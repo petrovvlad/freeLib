@@ -1537,8 +1537,8 @@ void ZipDir(QuaZip *zip,QDir dir)
 
 QString fb2mobi::convert(qlonglong id)
 {
-    QDir dir;
-    removeFolder(tmp_dir+"/OEBPS");
+    QDir dir(tmp_dir+"/OEBPS");
+    dir.removeRecursively();
     dir.mkpath(tmp_dir+"/OEBPS");
 
     QBuffer outbuff;
@@ -1692,8 +1692,8 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, book_in
         }
     }
     QString out_file;
-    QDir dir;
-    removeFolder(tmp_dir+"/OEBPS");
+    QDir dir(tmp_dir+"/OEBPS");
+    dir.removeRecursively();
     dir.mkpath(tmp_dir+"/OEBPS");
     dir.mkpath(tmp_dir+"/OEBPS/css");
     QFile::copy(QApplication::applicationDirPath()+"/xsl/css/style.css",tmp_dir+"/OEBPS/css/main.css");
