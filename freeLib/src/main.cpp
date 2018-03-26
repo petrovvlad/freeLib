@@ -1,22 +1,22 @@
 #include <QtWidgets/QApplication>
-#include "mainwindow.h"
-#include <QLocale>
-#include <QTextCodec>
-#include <QTranslator>
-#include <QLibraryInfo>
-#include "common.h"
-#include "fb2mobi/hyphenations.h"
-#include <QSplashScreen>
-#include <QPainter>
-#include "aboutdialog.h"
 #include <QDesktopWidget>
 #include <QNetworkProxy>
 #include <QStyleFactory>
 #include <quazip/quazip/quazip.h>
+#include <QLocale>
+#include <QTextCodec>
+#include <QTranslator>
+#include <QLibraryInfo>
+#include "fb2mobi/hyphenations.h"
+#include <QSplashScreen>
+#include <QPainter>
+
+#include "mainwindow.h"
+#include "aboutdialog.h"
+#include "common.h"
 
 
 SLib current_lib;
-//QSqlDatabase dbase;
 QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
@@ -73,8 +73,6 @@ QSettings* GetSettings(bool need_copy,bool reopen)
         else
             current_settings=new QSettings(OrgName,AppName);
     }
-   // settings->
-    //global_settings->group()
     if(need_copy)
         return current_settings;
     global_settings=current_settings;
@@ -173,7 +171,6 @@ void ResetToDefaultSettings()
 
 QStringList fillParams(QStringList str, book_info &bi,QFileInfo book_file)
 {
-    //qDebug()<<bi.num_in_seria;
     QStringList result=str;
     QString abbr = "";
     foreach(QString str,bi.seria.split(" "))
@@ -214,7 +211,6 @@ QStringList fillParams(QStringList str, book_info &bi,QFileInfo book_file)
         }
         result[i]=result[i].trimmed();
     }
-   // qDebug()<<str<<result[0];
     return result;
 }
 
@@ -302,8 +298,6 @@ void SetLocale()
     setlocale(LC_ALL, "rus");
     QLocale::setDefault(QLocale(QLocale::Russian,QLocale::RussianFederation));
 
-    //QTextCodec::setCodecForCStrings(QTextCodec::codecForName("UTF-8"));
-    //QTextCodec::setCodecForTr(QTextCodec::codecForName("UTF-8"));
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 
     if(translator)
@@ -349,7 +343,6 @@ void SetLocale()
                tag(app->translate("SettingsDlg","Poems"),".poem","poem_font",100)<<
                tag(app->translate("SettingsDlg","Epigraph"),".epigraph","epigraph_font",100)<<
                tag(app->translate("SettingsDlg","Book"),"body","body_font",100);
-   // delete settings;
 }
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -381,7 +374,6 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 
 int main(int argc, char *argv[])
 {
-             //qInstallMessageHandler(myMessageOutput);
     Q_INIT_RESOURCE(resource);
 
 #ifdef Q_OS_MACX
@@ -392,17 +384,14 @@ int main(int argc, char *argv[])
         //QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
     }
 #endif
-    //QApplication::setStyle(QStyleFactory::create("fusion"));
 
 
     QApplication a(argc, argv);
     a.setStyleSheet("QComboBox { combobox-popup: 0; }");
-    //qputenv("QT_MAC_DISABLE_FOREGROUND_APPLICATION_TRANSFORM", QByteArray("1"));
 
     QCommandLineOption trayOption("tray", "minimize to tray on start");
     CMDparser.addOption(trayOption);
     CMDparser.process(a);
-    //qDebug()<<CMDparser.optionNames();
 
     QPalette darkPalette;
     darkPalette.setColor(QPalette::Window, QColor("#E0E0E0")); //основной цвет интер
@@ -430,37 +419,14 @@ int main(int argc, char *argv[])
 
    //a.setPalette(darkPalette);
 
-    //QFile file;
-    //file.setFileName("/Volumes/Data/Progs/Lib/Lib/src/css/darkorange.stylesheet");
-    //if(!file.open(QFile::ReadOnly))
-    //    qDebug()<<"error";
-    //QString str=QString::fromLatin1(file.readAll().data());
-    //qDebug()<<str;
-    //a.setStyleSheet(str);
-    //GetSettings();
     translator=0;
     translator_qt=0;
     app=&a;
     a.setOrganizationName("freeLib");
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
-    // dbase = QSqlDatabase::addDatabase("QSQLITE","libdb");
     QSqlDatabase::addDatabase("QSQLITE","libdb");
 
-
     SetLocale();
-
-    //hyphenations h;
-    //h.init("ru");
-    //qDebug()<<h.hyphenate_word("Там\"","=",false);
-   // qDebug()<<h.hyphenate_word("- западной","=",false);
-   // qDebug()<<h.hyphenate_word("-за-п-адной","=",false);
-   // qDebug()<<h.hyphenate_word("-запа--дной","=",false);
-   // qDebug()<<h.hyphenate_word("-западной","=",true);
-   // qDebug()<<h.hyphenate_word("- западной","=",true);
-   // qDebug()<<h.hyphenate_word("-за-п-адной","=",true);
-   // qDebug()<<h.hyphenate_word("-запа--дной","=",true);
-     //return 0;
-
 
     QString HomeDir="";
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
@@ -490,16 +456,12 @@ int main(int argc, char *argv[])
 
     if(!settings->value("no_splash",false).toBool())
         splash->show();
-    //delete settings;
     a.processEvents();
     setProxy();
     MainWindow w;
 #ifdef Q_OS_OSX
   //  w.setWindowFlags(w.windowFlags() & ~Qt::WindowFullscreenButtonHint);
 #endif
-   // QSqlQuery query(dbase);
-
-    //w.setWindowIcon(QIcon(":/library.png"));
 
     if(!w.error_quit)
     {

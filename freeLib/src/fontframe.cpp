@@ -79,7 +79,6 @@ QString GetFontNameFromFile(QString lpszFilePath)
 
     if(f.open(QFile::ReadOnly))
     {
-        //qDebug()<<"open ok";
         TT_OFFSET_TABLE ttOffsetTable;
         f.read((char*)&ttOffsetTable, sizeof(TT_OFFSET_TABLE));
         ttOffsetTable.uNumOfTables = SWAPWORD(ttOffsetTable.uNumOfTables);
@@ -89,9 +88,7 @@ QString GetFontNameFromFile(QString lpszFilePath)
         //check is this is a true type font and the version is 1.0
         if(ttOffsetTable.uMajorVersion != 1 || ttOffsetTable.uMinorVersion != 0)
             return csRetVal;
-       // qDebug()<<"test version ok";
 
-        //qDebug()<<ttOffsetTable.uNumOfTables<<ttOffsetTable.uMajorVersion<<ttOffsetTable.uMinorVersion;
         TT_TABLE_DIRECTORY tblDir;
         //quint32 HeadOffset=0;
         quint32 NameOffset=0;
@@ -100,26 +97,14 @@ QString GetFontNameFromFile(QString lpszFilePath)
 
         for(int i=0; i< ttOffsetTable.uNumOfTables; i++)
         {
-            //qDebug()<<sizeof(TT_OFFSET_TABLE);
             f.read((char*)&tblDir, sizeof(TT_TABLE_DIRECTORY));
             csTemp=QString::fromLatin1(tblDir.szTag,4);
-            //qDebug()<<csTemp;
             if(csTemp.toLower()=="name")
             {
-                //bFound = true;
                 tblDir.uLength = SWAPLONG(tblDir.uLength);
                 tblDir.uOffset = SWAPLONG(tblDir.uOffset);
                 NameOffset=tblDir.uOffset;
             }
-            /*
-            if(csTemp.toLower()=="head")
-            {
-                //bFound = true;
-                tblDir.uLength = SWAPLONG(tblDir.uLength);
-                tblDir.uOffset = SWAPLONG(tblDir.uOffset);
-                HeadOffset=tblDir.uOffset;
-            }
-            */
             if(NameOffset)
                 break;
         }
@@ -140,7 +125,6 @@ QString GetFontNameFromFile(QString lpszFilePath)
                 ttRecord.uNameID = SWAPWORD(ttRecord.uNameID);
                 if(ttRecord.uNameID == 4)
                 {
-                   // qDebug()<<"ttRecord "<<4;
                     ttRecord.uStringLength = SWAPWORD(ttRecord.uStringLength);
                     ttRecord.uStringOffset = SWAPWORD(ttRecord.uStringOffset);
                     int nPos = f.pos();
@@ -158,19 +142,9 @@ QString GetFontNameFromFile(QString lpszFilePath)
                 }
             }
         }
-        /*
-        if(HeadOffset)
-        {
-            f.seek(HeadOffset);
-            TT_HEAD_RECORD ttNTHeader;
-            f.read((char*)&ttNTHeader, sizeof(TT_HEAD_RECORD));
-            qDebug()<<QString::number(ttNTHeader.umacStyle,2);
-        }
-        */
         f.close();
 
     }
-   // qDebug()<<csRetVal;
     return csRetVal;
 }
 
@@ -184,7 +158,6 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
     {
         ui->tag->addItem(tag_list[i].name);
     }
-    //current_font=font;
 
     connect(ui->Use,SIGNAL(toggled(bool)),this,SLOT(UseChange(bool)));
     connect(ui->del,SIGNAL(clicked()),this,SLOT(DelPress()));
@@ -203,8 +176,6 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
 
     ui->Use->setChecked(use);
     ui->tag->setCurrentIndex(tag);
-    //ui->bold->setChecked(bold);
-    //ui->italic->setChecked(italic);
     ui->fontSize->setValue(fontSize);
     if(font.isEmpty())
         on_tag_currentIndexChanged(tag);
@@ -315,7 +286,6 @@ void FontFrame::FontSelected(QString str)
                 font_box->insertItem(0,name,fileName);
                 font_box->setCurrentIndex(0);
             }
-            //current_font=fileName;
         }
         else
             font_box->setCurrentIndex(current_font);

@@ -16,11 +16,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->setupUi(this);
     ui->tabWidget->setCurrentIndex(0);
 
-    //mac_os:ui->settings_to_file->setVisible(false);
-
     connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(btnOK()));
-    //connect(ui->btnPath,SIGNAL(clicked()),this,SLOT(btnPath()));
-
 
     connect(ui->DelExp,SIGNAL(clicked()),this,SLOT(DelExt()));
     connect(ui->AddExp,SIGNAL(clicked()),this,SLOT(AddExt()));
@@ -51,9 +47,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 
     LoadSettings();
 
-    //ui->tabWidget->removeTab(4);
     ChangePort(ui->OPDS_port->value());
-    //ui->srv_annotation->hide();
 }
 
 SettingsDlg::~SettingsDlg()
@@ -96,13 +90,12 @@ void SettingsDlg::LoadSettings()
     ui->ShowDeleted->setChecked(settings->value("ShowDeleted").toBool());
     ui->use_tag->setChecked(settings->value("use_tag",true).toBool());
     ui->uncheck_export->setChecked(settings->value("uncheck_export",true).toBool());
-    ui->store_pos->setChecked(settings->value("stope_position",true).toBool());
+    ui->store_pos->setChecked(settings->value("store_position",true).toBool());
     ui->OPDS_enable->setChecked(settings->value("OPDS_enable",false).toBool());
     ui->OPDS_port->setValue(settings->value("OPDS_port",default_OPDS_port).toInt());
     ui->splash->setChecked(settings->value("no_splash",false).toBool());
     ui->trayIcon->setCurrentIndex(settings->value("tray_icon",0).toInt());
     ui->tray_color->setCurrentIndex(settings->value("tray_color",0).toInt());
-    //ui->relative_paths->setChecked(settings->value("relative_paths",false).toBool());
     ui->HTTP_need_pasword->setChecked(settings->value("HTTP_need_pasword").toBool());
     ui->HTTP_user->setText(settings->value("HTTP_user").toString());
     ui->HTTP_password->setText(settings->value("HTTP_password").toString());
@@ -148,9 +141,7 @@ void SettingsDlg::LoadSettings()
     count=settings->beginReadArray("export");
     for(int i=0;i<count;i++)
     {
-        //qDebug()<<2;
         settings->setArrayIndex(i);
-        //qDebug()<<settings->allKeys();
         ExportFrame* frame=new ExportFrame(this);
         ui->stackedWidget->addWidget(frame);
         frame->Load(settings);
@@ -159,7 +150,6 @@ void SettingsDlg::LoadSettings()
         connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
         connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
     }
-
 
     settings->endArray();
     if(count==0)
@@ -173,14 +163,6 @@ void SettingsDlg::LoadSettings()
         connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
     }
     ui->DelExport->setEnabled(ui->ExportName->count()>1);
-    //on_DefaultExport_clicked();
-
-
-    //ui->tabWidget->removeTab(ui->tabWidget->count()-1);
-   // ui->stackedWidget->->setLayout(new QHBoxLayout(ui->param));
-
-    //ui->tab_export->layout()->setMargin(0);
-
 
     disconnect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
     disconnect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
@@ -189,7 +171,6 @@ void SettingsDlg::LoadSettings()
     ui->Language->clear();
     ui->Language->addItem("english");
     ui->Language->setCurrentIndex(0);
-    //ui->hyphenate->setCurrentIndex(1);
     foreach(QString str,dirContent)
     {
         QString lang=str.right(str.length()-9);
@@ -206,7 +187,6 @@ void SettingsDlg::LoadSettings()
     ui->ABC->clear();
     ui->ABC->addItem("english");
     ui->ABC->setCurrentIndex(0);
-    //ui->hyphenate->setCurrentIndex(1);
     foreach(QString str,dirContent)
     {
         QString lang=str.right(str.length()-4);
@@ -234,7 +214,6 @@ void SettingsDlg::LoadSettings()
     connect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
     connect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
     connect(ui->ExportName->lineEdit(),SIGNAL(editingFinished()),this,SLOT(ExportNameChanged()));
-    //delete settings;
     UpdateWebExportList();
     on_proxy_type_currentIndexChanged(ui->proxy_type->currentIndex());
     on_HTTP_need_pasword_clicked();
@@ -284,7 +263,6 @@ void SettingsDlg::btnDBPath()
         if(QFile().rename(RelativeToAbsolutePath(ui->database_path->text()),dir+"/freeLib.sqlite"))
         {
             QFile().remove(RelativeToAbsolutePath(ui->database_path->text()));
-            //QDir().remove(QFileInfo(RelativeToAbsolutePath(ui->database_path->text())).absolutePath());
             ui->database_path->setText(dir+"/freeLib.sqlite");
             dbase.setDatabaseName(RelativeToAbsolutePath(ui->database_path->text()));
             if(!dbase.open())
@@ -292,7 +270,6 @@ void SettingsDlg::btnDBPath()
                 app->closingDown();
             }
         }
-        //delete settings;
     }
 }
 
@@ -308,8 +285,6 @@ void SettingsDlg::ChangePort(int i)
         QSettings *settings=GetSettings();
         settings->setValue("OPDS_enable",ui->OPDS_enable->isChecked());
         settings->sync();
-        //delete settings;
-
     }
     emit ChangingPort(i);
 }
@@ -325,7 +300,6 @@ void SettingsDlg::ChangeLanguage()
     ui->retranslateUi(this);
     LoadSettings();
     emit ChangingLanguage();
-    //delete settings;
 }
 
 void SettingsDlg::btnOK()
@@ -371,7 +345,7 @@ void SettingsDlg::btnOK()
     settings->setValue("ShowDeleted",ui->ShowDeleted->checkState()==Qt::Checked);
     settings->setValue("use_tag",ui->use_tag->checkState()==Qt::Checked);
     settings->setValue("uncheck_export",ui->uncheck_export->checkState()==Qt::Checked);
-    settings->setValue("stope_position",ui->store_pos->isChecked());
+    settings->setValue("store_position",ui->store_pos->isChecked());
     settings->setValue("OPDS_enable",ui->OPDS_enable->isChecked());
     settings->setValue("OPDS_port",ui->OPDS_port->value());
     settings->setValue("httpExport",ui->httpExport->currentIndex());
@@ -380,7 +354,6 @@ void SettingsDlg::btnOK()
     settings->setValue("no_splash",ui->splash->checkState()==Qt::Checked);
     settings->setValue("tray_icon",ui->trayIcon->currentIndex());
     settings->setValue("tray_color",ui->tray_color->currentIndex());
-    //settings->setValue("relative_paths",ui->relative_paths->checkState()==Qt::Checked);
     settings->setValue("HTTP_need_pasword",ui->HTTP_need_pasword->isChecked());
     settings->setValue("HTTP_user",ui->HTTP_user->text());
     settings->setValue("HTTP_password",ui->HTTP_password->text());
@@ -395,7 +368,6 @@ void SettingsDlg::btnOK()
     settings->setValue("proxy_host",ui->proxy_host->text());
     settings->setValue("proxy_password",ui->proxy_password->text());
 
-   // qDebug()<<ui->CurrentTools->currentText();
     SaveTools(settings);
     settings->beginWriteArray("application");
     for (int i = 0; i < ui->ApplicationList->rowCount(); ++i)
@@ -419,7 +391,6 @@ void SettingsDlg::btnOK()
     settings->setValue("database_path",ui->database_path->text());
     settings->sync();
     setProxy();
-    //delete settings;
 }
 
 void SettingsDlg::SaveTools(QSettings *settings)
@@ -483,11 +454,7 @@ void SettingsDlg::on_AddExport_clicked()
     ui->ExportName->setCurrentIndex(ui->ExportName->count()-1);
     ui->DelExport->setDisabled(false);
 
-    //QSettings *settings=GetSettings();
-    //int count=settings->beginReadArray("export");
-    //settings->setArrayIndex(count);
     frame->Load(0);
-    //settings->endArray();
 
     connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
     connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
@@ -496,14 +463,8 @@ void SettingsDlg::on_AddExport_clicked()
 
 void SettingsDlg::ExportNameChanged()
 {
-    //int cp=ui->ExportName->lineEdit()->cursorPosition();
-    //qDebug()<<cp;
     ui->ExportName->setItemText(ui->ExportName->currentIndex(),ui->ExportName->lineEdit()->text());
     UpdateWebExportList();
- //   app->processEvents();
- //   ui->ExportName->lineEdit()->setText(arg1);
-  //  ui->ExportName->lineEdit()->setCursorPosition(cp);
-   // ui->ExportName->lineEdit()->setSelection(cp,0);
 }
 
 void SettingsDlg::on_DelExport_clicked()
@@ -552,7 +513,6 @@ void SettingsDlg::on_tabWidget_currentChanged(int index)
 {
     if(ui->tabWidget->currentWidget()==ui->tab_export)
     {
-        //qDebug()<<"make_signal";
         SaveTools();
         emit NeedUpdateTools();
     }
@@ -616,16 +576,13 @@ void SettingsDlg::on_btnSaveExport_clicked()
     file.close();
     zip_file.close();
 
-    //int count=fonts_list.count();//set.beginReadArray("fonts");
     QSettings *settings=GetSettings();
     QString HomeDir="";
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path=QFileInfo(settings->value("database_path",HomeDir+"/freeLib/freeLib.sqlite").toString()).absolutePath()+"/fonts";
-    //for(int i=0;i<count;i++)
     foreach (QString font, fonts_list)
     {
-        //set.setArrayIndex(i);
         QString font_file=font;//set.value("font").toString();
         if(QFile::exists(QApplication::applicationDirPath()+"/xsl/fonts/"+font_file))
         {
@@ -653,8 +610,6 @@ void SettingsDlg::on_btnSaveExport_clicked()
             zip_file.close();
         }
     }
-    //set.endArray();
-
     zip.close();
 }
 

@@ -924,7 +924,7 @@
                  </property>
                  <widget class="QStackedWidget" name="stacked_books">
                   <property name="currentIndex">
-                   <number>1</number>
+                   <number>0</number>
                   </property>
                   <widget class="QWidget" name="page_books">
                    <layout class="QVBoxLayout" name="verticalLayout_14">

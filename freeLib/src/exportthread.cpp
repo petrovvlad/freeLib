@@ -1,3 +1,8 @@
+#include <QXmlQuery>
+#include <QApplication>
+#include <QTextStream>
+#include <QTimer>
+
 #include "exportthread.h"
 #include "common.h"
 #include "SmtpClient/smtpclient.h"
@@ -5,17 +10,9 @@
 #include "SmtpClient/mimetext.h"
 #include "QProcess"
 #include "QFileInfo"
-#include <QXmlQuery>
-#include <QApplication>
-#include <QTextStream>
-#include <QTimer>
 #include "fb2mobi/fb2mobi.h"
-//#include "zip/unzip.h"
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
-
-
-//#include
 
 QString Transliteration(QString str)
 {
@@ -123,10 +120,7 @@ QString BuildFileName(QString filename)
 void ExportThread::FB2export()
 {
     QSettings *settings=GetSettings();
-//    QString HomeDir="";
-//    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-//        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QDir dir=export_dir;//settings->value("DevicePath",HomeDir).toString();
+    QDir dir=export_dir;
     QString FileName;
     long count=0;
     foreach(QString i,book_list_str)
@@ -140,7 +134,6 @@ void ExportThread::FB2export()
         QFile file(FileName);
         if(!file.open(QIODevice::ReadOnly))
         {
-            //delete settings;
             return;
         }
         QByteArray ba=file.readAll();
@@ -159,7 +152,6 @@ void ExportThread::FB2export()
         {
             QuaZip zip(fi.absoluteFilePath());
             zip.open(QuaZip::mdUnzip);
-            //zip.openArchive(fi.absoluteFilePath());
             QStringList files=zip.getFileNameList();
             QuaZipFile zip_file(&zip);
             bool find=false;
@@ -169,17 +161,13 @@ void ExportThread::FB2export()
                 if(arh_file.suffix().toLower()=="fb2" || arh_file.suffix().toLower()=="epub")
                 {
                     QBuffer buf;
-                    //buf.open(QIODevice::ReadWrite);
                     if(SetCurrentZipFileName(&zip,str))
                     {
                         zip_file.open(QIODevice::ReadOnly);
                         buf.setData(zip_file.readAll());
-                    //if(zip.extractFile(str,&buf,UnZip::SkipPaths)==UnZip::Ok)
-                    //{
                         FileName=fi.absolutePath()+"/"+fi.completeBaseName()+"/"+str;
                         ba=buf.data();
                         GetBookInfo(bi,ba,arh_file.suffix().toLower(),true);
-                        //qDebug()<<ba.size()<<arh_file.suffix().toLower();
                         fi.setFile(str);
                         find=true;
                     }
@@ -194,7 +182,6 @@ void ExportThread::FB2export()
         }
         else
             continue;
-        //qDebug()<<"ok";
         QString file_name;
         if(settings->value("originalFileName",false).toBool())
         {
@@ -203,32 +190,17 @@ void ExportThread::FB2export()
         else
         {
             file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
-            //qDebug()<<"ok";
             if(file_name.isEmpty())
                 file_name=default_exp_file_name;
-            //qDebug()<<bi.authors.count();
-//            file_name=file_name.replace("%s",BuildFileName(bi.seria)).replace("%b",BuildFileName(bi.title)).replace("%a",QString(bi.authors.at(0).author).replace(","," ").trimmed())+"."+fi.suffix();
-//            if(file_name.contains("%n"))
-//            {
-//                int len=file_name.mid(file_name.indexOf("%n")+2,1).toInt();
-//                QString zerro;
-//                if(bi.num_in_seria==0)
-//                    file_name.replace("%n"+QString::number(len),"");
-//                else
-//                    file_name.replace("%n"+(len>0?QString::number(len):""),(len>0?zerro.fill('0',len-QString::number(bi.num_in_seria).length()):"")+QString::number(bi.num_in_seria));
-//            }
             file_name=fillParams(file_name,bi,fi)+"."+fi.suffix();;
             if(settings->value("transliteration",false).toBool())
                 file_name=Transliteration(file_name);
         }
         file_name=fillParams(dir.path(),bi,fi)+"/"+file_name;
         QBuffer buf(&ba);
-       // qDebug()<<"ok2";
-        //qDebug()<<file_name;
         convert((QList<QBuffer*>())<<&buf, file_name,count,false,bi);
 
     }
-    //delete settings;
 }
 bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count, bool remove_old, book_info &bi)
 {
@@ -239,25 +211,17 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     for(int i=0;i<count_tools;i++)
     {
         settings->setArrayIndex(i);
-        //qDebug()<<settings->value("name").toString()<<count_tools<<tool;
         if(settings->value("name").toString()==tool)
         {
             tool_path=settings->value("path").toString();
             tool_arg=settings->value("args").toString();
             tool_ext=settings->value("ext").toString();
-             //qDebug()<<"ok"<<tool_path;
             break;
         }
     }
     settings->endArray();
     QDir book_dir;
-   // book_dir=(file_name);
-    //book_dir.mkdir(book_dir.cleanPath(book_dir.path()));
-    //qDebug()<<book_dir.cleanPath(book_dir.path());
-    //QFile file(file_name);
     QFileInfo fi(file_name);
-    //book_dir.mkpath(fi.absoluteDir().path());
-    //qDebug()<<file_name;
 
     QString tmp_dir;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
@@ -265,21 +229,12 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     book_dir.mkpath(tmp_dir+"/freeLib");
 
     QStringList out_file;
-
-
     int i=0;
     QFile file;
     foreach (QBuffer* buf, outbuff)
     {
-        //if(outbuff.count()>1)
-       // {
-            out_file<<tmp_dir+QString("/freeLib/book%1.").arg(QString::number(i))+fi.suffix();
-            i++;
-      //  }
-      //  else
-      //  {
-      //      out_file<<tmp_dir+"/freeLib/book."+fi.suffix();
-      //  }
+        out_file<<tmp_dir+QString("/freeLib/book%1.").arg(QString::number(i))+fi.suffix();
+        i++;
         QFile::remove(out_file.last());
         file.setFileName(out_file.last());
         file.open(QFile::WriteOnly);
@@ -289,8 +244,6 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     if(out_file.count()==0)
         return false;
     QString current_out_file=out_file.first();
-    //qDebug()<<1<<out_file;
-    //return true;
     if(
             (settings->value("OutputFormat").toString()=="MOBI" ||
              settings->value("OutputFormat").toString()=="EPUB" ||
@@ -300,24 +253,10 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
             (fi.suffix().toLower()=="fb2" || fi.suffix().toLower()=="epub"))
     {
         fb2mobi conv;
-        //conv.pdf=pdf;
-        //qDebug()<<settings->value("OutputFormat").toString()<<fi.suffix().toLower();
-        //if(out_file.count()==1)
-        //    current_out_file=conv.convert(out_file.last(),remove_old,settings->value("OutputFormat").toString(),language);
-        //else
-            current_out_file=conv.convert(out_file,remove_old,settings->value("OutputFormat").toString(),bi);
-
-       // qDebug()<<out_file;
-        //fi.setFile(out_file);
+        current_out_file=conv.convert(out_file,remove_old,settings->value("OutputFormat").toString(),bi);
     }
-  //  else
-  //  {
-  //  }
-    //qDebug()<<3<<out_file;
 
     QString book_file_name=fi.absolutePath()+"/"+fi.completeBaseName()+"."+QFileInfo(current_out_file).suffix();
-//    if(settings->value("transliteration",false).toBool())
-//        book_file_name=fi.absolutePath()+"/"+Transliteration(fi.completeBaseName())+"."+QFileInfo(current_out_file).suffix();;
 
     if(send_type==ST_Mail)
     {
@@ -326,9 +265,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
            QEventLoop loop; QTimer::singleShot(settings->value("PauseMail",5).toInt()*1000, &loop, SLOT(quit())); loop.exec();
        }
        SmtpClient smtp(settings->value("EmailServer").toString(),settings->value("EmailPort").toInt());
-       //qDebug()<<settings->value("EmailServer").toString()<<settings->value("EmailPort").toInt();
        smtp.setConnectionType((SmtpClient::ConnectionType)settings->value("ConnectionType").toInt());
-       //connect(&smtp,SIGNAL(smtpError(SmtpError)),this,SLOT(smtpError(SmtpError)));
        if(!settings->value("EmailUser").toString().isEmpty())
            smtp.setUser(settings->value("EmailUser").toString());
        if(!settings->value("EmailPassword").toString().isEmpty())
@@ -343,59 +280,37 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
 
        QBuffer* outbuff=new QBuffer;
        QString FileName=current_out_file;
-//              FileName=GetBookFile(*outbuff,i);
        if(FileName.isEmpty())
        {
-           //delete settings;
            return false;
        }
        QFile book_file(FileName);
        if(!book_file.open(QFile::ReadOnly))
        {
            qDebug()<<"Error open file name "<<FileName;
-           //delete settings;
            return false;
        }
-       //qDebug()<<1;
        outbuff->setData(book_file.readAll());
        book_file.close();
-       //qDebug()<<outbuff->size()<<"-"<<FileName;
        MimeText text;
        QString onlyFileName=QFileInfo(book_file_name).fileName();
        text.setText(onlyFileName);
        msg.addPart(&text);
        msg.addPart(new MimeAttachment(outbuff,onlyFileName));
        smtp.connectToHost();
-       //qDebug()<<smtp.getResponseText();
-      // smtp.setAuthMethod(SmtpClient::AuthLogin);
        smtp.login();
-       //qDebug()<<smtp.getResponseText();
        if(!smtp.sendMail(msg))
        {
-           //qDebug()<<smtp.getResponseText();
            qDebug()<<"Error send e-mail.";
-           //delete settings;
            return false;
        }
-      // qDebug()<<1;
 
        smtp.quit();
-      // qDebug()<<1;
-       //delete settings;
        return true;
-       //sleep(10000);
-       //break;
     }
     else
     {
-        //qDebug()<<book_file_name;
         book_file_name=ValidateFileName(book_file_name);
-        //qDebug()<<book_file_name;
-        //qDebug()<<book_file_name;
-        //qDebug()<<book_dir.cleanPath(QFileInfo(book_file_name).absolutePath());
-        //qDebug()<<current_out_file;
-        //qDebug()<<book_file_name;
-        //return false;
         if(!settings->value("PostprocessingCopy",false).toBool())
         {
             book_dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
@@ -409,32 +324,16 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
         {
             QFileInfo fi_tmp(book_file_name);
             QString arg=tool_arg;
-            //arg<<tool_arg;//.split(" ");
-
-            // QString ex=QString(tool_path).replace("%app_res",QApplication::applicationDirPath()+"/");
-            //QString ex=fillParams(tool_path,QFileInfo(),"","","","");
-
             if(!tool_ext.isEmpty())
             {
                 book_file_name=tool_ext;
                 book_file_name=fillParams(book_file_name,bi,fi_tmp);
-//                book_file_name.replace("%fn",fi_tmp.completeBaseName()).
-//                        replace("%f",fi_tmp.absoluteFilePath()).
-//                        replace("%d",fi_tmp.absoluteDir().path()).
-//                        replace("%app_res",QApplication::applicationDirPath()+"/");
             }
             QString ex=fillParams(tool_path,bi,fi_tmp);
             arg=fillParams(arg,bi,fi_tmp);
-//            arg.replaceInStrings("%fn",fi_tmp.completeBaseName()).
-//                    replaceInStrings("%f",fi_tmp.absoluteFilePath()).
-//                    replaceInStrings("%d",fi_tmp.absoluteDir().path()).
-//                    replaceInStrings("%app_res",QApplication::applicationDirPath()+"/");
-           // arg.removeOne("%no_point");
             qDebug()<<ex<<arg;
             proc.execute((ex+" "+arg).trimmed());
         }
-
-        //delete settings;
         return QFileInfo(book_file_name).exists();
     }
 }
@@ -442,10 +341,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
 void ExportThread::export_books()
 {
     QSettings *settings=GetSettings();
-//    QString HomeDir="";
-//    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-//        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QDir dir=export_dir;//settings->value("DevicePath",HomeDir).toString();
+    QDir dir=export_dir;
     QFileInfo fi;
     QSqlQuery query(QSqlDatabase::database("libdb"));
 
@@ -454,7 +350,6 @@ void ExportThread::export_books()
         foreach(book_info i,book_list)
         {
             query.exec("SELECT file,archive,format,id_lib,path from book left join lib ON lib.id=id_lib where book.id="+QString::number(i.id));
-           // qDebug()<<query.lastError();
             QString archive,file;
             QString LibPath=current_lib.path;
             while(query.next())
@@ -472,13 +367,11 @@ void ExportThread::export_books()
             file=file.replace("\\","/");
             if(archive.isEmpty())
             {
-                //qDebug()<<archive;
                 QDir().mkpath(QFileInfo(dir.absolutePath()+"/"+file).absolutePath());
                 QFile().copy(LibPath+"/"+file,dir.absolutePath()+"/"+file);
                 continue;
             }
             QuaZip uz(LibPath+"/"+archive);
-            //UnZip::ErrorCode ec = uz.openArchive(LibPath+"/"+archive);
             if(!uz.open(QuaZip::mdUnzip))
             {
                 qDebug()<<("Error open archive!")<<" "<<archive;
@@ -487,7 +380,6 @@ void ExportThread::export_books()
             if(uz.getEntriesCount()>1)
             {
                 uz.close();
-                //qDebug()<<22;
                 QString out_dir=dir.absolutePath()+"/"+archive.left(archive.length()-4);
                 QDir().mkpath(out_dir);
                 QBuffer buff,infobuff;
@@ -502,7 +394,6 @@ void ExportThread::export_books()
             }
             else
             {
-                //qDebug()<<dir.absolutePath()+"/"+archive;
                 QDir().mkpath(QFileInfo(dir.absolutePath()+"/"+archive).absolutePath());
                 QFile().copy(LibPath+"/"+archive,dir.absolutePath()+"/"+archive);
             }
@@ -513,7 +404,6 @@ void ExportThread::export_books()
 
     long count=0;
     QList<QList<book_info> > books_group;
-//    QList<book_info> seria_books;
     qlonglong current_seria_id=-1;
     bool need_group_series=
             (settings->value("OutputFormat").toString()=="EPUB" || settings->value("OutputFormat").toString()=="MOBI" ||
@@ -521,25 +411,18 @@ void ExportThread::export_books()
             settings->value("join_series").toBool();
     foreach(book_info i,book_list)
     {
-        //qDebug()<<"ok1"<<book_list.count();
-        //emit Progress(count*100/book_list.count(),count);
         GetBookInfo(i,QByteArray(),"",true,i.id);
         if(current_seria_id!=i.id_seria || !need_group_series || i.id_seria==-1)
         {
             books_group<<QList<book_info>();
-            //qDebug()<<"new bg";
         }
         current_seria_id=i.id_seria;
         books_group.last()<<i;
-        //qDebug()<<i.seria<<" "<<i.title;
-        //count++;
-        //qDebug()<<"ok1";
     }
     count=0;
 
     foreach(QList<book_info> bi,books_group)
     {
-        //qDebug()<<"ok";
         if(!loop_enable)
             break;
         QList<QBuffer*> buffers;
@@ -547,7 +430,6 @@ void ExportThread::export_books()
         QString language;
         foreach(book_info i,bi)
         {
-            //qDebug()<<1;
             app->processEvents();
             count++;
             if(!loop_enable)
@@ -595,40 +477,23 @@ void ExportThread::export_books()
                         seria_name="";
                     }
                     file_name=fillParams(file_name,QFileInfo(),seria_name,book_name,author,ser_num)+"."+query.value(1).toString().trimmed();
-//                    file_name=file_name.replace("%s",seria_name).replace("%b",book_name).replace("%a",author)+"."+query.value(1).toString().trimmed();
-//                    if(file_name.contains("%n"))
-//                    {
-//                        int len=file_name.mid(file_name.indexOf("%n")+2,1).toInt();
-//                        QString zerro;
-//                        if(ser_num=="0")
-//                            file_name.replace("%n"+QString::number(len),"");
-//                        else
-//                            file_name.replace("%n"+(len>0?QString::number(len):""),(len>0?zerro.fill('0',len-ser_num.length()):"")+ser_num+" ");
-//                    }
                     if(settings->value("transliteration",false).toBool())
                         file_name=Transliteration(file_name);
                 }
                 file_name=dir.path()+"/"+file_name;
-                //qDebug()<<file_name;
                 language=query.value(5).toString();
-                //qDebug()<<outbuff.size();
             }
         }
-        //qDebug()<<3<<bi.count();
 
         if(convert(buffers, file_name,count,true,bi[0]))
         {
-            //qDebug()<<44;
             foreach(book_info i,bi)
                 successful_export_books<<i.id;
         }
         emit Progress(count*100/book_list.count(),count);
-        //qDebug()<<4;
         foreach (QBuffer* buf, buffers)
             delete buf;
-        //qDebug()<<5;
     }
-    //delete settings;
 }
 
 void ExportThread::process()
@@ -642,7 +507,6 @@ void ExportThread::process()
         export_lib();
 
     emit End();
-   // QThread::exit();
 }
 
 
@@ -674,8 +538,6 @@ void ExportThread::export_lib()
                "JOIN author ON author.id=book_author.id_author "
                "WHERE book_author.id_lib=%1 "
                "ORDER BY book.id,seria.id,num_in_seria;").arg(QString::number(ID_lib)));
- //   int count_all=query.numRowsAffected();
-    //qDebug()<<query.lastError();
     int count=0;
     qlonglong lastbookid=-1;
 
@@ -810,12 +672,10 @@ void ExportThread::export_lib()
 
     zip.close();
     emit Progress(0,count);
-//    qDebug()<<count_all;
 }
 
 void ExportThread::break_exp()
 {
-    //qDebug()<<"q";
     loop_enable=false;
 }
 

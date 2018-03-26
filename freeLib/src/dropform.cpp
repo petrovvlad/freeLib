@@ -20,8 +20,6 @@ DropForm::~DropForm()
 
 void DropForm::switch_command(QPoint mouse_pos)
 {
-    //qDebug()<<ui->verticalLayout->count();
-    //qDebug()<<count<<height_item<<point;
     int count=get_command(mouse_pos);
     for(int i=0;i<verticalLayout->count();i++)
     {
@@ -37,7 +35,6 @@ int DropForm::get_command(QPoint mouse_pos)
     if(verticalLayout->count()==0)
         return -1;
     QPoint point=mapFromParent(mouse_pos);
-    //qDebug()<<mapToGlobal(pos())<<(mouse_pos);
 
     int height_item=rect().height()/verticalLayout->count();
     int count=0;
@@ -52,7 +49,6 @@ int DropForm::get_command(QPoint mouse_pos)
 
 void DropForm::AddCommand(QStringList cmd)
 {
-    //qDebug()<<cmd;
     QFont lab_font(font());
     lab_font.setPixelSize(rect().height()/cmd.count()*0.75);
     QFontMetrics metric(lab_font);
@@ -75,10 +71,5 @@ void DropForm::AddCommand(QStringList cmd)
         lab->setMouseTracking(true);
         verticalLayout->addWidget(lab);
     }
-   // qDebug()<<verticalLayout->count();
 }
 
-//void DropForm::mouseMoveEvent(QMouseEvent *e)
-//{
-//    qDebug()<<"df"<<e->pos();
-//}

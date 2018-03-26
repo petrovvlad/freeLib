@@ -278,7 +278,6 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
     }
     if(!id_lib.isEmpty())
         condition+="book_author.id_lib="+id_lib+" and ";
-    //QSettings *settings=GetSettings();
     if(!settings->value("ShowDeleted",false).toBool())
         condition+="not deleted and ";
     if(search.isEmpty())
@@ -295,11 +294,8 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
                condition.left(condition.length()-5)+" ORDER BY first_author.rus_index, seria.name,num_in_seria,book.name_index LIMIT %1 OFFSET %2").
                arg(QString::number(MAX_BOOKS_PER_PAGE+1),QString::number(first_book*MAX_BOOKS_PER_PAGE)));
     }
-    //qDebug()<<query.lastQuery();
     QSqlQuery queryAuthors(QSqlDatabase::database("libdb"));
     QSqlQuery queryJanres(QSqlDatabase::database("libdb"));
-    //qDebug()<<condition;
-    //qDebug()<<query.lastError();
     long current_books_count=MAX_BOOKS_PER_PAGE;
     QString parameters="";
     QStringList keys=params.keys();
@@ -312,15 +308,9 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
         }
     }
     parameters+=(session.isEmpty()?"":QString((parameters.isEmpty()?"?":"&"))+"session="+session);
-    //qDebug()<<"p="<<parameters;
     QList<qlonglong> id_books;
     while(query.next())
     {
-       // if(id_books.contains(query.value(1).toLongLong()))
-        //{
-       //     current_books_count--;
-       //     continue;
-       // }
         id_books<<query.value(1).toLongLong();
         if(current_books_count==0)
         {
@@ -349,24 +339,16 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
                 QDomElement el=AddTextNode("a",tr("Next page"),entry);
                 el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(QString::number(first_book+1))+parameters);
                 el.setAttribute("class","author");
-//                QDomElement img=doc.createElement("img");
-//                img.setAttribute("src","/arrow_right.png");
-//                img.setAttribute("alt",tr("Next page"));
-//                img.setAttribute("height",QString("%1px").arg(for_mobile?"64":"32"));
-//                el.appendChild(img);
             }
             break;
         }
         current_books_count--;
-       // qDebug()<<query.value(0).toString();
         if(opds)
         {
-            //qDebug()<<query.value(0).toString();
             QDomElement entry=doc.createElement("entry");
             feed.appendChild(entry);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
             AddTextNode("id","tag:book:"+query.value(1).toString(),entry);
-           // AddTextNode("author",query.value(5).toString(),entry);
             AddTextNode("title",query.value(0).toString()+(query.value(4).toString().isEmpty()?"":" ("+query.value(4).toString()+")"),entry);
             queryAuthors.exec("SELECT name1||' '||name2||' '||name3 FROM book_author JOIN author ON id_author=author.id WHERE id_book="+query.value(1).toString());
             while(queryAuthors.next())
@@ -491,12 +473,10 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
             QDomElement el=AddTextNode("div",
                  query.value(0).toString()+(query.value(4).toString().isEmpty()?"":" ("+
                  query.value(4).toString()+(query.value(8).toInt()==0?"":" ["+query.value(8).toString()+"]")+")"),entry);
-            //el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(query.value(1).toString()));
             el.setAttribute("class","book");
             QDomElement br=doc.createElement("br");
             entry.appendChild(br);
 
-           // el.setAttribute("class","book");
             if(query.value(3).toString().toLower()=="fb2")
             {
                 QDomElement el=AddTextNode("a","fb2",entry);
@@ -549,9 +529,6 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
                     entry.appendChild(an_node);
                 }
             }
-           // el=doc.createElement("div");
-          //  el.setAttribute("style","clear: both;");
-           // entry.appendChild(el);
         }
          //<link href="/b/190619/download" rel="http://opds-spec.org/acquisition/disabled" type="application/fb2+zip" />
         if(current_books_count==0 && first_book>0)

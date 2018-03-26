@@ -19,7 +19,6 @@ void ClearLib(qlonglong existingID,bool delete_only)
     }
     else
     {
-        //qDebug()<<3;
         query.exec("delete from book where id_lib="+QString::number(existingID));
         query.exec("delete from author where id_lib="+QString::number(existingID));
         query.exec("delete from seria where id_lib="+QString::number(existingID));
@@ -40,20 +39,12 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
             buf.setData(data);
             QuaZip zip(&buf);
             zip.open(QuaZip::mdUnzip);
-            //zip.openArchive(&buf);
             QBuffer info;
-            //if (!info.open(QIODevice::ReadWrite))
-            //{
-            //    qDebug()<<("Error create buffer!");
-            //    return;
-            //}
             SetCurrentZipFileName(&zip,"META-INF/container.xml");
-            //zip.setCurrentFile("META-INF/container.xml");
             QuaZipFile zip_file(&zip);
             zip_file.open(QIODevice::ReadOnly);
             info.setData(zip_file.readAll());
             zip_file.close();
-            //zip.extractFile("META-INF/container.xml",&info,UnZip::SkipPaths);
             QDomDocument doc;
             doc.setContent(info.data());
             QDomNode root=doc.documentElement();
@@ -71,11 +62,8 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                         {
                             QString path=roots.childNodes().at(j).attributes().namedItem("full-path").toAttr().value();
                             QBuffer opf_buf;
-                            //opf_buf.open(QIODevice::ReadWrite);
                             QFileInfo fi(path);
                             rel_path=fi.path();
-                            //zip.extractFile(path,&opf_buf,UnZip::SkipPaths);
-                            //zip.setCurrentFile(path);
                             SetCurrentZipFileName(&zip,path);
                             zip_file.open(QIODevice::ReadOnly);
                             opf_buf.setData(zip_file.readAll());
@@ -83,10 +71,7 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
 
                             QDomDocument opf;
                             opf.setContent(opf_buf.data());
-                            //   qDebug()<<opf.documentElement().childNodes().count();
                             QDomNode meta=opf.documentElement().namedItem("metadata");
-                            //QString seria,title,language="ru";
-                            //QStringList genres,authors;
                             for(int m=0;m<meta.childNodes().count();m++)
                             {
                                 if(meta.childNodes().at(m).nodeName().right(5)=="title")
@@ -110,7 +95,6 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                                     }
 
                                     bi.authors<<author_info(author,0);
-                                //    authors.last().replace(" ",",");
                                 }
                                 else if(meta.childNodes().at(m).nodeName().right(7)=="subject")
                                 {
@@ -127,30 +111,23 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                                 }
                                 else if(meta.childNodes().at(m).nodeName().right(4)=="meta" && !info_only)
                                 {
-                                    //qDebug()<<"meta";
                                     if(meta.childNodes().at(m).attributes().namedItem("name").toAttr().value()=="cover")
                                     {
 
                                         QString cover=meta.childNodes().at(m).attributes().namedItem("content").toAttr().value();
                                         QDomNode manifest=opf.documentElement().namedItem("manifest");
-                                        //qDebug()<<cover;
                                         for(int man=0;man<manifest.childNodes().count();man++)
                                         {
                                             if(manifest.childNodes().at(man).attributes().namedItem("id").toAttr().value()==cover)
                                             {
                                                 QBuffer img;
-                                                //img.open(QIODevice::ReadWrite);
                                                 cover=rel_path+"/"+manifest.childNodes().at(man).attributes().namedItem("href").toAttr().value();
 
-                                                //qDebug()<<cover;
                                                 SetCurrentZipFileName(&zip,cover);
                                                 zip_file.open(QIODevice::ReadOnly);
                                                 img.setData(zip_file.readAll());
                                                 zip_file.close();
 
-//                                                zip.extractFile(cover,&img,UnZip::SkipPaths);
-                                                //qDebug()<<img.size();
-                                               // bi.img="<img src=\"data:image/png;base64,%1\" width=100% />";
                                                 bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+manifest.childNodes().at(man).attributes().namedItem("media-type").toAttr().value()+
                                                         ";base64,"+img.data().toBase64()+"\"></center></td>");
                                                 break;
@@ -188,7 +165,6 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                         }
                     }
                 }
-                //qDebug()<<cover;
                 QBuffer buff;
                 buff.open(QIODevice::WriteOnly);
                 QTextStream ts(&buff);
@@ -228,7 +204,6 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
         bi.authors.clear();
         QSqlQuery query(QSqlDatabase::database("libdb"));
         query.exec("SELECT book.name,num_in_seria,language,seria.name,id_seria from book left join seria on id_seria=seria.id where book.id="+QString::number(id_book));
-        //qDebug()<<query.lastError();
         if(query.next())
         {
             bi.title=query.value(0).toString();
@@ -292,26 +267,17 @@ qlonglong ImportThread::AddSeria(QString str, qlonglong libID, int tag)
 {
     if(str.trimmed().isEmpty())
         return -1;
-    //QSqlQuery query(QSqlDatabase::database("libdb"));
-    //qDebug()<<names.count()<<" "<<str;
-    //return 0;
     QString name=str.trimmed();
     query->exec("SELECT id FROM seria WHERE rus_index='"+ToIndex(name)+"' and id_lib="+QString::number(libID));
-    //qDebug()<<query.lastError().text();
     if(query->next())
     {
         qlonglong id=query->value(0).toLongLong();
-        //query.exec("SELECT id_lib FROM seria_lib WHERE id_lib="+QString::number(libID)+" AND id_seria="+QString::number(id));
-        //qDebug()<<query.lastError().text();
-        //if(!query.next())
-        //    query.exec("INSERT INTO seria_lib(id_lib,id_seria) values("+QString::number(libID)+","+QString::number(id)+")");
         return id;
     }
     query->exec("INSERT INTO seria(name,rus_index,id_lib,favorite) values('"+name+"','"+ToIndex(name)+"',"+QString::number(libID)+","+QString::number(tag)+")");
     query->exec("select last_insert_rowid()");
     query->next();
     qlonglong id=query->value(0).toLongLong();
-    //query.exec("INSERT INTO seria_lib(id_lib,id_seria) values("+QString::number(libID)+","+QString::number(id)+")");
     return id;
 }
 
@@ -319,10 +285,7 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
 {
     if(str.trimmed().isEmpty())
         return -1;
-    //QSqlQuery query(QSqlDatabase::database("libdb"));
     QStringList names=str.split(',');
-    //qDebug()<<names.count()<<" "<<str;
-    //return 0;
     QString name1;
     if(names.count()>0)
         name1=names[0].trimmed();
@@ -333,16 +296,10 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
     if(names.count()>2)
         name3=names[2].trimmed();
     query->exec("SELECT id,favorite FROM author WHERE rus_index='"+ToIndex(name1+" "+name2+" "+name3)+"' and id_lib="+QString::number(libID));
-    //qDebug()<<query.lastError().text();
     qlonglong id=0;
     if(query->next())
     {
         id=query->value(0).toLongLong();
-     //   query.exec("SELECT id_lib FROM lib_author WHERE id_lib="+QString::number(libID)+" AND id_author="+QString::number(id));
-        //qDebug()<<query.lastError().text();
-     //   if(!query.next())
-     //       query.exec("INSERT INTO lib_author(id_lib,id_author) values("+QString::number(libID)+","+QString::number(id)+")");
-        //return id;
     }
     if(id==0)
     {
@@ -364,20 +321,6 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
 qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria, int num_in_seria, QString file,
              int size, int IDinLib, bool deleted, QString format, QDate date, QString language, QString keys, qlonglong id_lib, QString archive, int tag)
 {
-    //QSqlQuery query(QSqlDatabase::database("libdb"));
-    //query.exec("SELECT id FROM book WHERE name='"+name+"' AND id_inlib="+QString::number(IDinLib)+" and id_lib="+QString::number(id_lib));
-    //qDebug()<<query.lastError().text();
-   // if(query.next())
-  //  {
-   //     qlonglong id=query.value(0).toLongLong();
-     //   query.exec("SELECT id_lib FROM lib_author WHERE id_lib="+QString::number(libID)+" AND id_author="+QString::number(id));
-        //qDebug()<<query.lastError().text();
-     //   if(!query.next())
-     //       query.exec("INSERT INTO lib_author(id_lib,id_author) values("+QString::number(libID)+","+QString::number(id)+")");
- //       return id;
- //   }
-
-    //qDebug()<<a;
     name=name.replace("'","''");
     file=file.replace("'","''");
     archive=archive.replace("'","''");
@@ -393,7 +336,6 @@ qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria
 }
 qlonglong ImportThread::AddJanre(qlonglong id_book,QString janre,qlonglong id_lib,QString language)
 {
-    //QSqlQuery query(QSqlDatabase::database("libdb"));
     qlonglong id_janre=0;
     query->exec("SELECT id,main_janre FROM janre where keys LIKE '"+janre.toLower()+";'");
     if(query->next())
@@ -411,7 +353,6 @@ qlonglong ImportThread::AddJanre(qlonglong id_book,QString janre,qlonglong id_li
 
 void ImportThread::start(QString fileName, QString name, QString path, long ID, int update_type, bool save_only, bool firstAuthor)
 {
-    //qDebug()<<name;
     _fileName=RelativeToAbsolutePath(fileName);
     if(!QFileInfo(_fileName).exists() || !QFileInfo(_fileName).isFile())
     {
@@ -424,12 +365,6 @@ void ImportThread::start(QString fileName, QString name, QString path, long ID, 
     loop=true;
     _save_only=save_only;
     _firstAuthorOnly=firstAuthor;
-
-    //_log=log;
-    //emit Message(tr("start"));
-    //SaveLibrary();
-   // if(!save_only)
-       // QThread::start();
 }
 
 void ImportThread::readFB2_test(const QByteArray& ba,QString file_name,QString arh_name)
@@ -448,54 +383,26 @@ void ImportThread::readFB2_test(const QByteArray& ba,QString file_name,QString a
                 arh_name=arh_name.right(arh_name.length()-1);
     }
     file_name=file_name.left(file_name.length()-4);
-    //QSqlQuery query(QSqlDatabase::database("libdb"));
-
-   // query->exec(QString("SELECT id FROM book where id_lib=%1 and file='%2' and archive='%3'").arg(QString::number(existingID),file_name,arh_name));
     if(query->next()) //если книга найдена, то просто снимаем пометку удаления
     {
         query->exec("update book set deleted=0 where id="+query->value(0).toString());
         return;
     }
-   // emit Message(tr("Book add: ")+file_name);
- //   QDomDocument doc;
- //   doc.setContent(ba);
-    //QDomElement title_info=doc.elementsByTagName("title-info").at(0).toElement();
     QString title;
     title="test";//title_info.elementsByTagName("book-title").at(0).toElement().text().trimmed();
     QString language="ru";//title_info.elementsByTagName("lang").at(0).toElement().text();
     QString seria="";//title_info.elementsByTagName("sequence").at(0).attributes().namedItem("name").toAttr().value().trimmed();
     QString num_seria="0";//title_info.elementsByTagName("sequence").at(0).attributes().namedItem("number").toAttr().value().trimmed();
-   // qDebug()<<seria;
-   // qDebug()<<num_seria.toInt();
-   // qDebug()<<language;
-    //qDebug()<<title;
 
 
     qlonglong id_seria=AddSeria(seria,existingID,0);
     qlonglong id_book=AddBook(0,title,id_seria,num_seria.toInt(),file_name,ba.size(),0,false,"fb2",QDate::currentDate(),language,"",existingID,arh_name,0);
     return;
-//qlonglong id_book=1;
-    //foreach(QString author,Authors)
-    //{
-    //}
-
-   // QDomNodeList author="История";//title_info.elementsByTagName("author");
     bool first_author=true;
-    //for(int i=0;i<author.count();i++)
-    {
-       // qDebug()<<;
-       // qDebug()<<;
-       // qDebug()<<;
-        AddAuthor("Иванов, Иван,Иванович ",
-                  existingID,id_book,first_author,language,0);
-        first_author=false;
-    }
-    //QDomNodeList genre="sf";//title_info.elementsByTagName("genre");
-    //for(int i=0;i<genre.count();i++)
-    {
-        AddJanre(id_book,"sf",existingID,language);
-//        qDebug()<<genre.at(i).toElement().text();
-    }
+    AddAuthor("Иванов, Иван,Иванович ",
+              existingID,id_book,first_author,language,0);
+    first_author=false;
+    AddJanre(id_book,"sf",existingID,language);
 }
 
 void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_name, qint32 file_size)
@@ -521,7 +428,6 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
         return;
     }
     emit Message(tr("Book add:")+" "+file_name);
-//return;
 
     book_info bi;
     GetBookInfo(bi,ba,"fb2",true);
@@ -538,50 +444,6 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     }
     foreach(genre_info genre,bi.genres)
         AddJanre(id_book,genre.genre,existingID,bi.language);
-/*
-    QDomDocument doc;
-    doc.setContent(ba);
-    QDomElement title_info=doc.elementsByTagName("title-info").at(0).toElement();
-    QString title;
-    title=title_info.elementsByTagName("book-title").at(0).toElement().text().trimmed();
-    QString language=title_info.elementsByTagName("lang").at(0).toElement().text();
-    QString seria=title_info.elementsByTagName("sequence").at(0).attributes().namedItem("name").toAttr().value().trimmed();
-    QString num_seria=title_info.elementsByTagName("sequence").at(0).attributes().namedItem("number").toAttr().value().trimmed();
-   // qDebug()<<seria;
-   // qDebug()<<num_seria.toInt();
-   // qDebug()<<language;
-    //qDebug()<<title;
-
-   // query->exec("BEGIN;");
-    qlonglong id_seria=AddSeria(seria,existingID);
-    qlonglong id_book=AddBook(0,title,id_seria,num_seria.toInt(),file_name,(file_size==0?ba.size():file_size),0,false,"fb2",QDate::currentDate(),language,"",existingID,arh_name);
-
-    //foreach(QString author,Authors)
-    //{
-    //}
-
-    QDomNodeList author=title_info.elementsByTagName("author");
-    bool first_author=true;
-    for(int i=0;i<author.count();i++)
-    {
-       // qDebug()<<;
-       // qDebug()<<;
-       // qDebug()<<;
-        AddAuthor(author.at(i).toElement().elementsByTagName("last-name").at(0).toElement().text()+","+
-                  author.at(i).toElement().elementsByTagName("first-name").at(0).toElement().text()+","+
-                  author.at(i).toElement().elementsByTagName("middle-name").at(0).toElement().text()+" ",
-                  existingID,id_book,first_author,language);
-        first_author=false;
-    }
-    QDomNodeList genre=title_info.elementsByTagName("genre");
-    for(int i=0;i<genre.count();i++)
-    {
-        AddJanre(id_book,genre.at(i).toElement().text().trimmed(),existingID,language);
-//        qDebug()<<genre.at(i).toElement().text();
-    }
-   // query->exec("COMMIT;");
-   */
-
 }
 void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh_name, qint32 file_size)
 {
@@ -605,8 +467,6 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
         return;
     }
     emit Message(tr("Book add: ")+file_name);
-
-//    UnZip zip;
 
     book_info bi;
     GetBookInfo(bi,ba,"epub",true);
@@ -639,16 +499,12 @@ void ImportThread::importFB2_main(QString path)
     }
 }
 
-//QDateTime td=QDateTime::currentDateTime();
-
 void ImportThread::importFB2(QString path, int &count)
 {
     QDir dir(path);
     QFileInfoList info_list = dir.entryInfoList(QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable|QDir::Files|QDir::Dirs);
     QList<QFileInfo>::iterator iter=info_list.begin();
     QString file_name;
-   // qDebug()<<path;
-    // ba;
     for(iter=info_list.begin();iter != info_list.end() && loop;iter++)
     {
         app->processEvents();
@@ -700,13 +556,11 @@ void ImportThread::importFB2(QString path, int &count)
                 }
                 QuaZip uz(file_name);
                 uz.setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-                //UnZip::ErrorCode ec = uz.openArchive(file_name);
                 if (!uz.open(QuaZip::mdUnzip))
                 {
                     qDebug()<<("Error open archive!")<<" "<<file_name;
                     continue;
                 }
-                //QStringList list=uz.fileList();
 
                 QuaZipFile zip_file(&uz);
                 QList<QuaZipFileInfo64> list=uz.getFileInfoList64();
@@ -716,13 +570,6 @@ void ImportThread::importFB2(QString path, int &count)
                     if(!loop)
                         break;
                     QBuffer buffer;
-                    //if (!buffer.open(QIODevice::ReadWrite))
-                    //{
-                    //    qDebug()<<("Error create buffer!");
-                    //    break;
-                    //}
-                    //uz.entryList();
-                    //ba=buffer.data();
                     if(count==0)
                         query->exec("BEGIN;");
                     QuaZipFileInfo zip_fi;
@@ -738,7 +585,6 @@ void ImportThread::importFB2(QString path, int &count)
                     }
                     else if(zip_fi.name.right(3).toLower()=="epub")
                     {
-//                        uz.extractFile(str.filename,&buffer,UnZip::SkipPaths);
                         SetCurrentZipFileName(&uz,zip_fi.name);
                         zip_file.open(QIODevice::ReadOnly);
                         buffer.setData(zip_file.readAll());
@@ -749,32 +595,22 @@ void ImportThread::importFB2(QString path, int &count)
                         QFileInfo fi(str.name);
                         if(fi.completeBaseName().left(1)!="." && !fi.completeBaseName().isEmpty())
                         {
-                            //qDebug()<<fi.completeBaseName();
                             QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
                             if(SetCurrentZipFileName(&uz,fbd))
                             {
                                 SetCurrentZipFileName(&uz,zip_fi.name);
                                 zip_file.open(QIODevice::ReadOnly);
                                 buffer.setData(zip_file.readAll());
-//                                uz.extractFile(fbd,&buffer,UnZip::SkipPaths);
                                 readFB2(buffer.data(),str.name,file_name, str.uncompressedSize);
-  //                              qDebug()<<"ok";
                             }
                         }
                     }
 
-                    //qDebug()<<buffer.size();
-                    //readFB2_test(buffer.data(),str,file_name);
-                    //qDebug()<<str<<file_name;
-                    //buffer.close();
                     count++;
-                    //qDebug()<<count;
                     if(count==1000)
                     {
-                        //qDebug()<<(QDateTime::currentDateTime().toMSecsSinceEpoch()-td.toMSecsSinceEpoch());
                         query->exec("COMMIT;");
                         count=0;
-                        //td=QDateTime::currentDateTime();
                     }
                 }
             }
@@ -782,7 +618,6 @@ void ImportThread::importFB2(QString path, int &count)
             {
                 query->exec("COMMIT;");
                 count=0;
-                //td=QDateTime::currentDateTime();
             }
         }
     }
@@ -795,9 +630,6 @@ void ImportThread::process()
         emit End();
         return;
     }
-           // QThread::start();
-    //emit Message(tr("start"));
-    //it.start();
     if(_name.isEmpty())
     {
         emit Message(tr("Empty library name"));
@@ -805,9 +637,7 @@ void ImportThread::process()
         return;
     }
     query=new QSqlQuery(QSqlDatabase::database("libdb"));
-//    qDebug()<<existingID;
 
-//    if(_fileName.isEmpty())
     switch(_update_type)
     {
     case UT_FULL:
@@ -833,18 +663,12 @@ void ImportThread::process()
         return;
     }
     QuaZip uz(_fileName);
-   // qDebug()<<_fileName;
-    //UnZip::ErrorCode ec = uz.openArchive(_fileName);
-    //qDebug()<<1<<_fileName;
     if (!uz.open(QuaZip::mdUnzip))
     {
         qDebug()<<("Error open inpx!");
         emit End();
         return;
     }
-    //qDebug()<<8;
-    //ClearLib(existingID,false);
-    //qDebug()<<2;
     QStringList list = uz.getFileNameList();
     qlonglong book_count=0;
 #define _NAME           0
@@ -891,16 +715,9 @@ void ImportThread::process()
     {
         if(QString(str).toUpper()=="STRUCTURE.INFO")
         {
-            //qDebug()<<str;
             for(unsigned int i=0;i<sizeof(field_index)/sizeof(int);i++)
                 field_index[i]=-1;
             QBuffer outbuff;
-            //if (!outbuff.open(QIODevice::ReadWrite))
-            //{
-             //   qDebug()<<("Error create buffer!");
-             //   emit End();
-             //   return;
-            //}
             SetCurrentZipFileName(&uz,str);
             zip_file.open(QIODevice::ReadOnly);
             outbuff.setData(zip_file.readAll());
@@ -910,12 +727,10 @@ void ImportThread::process()
             QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
             foreach(QString line,lines)
             {
-                //qDebug()<<line;
                 QStringList substrings=line.toUpper().split(';');
                 int i=0;
                 foreach(QString substring,substrings)
                 {
-                    //qDebug()<<substring;
                     if(substring=="TITLE")
                         field_index[_NAME]=i;
                     else if(substring=="SERIES")
@@ -961,7 +776,6 @@ void ImportThread::process()
     }
     foreach( QString str , list  )
     {
-        //qDebug()<<str;
         app->processEvents();
         if(!loop)
         {
@@ -973,19 +787,10 @@ void ImportThread::process()
         if(_update_type==UT_NEW)
         {
             query->exec(QString("SELECT * FROM book where archive='%1' and id_lib=%2 LIMIT 1").arg(str,QString::number(existingID)));
-            //Debug()<<query->lastError();
-            //qDebug()<<existingID<<str;
             if(query->next())
                 continue;
-         //   qDebug()<<"ddd";
         }
         QBuffer outbuff;
-        //if (!outbuff.open(QIODevice::ReadWrite))
-        //{
-        //    qDebug()<<("Error create buffer!");
-        //    emit End();
-        //    return;
-        //}
         SetCurrentZipFileName(&uz,str);
         zip_file.open(QIODevice::ReadOnly);
         outbuff.setData(zip_file.readAll());
@@ -995,7 +800,6 @@ void ImportThread::process()
         qlonglong t1_=0,t2_=0,t3_=0,t4_=0,count=0;
         foreach(QString line,lines)
         {
-            //qDebug()<<line;
             if(count==0)
                 query->exec("BEGIN;");
             qlonglong t0=QDateTime::currentMSecsSinceEpoch();
@@ -1105,8 +909,6 @@ void ImportThread::process()
                     if(!tag_author[author_count].trimmed().isEmpty())
                         tag_auth=tag_author[author_count].trimmed().toInt();
                 }
-                //if(tag_auth>0)
-                //qDebug()<<author<<" "<<tag_author;
                 AddAuthor(author,existingID,id_book,author_count==0,language,tag_auth);
                 author_count++;
             }
@@ -1125,7 +927,6 @@ void ImportThread::process()
                 }
             }
             qlonglong t4=QDateTime::currentMSecsSinceEpoch();
-           // qDebug()<<t1-t0<<"-"<<t2-t1<<"-"<<t3-t2<<"-"<<t4-t3<<"="<<t4-t0;
             t1_+=t1-t0;
             t2_+=t2-t1;
             t3_+=t3-t2;
@@ -1135,7 +936,6 @@ void ImportThread::process()
             if(count==1000)
             {
                 emit Message(tr("Books adds:")+" "+QString::number(book_count));
-                //qDebug()<<t1_/count<<"-"<<t2_/count<<"-"<<t3_/count<<"-"<<t4_/count<<"="<<(t1_+t2_+t3_+t4_)/count<<"="<<(t1_+t2_+t3_+t4_);
                 count=0;
                 t1_=0;
                 t2_=0;
@@ -1150,15 +950,12 @@ void ImportThread::process()
             emit Message(tr("Books adds: ")+QString::number(book_count));
             query->exec("COMMIT;");
         }
-        //qDebug()<<lines.count()<<" "<<str;
     }
-    //UpdateAuthor();
     emit End();
 }
 
 void ImportThread::break_import()
 {
-    //qDebug()<<"q";
     loop=false;
 }
 

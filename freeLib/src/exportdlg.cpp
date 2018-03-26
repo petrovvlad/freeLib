@@ -5,7 +5,6 @@ ExportDlg::ExportDlg(QWidget *parent) :
     QDialog(parent,Qt::Window|Qt::WindowSystemMenuHint),
     ui(new Ui::ExportDlg)
 {
-    //setWindowFlags();
     ui->setupUi(this);
     connect(ui->AbortButton,SIGNAL(clicked()),this,SLOT(BreakExport()));
     itsOkToClose=false;
@@ -18,12 +17,10 @@ ExportDlg::~ExportDlg()
 {
     if(worker)
         delete worker;
-    //delete thread;
     delete ui;
 }
 void ExportDlg::reject()
 {
-    //qDebug()<<"red";
     if (itsOkToClose)
     {
        QDialog::reject();
@@ -37,7 +34,6 @@ void ExportDlg::reject()
 
 void ExportDlg::exec(const QList<book_info> &list_books, SendType send, qlonglong id_author)
 {
-    //qDebug()<<"void ExportDlg::exec(const QList<book_info> &list_books, SendType send, qlonglong id_author)";
     ui->Exporting->setText("0");
     QSettings* settings=GetSettings();
     ui->CloseAfter->setChecked(settings->value("CloseExpDlg").toBool());
@@ -49,7 +45,6 @@ void ExportDlg::exec(const QList<book_info> &list_books, SendType send, qlonglon
         dir=SelectDir();
         if(dir.isEmpty())
         {
-            //delete settings;
             return;
         }
     }
@@ -61,7 +56,6 @@ void ExportDlg::exec(const QList<book_info> &list_books, SendType send, qlonglon
     connect(worker, SIGNAL(Progress(int,int)), this, SLOT(Process(int,int)));
     connect(thread, SIGNAL(started()), worker, SLOT(process()));
     connect(worker, SIGNAL(End()), thread, SLOT(quit()));
-   // connect(worker, SIGNAL(End()), worker, SLOT(deleteLater()));
     connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
     connect(worker, SIGNAL(End()), this, SLOT(EndExport()));
     connect(this, SIGNAL(break_exp()), worker, SLOT(break_exp()));
@@ -70,7 +64,6 @@ void ExportDlg::exec(const QList<book_info> &list_books, SendType send, qlonglon
     QDialog::exec();
     settings->setValue("CloseExpDlg",ui->CloseAfter->checkState()==Qt::Checked);
     settings->sync();
-    //delete settings;
 }
 void ExportDlg::exec(const QStringList &list_books, SendType send)
 {
@@ -85,7 +78,6 @@ void ExportDlg::exec(const QStringList &list_books, SendType send)
         dir=SelectDir();
         if(dir.isEmpty())
         {
-            //delete settings;
             return;
         }
     }
@@ -97,7 +89,6 @@ void ExportDlg::exec(const QStringList &list_books, SendType send)
     connect(worker, SIGNAL(Progress(int,int)), this, SLOT(Process(int,int)));
     connect(thread, SIGNAL(started()), worker, SLOT(process()));
     connect(worker, SIGNAL(End()), thread, SLOT(quit()));
-    //connect(worker, SIGNAL(End()), worker, SLOT(deleteLater()));
     connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
     connect(worker, SIGNAL(End()), this, SLOT(EndExport()));
     connect(this, SIGNAL(break_exp()), worker, SLOT(break_exp()));
@@ -110,7 +101,6 @@ void ExportDlg::exec(const QStringList &list_books, SendType send)
 }
 void ExportDlg::exec(qlonglong id_lib, QString path)
 {
-    //qDebug()<<123456;
     ui->Exporting->setText("0");
     QSettings *settings=GetSettings();
     ui->CloseAfter->setChecked(settings->value("CloseExpDlg").toBool());
@@ -124,7 +114,6 @@ void ExportDlg::exec(qlonglong id_lib, QString path)
     connect(worker, SIGNAL(Progress(int,int)), this, SLOT(Process(int,int)));
     connect(thread, SIGNAL(started()), worker, SLOT(process()));
     connect(worker, SIGNAL(End()), thread, SLOT(quit()));
-    //connect(worker, SIGNAL(End()), worker, SLOT(deleteLater()));
     connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
     connect(worker, SIGNAL(End()), this, SLOT(EndExport()));
     connect(this, SIGNAL(break_exp()), worker, SLOT(break_exp()));
@@ -133,7 +122,6 @@ void ExportDlg::exec(qlonglong id_lib, QString path)
     QDialog::exec();
     settings->setValue("CloseExpDlg",ui->CloseAfter->checkState()==Qt::Checked);
     settings->sync();
-    //delete settings;
 }
 int ExportDlg::exec()
 {
@@ -158,28 +146,15 @@ QString ExportDlg::SelectDir()
         settings->setValue("DevicePath",result);
         settings->sync();
     }
-    //delete settings;
-    //qDebug()<<result<<result.isEmpty();
     return result;
 }
 
-//#include <QPrinter>
 void ExportDlg::EndExport()
 {
-    //ui->buttonBox->setStandardButtons(QDialogButtonBox::Close);
     thread=0;
     ui->AbortButton->setText(tr("Close"));
     succesfull_export_books=worker->successful_export_books;
 
-  //  QPrinter printer(QPrinter::HighResolution);
-  //  printer.setPageSize(QPrinter::A4);
-  //  printer.setOutputFormat(QPrinter::PdfFormat);
-  //  QString out_file="/Users/aleksandr/freeLib/index.pdf";
-  //  QFile::remove(out_file);
-  //  printer.setOutputFileName(out_file);
-  //  ui->webView->print(&printer);
-    //thread.terminate();
-   // thread.exit();
     itsOkToClose=true;
     if(ui->CloseAfter->checkState()==Qt::Checked)
     {
@@ -211,6 +186,5 @@ void ExportDlg::Process(int Procent,int count)
 {
     ui->progressBar->setValue(Procent);
     ui->Exporting->setText(QString::number(count));
-    //qDebug()<<Procent;
 }
 
