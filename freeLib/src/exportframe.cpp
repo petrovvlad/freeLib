@@ -40,7 +40,6 @@ ExportFrame::ExportFrame(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::ExportFrame)
 {
-  //  LoadningParam=false;
     ui->setupUi(this);
     ui->stackedWidget->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
@@ -82,12 +81,10 @@ void ExportFrame::on_radioEmail_toggled(bool checked)
 void ExportFrame::on_OutputFormat_currentIndexChanged(const QString &arg1)
 {
     ui->tabFormat->setDisabled(ui->OutputFormat->currentText()=="-");
-   // ui->removePersonal->setEnabled(ui->OutputFormat->currentText()=="AZW3");
 }
 
 void ExportFrame::on_ConnectionType_currentIndexChanged(const QString &arg1)
 {
-    //qDebug()<<"tcp port";
     if(ui->ConnectionType->currentText().toLower()=="tcp")
         ui->Port->setText("25");
     else
@@ -97,8 +94,6 @@ void ExportFrame::on_ConnectionType_currentIndexChanged(const QString &arg1)
 void ExportFrame::Load(QSettings *_settings)
 {
     disconnect(ui->ConnectionType,SIGNAL(currentIndexChanged(QString)),this,SLOT(on_ConnectionType_currentIndexChanged(QString)));
-    //qDebug()<<"losd";
-    //LoadningParam=true;
     QSettings *settings=_settings;
     if(_settings==0)
         settings=new QSettings();
@@ -121,8 +116,6 @@ void ExportFrame::Load(QSettings *_settings)
     ui->dropcaps->setChecked(settings->value("dropcaps").toBool());
     ui->join_series->setChecked(settings->value("join_series").toBool());
     ui->hyphenate->setCurrentIndex(settings->value("hyphenate").toInt());
-    //ui->hyphenate->setCurrentText(ui->hyphenate->itemText(settings->value("hyphenate").toInt()));
-    //qDebug()<<settings->value("hyphenate").toInt()<<ui->hyphenate->count();
     ui->Vignette->setCurrentIndex(settings->value("Vignette").toInt());
     ui->userCSS->setChecked(settings->value("userCSS",false).toBool());
     ui->UserCSStext->setPlainText(settings->value("UserCSStext","").toString());
@@ -192,12 +185,6 @@ void ExportFrame::Load(QSettings *_settings)
         settings->endArray();
     }
 
-    //ui->tabWidget->removeTab(ui->tabWidget->count()-1);
-   // ui->stackedWidget->->setLayout(new QHBoxLayout(ui->param));
-
-    //ui->tab_export->layout()->setMargin(0);
-
-    on_createCover_clicked();
     on_originalFileName_clicked();
     on_PostprocessingCopy_clicked();
     on_ml_toc_clicked();
@@ -210,10 +197,6 @@ void ExportFrame::Load(QSettings *_settings)
 
 QStringList ExportFrame::Save(QSettings *settings,bool save_passwords)
 {
-    //qDebug()<<"save";
-    //qDebug()<<ui->OutputFormat->currentText()ж
-    //settings->setValue("current_tool",ui->CurrentTools->currentText());
-    //UpdateToolComboBox(settings);
     if(save_passwords)
     {
         settings->setValue("Email",ui->Email->text().trimmed());

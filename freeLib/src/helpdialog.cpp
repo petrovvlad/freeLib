@@ -8,8 +8,6 @@ HelpDialog::HelpDialog(QWidget *parent) :
     ui(new Ui::HelpDialog)
 {
     ui->setupUi(this);
-//    ui->webView->page()->mainFrame()->setScrollBarPolicy(Qt::Vertical,Qt::ScrollBarAlwaysOn);
-//    ui->webView->load(QUrl::fromLocalFile(QApplication::applicationDirPath()+"/Help/index.html"));
 }
 
 HelpDialog::~HelpDialog()

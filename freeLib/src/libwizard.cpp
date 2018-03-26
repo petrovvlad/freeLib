@@ -112,8 +112,6 @@ void LibWizard::SetDir(int page)
     case 1:
         if(mode==MODE_CONVERTER)
         {
-    //        qDebug()<<"ww";
-
         }
         break;
     case 2:
@@ -142,24 +140,16 @@ void LibWizard::SetDir(int page)
                 if(QString(str).toUpper()=="COLLECTION.INFO")
                 {
                     QBuffer outbuff;
-                    //if (!outbuff.open(QIODevice::ReadWrite))
-                    //{
-                    //    qDebug()<<("Error create buffer!");
-                    //    return;
-                    //}
                     SetCurrentZipFileName(&uz,str);
                     QuaZipFile zip_file(&uz);
                     zip_file.open(QIODevice::ReadOnly);
                     outbuff.setData(zip_file.readAll());
                     zip_file.close();
-                    //uz.extractFile(str,&outbuff,UnZip::SkipPaths);
-                    //qDebug()<<outbuff.size();
                     QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
                     foreach(QString line,lines)
                     {
                         ui->lib_name->setText(line);
                         ui->lib_name->setCursorPosition(0);
-                        //name=line.trimmed();
                         break;
                     }
                 }
@@ -202,7 +192,6 @@ QString LibWizard::find_inpx()
 
 int LibWizard::AddLibMode()
 {
-//    AddLib=1;
     this->removePage(0);
     return exec();
 }
