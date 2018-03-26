@@ -1,0 +1,297 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AddLibrary</class>
+ <widget class="QDialog" name="AddLibrary">
+  <property name="windowModality">
+   <enum>Qt::WindowModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>705</width>
+    <height>530</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Add/Edit library</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <property name="spacing">
+    <number>8</number>
+   </property>
+   <property name="leftMargin">
+    <number>8</number>
+   </property>
+   <property name="topMargin">
+    <number>8</number>
+   </property>
+   <property name="rightMargin">
+    <number>8</number>
+   </property>
+   <property name="bottomMargin">
+    <number>8</number>
+   </property>
+   <item>
+    <layout class="QGridLayout" name="gridLayout">
+     <item row="4" column="0">
+      <widget class="QLabel" name="label_3">
+       <property name="text">
+        <string>Books dir:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="2" column="1">
+      <widget class="QLabel" name="HTTP">
+       <property name="text">
+        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+       </property>
+       <property name="openExternalLinks">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="0">
+      <widget class="QLabel" name="label_4">
+       <property name="text">
+        <string>Library name:</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>OPDS server</string>
+       </property>
+      </widget>
+     </item>
+     <item row="0" column="1">
+      <layout class="QHBoxLayout" name="Name_layout">
+       <item>
+        <widget class="QComboBox" name="ExistingLibs">
+         <property name="editable">
+          <bool>true</bool>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="Add">
+         <property name="maximumSize">
+          <size>
+           <width>22</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Add new library</string>
+         </property>
+         <property name="text">
+          <string notr="true">+</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resource.qrc">
+           <normaloff>:/icons/img/icons/plus.png</normaloff>:/icons/img/icons/plus.png</iconset>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QToolButton" name="Del">
+         <property name="maximumSize">
+          <size>
+           <width>22</width>
+           <height>22</height>
+          </size>
+         </property>
+         <property name="toolTip">
+          <string>Delete current library</string>
+         </property>
+         <property name="text">
+          <string notr="true">-</string>
+         </property>
+         <property name="icon">
+          <iconset resource="resource.qrc">
+           <normaloff>:/icons/img/icons/minus.png</normaloff>:/icons/img/icons/minus.png</iconset>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item row="3" column="1">
+      <widget class="QLineEdit" name="inpx"/>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLineEdit" name="BookDir"/>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_6">
+       <property name="text">
+        <string>HTTP server</string>
+       </property>
+      </widget>
+     </item>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>INPX file (optionally):</string>
+       </property>
+      </widget>
+     </item>
+     <item row="1" column="1">
+      <widget class="QLabel" name="OPDS">
+       <property name="text">
+        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+       </property>
+       <property name="openExternalLinks">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QGroupBox" name="update_group">
+     <property name="title">
+      <string>Update type</string>
+     </property>
+     <layout class="QVBoxLayout" name="verticalLayout_2">
+      <item>
+       <widget class="QRadioButton" name="add_new">
+        <property name="text">
+         <string>Add new</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="del_old">
+        <property name="text">
+         <string>Delete old and add new</string>
+        </property>
+       </widget>
+      </item>
+      <item>
+       <widget class="QRadioButton" name="update_all">
+        <property name="text">
+         <string>Recreate library</string>
+        </property>
+       </widget>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="firstAuthorOnly">
+     <property name="text">
+      <string>import first author only</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QListWidget" name="Log">
+     <property name="focusPolicy">
+      <enum>Qt::TabFocus</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout">
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>40</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnExport">
+       <property name="minimumSize">
+        <size>
+         <width>90</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Export</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnUpdate">
+       <property name="minimumSize">
+        <size>
+         <width>90</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Update</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnCancel">
+       <property name="minimumSize">
+        <size>
+         <width>90</width>
+         <height>0</height>
+        </size>
+       </property>
+       <property name="maximumSize">
+        <size>
+         <width>16777215</width>
+         <height>16777215</height>
+        </size>
+       </property>
+       <property name="text">
+        <string>Close</string>
+       </property>
+       <property name="autoDefault">
+        <bool>false</bool>
+       </property>
+       <property name="default">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <tabstops>
+  <tabstop>inpx</tabstop>
+  <tabstop>BookDir</tabstop>
+  <tabstop>Log</tabstop>
+ </tabstops>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
+ <connections>
+  <connection>
+   <sender>btnCancel</sender>
+   <signal>clicked()</signal>
+   <receiver>AddLibrary</receiver>
+   <slot>reject()</slot>
+   <hints>
+    <hint type="sourcelabel">
+     <x>685</x>
+     <y>475</y>
+    </hint>
+    <hint type="destinationlabel">
+     <x>346</x>
+     <y>172</y>
+    </hint>
+   </hints>
+  </connection>
+ </connections>
+</ui>

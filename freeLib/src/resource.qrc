@@ -1,0 +1,64 @@
+<RCC>
+    <qresource prefix="/">
+        <file>preview.html</file>
+        <file>freeLib.sqlite</file>
+        <file alias="library.png">library.iconset/icon_16x16.png</file>
+        <file alias="library@2x.png">library.iconset/icon_16x16@2x.png</file>
+        <file alias="splash.png">img/splash.png</file>
+        <file alias="splash@2x.png">img/splash@2x.png</file>
+        <file alias="library_48x48.png">img/icons/icon_48x48.png</file>
+        <file alias="library_128x128.png">library.iconset/icon_128x128.png</file>
+        <file>img/tray1.png</file>
+        <file>img/tray2.png</file>
+        <file>img/tray0.png</file>
+        <file>shelf.qml</file>
+    </qresource>
+    <qresource prefix="/icons">
+        <file>img/icons/settings.png</file>
+        <file>img/icons/settings@2x.png</file>
+        <file>img/icons/arrow_sans_up.png</file>
+        <file>img/icons/arrow_sans_up@2x.png</file>
+        <file>img/icons/arrow_sans_down.png</file>
+        <file>img/icons/arrow_sans_down@2x.png</file>
+        <file>img/icons/close.png</file>
+        <file>img/icons/close@2x.png</file>
+        <file>img/icons/Streamline_big.png</file>
+        <file>img/icons/Streamline_big@2x.png</file>
+        <file>img/icons/Streamline@2x.png</file>
+        <file>img/icons/Streamline.png</file>
+        <file>img/icons/book.png</file>
+        <file>img/icons/book@2x.png</file>
+        <file>img/icons/contact_big.png</file>
+        <file>img/icons/contact_big@2x.png</file>
+        <file>img/icons/contact.png</file>
+        <file>img/icons/contact@2x.png</file>
+        <file>img/icons/library.png</file>
+        <file>img/icons/library@2x.png</file>
+        <file>img/icons/clear.png</file>
+        <file>img/icons/clear@2x.png</file>
+        <file>img/icons/stars/0star.png</file>
+        <file>img/icons/stars/0star@2x.png</file>
+        <file>img/icons/stars/1star.png</file>
+        <file>img/icons/stars/1star@2x.png</file>
+        <file>img/icons/stars/2star.png</file>
+        <file>img/icons/stars/2star@2x.png</file>
+        <file>img/icons/stars/3star.png</file>
+        <file>img/icons/stars/3star@2x.png</file>
+        <file>img/icons/stars/4star.png</file>
+        <file>img/icons/stars/4star@2x.png</file>
+        <file>img/icons/stars/5star.png</file>
+        <file>img/icons/stars/5star@2x.png</file>
+        <file>img/icons/minus.png</file>
+        <file>img/icons/minus@2x.png</file>
+        <file>img/icons/plus.png</file>
+        <file>img/icons/plus@2x.png</file>
+        <file>img/icons/checkbox@2x.png</file>
+        <file>img/icons/checkbox.png</file>
+        <file>img/icons/open.png</file>
+        <file>img/icons/open@2x.png</file>
+        <file>img/icons/save.png</file>
+        <file>img/icons/save@2x.png</file>
+        <file>img/icons/pen_alt_fill.png</file>
+        <file>img/icons/pen_alt_fill@2x.png</file>
+    </qresource>
+</RCC>

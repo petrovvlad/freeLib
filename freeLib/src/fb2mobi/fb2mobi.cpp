@@ -1,0 +1,2037 @@
+#include <QDomDocument>
+#include <QApplication>
+#include <QProcess>
+#include <QRegExp>
+#include <QPrinter>
+#include <QTextDocument>
+#include <QFileInfo>
+#include <QUuid>
+#include <QPainter>
+#include <QWebEnginePage>
+
+#include "../quazip/quazip/quazip.h"
+#include "../quazip/quazip/quazipfile.h"
+#include "../mobiEdit/mobiedit.h"
+#include <importthread.h>
+#include "fb2mobi.h"
+
+fb2mobi::fb2mobi()
+{
+    QSettings *settings=GetSettings();
+    need_page_break=false;
+    first_body=true;
+    header=false;
+    inline_image_mode=false;
+    current_header_level=0;
+    current_section_level=0;
+    first_header_in_body=false;
+    dropcaps=settings->value("dropcaps").toBool();
+    nodropcaps="'\"-.…0123456789‒–—";
+    toc_index=0;
+    toctitle=tr("Contents");
+    no_paragraph=false;
+    dodropcaps=false;
+    first_chapter_line=false;
+    subheader=false;
+    annotation=false;
+    toc_max_level=1000000;
+    authorstring=default_author_name;
+    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
+        tmp_dir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
+    tmp_dir+="/freeLib";
+    QDir dir(tmp_dir);
+    dir.mkpath(dir.path());
+    annotation_title=tr("Abstract");
+    notes_title=tr("Notes");
+
+    bookseriestitle=default_book_title;
+    if(!settings->value("bookseriestitle").toString().isEmpty())
+        bookseriestitle=settings->value("bookseriestitle").toString();
+    if(!settings->value("authorstring").toString().isEmpty())
+        authorstring=settings->value("authorstring").toString();
+    hyphenate=settings->value("hyphenate").toInt();
+    vignette=settings->value("Vignette",0).toInt();
+    break_after_cupture=settings->value("break_after_cupture",true).toBool();
+    notes_mode=settings->value("footnotes",0).toInt();
+    notes_bodies<<"notes"<<"comments";
+    cut_html=settings->value("split_file",true).toBool();
+    join_seria=false;
+    //delete settings;
+}
+
+QString test_language(QString language)
+{
+    QStringList l;
+    l<<"af"<<"sq"<<"ar"<<"hy"<<"az"<<"eu"<<"be"<<"bn"<<"bg"<<"ca"<<"zh"<<"hr"<<"cs"<<"da"<<"nl"<<"en"<<"et"<<"fo"<<"fa"<<"fi"<<"fr"<<"ka"<<"de"<<"gu"<<"he"<<
+       "hi"<<"hu"<<"is"<<"id"<<"it"<<"ja"<<"kn"<<"kk"<<"x-kok"<<"ko"<<"lv"<<"lt"<<"mk"<<"ms"<<"ml"<<"mt"<<"mr"<<"ne"<<"no"<<"or"<<"pl"<<"pt"<<"pa"<<"rm"<<
+       "ro"<<"ru"<<"sz"<<"sa"<<"sr"<<"sk"<<"sl"<<"sb"<<"es"<<"sx"<<"sw"<<"sv"<<"ta"<<"tt"<<"te"<<"th"<<"ts"<<"tn"<<"tr"<<"uk"<<"ur"<<"uz"<<"vi"<<"xh"<<"zu";
+    if(l.contains(language.toLower()))
+        return language;
+    foreach (QString str, l)
+    {
+        if(language.startsWith(str))
+            return str;
+    }
+    return "en";
+}
+
+QString HTMLHEAD = ("<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+            "<head>"
+            "<title>freeLib</title>"
+            "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/main.css\"/>"
+            "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>"
+            "</head>"
+            "<body>");
+
+
+QString HTMLFOOT = ("</body>"
+              "</html>");
+
+void fb2mobi::parse_description(QDomNode elem)
+{
+    QSettings* settings=GetSettings();
+    if(join_seria)
+    {
+        book_inf->title=book_inf->seria;
+        book_inf->seria="";
+        book_inf->num_in_seria=0;
+    }
+    book_author=authorstring;
+    book_author=fillParams(book_author,*book_inf);
+    if(settings->value("authorTranslit",false).toBool())
+        book_author=Transliteration(book_author);
+    isbn=book_inf->isbn;
+    for(int e=0;e<elem.childNodes().count();e++)
+    {
+         if(elem.childNodes().at(e).toElement().tagName() == "title-info")
+         {
+             QDomNode ti=elem.childNodes().at(e);
+             for(int t=0;t<ti.childNodes().count();t++)
+             {
+                 if(ti.childNodes().at(t).toElement().tagName()=="annotation")
+                 {
+                 //    if(!hide_annotation)
+                     {
+                         buf_current=&buf_annotation;
+                         *buf_current=HTMLHEAD;
+                         *buf_current+=QString("<div class=\"annotation\"><div class=\"h1\">%1</div>").arg(annotation_title);
+                         annotation=true;
+                         parse_format(ti.childNodes().at(t), "div");
+                         annotation=false;
+                         *buf_current+="</div>";
+                         *buf_current+=HTMLFOOT;
+                         buf_current=&html_files.last().content;
+                     }
+
+                 }
+                 else if(ti.childNodes().at(t).toElement().tagName()=="coverpage")
+                 {
+                     QDomNode image=ti.childNodes().at(t);
+                     for(int i=0;i<image.childNodes().count();i++)
+                     {
+                         if(image.childNodes().at(i).toElement().tagName()=="image")
+                         {
+                             for(int j=0;j<image.childNodes().at(i).attributes().count();j++)
+                             {
+                                 if(image.childNodes().at(i).attributes().item(j).nodeName().right(href_pref.length())==href_pref)
+                                 {
+                                    //book_cover=QString("img%1/").arg(QString::number(current_book))+image.childNodes().at(i).attributes().namedItem(href_pref).toAttr().value().replace("#","");
+                                     book_cover=QString("img%1/").arg(QString::number(current_book))+image.childNodes().at(i).attributes().item(j).toAttr().value().replace("#","");
+                                 }
+                             }
+                             break;
+                         }
+                     }
+                 }
+             }
+         }
+         else if(elem.childNodes().at(e).toElement().tagName() == "publish-info")
+         {
+             QDomNode ti=elem.childNodes().at(e);
+             for(int t=0;t<ti.childNodes().count();t++)
+             {
+                 if(ti.childNodes().at(t).toElement().tagName()=="isbn")
+                 {
+                    isbn=ti.childNodes().at(t).toElement().toElement().text().trimmed().replace("-","");
+                 }
+             }
+         }
+    }
+    hyphenator.init(test_language(book_inf->language));
+}
+
+void fb2mobi::parse_binary(QDomNode elem)
+{
+    QString filename=elem.attributes().namedItem("id").toAttr().value();
+    if(!filename.isEmpty())
+    {
+        QFileInfo fi(filename);
+        if(fi.suffix().isEmpty())
+        {
+            if(book_cover.right(filename.length())==filename)
+                book_cover+=".jpg";
+            filename+=".jpg";
+        }
+        QDir dir;
+        dir.mkpath((tmp_dir+"/OEBPS/img%1/").arg(QString::number(current_book)));
+        QFile file((tmp_dir+"/OEBPS/img%1/"+filename).arg(QString::number(current_book)));
+        file.open(QIODevice::WriteOnly);
+        file.write(QByteArray::fromBase64((elem.toElement().text().toStdString().c_str())));
+        file.close();
+        image_list<<(("img%1/"+filename).arg(QString::number(current_book)));
+    }
+}
+void fb2mobi::parse_body(QDomNode elem)
+{
+    body_name="";
+    if(!elem.attributes().namedItem("name").isNull())
+        body_name=elem.attributes().namedItem("name").toAttr().value();
+    current_header_level=0;
+    first_header_in_body=true;
+    //qDebug()<<body_name;
+    parse_format(elem);
+    first_body=false;
+}
+void fb2mobi::parse_p(QDomNode elem)
+{
+    QString ptag="";
+    QString pcss="";
+    if(header)
+    {
+        ptag="p";
+        pcss="css";
+    }
+    else
+    {
+        ptag="p";
+        pcss="text";
+    }
+    parse_format(elem,ptag,pcss);
+}
+
+void fb2mobi::parse_other(QDomNode elem)
+{
+    //qDebug()<<elem.toElement().tagName();
+    parse_format(elem,elem.toElement().tagName());
+}
+void fb2mobi::parse_section(QDomNode elem)
+{
+    current_header_level++;
+    current_section_level++;
+    need_end_chapter_vignette=true;
+    parse_format(elem,"div","section");
+    if(body_name.isEmpty() && vignette>0 && need_end_chapter_vignette)
+    {
+        QString level = QString("h%1").arg(current_header_level <= 6?current_header_level:6);
+        QString vignet=get_vignette(level,VIGNETTE_CHAPTER_END);
+        if(!vignet.isEmpty())
+            *buf_current+=vignet;
+        need_end_chapter_vignette=false;
+    }
+    current_header_level--;
+    if(!parsing_note)
+    {
+        while(current_section_level>0)
+        {
+            *buf_current+="</div>";
+            current_section_level--;
+        }
+        if(cut_html )
+        {
+
+            html_files.last().content+=HTMLFOOT;
+            html_files<<html_content(QString("section%1.html").arg(QString::number(html_files.count())));
+            html_files.last().content=HTMLHEAD;
+            if(!annotation)
+                buf_current=&html_files.last().content;
+        }
+    }
+    else if(parsing_note)
+    {
+        current_section_level=0;
+    }
+
+}
+QString fb2mobi::get_vignette(QString level,QString type)
+{
+    QString result;
+    if(vignette==1)
+    {
+        if(QFileInfo(tmp_dir+"/OEBPS/pic/"+level.toLower()+type).exists())
+            result="";
+        if(QFileInfo(tmp_dir+"/OEBPS/pic/"+level.toLower()+type+".png").exists())
+            result=level.toLower()+type+".png";
+        if(QFileInfo(tmp_dir+"/OEBPS/pic/"+type+".png").exists())
+            result=type+".png";
+        if(!result.isEmpty())
+        {
+            if(type==VIGNETTE_CHAPTER_END)
+            {
+                result=QString("<div class=\"vignette_chapter_end\"><img  alt=\"\" src=\"pic/%1\"/></div>").arg(result);
+            }
+            else if(type==VIGNETTE_TITLE_BEFORE)
+            {
+                result=QString("<div class=\"vignette_title_before\"><img  alt=\"\" src=\"pic/%1\"/></div>").arg(result);
+            }
+            else if(type==VIGNETTE_TITLE_AFTER)
+            {
+                result=QString("<div class=\"vignette_title_after\"><img  alt=\"\" src=\"pic/%1\"/></div>").arg(result);
+            }
+        }
+    }
+    else if(vignette==2)
+    {
+        //qDebug()<<"-";
+        QString file="";
+        QString txt_dir=QApplication::applicationDirPath()+"/xsl/img/";
+        if(QFileInfo(txt_dir+level.toLower()+type).exists())
+            file="";
+        if(QFileInfo(txt_dir+level.toLower()+type+".txt").exists())
+            file=txt_dir+level.toLower()+type+".txt";
+        if(QFileInfo(txt_dir+type+".txt").exists())
+            file=txt_dir+type+".txt";
+        //qDebug()<<"-"+file;
+        if(!file.isEmpty())
+        {
+            QFile vig_file(file);
+            if(vig_file.open(QFile::ReadOnly))
+                result=QString::fromUtf8(vig_file.readAll().data());
+        }
+        if(!result.isEmpty())
+        {
+            if(type==VIGNETTE_CHAPTER_END)
+            {
+                result=QString("<div class=\"vignette_chapter_end\">%1</div>").arg(result);
+            }
+            else if(type==VIGNETTE_TITLE_BEFORE)
+            {
+                result=QString("<div class=\"vignette_title_before\">%1</div>").arg(result);
+            }
+            else if(type==VIGNETTE_TITLE_AFTER)
+            {
+                result=QString("<div class=\"vignette_title_after\">%1</div>").arg(result);
+            }
+        }
+    }
+    return result;
+}
+
+void fb2mobi::parse_note_elem(QDomNode elem)
+{
+       QString note_title="";
+
+       if(elem.toElement().tagName()=="section" &&  elem.attributes().contains("id"))
+       {
+           QString id = elem.attributes().namedItem("id").toAttr().value();
+           QString notetext = "";
+           for(int e=0;e<elem.childNodes().count();e++)
+           {
+               QString str;
+               QTextStream stream(&str);
+               elem.childNodes().at(e).save(stream,4);
+               str.replace(QRegExp("<[^>]*>")," ");
+               if(elem.childNodes().at(e).toElement().tagName()=="title" || elem.childNodes().at(e).toElement().tagName()=="subtitle")
+               {
+                  note_title = str.trimmed();
+               }
+               else
+               {
+                   if(notes_mode==1)
+                       notetext+=str.trimmed();
+               }
+           }
+           if(notes_mode!=1)
+           {
+                  QString* cur=buf_current;
+                  buf_current=&notetext;
+                  //qDebug()<<"find section";
+                  parse_format(elem);
+                  buf_current=cur;
+
+           }
+           notes_dict.append(QPair<QString,QStringList>(id,QStringList()<<note_title.replace("&nbsp;"," ").trimmed()<<notetext.replace("&nbsp;"," ").trimmed()));
+       }
+       else
+       {
+           for(int e=0;e<elem.childNodes().count();e++)
+              parse_note_elem(elem.childNodes().at(e));
+       }
+}
+void fb2mobi::get_notes_dict(QString body_names)
+{
+    parsing_note=true;
+    notes_dict.clear();
+    QDomNode root=doc.documentElement();
+
+    for(int i=0; i<root.childNodes().count();i++)
+    {
+        QDomNode item=root.childNodes().at(i);
+        if(item.toElement().tagName()=="body")
+        {
+            if(item.attributes().contains("name"))
+            {
+                for(int e=0;e<item.childNodes().count();e++)
+                    parse_note_elem(item.childNodes().at(e));
+            }
+        }
+    }
+    parsing_note=false;
+}
+
+void fb2mobi::parse_title(QDomNode elem)
+{
+    QString toc_ref_id = QString("tocref%1").arg(QString::number(toc_index));
+    if(parsing_note)
+    {
+        return;
+    }
+
+    QString toc_title;
+    QString str;
+    QTextStream stream(&str);
+    elem.save(stream,4);
+    str.replace(QRegExp("</p>|<br>|<br/>",Qt::CaseInsensitive)," ");
+    QStringList list=str.replace("\n","").replace("\r","").replace(QRegExp("<[^>]*>"),"").split(" ");
+    foreach(QString i,list)
+    {
+        toc_title+=(i.trimmed().isEmpty()?"":i.trimmed()+" ");
+    }
+    toc_title=toc_title.trimmed();
+
+    if(break_after_cupture && need_page_break && !cut_html && !parsing_note)
+    {
+        *buf_current+="<div style=\"page-break-before:always;\"></div>";
+        need_page_break=false;
+    }
+    if(body_name.isEmpty() || first_header_in_body || first_body)
+    {
+        header=true;
+        first_chapter_line=true;
+        *buf_current+=QString("<div class=\"titleblock\" id=\"%1\">").arg(toc_ref_id);
+        if((body_name.isEmpty() || first_body) && first_header_in_body)
+        {
+            if(vignette>0 && !toc_title.isEmpty())
+            {
+                QString vignet=get_vignette("h0",VIGNETTE_TITLE_BEFORE);
+                if(!vignet.isEmpty())
+                    *buf_current+=vignet;
+            }
+            parse_format(elem, "div", "h0");
+            current_header_level = 0;
+            if(vignette>0 && !toc_title.isEmpty())
+            {
+                QString vignet=get_vignette("h0",VIGNETTE_TITLE_AFTER);
+                if(!vignet.isEmpty())
+                    *buf_current+=vignet;
+            }
+        }
+        else
+        {
+            QString level = QString("h%1").arg(current_header_level <= 6?current_header_level:6);
+            if(vignette>0 && !toc_title.isEmpty())
+            {
+                QString vignet=get_vignette(level,VIGNETTE_TITLE_BEFORE);
+                if(!vignet.isEmpty())
+                    *buf_current+=vignet;
+            }
+            parse_format(elem, "div", level);
+            if(vignette>0 && !toc_title.isEmpty())
+            {
+                QString vignet=get_vignette(level,VIGNETTE_TITLE_AFTER);
+                if(!vignet.isEmpty())
+                    *buf_current+=vignet;
+            }
+        }
+        if(!toc_title.isEmpty())
+        {
+            STOC c_toc={QString("%1#%2").arg(html_files.last().file_name,toc_ref_id),toc_title,current_header_level,body_name,""};
+            toc<<c_toc;
+        }
+    }
+    else
+    {
+        *buf_current+=QString("<div class=\"titleblock\" id=\"%1\">").arg(toc_ref_id);
+        parse_format(elem, "div");
+    }
+
+    *buf_current+="</div>\n";
+
+    toc_index++;
+    first_header_in_body=false;
+    header=false;
+}
+void fb2mobi::parse_image(QDomNode elem)
+{
+    //qDebug()<<" find img"<<href_pref;
+    QString image;
+    QString img_id;
+    for(int i=0;i<elem.attributes().count();i++)
+    {
+        if(elem.attributes().item(i).toAttr().name().right(href_pref.length())==href_pref)
+        {
+            //qDebug()<<elem.attributes().item(i).toAttr().name();
+            image=elem.attributes().item(i).toAttr().value();
+            image=image.replace("#","");
+            if(!image.isEmpty())
+            {
+                QFileInfo fi(image);
+                if(fi.suffix().isEmpty())
+                    image+=".jpg";
+            }
+        }
+        else if(elem.attributes().item(i).toAttr().name()=="id")
+            img_id=elem.attributes().item(i).toAttr().value();
+    }
+    if(inline_image_mode)
+    {
+        if(!img_id.isEmpty())
+            *buf_current+=QString("<img id=\"%1\" class=\"inlineimage\" src=\"img%3/%2\" alt=\"%2\"/>").arg(img_id, image,QString::number(current_book));
+        else
+            *buf_current+=QString("<img class=\"inlineimage\" src=\"img%2/%1\" alt=\"%1\"/>").arg(image,QString::number(current_book));
+    }
+    else
+    {
+        if(!img_id.isEmpty())
+            *buf_current+=QString("<div id=\"%1\" class=\"image\">").arg(img_id);
+        else
+            *buf_current+=QString("<div class=\"image\">");
+        *buf_current+=QString("<img src=\"img%2/%1\" alt=\"%1\"/>").arg(image,QString::number(current_book));
+        *buf_current+="</div>";
+    }
+    parse_format(elem);
+}
+void fb2mobi::parse_emptyline(QDomNode)
+{
+    *buf_current+="<br/>";
+}
+void fb2mobi::parse_epigraph(QDomNode elem)
+{
+    no_paragraph=true;
+    parse_format(elem, "div", "epigraph");
+    no_paragraph=false;
+}
+void fb2mobi::parse_annotation(QDomNode elem)
+{
+    no_paragraph=true;
+    parse_format(elem, "div", "annotation");
+    no_paragraph=false;
+}
+void fb2mobi::parse_a(QDomNode elem)
+{
+    for(int j=0;j<elem.attributes().count();j++)
+    {
+        if(elem.attributes().item(j).nodeName().right(href_pref.length())==href_pref)
+        {
+             parse_format(elem,"a","anchor",elem.attributes().item(j).toAttr().value().toHtmlEscaped());
+             break;
+        }
+    }
+}
+void fb2mobi::parse_emphasis(QDomNode elem)
+{
+    parse_span("emphasis", elem);
+}
+void fb2mobi::parse_strong(QDomNode elem)
+{
+    parse_span("strong", elem);
+}
+void fb2mobi::parse_strikethrough(QDomNode elem)
+{
+    parse_span("strike", elem);
+}
+void fb2mobi::parse_span(QString span, QDomNode elem)
+{
+    parse_format(elem,"span", span);
+}
+void fb2mobi::parse_textauthor(QDomNode elem)
+{
+    no_paragraph = true;
+    parse_format(elem, "div", "text-author");
+    no_paragraph = false;
+}
+void fb2mobi::parse_v(QDomNode elem)
+{
+    parse_format(elem, "p");
+}
+void fb2mobi::parse_poem(QDomNode elem)
+{
+    no_paragraph = true;
+    parse_format(elem, "div", "poem");
+    no_paragraph = false;
+}
+void fb2mobi::parse_stanza(QDomNode elem)
+{
+    parse_format(elem, "div", "stanza");
+}
+void fb2mobi::parse_table(QDomNode elem)
+{
+    *buf_current+="<table class=\"table\"";
+    for(int i=0;i<elem.attributes().count();i++)
+    {
+        *buf_current+=QString(" %1=\"%2\"").arg(elem.attributes().item(i).toAttr().name(), elem.attributes().item(i).toAttr().value());
+    }
+    *buf_current+=">";
+    parse_format(elem);
+    *buf_current+="</table>";
+}
+void fb2mobi::parse_table_element(QDomNode elem)
+{
+    *buf_current+="<"+elem.toElement().tagName();
+
+    for(int i=0;i<elem.attributes().count();i++)
+    {
+        *buf_current+=QString(" %1=\"%2\"").arg(elem.attributes().item(i).toAttr().name(), elem.attributes().item(i).toAttr().value());
+    }
+
+    *buf_current+=">";
+    parse_format(elem);
+    *buf_current+="</"+elem.toElement().tagName()+">";
+}
+
+void fb2mobi::parse_code(QDomNode elem)
+{
+    parse_format(elem, "code");
+}
+void fb2mobi::parse_date(QDomNode elem)
+{
+    parse_format(elem, "time");
+}
+void fb2mobi::parse_subtitle(QDomNode elem)
+{
+    if(parsing_note)
+        return;
+    subheader = true;
+    parse_format(elem, "p", "subtitle");
+    subheader = false;
+}
+void fb2mobi::parse_style(QDomNode)
+{
+    return;
+}
+void fb2mobi::parse_cite(QDomNode elem)
+{
+    parse_format(elem, "div", "cite");
+}
+
+QString fb2mobi::save_html(QString str)
+{
+    return QString(str).toHtmlEscaped();
+}
+
+void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString href)
+{
+    QStringList note;
+    bool need_popup=false;
+    if(!tag.isEmpty())
+    {
+        dodropcaps=false;
+        if(dropcaps && first_chapter_line && !(header || subheader) && body_name.isEmpty() && tag.toLower()=="p")
+        {
+            if(!no_paragraph)
+            {
+                if(nodropcaps.indexOf(elem.toElement().text())<0)
+                {
+                    dodropcaps=true;
+                    css="dropcaps";
+                }
+                first_chapter_line=false;
+            }
+        }
+
+        if(notes_mode>0 && tag.toLower()=="a" && notes_mode!=3)
+        {
+            QString note_id=href.right(href.length()-1);
+            note.clear();
+            for(int i=0;i<notes_dict.count();i++)
+            {
+                if(notes_dict[i].first==note_id)
+                    note=notes_dict[i].second;
+            }
+            if(note.count()>0)
+            {
+                current_notes<<note;
+                tag="span";
+                css=QString("%1anchor").arg(notes_mode==1?"inline":"block");
+                href="";
+            }
+        }
+
+        QString str;
+        str+=QString("<%1").arg(tag);
+        if(!css.isEmpty())
+            str+=QString(" class=\"%1\"").arg(css);
+        if(notes_mode==3 && tag.toLower()=="a" && outputFormat=="EPUB")
+        {
+            str+=QString(" epub:type=\"noteref\"");
+        }
+        if(!href.isEmpty() && elem.attributes().namedItem("id").isNull())
+        {
+            elem.toElement().setAttribute("id",QString("tocref%1").arg(QString::number(toc_index)));
+            toc_index++;
+        }
+        if(!elem.attributes().namedItem("id").isNull())
+        {
+            QString id=elem.attributes().namedItem("id").toAttr().value();
+            str+=QString(" id=\"%1\"").arg(id);
+            ref_files[id]=html_files.last().file_name+(id.left(1)=="#"?"":"#")+id;
+            crossing_ref[id].from=html_files.last().file_name+(id.left(1)=="#"?"":"#")+id;
+            crossing_ref[id].to=href;
+        }
+        if(!href.isEmpty())
+            str+=QString(" href=\"%1\"").arg(href);
+        *buf_current+=str;
+        if(annotation)
+        {
+            book_anntotation+=str;
+        }
+    }
+    if(!tag.isEmpty())
+    {
+        *buf_current+=">";
+        if(annotation)
+        {
+            book_anntotation+=">";
+        }
+        if(tag=="p")
+            inline_image_mode=true;
+    }
+
+    if(!elem.isElement())
+    {
+        if(!(header || subheader))
+        {
+            need_page_break=true;
+        }
+        QString hstring;
+        QString elem_text=save_html(elem.nodeValue());
+        if(hyphenate>0 && !(header || subheader))
+        {
+
+            QStringList sl=elem_text.split(" ");
+            foreach (QString str, sl)
+            {
+                QString hyp=hyphenator.hyphenate_word(str,(hyphenate==1?SOFT_HYPHEN:CHILD_HYPHEN),hyphenate==1);
+                hstring+=" "+hyp;
+            }
+            hstring.remove(0,1);
+        }
+        else
+        {
+            hstring=elem_text;
+        }
+
+        if(dodropcaps)
+        {
+            int len=1;
+            if(len<hstring.length())
+            {
+                while(!hstring[len-1].isLetter())
+                {
+                    if(len>1)
+                    {
+                        if(hstring[len-2].isDigit() && hstring[len-1]==' ')
+                            break;
+                    }
+                    if(hstring.mid(len-1).startsWith("&quot;",Qt::CaseInsensitive))
+                        len+=6;
+                    else
+                        len++;
+                    if(len>=hstring.length())
+                        break;
+                }
+            }
+            else
+                len=hstring.length();
+            len=hstring.left(len).trimmed().length();
+            *buf_current+=QString("<span class=\"dropcaps\">%1</span>").arg(hstring.left(len))+hstring.right(hstring.length()-len);
+            dodropcaps=false;
+        }
+        else
+        {
+            if(hstring.length()>2)
+            {
+                if((hstring[0]==L'-' || hstring[0]==L'—' || hstring[0]==L'—') && hstring[1]==L' ')
+                {
+                    hstring=hstring[0]+"&#8197;"+hstring.right(hstring.length()-2);
+                }
+            }
+            *buf_current+=hstring;
+        }
+        if(annotation)
+        {
+            book_anntotation+=hstring;
+        }
+    }
+    for(int e=0;e<elem.childNodes().count();e++)
+    {
+        if(elem.childNodes().at(e).toElement().tagName()=="title")
+            parse_title(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="subtitle")
+            parse_subtitle(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="epigraph")
+            parse_epigraph(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="annotation")
+            parse_annotation(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="section")
+            parse_section(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="strong")
+            parse_strong(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="emphasis")
+            parse_emphasis(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="strikethrough")
+            parse_strikethrough(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="style")
+            parse_style(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="a")
+           parse_a(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="image")
+            parse_image(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="p")
+            parse_p(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="poem")
+            parse_poem(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="stanza")
+            parse_stanza(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="v")
+            parse_v(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="cite")
+            parse_cite(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="empty-line")
+            parse_emptyline(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="text-author")
+            parse_textauthor(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="table")
+            parse_table(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="code")
+            parse_code(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="date")
+            parse_date(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="tr")
+            parse_table_element(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="td")
+            parse_table_element(elem.childNodes().at(e));
+        else if(elem.childNodes().at(e).toElement().tagName()=="th")
+            parse_table_element(elem.childNodes().at(e));
+        else
+            parse_other(elem.childNodes().at(e));
+    }
+
+    if(!tag.isEmpty())
+    {
+        if(elem.toElement().tagName()!="section")
+            *buf_current+=QString("</%1>").arg(tag);
+        if(annotation)
+        {
+            book_anntotation+=QString("</%1>").arg(tag);
+        }
+        if(tag=="p")
+            inline_image_mode=false;
+        if(current_notes.count()>0)
+        {
+            if(notes_mode==1) //inline
+            {
+                *buf_current+=QString("<span class=\"inlinenote\">%1</span>").arg(current_notes.at(0).at(1));
+                current_notes.clear();
+            }
+            else if(notes_mode == 2 && tag == "p")
+            {
+                *buf_current+="<div class=\"blocknote\">";
+                foreach(QStringList note,current_notes)
+                {
+                    if(!note[1].isEmpty())
+                        *buf_current+=QString("<p><span class=\"notenum\">%1</span>&#160;%2</p>").arg(note[0], (note[1]));
+                }
+                *buf_current+="</div>";
+                current_notes.clear();
+            }
+        }
+    }
+}
+void fb2mobi::generate_toc()
+{
+    buf=HTMLHEAD;
+    buf+="<div class=\"toc\">";
+    buf+=QString("<div class=\"h1\" id=\"toc\">%1</div>").arg(toctitle);
+    QSettings *settings=GetSettings();
+    if(!buf_annotation.isEmpty() && !settings->value("annotation",false).toBool())
+    {
+        buf+=QString("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg("annotation.html", annotation_title);
+    }
+    foreach(STOC item,toc)
+    {
+        if(item.level<=toc_max_level)
+        {
+            if(item.body_name.isEmpty())
+            {
+                int indent=(item.level<=6?item.level:6);
+                if(indent==0)
+                {
+                    QStringList lines=item.title.split("\n");
+                    buf+=QString("<div class=\"indent0\"><a href=\"%1\">").arg(item.href);
+                    foreach(QString line,lines)
+                    {
+                        if(!line.trimmed().isEmpty())
+                            buf+=save_html(line).trimmed()+"<br/>";
+                    }
+                    buf+="</a></div>";
+                }
+                else
+                    buf+=QString("<div class=\"indent%1\"><a href=\"%2\">%3</a></div>").arg(QString::number(indent), item.href, save_html(item.title));
+            }
+            else
+                buf+=QString("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg(item.href, save_html(item.title));
+        }
+    }
+
+
+    buf+="</div>";
+    buf+=QString("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg("annotation.html", notes_title);
+    buf+=HTMLFOOT;
+}
+
+
+void fb2mobi::generate_ncx()
+{
+    buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+    buf+="<ncx>"
+            "<head></head>"
+            "<docTitle>"
+            "<text>freeLib</text>"
+            "</docTitle>"
+            "<navMap>";
+    int i=1;
+    QSettings *settings=GetSettings();
+    if(!buf_annotation.isEmpty() && !settings->value("annotation",false).toBool())
+    {
+        buf+=QString("<navPoint id=\"annotation\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(annotation_title);
+        buf+=QString("<content src=\"annotation.html\" />");
+        buf+=QString("</navPoint>");
+        i++;
+    }
+    if(settings->value("content_placement",0).toInt()==1)
+    {
+        // Включим содержание в навигацию джойстиком
+        buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(toctitle);
+        buf+=QString("<content src=\"toc.html\" />");
+        buf+=QString("</navPoint>");
+        i++;
+    }
+    int current_level=-1;
+    bool flat=!settings->value("ml_toc",false).toBool();
+    int maxLevel=settings->value("MAXcaptionLevel",2).toInt();
+    QList<STOC> tmp_toc=toc;
+    if(!flat)
+    {
+        //считаем количество заголовков каждого уровня
+        QMap<int,int> LevelsCount;
+        foreach(STOC item,tmp_toc)
+        {
+            if(LevelsCount.contains(item.level))
+                LevelsCount[item.level]++;
+            else
+                LevelsCount.insert(item.level,1);
+        }
+
+        //находим maxLevel уровней с максимальным количеством заголовков
+        QList<int> levelsList;
+        for(int i=0;i<maxLevel;i++)
+        {
+            int curMaxCount=0;
+            int maxKey=0;
+            QMapIterator<int, int> ref(LevelsCount);
+            while(ref.hasNext())
+            {
+                ref.next();
+                if(ref.value()>curMaxCount)
+                {
+                    curMaxCount=ref.value();
+                    maxKey=ref.key();
+                }
+            }
+            if(curMaxCount>0)
+            {
+                LevelsCount[maxKey]=0;
+                levelsList<<maxKey;
+            }
+        }
+        qSort(levelsList.begin(),levelsList.end());
+        for(int i=levelsList.count()-1;i>=0;i--)
+        {
+            for(int j=0;j<tmp_toc.count();j++)
+            {
+               if(tmp_toc[j].level>=levelsList[i])
+                {
+                    tmp_toc[j].level=-i;
+                }
+            }
+        }
+        for(int j=0;j<tmp_toc.count();j++)
+        {
+            if(tmp_toc[j].level>0)
+                tmp_toc[j].level=0;
+            else
+                tmp_toc[j].level=-tmp_toc[j].level;
+        }
+
+    }
+    foreach(STOC item,tmp_toc)
+    {
+        if(!flat)
+        {
+            while(current_level>item.level)
+            {
+                buf+=QString("</navPoint>");
+                current_level--;
+            }
+            if(current_level==item.level)
+                buf+=QString("</navPoint>\n");
+        }
+        buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(save_html(item.title));
+        buf+=QString("<content src=\"%1\" />").arg(item.href);
+        if(flat)
+            buf+=QString("</navPoint>\n");
+        current_level=item.level;
+        i++;
+    }
+    while(current_level>=0 && !flat)
+    {
+        buf+=QString("</navPoint>");
+        current_level--;
+    }
+
+
+    if(settings->value("content_placement",0).toInt()==2)
+    {
+        // Включим содержание в навигацию джойстиком
+        if( i > 1)
+        {
+            buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+            buf+=QString("<navLabel><text>%1</text></navLabel>").arg(toctitle);
+            buf+=QString("<content src=\"toc.html\" />");
+            buf+=QString("</navPoint>");
+            i++;
+        }
+    }
+
+    buf+=QString("</navMap></ncx>");
+}
+void fb2mobi::generate_ncx_epub()
+{
+    buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+    buf+="<!DOCTYPE ncx PUBLIC \"-//NISO//DTD ncx 2005-1//EN\" \"http://www.daisy.org/z3986/2005/ncx-2005-1.dtd\">";
+    buf+="<ncx xmlns=\"http://www.daisy.org/z3986/2005/ncx/\" version=\"2005-1\">"
+            "<head>"
+            "<meta name=\"dtb:uid\" content=\"123456\"/>"
+            "<meta name=\"dtb:depth\" content=\"1\"/>"
+            "<meta name=\"dtb:totalPageCount\" content=\"0\"/>"
+            "<meta name=\"dtb:maxPageNumber\" content=\"0\"/>"
+            "</head>"
+            "<docTitle>"
+            "<text>FreeLib</text>"
+            "</docTitle>"
+            "<navMap>";
+    int i=1;
+    QSettings *settings=GetSettings();
+    if(!buf_annotation.isEmpty() && !settings->value("annotation",false).toBool())
+    {
+        buf+=QString("<navPoint id=\"annotation\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(annotation_title);
+        buf+=QString("<content src=\"annotation.html\" />");
+        buf+=QString("</navPoint>");
+        i++;
+    }
+    // Включим содержание в навигацию джойстиком
+    if(settings->value("content_placement",0).toInt()==1)
+    {
+        buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QString("<navLabel><text>Содержание</text></navLabel>");
+        buf+=QString("<content src=\"toc.html\" />");
+        buf+=QString("</navPoint>");
+        i++;
+    }
+    int current_level=-1;
+    bool flat=!settings->value("ml_toc",false).toBool();
+    foreach(STOC item,toc)
+    {
+        if(!flat)
+        {
+            while(current_level>item.level)
+            {
+                buf+=QString("</navPoint>");
+                current_level--;
+            }
+            if(current_level==item.level)
+                buf+=QString("</navPoint>\n");
+        }
+        buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(save_html(item.title));
+        buf+=QString("<content src=\"%1\" />").arg(item.href);
+        if(flat)
+            buf+=QString("</navPoint>\n");
+        current_level=item.level;
+        i++;
+    }
+    while(current_level>=0 && !flat)
+    {
+        buf+=QString("</navPoint>");
+        current_level--;
+    }
+
+    // Включим содержание в навигацию джойстиком
+    if(settings->value("content_placement",0).toInt()==2)
+    {
+        buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QString("<navLabel><text>Содержание</text></navLabel>");
+        buf+=QString("<content src=\"toc.html\" />");
+        buf+=QString("</navPoint>");
+        i++;
+    }
+
+    buf+=QString("</navMap></ncx>");
+}
+void fb2mobi::generate_mime()
+{
+    buf="application/epub+zip";
+}
+void fb2mobi::generate_container()
+{
+    buf="<?xml version=\"1.0\"?>"
+            "<container version=\"1.0\" xmlns=\"urn:oasis:names:tc:opendocument:xmlns:container\">"
+              "<rootfiles>"
+                "<rootfile full-path=\"OEBPS/book.opf\" "
+                 "media-type=\"application/oebps-package+xml\" />"
+              "</rootfiles>"
+            "</container>";
+}
+QString MIME_TYPE(QString type)
+{
+    type=type.toLower();
+    if(type=="jpg")
+        return "image/jpeg";
+    if(type=="ttf")
+    {
+        return "application/octet-stream";
+        //return "application/x-font-ttf";
+    }
+    return "image/"+type;
+}
+
+void fb2mobi::generate_opf_epub()
+{
+    buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+    buf+="<package xmlns=\"http://www.idpf.org/2007/opf\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" unique-identifier=\"bookid\" version=\"2.0\">";
+    buf+=QString("<metadata xmlns:opf=\"http://www.idpf.org/2007/opf\">");
+    QSettings *settings=GetSettings();
+    if(book_inf->seria=="")
+        buf+=QString("<dc:title>%1</dc:title>").arg(book_inf->title);
+    else
+    {
+
+        QString title = bookseriestitle;
+        title=fillParams(title,*book_inf);
+        if(settings->value("seriaTranslit",false).toBool())
+            title=Transliteration(title);
+        buf+=QString("<dc:title>%1</dc:title>").arg(title);
+     }
+    buf+=QString("<dc:language>%1</dc:language>").arg(test_language(book_inf->language));
+    buf+=QString("<dc:identifier id=\"bookid\">%1</dc:identifier>").arg(isbn.isEmpty()?(book_inf->id<=0?QUuid::createUuid().toString():QString::number(book_inf->id)):isbn);
+    buf+=QString("<dc:creator opf:role=\"aut\">%1</dc:creator>").arg(book_author);
+
+    buf+=QString("<dc:subject>%1</dc:subject> ").arg(book_inf->genres[0].genre);
+    if(!book_anntotation.isEmpty())
+        buf+=QString("<dc:description>%1</dc:description>").arg(book_anntotation.replace(QRegExp("<[^>]*>"),"").trimmed());
+    if(!book_cover.isEmpty())
+        buf+=QString("<meta name=\"cover\" content=\"cover-image\" />");
+    buf+=QString("</metadata>");
+    buf+=QString("<manifest>"
+                     "<item id=\"ncx\" media-type=\"application/x-dtbncx+xml\" href=\"toc.ncx\"/>");
+    buf+=((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<item id=\"annotation\" media-type=\"application/xhtml+xml\" href=\"annotation.html\"/>");
+    buf+=(book_cover.isEmpty()?"":QString("<item id=\"cover-image\" href=\"%1\" media-type=\"%2\"/>").arg(book_cover,MIME_TYPE(QFileInfo(book_cover).suffix())));
+    QString spine_files;
+    int i=0;
+    foreach (html_content str, html_files)
+    {
+        buf+=QString("<item id=\"content%2\" media-type=\"application/xhtml+xml\" href=\"%1\"/>").arg(str.file_name,QString::number(i));
+        //if(!str.file_name.startsWith("footnotes",Qt::CaseInsensitive))
+        {
+            spine_files+=QString("<itemref idref=\"content%2\"/>").arg(QString::number(i));
+        }
+        i++;
+    }
+    if(settings->value("content_placement",0)!=0)
+    {
+        buf+="<item id=\"toc\" media-type=\"application/xhtml+xml\" href=\"toc.html\"/>"
+        "<item id=\"css\" href=\"css/main.css\" media-type=\"text/css\"/>";
+    }
+
+
+    QFileInfoList fonts=QDir(tmp_dir+"/OEBPS/fonts").entryInfoList(QDir::NoDotAndDotDot | QDir::Files);
+    foreach (QFileInfo font, fonts)
+    {
+        buf+=QString("<item id=\"%1\" media-type=\"%2\" href=\"fonts/%1\"/>").arg(font.fileName(),MIME_TYPE(font.suffix()));
+    }
+    QFileInfoList pics=QDir(tmp_dir+"/OEBPS/pic").entryInfoList(QDir::NoDotAndDotDot | QDir::Files);
+    foreach (QFileInfo pic, pics)
+    {
+        buf+=QString("<item id=\"%1\" media-type=\"%2\" href=\"pic/%1\"/>").arg(pic.fileName(),MIME_TYPE(pic.suffix()));
+    }
+    int img_count=0;
+    foreach(QString str,image_list)
+    {
+        if(str==book_cover)
+            continue;
+        buf+=QString("<item id=\"%1\" href=\"%2\" media-type=\"%3\"/>").arg("img_id_"+QString::number(img_count),str,MIME_TYPE(QFileInfo(str).suffix()));
+        img_count++;
+    }
+
+    buf+=QString("</manifest>")+
+            "<spine toc=\"ncx\">"+
+            (settings->value("content_placement",0).toInt()==1?"<itemref idref=\"toc\"/>":"")+
+            +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<itemref idref=\"annotation\"/>")+
+            spine_files+
+            (settings->value("content_placement",0).toInt()==2?"<itemref idref=\"toc\"/>":"")+
+            "</spine>"
+            "</package>";
+}
+
+void fb2mobi::generate_opf()
+{
+    buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
+    buf+="<package><metadata><dc-metadata xmlns:dc=\"http://\">";
+    QSettings* settings=GetSettings();
+    if(book_inf->seria=="")
+        buf+=QString("<dc:Title>%1</dc:Title>").arg(book_inf->title);
+    else
+    {
+        QString abbr = "";
+        foreach(QString str,book_inf->seria.split(" "))
+        {
+            abbr+=str.left(1);
+        }
+
+        QString title = bookseriestitle;
+        title=fillParams(title,*book_inf);
+        if(settings->value("seriaTranslit",false).toBool())
+            title=Transliteration(title);
+
+        buf+=QString("<dc:Title>%1</dc:Title>").arg(title);
+     }
+    buf+=QString("<dc:Language>%1</dc:Language>").arg(test_language(book_inf->language));
+    buf+=QString("<dc:Creator>%1</dc:Creator>").arg(book_author);
+    buf+=QString("<dc:identifier id=\"BookId\" opf:scheme=\"ISBN\">%1</dc:identifier>").arg(isbn.isEmpty()?(book_inf->id<=0?QUuid::createUuid().toString():QString::number(book_inf->id)):isbn);
+    buf+=QString("<dc:Publisher /><dc:date /><x-metadata>");
+    if(!book_cover.isEmpty())
+        buf+=QString("<EmbeddedCover>%1</EmbeddedCover>").arg(book_cover);
+    buf+=QString("</x-metadata></dc-metadata></metadata>");
+    buf+=QString(QString("<manifest>")+
+                     "<item id=\"ncx\" media-type=\"application/x-dtbncx+xml\" href=\"toc.ncx\"/>"
+                     +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<item id=\"annotation\" media-type=\"text/x-oeb1-document\" href=\"annotation.html\"/>"));
+
+    int i=0;
+    QString spine_files;
+    foreach (html_content str, html_files)
+    {
+        buf+=QString("<item id=\"text%2\" media-type=\"text/x-oeb1-document\" href=\"%1\"/>").arg(str.file_name,QString::number(i));
+        spine_files+=QString("<itemref idref=\"text%1\"/>").arg(QString::number(i));
+        i++;
+    }
+
+    buf+=QString((settings->value("content_placement",0).toInt()!=0?"<item id=\"content\" media-type=\"text/x-oeb1-document\" href=\"toc.html\"/>":""))+
+                     "</manifest>"
+                     "<spine toc=\"ncx\">"+
+                    (settings->value("content_placement",0).toInt()==1?"<itemref idref=\"content\"/>":"")+
+                     +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<itemref idref=\"annotation\"/>")+
+                     spine_files+
+                    (settings->value("content_placement",0).toInt()==2?"<itemref idref=\"content\"/>":"")+
+                     "</spine>"
+                     "<guide>"
+                     +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<reference type=\"other.intro\" title=\"Annotation\" href=\"annotation.html\"/>")+
+                     (settings->value("content_placement",0).toInt()==1?"<itemref idref=\"content\"/>":"")+
+                     QString("<reference type=\"text\" title=\"Book\" href=\"%1\"/>").arg(html_files.first().file_name)+
+                     (settings->value("content_placement",0).toInt()==2?"<itemref idref=\"content\"/>":"")+
+                     "</guide>"
+                     "</package>";
+}
+
+void fb2mobi::generate_html(QFile *file)
+{
+    html_files<<html_content(QFileInfo(file->fileName()).completeBaseName()+".html");
+    buf_current=&html_files.last().content;
+
+    *buf_current=HTMLHEAD;
+    doc.setContent(file);
+    QDomNode root=doc.documentElement();
+    href_pref="href";
+    get_notes_dict("notes");
+
+    first_body=true;
+    for(int i=0; i<root.childNodes().count();i++)
+    {
+        if(root.childNodes().at(i).toElement().tagName()=="description" && (!join_seria || current_book==1))
+            parse_description(root.childNodes().at(i));
+        else if(root.childNodes().at(i).toElement().tagName()=="body" && (first_body || !root.childNodes().at(i).toElement().attributes().contains("name")))
+        {
+            parse_body(root.childNodes().at(i));
+        }
+        else if(root.childNodes().at(i).toElement().tagName()=="binary")
+            parse_binary(root.childNodes().at(i));
+    }
+    *buf_current+=HTMLFOOT;
+    for(int i=0;i<html_files.count();i++)
+    {
+        if(html_files[i].content==(HTMLHEAD+HTMLFOOT))
+        {
+            html_files.removeAt(i);
+            i--;
+        }
+    }
+
+    if((notes_mode==0 || notes_mode==3) && notes_dict.count()>0)
+    {
+        int index=0;
+        QString tmp="footnotes%1.html";
+        bool loop=true;
+        while(loop)
+        {
+            loop=false;
+            for(int i=0;i<html_files.count();i++)
+            {
+                if(html_files[i].file_name==tmp.arg(QString::number(index)))
+                {
+                    index++;
+                    loop=true;
+                    break;
+                }
+            }
+
+        }
+        html_files<<html_content(tmp.arg(QString::number(index)));
+        STOC c_toc={QString("%1#%2").arg(html_files.last().file_name,QString("fn%1").arg(QString::number(toc_index))),tr("Footnotes"),1,body_name,""};
+        toc<<c_toc;
+        QString* str=&html_files.last().content;
+        *str+=HTMLHEAD;
+        *str+=QString("<a name='fn%1'></a>").arg(QString::number(toc_index));
+        toc_index++;
+        for(int i=0;i<notes_dict.count();i++)
+        {
+            QString id=notes_dict[i].first;
+            ref_files[id]=html_files.last().file_name+(id.left(1)=="#"?"":"#")+id;
+            QMapIterator<QString, cross_ref> ref(crossing_ref);
+            QString href;
+            while(ref.hasNext())
+            {
+                ref.next();
+                if(((ref.value().to.left(1)=="#"?"":"#")+ref.value().to)==((id.left(1)=="#"?"":"#")+id))
+                {
+                    href=ref.value().from;
+                    break;
+                }
+            }
+            QString title=notes_dict[i].second[0].isEmpty()?"^":notes_dict[i].second[0];
+            if(notes_mode==3)
+            {
+                if(outputFormat=="EPUB")
+                    *str+=QString("<div epub:type=\"footnote\" id=\"%1\">").arg(id);
+                else
+                    *str+=QString("<div id=\"%1\"><div class=\"titlenotes\"><a href=\"%2\">[%3] </a></div>").arg(id,href,title);
+            }
+            else
+            {
+                if(outputFormat=="EPUB")
+                    *str+=QString("<div class=\"titlenotes\" id=\"%1\"><a href=\"%2\">[%3] </a></div>").arg(id,href,title);
+                else
+                    *str+=QString("<div class=\"titlenotes\" id=\"%1\">%2</div>").arg(id,title);
+            }
+            *str+=notes_dict[i].second[1];
+            if(notes_mode==3)
+                *str+="</div>";
+            *str+="<div style=\"page-break-before:always;\"></div>";
+            if(str->length()>10000)
+            {
+                *str+=HTMLFOOT;
+                //i++;
+                html_files<<html_content(tmp.arg(QString::number(i+1)));
+                str=&html_files.last().content;
+                *str+=HTMLHEAD;
+            }
+        }
+
+        *str+=HTMLFOOT;
+    }
+
+    QMapIterator<QString, QString> ref(ref_files);
+    while(ref.hasNext())
+    {
+        ref.next();
+        for(int i=0;i<html_files.count();i++)
+        {
+            html_files[i].content.replace("href=\""+ref.key()+"\"","href=\""+ref.value()+"\"");
+            html_files[i].content.replace("href=\"#"+ref.key()+"\"","href=\""+ref.value()+"\"");
+        }
+    }
+}
+
+QString fb2mobi::GenerateAZW3(QString file)
+{
+    mobiEdit me(file);
+    QString azw3File=file.left(file.length()-4)+"azw3";
+    QSettings *settings=GetSettings();
+    if(!me.SaveAZW(azw3File,settings->value("removePersonal",false).toBool(),settings->value("repairCover",true).toBool()))
+        return file;
+    QFile().remove(file);
+    return azw3File;
+}
+
+QString fb2mobi::GenerateMOBI7(QString file)
+{
+    mobiEdit me(file);
+    QString mobi7File=file.left(file.length()-4)+"mobi";
+    QSettings *settings=GetSettings();
+    if(!me.SaveMOBI7(mobi7File,settings->value("removePersonal",false).toBool(),settings->value("repairCover",true).toBool()))
+        return file;
+    return mobi7File;
+}
+
+void PaintText(QPainter* painter,QRect rect,int to,QString text,QRect* br=0)
+{
+    QFont font(painter->font());
+    QRect bound;
+    do
+    {
+        font.setPixelSize(font.pixelSize()-1);
+        painter->setFont(font);
+        bound=painter->boundingRect(rect,to,text);
+    }while((bound.width()>rect.width() || bound.height()>rect.height()) && font.pixelSize()>5);
+    painter->drawText(rect,to,text,br);
+}
+
+void fb2mobi::InsertSeriaNumberToCover(QString number,CreateCover create_cover)
+{
+    if(book_cover.isEmpty() && cc_no)
+        return;
+    bool create_new=false;
+    if((book_cover.isEmpty() && create_cover==cc_if_not_exists) || create_cover==cc_always)
+    {
+        //qDebug()<<1;
+        QImage img(QApplication::applicationDirPath()+"/xsl/img/cover.jpg");
+        if(book_cover.isEmpty())
+        {
+            book_cover="cover.jpg";
+            image_list<<book_cover;
+        }
+        else
+        {
+            QFile::remove(tmp_dir+"/OEBPS/"+book_cover);
+        }
+        img.save(tmp_dir+"/OEBPS/"+book_cover);
+        create_new=true;
+    }
+
+    QImage img(tmp_dir+"/OEBPS/"+book_cover);
+    img=img.convertToFormat(QImage::Format_RGB32);
+
+    QPainter* painter = new QPainter(&img);
+    QFont font;
+    if(!create_new)
+    {
+        if(!number.isEmpty())
+        {
+            painter->setBackgroundMode(Qt::OpaqueMode);
+            painter->setBackground(QBrush(QColor(255,255,255,168)));
+            font.setPixelSize(img.height()/15);
+            painter->setFont(font);
+            PaintText(painter,img.rect(),Qt::AlignTop|Qt::AlignRight,number);
+        }
+    }
+    else
+    {
+        int delta=img.rect().height()/50;
+        int delta2=img.rect().height()/100;
+        int r_width=img.rect().width()-delta*2;
+        int r_heigth=img.rect().height()-delta*2;
+        int r_heigthTopBottom=r_heigth/4;
+
+        font.setPixelSize(img.height()/15);
+        painter->setFont(font);
+        PaintText(painter,QRect(delta,delta,r_width,r_heigthTopBottom-delta2),Qt::AlignHCenter|Qt::AlignTop|Qt::TextWordWrap,book_inf->authors[0].author.replace(","," "));
+
+        font.setPixelSize(img.height()/12);
+        font.setBold(true);
+        painter->setFont(font);
+        PaintText(painter,QRect(delta,delta+r_heigthTopBottom+delta2,r_width,r_heigth-r_heigthTopBottom*2-delta2*2),Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, book_inf->title);
+
+        font.setBold(false);
+        font.setPixelSize(img.height()/17);
+        painter->setFont(font);
+        PaintText(painter,QRect(delta,delta+r_heigth-r_heigthTopBottom+delta2,r_width,r_heigthTopBottom-delta2),Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,book_inf->seria+(book_inf->num_in_seria>0?"\n"+QString::number(book_inf->num_in_seria):""));
+    }
+    img.save(tmp_dir+"/OEBPS/"+book_cover);
+    delete painter;
+}
+
+void recurseAddDir(QDir d, QStringList & list)
+{
+    QStringList qsl = d.entryList(QDir::NoDotAndDotDot | QDir::Dirs | QDir::Files);
+    foreach (QString file, qsl)
+    {
+        QFileInfo finfo(QString("%1/%2").arg(d.path()).arg(file));
+        if (finfo.isSymLink())
+            return;
+        if (finfo.isDir())
+        {
+            QDir sd(finfo.filePath());
+            recurseAddDir(sd, list);
+        }
+        else
+            list << QDir::toNativeSeparators(finfo.filePath());
+    }
+}
+
+void ZipDir(QuaZip *zip,QDir dir)
+{
+    QFile inFile;
+    QStringList sl;
+    recurseAddDir(dir, sl);
+    QFileInfoList files;
+    foreach (QString fn, sl)
+        files << QFileInfo(fn);
+    QuaZipFile outFile(zip);
+    char c;
+    foreach(QFileInfo fileInfo, files)
+    {
+        if (!fileInfo.isFile())
+            continue;
+        // Если файл в поддиректории, то добавляем имя этой поддиректории к именам файлов
+        // например: fileInfo.filePath() = "D:\Work\Sources\SAGO\svn\sago\Release\tmp_DOCSWIN\Folder\123.opn"
+        // тогда после удаления части строки fileNameWithSubFolders будет равен "Folder\123.opn" и т.д.
+        QString fileNameWithRelativePath = fileInfo.filePath().remove(0, QFileInfo(dir.absolutePath()).absolutePath().length() + 1);
+        inFile.setFileName(fileInfo.filePath());
+        if (!inFile.open(QIODevice::ReadOnly))
+        {
+            qDebug()<<QString("testCreate(): inFile.open(): %1").arg(inFile.errorString().toLocal8Bit().constData());
+            return;
+        }
+        if (!outFile.open(QIODevice::WriteOnly, QuaZipNewInfo(fileNameWithRelativePath, fileInfo.filePath())))
+        {
+            qDebug()<<QString("testCreate(): outFile.open(): %1").arg(outFile.getZipError());
+            return;
+        }
+        while (inFile.getChar(&c) && outFile.putChar(c));
+        if (outFile.getZipError() != UNZ_OK)
+        {
+            qDebug()<<QString("testCreate(): outFile.putChar(): %1").arg(outFile.getZipError());
+            return;
+        }
+        outFile.close();
+        if (outFile.getZipError() != UNZ_OK)
+        {
+            qDebug()<<QString("testCreate(): outFile.close(): %1").arg(outFile.getZipError());
+            return;
+        }
+        inFile.close();
+    }
+}
+
+QString fb2mobi::convert(qlonglong id)
+{
+    QDir dir;
+    removeFolder(tmp_dir+"/OEBPS");
+    dir.mkpath(tmp_dir+"/OEBPS");
+
+    QBuffer outbuff;
+    QBuffer infobuff;
+    QFileInfo fi_book;
+    outputFormat="EPUB";
+    fi_book=GetBookFile(outbuff,infobuff,id);
+    if(fi_book.suffix().toLower()!="fb2")
+        return "";
+    book_info book_inf_tmp;
+    GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",true,id);
+    book_inf=&book_inf_tmp;
+
+    QFile file;
+    QString out_file=tmp_dir+QString("/book.fb2");
+    QFile::remove(out_file);
+    file.setFileName(out_file);
+    file.open(QFile::WriteOnly);
+    file.write(outbuff.data());
+    file.close();
+
+
+    fb2file.setFile(tmp_dir+QString("/book.fb2"));
+    QFile f(tmp_dir+QString("/book.fb2"));
+    if(!f.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+        qDebug()<<"Error open fb2 file: "<<f.fileName();
+        return "";
+    }
+    join_seria=false;
+    current_book=1;
+    generate_html(&f);
+   // return tmp_dir+"/freeLib/"+book_cover;
+    f.close();
+
+    QSettings *settings=GetSettings();
+    QString title = settings->value("coverLabel").toString();
+    if(title.isEmpty())
+        title=default_cover_label;
+    if(book_cover.isEmpty())
+        InsertSeriaNumberToCover(title,cc_if_not_exists);
+    if(!book_cover.endsWith(".jpg",Qt::CaseInsensitive))
+    {
+        QImage img(tmp_dir+"/OEBPS/"+book_cover);
+        book_cover=book_cover.left(book_cover.length()-QFileInfo(book_cover).suffix().length())+"jpg";
+        img.save(tmp_dir+"/OEBPS/"+book_cover);
+    }
+    return tmp_dir+"/OEBPS/"+book_cover;
+}
+
+struct group_colors
+{
+    QList<QColor> list;
+};
+
+QColor GetColor(QImage img)
+{
+    int h=img.height();
+    int w=img.width();
+    int step=10;
+    int error=32;
+    QMap<QRgb,QList<QColor> > colors;
+    for(int i=0;i<h;i+=step)
+    {
+        for(int j=0;j<w;j+=step)
+        {
+            QColor color=img.pixel(j,i);
+            color.setBlue(color.blue()/error);
+            color.setGreen(color.green()/error);
+            color.setRed(color.red()/error);
+            colors[color.rgb()]<<img.pixel(j,i);
+        }
+    }
+    QMap<QRgb,QList<QColor> >::iterator it = colors.begin();
+    QList<QColor> result;
+    QList<QColor> result_prev;
+    int max=0;
+    for(;it != colors.end(); ++it)
+    {
+       if(max<it.value().count())
+       {
+           max=it.value().count();
+           result_prev=result;
+           result=it.value();
+       }
+    }
+    qlonglong r=0,g=0,b=0;
+    foreach (QColor color, result)
+    {
+        r+=color.red();
+        g+=color.green();
+        b+=color.blue();
+    }
+    if(result_prev.count()>0)
+    {
+        qlonglong pr=0,pg=0,pb=0;
+        foreach (QColor color, result_prev)
+        {
+            pr+=color.red();
+            pg+=color.green();
+            pb+=color.blue();
+        }
+        if((pr+pg+pb)/result_prev.count()>(r+g+b)/result.count())
+            return QColor(pr/result_prev.count(),pg/result_prev.count(),pb/result_prev.count());
+        else
+            return QColor(r/result.count(),g/result.count(),b/result.count());
+    }
+    return QColor(r/result.count(),g/result.count(),b/result.count());
+}
+
+struct fontfamily
+{
+    int font;
+    int font_b;
+    int font_i;
+    int font_bi;
+    QMap<QString,QString> tags;
+    fontfamily()
+    {
+        font=-1;
+        font_b=-1;
+        font_i=-1;
+        font_bi=-1;
+    }
+
+    bool operator ==(const fontfamily a)
+    {
+        return font==a.font && font_b==a.font_b && font_i==a.font_i && font_bi==a.font_bi;
+    }
+};
+
+QString fb2mobi::convert(QStringList files, bool remove, QString format, book_info &bi)
+{
+    QSettings *settings=GetSettings();
+
+    book_inf=&bi;
+    outputFormat=format;
+    if(files.count()==1)
+    {
+        fb2file.setFile(files.first());
+        QString out_file;
+        if(fb2file.suffix().toLower()=="epub" && (format=="MOBI" || format=="AZW3"))
+        {
+            QProcess::execute(QApplication::applicationDirPath()+"/xsl/kindlegen",QStringList()<<tmp_dir+"/"+fb2file.fileName());
+            out_file=tmp_dir+"/"+fb2file.completeBaseName()+".mobi";
+            if(format=="AZW3")
+            {
+                out_file=GenerateAZW3(out_file);
+            }
+            return out_file;
+        }
+    }
+    QString out_file;
+    QDir dir;
+    removeFolder(tmp_dir+"/OEBPS");
+    dir.mkpath(tmp_dir+"/OEBPS");
+    dir.mkpath(tmp_dir+"/OEBPS/css");
+    QFile::copy(QApplication::applicationDirPath()+"/xsl/css/style.css",tmp_dir+"/OEBPS/css/main.css");
+    if(settings->value("userCSS",false).toBool())
+    {
+        QString userCSS=settings->value("UserCSStext","").toString();
+        if(!userCSS.isEmpty())
+        {
+            QFile file(tmp_dir+"/OEBPS/css/main.css");
+            file.remove();
+            if(file.open(QFile::WriteOnly))
+            {
+                file.write(userCSS.toUtf8());
+                file.close();
+            }
+        }
+    }
+    dir.mkpath(tmp_dir+"/OEBPS/pic");
+    if(vignette>0)
+    {
+        dir.setPath(QApplication::applicationDirPath()+"/xsl/img");
+        QFileInfoList list = dir.entryInfoList();
+        foreach (QFileInfo i, list)
+        {
+            if(i.suffix().toLower()!="txt")
+                QFile::copy(i.absoluteFilePath(),tmp_dir+"/OEBPS/pic/"+i.fileName());
+        }
+    }
+    QString HomeDir="";
+    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
+        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+    QString db_path=QFileInfo(settings->value("database_path",HomeDir+"/freeLib/freeLib.sqlite").toString()).absolutePath()+"/fonts";
+
+    QFile css(tmp_dir+"/OEBPS/css/main.css");
+    css.open(QFile::Append);
+    int count=settings->beginReadArray("fonts");
+    QStringList fonts;
+    QList<fontfamily> fonts_set;
+    for(int i=0;i<count;i++)
+    {
+        settings->setArrayIndex(i);
+        if(settings->value("use").toBool())
+        {
+            dir.mkpath(tmp_dir+"/OEBPS/fonts");
+            fontfamily set;
+            for(int j=0;j<4;j++)
+            {
+                QString font_file=settings->value(j==0?"font":j==1?"font_b":j==2?"font_i":j==3?"font_bi":"").toString();
+                int index=fonts.indexOf(font_file);
+                if(index<0 && !font_file.isEmpty())
+                {
+                    fonts.append(font_file);
+                    index=fonts.count()-1;
+                    if(QFile::exists(QApplication::applicationDirPath()+"/xsl/fonts/"+font_file))
+                    {
+                        QFile::copy(QApplication::applicationDirPath()+"/xsl/fonts/"+font_file,tmp_dir+QString("/OEBPS/fonts/font%1.ttf").arg(QString::number(index)));
+                    }
+                    else
+                    {
+                        if(QFile::exists(db_path+"/"+font_file))
+                        {
+                            QFile::copy(db_path+"/"+font_file,tmp_dir+QString("/OEBPS/fonts/font%1.ttf").arg(QString::number(index)));
+                        }
+                        else
+                        {
+                            QFileInfo fi(font_file);
+                            font_file=fi.fileName();
+                            QFile::copy(fi.absoluteFilePath(),tmp_dir+QString("/OEBPS/fonts/font%1.ttf").arg(QString::number(index)));
+                        }
+                    }
+                }
+                if(j==0)
+                    set.font=index;
+                else if(j==1)
+                    set.font_b=index;
+                else if(j==2)
+                    set.font_i=index;
+                else if(j==3)
+                    set.font_bi=index;
+            }
+            int tag_id=settings->value("tag").toInt();
+            set.tags[tag_list[tag_id].css]=settings->value("fontSize").toString();
+            bool find=false;
+            for (int j=0;j<fonts_set.count();j++)
+            {
+                if(fonts_set[j]==set)
+                {
+                    find=true;
+                    fonts_set[j].tags[tag_list[tag_id].css]=settings->value("fontSize").toString();
+                    break;
+                }
+            }
+            if(!find)
+            {
+                for(int j=0;j<4;j++)
+                {
+                    if(j==0 && set.font==-1)
+                        continue;
+                    if(j==1 && set.font_b==-1)
+                        continue;
+                    if(j==2 && set.font_i==-1)
+                        continue;
+                    if(j==3 && set.font_bi==-1)
+                        continue;
+                    css.write(QString("\n@font-face {\n"
+                                  "font-family: \"font%4\";\n"
+                                           "src: url(\"../fonts/%1\");\n"
+                                           "%2"
+                                           "%3"
+                                       "}\n").arg(
+                              QString("font%1.ttf").arg(QString::number(j==0?set.font:j==1?set.font_b:j==2?set.font_i:j==3?set.font_bi:0)),
+                              (j==1||j==3)?"font-weight: bold;\n":"",
+                              (j==2||j==3)?"font-style: italic;\n":"",
+                              QString::number(fonts_set.count())).toUtf8());
+                }
+                fonts_set<<set;
+            }
+        }
+    }
+    settings->endArray();
+    int font_index=0;
+    foreach (fontfamily set_i, fonts_set)
+    {
+        QStringList keys=set_i.tags.keys();
+        foreach (QString key, keys)
+        {
+            css.write(QString("\n%2 {\n"
+                "font-family: \"%1\";\n"
+                "font-size: %3%;\n"
+                "}\n").arg(QString("font%1").arg(QString::number(font_index)),
+                           key,
+                           set_i.tags[key]).toUtf8());
+        }
+        font_index++;
+    }
+
+    css.close();
+    join_seria=files.count()>1;
+    int i=0;
+    foreach (QString file, files)
+    {
+        fb2file.setFile(file);
+        if(fb2file.suffix().toLower()!="fb2")
+            return "";
+        QFile f(tmp_dir+QString("/book%1.fb2").arg(QString::number(i)));
+        if(!f.open(QIODevice::ReadOnly | QIODevice::Text))
+        {
+            qDebug()<<"Error open fb2 file: "<<f.fileName();
+            return "";
+        }
+        current_book=i+1;
+        generate_html(&f);
+        f.close();
+        i++;
+    }
+    QFile f;
+    QTextStream ts(&f);
+    foreach (html_content html, html_files)
+    {
+        QString html_file=tmp_dir+QString("/OEBPS/%1").arg(html.file_name);
+        f.setFileName(html_file);
+        f.open(QIODevice::WriteOnly);
+        ts<<html.content;
+        f.close();
+    }
+    if(settings->value("repairCover",true).toBool() && !book_cover.isEmpty())
+    {
+        QImage img(tmp_dir+"/OEBPS/"+book_cover);
+        img=img.convertToFormat(QImage::Format_RGB32);
+        if(img.width()<625 || img.height()<625 || (img.height()<1000 && img.width()<1000))
+        {
+            int h=img.height();
+            int w=img.width();
+            if(h<1100)
+            {
+                w=w*1100/h;
+                h=1100;
+            }
+            if(w<700)
+            {
+                h=h*700/w;
+                w=700;
+            }
+            img=img.scaled(w,h,Qt::KeepAspectRatio,Qt::SmoothTransformation);
+            img.save(tmp_dir+"/OEBPS/"+book_cover);
+        }
+        double Aspect=double(img.width())/double(img.height());
+        if(Aspect<=0.62 || Aspect>=0.63)
+        {
+            int h=img.height();
+            int w=img.width();
+            if(Aspect<=0.62)
+            {
+                w=h*0.6252;
+            }
+            else
+            {
+                h=w/0.6252;
+            }
+            QImage img_new(w,h,QImage::Format_RGB32);
+            QPainter painter(&img_new);
+            if(Aspect<0.62)
+            {
+                painter.fillRect(0,0,w/2,h,QBrush(GetColor(img.copy(0,0,img.width()/5,img.height()))));
+                painter.fillRect(w/2,0,w/2,h,QBrush(GetColor(img.copy(img.width()-img.width()/5,0,img.width()/5,img.height()))));
+            }
+            else
+            {
+                painter.fillRect(0,0,w,h/2,QBrush(GetColor(img.copy(0,0,img.width(),img.height()/5))));
+                painter.fillRect(0,h/2,w,h/2,QBrush(GetColor(img.copy(0,img.height()-img.height()/5,img.width(),img.height()/5))));
+            }
+            painter.drawImage((w-img.width())/2,(h-img.height())/2,img);
+            img_new.save(tmp_dir+"/OEBPS/"+book_cover);
+        }
+    }
+    if(settings->value("addCoverLabel",false).toBool() || settings->value("createCover",false).toBool())
+    {
+        QString abbr = "";
+        foreach(QString str,book_inf->seria.split(" "))
+            abbr+=str.left(1);
+        //qDebug()<<book_inf->seria;
+        QString title = settings->value("coverLabel").toString();
+        if(title.isEmpty())
+            title=default_cover_label;
+        title=fillParams(title,*book_inf);
+        if(book_inf->num_in_seria==0 || !settings->value("addCoverLabel",false).toBool())
+            title="";
+        InsertSeriaNumberToCover(title,
+                                 (settings->value("createCaverAlways",false).toBool()?cc_always:(settings->value("createCover",false).toBool()?cc_if_not_exists:cc_no)));
+    }
+    generate_toc();
+    if(settings->value("content_placement",0).toInt()!=0)
+    {
+        QString toc_file=tmp_dir+"/OEBPS/toc.html";;
+        f.setFileName(toc_file);
+        f.open(QIODevice::WriteOnly);
+        ts<<buf;
+        f.close();
+    }
+
+    if(!buf_annotation.isEmpty() && !settings->value("annotation",false).toBool())
+    {
+        QString annotation_file=tmp_dir+"/OEBPS/annotation.html";
+        f.setFileName(annotation_file);
+        f.open(QIODevice::WriteOnly);
+        ts<<buf_annotation;
+        f.close();
+    }
+
+    if(format=="MOBI" || format=="AZW3" || format=="MOBI7")
+        generate_ncx();
+    else
+        generate_ncx_epub();
+    QString ncx_file=tmp_dir+"/OEBPS/toc.ncx";;
+    f.setFileName(ncx_file);
+    f.open(QIODevice::WriteOnly);
+    ts<<buf;
+    f.close();
+
+    if(format=="MOBI" || format=="AZW3" || format=="MOBI7")
+        generate_opf();
+    else
+        generate_opf_epub();
+    QString opf_file=tmp_dir+"/OEBPS/book.opf";;
+    f.setFileName(opf_file);
+    f.open(QIODevice::WriteOnly);
+    ts<<buf;
+    f.close();
+
+    if(format=="MOBI" || format=="AZW3" || format=="MOBI7")
+    {
+        QProcess::execute(QApplication::applicationDirPath()+"/xsl/kindlegen",QStringList()<<opf_file);
+        out_file=tmp_dir+"/OEBPS/book.mobi";
+    }
+    if(format=="AZW3")
+    {
+        out_file=GenerateAZW3(out_file);
+    }
+    if(format=="MOBI7")
+    {
+        out_file=GenerateMOBI7(out_file);
+    }
+    else if(format=="EPUB")
+    {
+        if(QDir(tmp_dir+"/OEBPS/pic").entryList(QStringList(),QDir::Files).count()==0)
+        {
+            QDir().rmpath(tmp_dir+"/OEBPS/pic");
+        }
+        QDir().mkpath(tmp_dir+"/META-INF");
+        generate_mime();
+        QString mime_file=tmp_dir+"/mimetype";;
+        f.setFileName(mime_file);
+        f.open(QIODevice::WriteOnly);
+        ts<<buf;
+        f.close();
+        generate_container();
+        QString container_file=tmp_dir+"/META-INF/container.xml";;
+        f.setFileName(container_file);
+        f.open(QIODevice::WriteOnly);
+        ts<<buf;
+        f.close();
+
+        QuaZip zip(tmp_dir+"/book.epub");
+        zip.open(QuaZip::mdCreate);
+        QuaZipFile zip_file(&zip);
+        //zip.
+        zip_file.open(QIODevice::WriteOnly,QuaZipNewInfo("mimetype"),0,0,0,0);
+        QFile file(mime_file);
+        file.open(QIODevice::ReadOnly);
+        zip_file.write(file.readAll());
+        zip_file.close();
+        ZipDir(&zip,QDir(tmp_dir+"/OEBPS"));
+        ZipDir(&zip,QDir(tmp_dir+"/META-INF"));
+        zip.close();
+
+        out_file=tmp_dir+"/book.epub";
+    }
+    else if(format=="PDF")
+    {
+
+        QWebEnginePage* pdf=new QWebEnginePage();
+         QEventLoop loop;
+        connect(pdf,SIGNAL(loadFinished(bool)),&loop,SLOT(quit()));
+        qDebug()<<QUrl::fromLocalFile(tmp_dir+"/OEBPS/"+html_files[0].file_name);
+        pdf->load(QUrl::fromLocalFile(tmp_dir+"/OEBPS/"+html_files[0].file_name));
+        loop.exec();
+        //qDebug()<<pdf->mainFrame()->toHtml();
+        //QPrinter printer;
+        //printer.setPageSize(QPrinter::A4);
+        out_file=tmp_dir+"/book.pdf";
+        QFile::remove(out_file);
+        //printer.setOutputFileName(out_file);
+        //printer.setOutputFormat(QPrinter::NativeFormat);
+        //pdf->print(&printer);
+        pdf->printToPdf(out_file);
+        qDebug()<<out_file<<html_files[0].file_name;
+        delete pdf;
+    }
+    return out_file;
+}
+

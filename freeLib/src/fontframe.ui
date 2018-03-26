@@ -1,0 +1,235 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>FontFrame</class>
+ <widget class="QFrame" name="FontFrame">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>620</width>
+    <height>83</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string notr="true"/>
+  </property>
+  <property name="frameShape">
+   <enum>QFrame::StyledPanel</enum>
+  </property>
+  <property name="frameShadow">
+   <enum>QFrame::Raised</enum>
+  </property>
+  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,1,0,0,0">
+   <property name="leftMargin">
+    <number>4</number>
+   </property>
+   <property name="topMargin">
+    <number>0</number>
+   </property>
+   <property name="rightMargin">
+    <number>4</number>
+   </property>
+   <property name="bottomMargin">
+    <number>0</number>
+   </property>
+   <item>
+    <widget class="QCheckBox" name="Use">
+     <property name="text">
+      <string/>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QComboBox" name="tag">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Maximum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
+     <property name="sizeAdjustPolicy">
+      <enum>QComboBox::AdjustToContents</enum>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_3">
+     <property name="spacing">
+      <number>1</number>
+     </property>
+     <item>
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>size</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QSpinBox" name="fontSize">
+       <property name="minimum">
+        <number>20</number>
+       </property>
+       <property name="maximum">
+        <number>1000</number>
+       </property>
+       <property name="singleStep">
+        <number>10</number>
+       </property>
+       <property name="value">
+        <number>100</number>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string notr="true">%</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QFrame" name="frame">
+     <property name="frameShape">
+      <enum>QFrame::StyledPanel</enum>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2" columnstretch="0,1,1">
+      <property name="leftMargin">
+       <number>4</number>
+      </property>
+      <property name="topMargin">
+       <number>4</number>
+      </property>
+      <property name="rightMargin">
+       <number>4</number>
+      </property>
+      <property name="bottomMargin">
+       <number>4</number>
+      </property>
+      <property name="spacing">
+       <number>4</number>
+      </property>
+      <item row="2" column="0">
+       <widget class="QLabel" name="label_6">
+        <property name="text">
+         <string>Italic</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_5">
+        <property name="text">
+         <string>Normal</string>
+        </property>
+       </widget>
+      </item>
+      <item row="2" column="1">
+       <widget class="QComboBox" name="font_i"/>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="font"/>
+      </item>
+      <item row="0" column="1">
+       <widget class="QLabel" name="label_3">
+        <property name="text">
+         <string>Regular</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QLabel" name="label_4">
+        <property name="text">
+         <string>Bold</string>
+        </property>
+        <property name="alignment">
+         <set>Qt::AlignCenter</set>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="2">
+       <widget class="QComboBox" name="font_b"/>
+      </item>
+      <item row="2" column="2">
+       <widget class="QComboBox" name="font_bi"/>
+      </item>
+     </layout>
+     <zorder>gridLayoutWidget</zorder>
+     <zorder>label_3</zorder>
+     <zorder>label_6</zorder>
+     <zorder>font</zorder>
+     <zorder>font_i</zorder>
+     <zorder>label_5</zorder>
+     <zorder>label_4</zorder>
+     <zorder>font_b</zorder>
+     <zorder>font_bi</zorder>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="spacing">
+      <number>1</number>
+     </property>
+     <item>
+      <widget class="QToolButton" name="Up">
+       <property name="maximumSize">
+        <size>
+         <width>22</width>
+         <height>22</height>
+        </size>
+       </property>
+       <property name="text">
+        <string notr="true">...</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/icons/img/icons/arrow_sans_up.png</normaloff>:/icons/img/icons/arrow_sans_up.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="Down">
+       <property name="maximumSize">
+        <size>
+         <width>22</width>
+         <height>22</height>
+        </size>
+       </property>
+       <property name="text">
+        <string notr="true">...</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/icons/img/icons/arrow_sans_down.png</normaloff>:/icons/img/icons/arrow_sans_down.png</iconset>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QToolButton" name="del">
+       <property name="maximumSize">
+        <size>
+         <width>22</width>
+         <height>22</height>
+        </size>
+       </property>
+       <property name="text">
+        <string notr="true">...</string>
+       </property>
+       <property name="icon">
+        <iconset resource="resource.qrc">
+         <normaloff>:/icons/img/icons/close.png</normaloff>:/icons/img/icons/close.png</iconset>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
+ <connections/>
+</ui>

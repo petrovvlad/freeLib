@@ -1,0 +1,170 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>AboutDialog</class>
+ <widget class="QDialog" name="AboutDialog">
+  <property name="windowModality">
+   <enum>Qt::WindowModal</enum>
+  </property>
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>640</width>
+    <height>400</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>About</string>
+  </property>
+  <property name="modal">
+   <bool>true</bool>
+  </property>
+  <widget class="QLabel" name="label">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>640</width>
+     <height>400</height>
+    </rect>
+   </property>
+   <property name="palette">
+    <palette>
+     <active>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>128</red>
+         <green>128</green>
+         <blue>128</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </active>
+     <inactive>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>128</red>
+         <green>128</green>
+         <blue>128</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </inactive>
+     <disabled>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>69</red>
+         <green>69</green>
+         <blue>69</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </disabled>
+    </palette>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>100</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string notr="true"/>
+   </property>
+   <property name="pixmap">
+    <pixmap resource="resource.qrc">:/splash.png</pixmap>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignCenter</set>
+   </property>
+  </widget>
+  <widget class="QLabel" name="version">
+   <property name="geometry">
+    <rect>
+     <x>30</x>
+     <y>140</y>
+     <width>261</width>
+     <height>111</height>
+    </rect>
+   </property>
+   <property name="palette">
+    <palette>
+     <active>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>255</green>
+         <blue>255</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </active>
+     <inactive>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>255</red>
+         <green>255</green>
+         <blue>255</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </inactive>
+     <disabled>
+      <colorrole role="WindowText">
+       <brush brushstyle="SolidPattern">
+        <color alpha="255">
+         <red>127</red>
+         <green>127</green>
+         <blue>127</blue>
+        </color>
+       </brush>
+      </colorrole>
+     </disabled>
+    </palette>
+   </property>
+   <property name="font">
+    <font>
+     <pointsize>75</pointsize>
+     <weight>75</weight>
+     <bold>true</bold>
+    </font>
+   </property>
+   <property name="text">
+    <string notr="true">v 1.0</string>
+   </property>
+   <property name="alignment">
+    <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignVCenter</set>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="toolButton">
+   <property name="geometry">
+    <rect>
+     <x>600</x>
+     <y>370</y>
+     <width>21</width>
+     <height>21</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string notr="true"/>
+   </property>
+   <property name="icon">
+    <iconset resource="resource.qrc">
+     <normaloff>:/icons/img/icons/close.png</normaloff>:/icons/img/icons/close.png</iconset>
+   </property>
+   <property name="default">
+    <bool>true</bool>
+   </property>
+  </widget>
+ </widget>
+ <resources>
+  <include location="resource.qrc"/>
+ </resources>
+ <connections/>
+</ui>
