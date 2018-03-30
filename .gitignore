@@ -1,0 +1,6 @@
+# Build results
+[Dd]ebug/
+[Rr]elease/
+
+# User-specific files
+*.user
