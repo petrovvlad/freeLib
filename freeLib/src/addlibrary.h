@@ -17,12 +17,14 @@ public:
     ~AddLibrary();
     //int exec();
     void AddNewLibrary(QString _name, QString _path, QString _fileName);
+    bool bLibChanged;
     
 private:
     Ui::AddLibrary *ui;
     ImportThread *imp_tr;
     QThread *thread;
-    int ExistingID;
+    qlonglong ExistingID;
+    void UpdateLibList();
     void SaveLibrary(QString _name, QString _path, QString _fileName, bool _firstAuthor);
     //bool itsOkToClose;
 private slots:
@@ -31,7 +33,6 @@ private slots:
     void SelectBooksDir();
     void StartImport();
     void SelectLibrary();
-    void UpdateLibList();
     //void Ok();
     void DeleteLibrary();
     void Add_Library();

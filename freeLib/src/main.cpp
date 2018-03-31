@@ -27,11 +27,11 @@ QApplication *app;
 
 bool SetCurrentZipFileName(QuaZip *zip,QString name)
 {
-    bool result=zip->setCurrentFile(name);
+    bool result=zip->setCurrentFile(name,QuaZip::csInsensitive);
     if(!result)
     {
         zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-        result=zip->setCurrentFile(name);
+        result=zip->setCurrentFile(name,QuaZip::csInsensitive);
     }
     return result;
 }

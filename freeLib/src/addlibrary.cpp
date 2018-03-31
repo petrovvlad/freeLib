@@ -1,36 +1,41 @@
+#include <QMainWindow>
+#include <QToolButton>
+
 #include "addlibrary.h"
 #include "ui_addlibrary.h"
 #include "common.h"
-#include <QToolButton>
-//#include "zip/unzip.h"
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
-#include <QMainWindow>
 #include "exportdlg.h"
 
 AddLibrary::AddLibrary(QWidget *parent) :
     QDialog(parent,Qt::Dialog|Qt::WindowSystemMenuHint),
     ui(new Ui::AddLibrary)
 {
+    bLibChanged = false;
     ui->setupUi(this);
+
     QToolButton* tbInpx=new QToolButton(this);
     tbInpx->setFocusPolicy(Qt::NoFocus);
     tbInpx->setCursor(Qt::ArrowCursor);
     tbInpx->setText("...");
-    //tbClear->setVisible(false);
     QHBoxLayout* layout=new QHBoxLayout(ui->inpx);
     layout->addWidget(tbInpx,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
+
     QToolButton* tbBooksDir=new QToolButton(this);
     tbBooksDir->setFocusPolicy(Qt::NoFocus);
     tbBooksDir->setCursor(Qt::ArrowCursor);
     tbBooksDir->setText("...");
-    //tbClear->setVisible(false);
     layout=new QHBoxLayout(ui->BookDir);
     layout->addWidget(tbBooksDir,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
+
+    ExistingID = -1;
+    UpdateLibList();
+
     connect(tbInpx,SIGNAL(clicked()),this,SLOT(InputINPX()));
     connect(tbBooksDir,SIGNAL(clicked()),this,SLOT(SelectBooksDir()));
     connect(ui->btnUpdate,SIGNAL(clicked()),this,SLOT(StartImport()));
@@ -41,12 +46,9 @@ AddLibrary::AddLibrary(QWidget *parent) :
     connect(ui->Del,SIGNAL(clicked()),this,SLOT(DeleteLibrary()));
     connect(ui->Add,SIGNAL(clicked()),this,SLOT(Add_Library()));
     connect(ui->ExistingLibs->lineEdit(),SIGNAL(editingFinished()),this,SLOT(ExistingLibsChanged()));
-    UpdateLibList();
     ui->add_new->setChecked(true);
 
-    //ui->btnExport->setVisible(false);
     SelectLibrary();
-//    connect(ui->PayPal,SIGNAL())
 }
 
 AddLibrary::~AddLibrary()
@@ -56,10 +58,6 @@ AddLibrary::~AddLibrary()
 
 void AddLibrary::Add_Library()
 {
-    //if(!db_is_open)
-    {
-        db_is_open=openDB(true,false);
-    }
     ExistingID=-1;
     ui->ExistingLibs->addItem(tr("new"),"");
     ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
@@ -81,7 +79,6 @@ void AddLibrary::LogMessage(QString msg)
         ui->Log->takeItem(0);
     ui->Log->addItem(msg);
     ui->Log->setCurrentRow(ui->Log->count()-1);
-    //qDebug()<<msg;
 }
 void AddLibrary::InputINPX()
 {
@@ -97,31 +94,22 @@ void AddLibrary::InputINPX()
             qDebug()<<"Error open INPX file: "<<fileName;
             return;
         }
-        //QStringList list = uz.getFileNameList();
-        //foreach(QString str,list)
-        //{
-            if(SetCurrentZipFileName(&uz,"COLLECTION.INFO"))
-            {
-                QBuffer outbuff;
-                //if (!outbuff.open(QIODevice::ReadWrite))
-                //{
-                //    qDebug()<<("Error create buffer!");
-                //    return;
-                //}
-                //uz.extractFile(str,&outbuff,UnZip::SkipPaths);
-                QuaZipFile zip_file(&uz);
-                zip_file.open(QIODevice::ReadOnly);
-                outbuff.setData(zip_file.readAll());
-                zip_file.close();
-                //qDebug()<<outbuff.size();
-                QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
-                foreach(QString line,lines)
-                {
-                    ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(),line);
-                    break;
-                }
-            }
-        //}
+        if(SetCurrentZipFileName(&uz,"COLLECTION.INFO"))
+        {
+            QBuffer outbuff;
+            QuaZipFile zip_file(&uz);
+            zip_file.open(QIODevice::ReadOnly);
+            outbuff.setData(zip_file.readAll());
+            zip_file.close();
+            QString sLib = QString::fromUtf8(outbuff.data().left(outbuff.data().indexOf('\n')));
+            ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(),sLib);
+//            QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
+//            foreach(QString line,lines)
+//            {
+//                ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(),line);
+//                break;
+//            }
+        }
     }
 }
 void AddLibrary::SelectBooksDir()
@@ -138,9 +126,8 @@ void AddLibrary::UpdateLibList()
         return;
     QSqlQuery query(QSqlDatabase::database("libdb"));
     query.exec("SELECT id,name,path,inpx,firstauthor FROM lib ORDER BY name");
-    int CurrentID=current_lib.id;
+    qlonglong CurrentID=current_lib.id;
     ui->ExistingLibs->clear();
-    //ui->ExistingLibs->addItem(tr("new"),"");
     while(query.next())
     {
         ui->ExistingLibs->addItem(query.value(1).toString().trimmed(),
@@ -148,7 +135,6 @@ void AddLibrary::UpdateLibList()
                                   query.value(2).toString().trimmed()+"$#$?#-"+
                                   query.value(3).toString().trimmed()+"$#$?#-"+
                                   query.value(4).toString().trimmed());
-        //qDebug()<<query.value(4).toString();
         if(query.value(0).toInt()==CurrentID)
             ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
     }
@@ -167,9 +153,7 @@ void AddLibrary::StartImport()
     ui->btnCancel->setText(tr("Break"));
     ui->update_group->hide();
     //ui->author_group->hide();
-    //qDebug()<<ui->ExistingLibs->currentText().trimmed();
     SaveLibrary(ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),ui->firstAuthorOnly->isChecked());
-    //qDebug()<<ui->ExistingLibs->currentText().trimmed();
 
     thread = new QThread;
     imp_tr=new ImportThread();
@@ -193,17 +177,13 @@ void AddLibrary::AddNewLibrary(QString _name, QString _path, QString _fileName)
     {
         db_is_open=openDB(true,false);
     }
-    //qDebug()<<_name;
     ExistingID=-1;
     ui->ExistingLibs->addItem(_name,"");
-    //qDebug()<<ui->ExistingLibs->count();
     ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
     app->processEvents();
     ui->BookDir->setText(_path);
-    //ui->LibName->setText(_name);
     ui->inpx->setText(_fileName);
     ui->add_new->setChecked(true);
-    //qDebug()<<ui->ExistingLibs->currentText();
     StartImport();
     exec();
 }
@@ -226,7 +206,6 @@ void AddLibrary::SelectLibrary()
         }
     }
     QStringList str=ui->ExistingLibs->itemData(ui->ExistingLibs->currentIndex()).toString().split("$#$?#-");
-    //qDebug()<<str;
     if(str.count()<2)
         str.clear();
     QString dir,inpx;
@@ -247,35 +226,28 @@ void AddLibrary::SelectLibrary()
     QSettings* settings=GetSettings();
     ui->OPDS->setText(str.count()==0?"":QString("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(str[0],settings->value("OPDS_port",default_OPDS_port).toString()));
     ui->HTTP->setText(str.count()==0?"":QString("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(str[0],settings->value("OPDS_port",default_OPDS_port).toString()));
-   // qDebug()<<2;
 
-    settings->setValue("LibID",(str.count()==0?-1:str[0].toInt()));
+    settings->setValue("LibID",ExistingID/*(str.count()==0?-1:str[0].toInt())*/);
     settings->sync();
-    //delete settings;
     current_lib.id=ExistingID;
     current_lib.UpdateLib();
-   // qDebug()<<3;
 
 }
 
 void AddLibrary::SaveLibrary(QString _name,QString _path,QString _fileName,bool _firstAuthor)
 {
-//    qDebug()<<"save;";
     QSqlQuery query(QSqlDatabase::database("libdb"));
     if(ExistingID<0)
     {
         LogMessage(tr("Add library"));
         query.exec("INSERT INTO Lib(name,path,inpx,firstAuthor) values('"+_name+"','"+_path+"','"+_fileName+"',"+(_firstAuthor?"1":"0")+")");
-        //qDebug()<<query.lastError();
         query.exec("select last_insert_rowid()");
         query.next();
         ExistingID=query.value(0).toLongLong();
         QSettings* settings=GetSettings();
         settings->setValue("LibID",ExistingID);
         settings->sync();
-        //delete settings;
         current_lib.UpdateLib();
-    //    current_lib.id=ExistingID;
         UpdateLibList();
     }
     else
@@ -283,11 +255,10 @@ void AddLibrary::SaveLibrary(QString _name,QString _path,QString _fileName,bool 
         LogMessage(tr("Update library"));
         query.exec("UPDATE Lib SET name='"+_name+"',path='"+_path+"',inpx='"+_fileName+"' ,firstAuthor="+(_firstAuthor?"1":"0")+" WHERE ID="+QString::number(ExistingID));
     }
+    bLibChanged = true;
  }
 void AddLibrary::DeleteLibrary()
 {
-    //ui->ExistingLibs->setEnabled(ui->ExistingLibs->count()>0);
-
     if(ExistingID<0)
         return;
     if(QMessageBox::question(this,tr("Delete library"),tr("Delete library")+" \""+ui->ExistingLibs->currentText()+"\"",QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
@@ -296,6 +267,7 @@ void AddLibrary::DeleteLibrary()
     QSqlQuery query(QSqlDatabase::database("libdb"));
     query.exec("DELETE FROM lib where ID="+QString::number(ExistingID));
     UpdateLibList();
+    bLibChanged = true;
 }
 void AddLibrary::EndUpdate()
 {
@@ -308,7 +280,6 @@ void AddLibrary::EndUpdate()
     ui->inpx->setDisabled(false);
     ui->Del->setDisabled(false);
     ui->Add->setDisabled(false);
-    //ui->LibName->setDisabled(false);
     ui->ExistingLibs->setDisabled(false);
     ui->update_group->show();
     //ui->author_group->show();
@@ -344,7 +315,11 @@ void AddLibrary::ExistingLibsChanged()
 
 void AddLibrary::ExportLib()
 {
-    accept();
+    //accept();
+    QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
+    ExportDlg ed(this);
+    ed.exec(current_lib.id,dirName);
+
 }
 
 
