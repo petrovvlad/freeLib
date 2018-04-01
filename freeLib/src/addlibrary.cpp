@@ -40,7 +40,7 @@ AddLibrary::AddLibrary(QWidget *parent) :
     connect(tbBooksDir,SIGNAL(clicked()),this,SLOT(SelectBooksDir()));
     connect(ui->btnUpdate,SIGNAL(clicked()),this,SLOT(StartImport()));
     //connect(ui->btnOK,SIGNAL(clicked()),this,SLOT(Ok()));
-    connect(ui->btnCancel,SIGNAL(clicked()),this,SLOT(terminateImport()));
+    //connect(ui->btnCancel,SIGNAL(clicked()),this,SLOT(terminateImport()));
     connect(ui->btnExport,SIGNAL(clicked()),this,SLOT(ExportLib()));
     connect(ui->ExistingLibs,SIGNAL(currentIndexChanged(int)),this,SLOT(SelectLibrary()));
     connect(ui->Del,SIGNAL(clicked()),this,SLOT(DeleteLibrary()));
@@ -141,18 +141,15 @@ void AddLibrary::UpdateLibList()
 }
 void AddLibrary::StartImport()
 {
-    //ui->btnOK->setDisabled(true);
     int update_type=(ui->add_new->isChecked()?UT_NEW:ui->del_old->isChecked()?UT_DEL_AND_NEW:UT_FULL);
     ui->btnUpdate->setDisabled(true);
     ui->BookDir->setDisabled(true);
     ui->inpx->setDisabled(true);
-    //ui->LibName->setDisabled(true);
     ui->ExistingLibs->setDisabled(true);
     ui->Del->setDisabled(true);
     ui->Add->setDisabled(true);
     ui->btnCancel->setText(tr("Break"));
     ui->update_group->hide();
-    //ui->author_group->hide();
     SaveLibrary(ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),ui->firstAuthorOnly->isChecked());
 
     thread = new QThread;
@@ -163,7 +160,6 @@ void AddLibrary::StartImport()
     connect(imp_tr, SIGNAL(Message(QString)), this, SLOT(LogMessage(QString)));
     connect(thread, SIGNAL(started()), imp_tr, SLOT(process()));
     connect(imp_tr, SIGNAL(End()), thread, SLOT(quit()));
-   // connect(worker, SIGNAL(End()), worker, SLOT(deleteLater()));
     connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
     connect(imp_tr, SIGNAL(End()), this, SLOT(EndUpdate()));
     connect(this, SIGNAL(break_import()), imp_tr, SLOT(break_import()));
@@ -273,7 +269,6 @@ void AddLibrary::EndUpdate()
 {
     LogMessage(tr("Ending"));
     UpdateLibList();
-    //ui->btnOK->setDisabled(false);
     ui->btnUpdate->setDisabled(false);
     ui->btnCancel->setText(tr("Close"));
     ui->BookDir->setDisabled(false);
@@ -282,7 +277,7 @@ void AddLibrary::EndUpdate()
     ui->Add->setDisabled(false);
     ui->ExistingLibs->setDisabled(false);
     ui->update_group->show();
-    //ui->author_group->show();
+    bLibChanged = true;
 }
 void AddLibrary::terminateImport()
 {

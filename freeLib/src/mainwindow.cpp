@@ -490,6 +490,8 @@ void MainWindow::UpdateTags()
 {
     if(!db_is_open)
         return;
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
     QButtonGroup *group=new QButtonGroup(this);
     group->setExclusive(true);
     disconnect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
@@ -532,6 +534,8 @@ void MainWindow::UpdateTags()
 
     ui->TagFilter->addItem(tr("setup ..."),-1);
     connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+
+    QApplication::restoreOverrideCursor();
 }
 
 void MainWindow::TimerSearch()
@@ -1455,6 +1459,8 @@ void MainWindow::UpdateJanre()
 {
     if(!db_is_open)
         return;
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
     QSqlQuery query_child(QSqlDatabase::database("libdb"));
     QSqlQuery query(QSqlDatabase::database("libdb"));
 
@@ -1530,6 +1536,7 @@ void MainWindow::UpdateJanre()
     if(current_list_for_tag==(QObject*)ui->JanreList)
         current_list_id=-1;
 
+    QApplication::restoreOverrideCursor();
 }
 void MainWindow::SelectBook()
 {
@@ -1674,21 +1681,23 @@ void MainWindow::Add_Library()
     SaveLibPosition();
     AddLibrary al(this);
     al.exec();
-    int result=al.result();
-    QSettings *settings=GetSettings();
-    current_list_id=settings->value("current_list_id",0).toLongLong();
-    stored_book=settings->value("current_book_id",0).toLongLong();
-    UpdateJanre();
-    UpdateTags();
-    searchCanged(ui->searchString->text());
-    setWindowTitle(AppName+(current_lib.name.isEmpty()||current_lib.id<0?"":" - "+current_lib.name));
-    FillLibrariesMenu();
-    if(result==1) //нажата кнопка экспорт
-    {
-        QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
-        ExportDlg ed(this);
-        ed.exec(current_lib.id,dirName);
+    //int result=al.result();
+    if(al.bLibChanged){
+        QSettings *settings=GetSettings();
+        current_list_id=settings->value("current_list_id",0).toLongLong();
+        stored_book=settings->value("current_book_id",0).toLongLong();
+        UpdateJanre();
+        UpdateTags();
+        searchCanged(ui->searchString->text());
+        setWindowTitle(AppName+(current_lib.name.isEmpty()||current_lib.id<0?"":" - "+current_lib.name));
+        FillLibrariesMenu();
     }
+    //    if(result==1) //нажата кнопка экспорт
+//    {
+//        QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
+//        ExportDlg ed(this);
+//        ed.exec(current_lib.id,dirName);
+//    }
 }
 void MainWindow::btnAuthor()
 {
