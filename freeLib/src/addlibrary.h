@@ -2,7 +2,9 @@
 #define ADDLIBRARY_H
 
 #include <QDialog>
+#include <QMap>
 #include "importthread.h"
+#include "common.h"
 
 namespace Ui {
 class AddLibrary;
@@ -23,10 +25,10 @@ private:
     Ui::AddLibrary *ui;
     ImportThread *imp_tr;
     QThread *thread;
-    qlonglong ExistingID;
     void UpdateLibList();
-    void SaveLibrary(QString _name, QString _path, QString _fileName, bool _firstAuthor);
-    //bool itsOkToClose;
+    void SaveLibrary(int idLib,QString _name, QString _path, QString _fileName, bool _firstAuthor, bool bWoDeleted);
+    QMap<int,SLib> mapLib;
+    int IdCurrentLib_;
 private slots:
     void LogMessage(QString msg);
     void InputINPX();

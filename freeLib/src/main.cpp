@@ -1,4 +1,4 @@
-#include <QtWidgets/QApplication>
+#include <QApplication>
 #include <QDesktopWidget>
 #include <QNetworkProxy>
 #include <QStyleFactory>
@@ -17,6 +17,7 @@
 
 
 SLib current_lib;
+int IdCurrentLib;
 QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
@@ -273,7 +274,6 @@ QString FindLocaleFile(QString locale,QString name,QString suffics)
     bool qm=true;
     while(!QFile(FileName).exists())
     {
-        //qDebug()<<FileName;
         if(qm)
         {
             FileName=FileName.left(FileName.length()-(suffics.length()+1));
@@ -458,6 +458,7 @@ int main(int argc, char *argv[])
         splash->show();
     a.processEvents();
     setProxy();
+    IdCurrentLib=settings->value("LibID",-1).toInt();
     MainWindow w;
 #ifdef Q_OS_OSX
   //  w.setWindowFlags(w.windowFlags() & ~Qt::WindowFullscreenButtonHint);

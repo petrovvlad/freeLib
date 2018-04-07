@@ -1,17 +1,15 @@
+#include <QDomDocument>
+#include <QBuffer>
+
 #include "importthread.h"
-//#include "zip/unzip.h"
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "common.h"
-#include <QBuffer>
-#include <QDomDocument>
-//#include "zip/zip.h"
 
 
 
 void ClearLib(qlonglong existingID,bool delete_only)
 {
-    //qDebug()<<4;
     QSqlQuery query(QSqlDatabase::database("libdb"));
     if(delete_only)
     {
@@ -328,7 +326,6 @@ qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria
                name+"',"+QString::number(star)+","+QString::number(id_seria)+","+QString::number(num_in_seria)+",'"+language+"','"+
                ToIndex(name)+"','"+file+"',"+QString::number(size)+","+(deleted?"1":"0")+",'"+date.toString("yyyy/MM/dd")+"','"+keys+"',"+
                QString::number(IDinLib)+","+QString::number(id_lib)+",'"+format+"','"+archive+"'"+","+QString::number(tag)+ ")");
-    //qDebug()<<query.lastError();
     query->exec("select last_insert_rowid()");
     query->next();
     qlonglong id=query->value(0).toLongLong();
@@ -351,7 +348,7 @@ qlonglong ImportThread::AddJanre(qlonglong id_book,QString janre,qlonglong id_li
     return id;
 }
 
-void ImportThread::start(QString fileName, QString name, QString path, long ID, int update_type, bool save_only, bool firstAuthor)
+void ImportThread::start(QString fileName, QString name, QString path, long ID, int update_type, bool save_only, bool firstAuthor, bool bWoDeleted)
 {
     _fileName=RelativeToAbsolutePath(fileName);
     if(!QFileInfo(_fileName).exists() || !QFileInfo(_fileName).isFile())
@@ -365,6 +362,7 @@ void ImportThread::start(QString fileName, QString name, QString path, long ID, 
     loop=true;
     _save_only=save_only;
     _firstAuthorOnly=firstAuthor;
+    bWoDeleted_ = bWoDeleted;
 }
 
 void ImportThread::readFB2_test(const QByteArray& ba,QString file_name,QString arh_name)
@@ -657,7 +655,6 @@ void ImportThread::process()
         query->exec(QString("delete from book_janre where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(existingID)));
         query->exec(QString("delete from book_author where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(existingID)));
         query->exec("drop table if exists tmp;");
-        //qDebug()<<query.lastError();
         query->exec("VACUUM");
         emit End();
         return;
@@ -722,8 +719,6 @@ void ImportThread::process()
             zip_file.open(QIODevice::ReadOnly);
             outbuff.setData(zip_file.readAll());
             zip_file.close();
-            //uz.extractFile(str,&outbuff,UnZip::SkipPaths);
-            //qDebug()<<outbuff.size();
             QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
             foreach(QString line,lines)
             {
@@ -770,8 +765,8 @@ void ImportThread::process()
                   i++;
                 }
 
-                //break;
             }
+            break;
         }
     }
     foreach( QString str , list  )
@@ -798,10 +793,10 @@ void ImportThread::process()
         //uz.extractFile(str,&outbuff,UnZip::SkipPaths);
         QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
         qlonglong t1_=0,t2_=0,t3_=0,t4_=0,count=0;
+        if(lines.count()>0)
+            query->exec("BEGIN;");
         foreach(QString line,lines)
         {
-            if(count==0)
-                query->exec("BEGIN;");
             qlonglong t0=QDateTime::currentMSecsSinceEpoch();
             app->processEvents();
             if(!loop)
@@ -809,85 +804,84 @@ void ImportThread::process()
                 break;
             }
             QStringList substrings=line.split(QChar(4));
-            //qDebug()<<substrings.count();
             if(substrings.count()==0)
                 continue;
             QString name;
-            if(substrings.count()>=field_index[_NAME]+1)
+            if(substrings.count()>field_index[_NAME])
             {
                 name=substrings[field_index[_NAME]].trimmed();
             }
             QString Seria;
-            if(substrings.count()>=field_index[_SERIA]+1)
+            if(substrings.count()>field_index[_SERIA])
                 Seria=substrings[field_index[_SERIA]].trimmed();
-            qlonglong num_in_seria=0;
-            if(substrings.count()>=field_index[_NUM_IN_SERIA]+1)
+            int num_in_seria=0;
+            if(substrings.count()>field_index[_NUM_IN_SERIA])
             {
                 num_in_seria=substrings[field_index[_NUM_IN_SERIA]].trimmed().toInt();
             }
             QString file;
-            if(substrings.count()>=field_index[_FILE]+1)
+            if(substrings.count()>field_index[_FILE])
             {
                 file=substrings[field_index[_FILE]].trimmed();
             }
-            qlonglong size=0;
-            if(substrings.count()>=field_index[_SIZE]+1)
+            int size=0;
+            if(substrings.count()>field_index[_SIZE])
             {
                 size=substrings[field_index[_SIZE]].trimmed().toInt();
             }
-            qlonglong id_in_lib=0;
-            if(substrings.count()>=field_index[_ID_IN_LIB]+1)
+            int id_in_lib=0;
+            if(substrings.count()>field_index[_ID_IN_LIB])
             {
                 id_in_lib=substrings[field_index[_ID_IN_LIB]].trimmed().toInt();
             }
             bool deleted=0;
-            if(substrings.count()>=field_index[_DELETED]+1)
+            if(substrings.count()>field_index[_DELETED])
             {
                 deleted=(substrings[field_index[_DELETED]].trimmed().toInt()>0);
             }
             QString format;
-            if(substrings.count()>=field_index[_FORMAT]+1)
+            if(substrings.count()>field_index[_FORMAT])
             {
                 format=substrings[field_index[_FORMAT]].trimmed();
             }
 
             QDate date;
-            if(substrings.count()>=field_index[_DATE]+1)
+            if(substrings.count()>field_index[_DATE])
             {
                 date=QDate::fromString(substrings[field_index[_DATE]].trimmed(),"yyyy-MM-dd");
             }
             QString language;
-            if(substrings.count()>=field_index[_LANGUAGE]+1)
+            if(substrings.count()>field_index[_LANGUAGE])
             {
                 language=substrings[field_index[_LANGUAGE]].trimmed();
             }
             qlonglong star=0;
-            if(substrings.count()>=field_index[_STAR]+1 && field_index[_STAR]>=0)
+            if(substrings.count()>field_index[_STAR] && field_index[_STAR]>=0)
             {
                 star=substrings[field_index[_STAR]].trimmed().toInt();
             }
             QString keys;
-            if(substrings.count()>=field_index[_KEYS]+1)
+            if(substrings.count()>field_index[_KEYS])
             {
                 keys=substrings[field_index[_KEYS]].trimmed();
             }
             QString folder=str;
-            if(substrings.count()>=field_index[_FOLDER]+1 && field_index[_FOLDER]>=0)
+            if(substrings.count()>field_index[_FOLDER] && field_index[_FOLDER]>=0)
             {
                 folder=substrings[field_index[_FOLDER]].trimmed();
             }
             int tag=0;
-            if(substrings.count()>=field_index[_TAG]+1 && field_index[_TAG]>=0)
+            if(substrings.count()>field_index[_TAG] && field_index[_TAG]>=0)
             {
                 tag=substrings[field_index[_TAG]].trimmed().toInt();
             }
             int tag_seria=0;
-            if(substrings.count()>=field_index[_TAG_SERIA]+1 && field_index[_TAG_SERIA]>=0)
+            if(substrings.count()>field_index[_TAG_SERIA] && field_index[_TAG_SERIA]>=0)
             {
                 tag_seria=substrings[field_index[_TAG_SERIA]].trimmed().toInt();
             }
             QStringList tag_author;
-            if(substrings.count()>=field_index[_TAG_AUTHOR]+1 && field_index[_TAG_AUTHOR]>=0)
+            if(substrings.count()>field_index[_TAG_AUTHOR] && field_index[_TAG_AUTHOR]>=0)
             {
                 tag_author=substrings[field_index[_TAG_AUTHOR]].trimmed().split(":");
             }
@@ -896,54 +890,57 @@ void ImportThread::process()
                 id_seria=AddSeria(Seria,existingID,tag_seria);
 
             qlonglong t1=QDateTime::currentMSecsSinceEpoch();
-            qlonglong id_book=AddBook(star,name,id_seria,num_in_seria,file,size,id_in_lib,deleted,format,date,language,keys,existingID,folder,tag);
-            qlonglong t2=QDateTime::currentMSecsSinceEpoch();
+            qlonglong id_book;
+            if(!bWoDeleted_ || !deleted){
+                id_book=AddBook(star,name,id_seria,num_in_seria,file,size,id_in_lib,deleted,format,date,language,keys,existingID,folder,tag);
+                qlonglong t2=QDateTime::currentMSecsSinceEpoch();
 
-            QStringList Authors=substrings[field_index[_AUTHORS]].split(':');
-            bool author_count=0;
-            foreach(QString author,Authors)
-            {
-                int tag_auth=0;
-                if(author_count<tag_author.count())
+                QStringList Authors=substrings[field_index[_AUTHORS]].split(':');
+                int author_count=0;
+                foreach(QString author,Authors)
                 {
-                    if(!tag_author[author_count].trimmed().isEmpty())
-                        tag_auth=tag_author[author_count].trimmed().toInt();
+                    int tag_auth=0;
+                    if(author_count<tag_author.count())
+                    {
+                        if(!tag_author[author_count].trimmed().isEmpty())
+                            tag_auth=tag_author[author_count].trimmed().toInt();
+                    }
+                    AddAuthor(author,existingID,id_book,author_count==0,language,tag_auth);
+                    author_count++;
                 }
-                AddAuthor(author,existingID,id_book,author_count==0,language,tag_auth);
-                author_count++;
-            }
 
-            qlonglong t3=QDateTime::currentMSecsSinceEpoch();
-            if(substrings.count()>=field_index[_JANRES]+1)
-            {
-                QStringList Janres=substrings[field_index[_JANRES]].split(':');
-                bool first=true;
-                foreach(QString janre,Janres)
+                qlonglong t3=QDateTime::currentMSecsSinceEpoch();
+                if(substrings.count()>=field_index[_JANRES]+1)
                 {
-                    if(!first && janre.trimmed().isEmpty())
-                        continue;
-                    AddJanre(id_book,janre.trimmed(),existingID,language);
-                    first=false;
+                    QStringList Janres=substrings[field_index[_JANRES]].split(':');
+                    bool first=true;
+                    foreach(QString janre,Janres)
+                    {
+                        if(!first && janre.trimmed().isEmpty())
+                            continue;
+                        AddJanre(id_book,janre.trimmed(),existingID,language);
+                        first=false;
+                    }
                 }
-            }
-            qlonglong t4=QDateTime::currentMSecsSinceEpoch();
-            t1_+=t1-t0;
-            t2_+=t2-t1;
-            t3_+=t3-t2;
-            t4_+=t4-t3;
-            count++;
-            book_count++;
-            if(count==1000)
-            {
-                emit Message(tr("Books adds:")+" "+QString::number(book_count));
-                count=0;
-                t1_=0;
-                t2_=0;
-                t3_=0;
-                t4_=0;
-                query->exec("COMMIT;");
-            }
+                qlonglong t4=QDateTime::currentMSecsSinceEpoch();
+                t1_+=t1-t0;
+                t2_+=t2-t1;
+                t3_+=t3-t2;
+                t4_+=t4-t3;
+                count++;
+                book_count++;
+                if(count==1000)
+                {
+                    emit Message(tr("Books adds:")+" "+QString::number(book_count));
+                    count=0;
+                    t1_=0;
+                    t2_=0;
+                    t3_=0;
+                    t4_=0;
+                    query->exec("COMMIT;");
+                }
 
+            }
         }
         if(count>0)
         {

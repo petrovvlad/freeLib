@@ -20,7 +20,7 @@ class ImportThread : public QObject
     Q_OBJECT
 public:
     explicit ImportThread(QObject *parent = 0);
-    void start(QString fileName, QString name, QString path, long ID, int update_type, bool save_only=false, bool firstAuthor=false);
+    void start(QString fileName, QString name, QString path, long ID, int update_type, bool save_only=false, bool firstAuthor=false, bool bWoDeleted=false);
     //void SaveLibrary();
     bool loop;
 signals:
@@ -43,6 +43,7 @@ private:
     bool _save_only;
     int _update_type;
     bool _firstAuthorOnly;
+    bool bWoDeleted_;
     long existingID;
     QSqlQuery *query;
     qlonglong AddSeria(QString str,qlonglong libID,int tag);

@@ -52,7 +52,6 @@ struct SLib
         id=settings->value("LibID",-1).toLongLong();
         if(!db_is_open)
             return;
-        //delete settings;
         QSqlQuery query(QSqlDatabase::database("libdb"));
         query.exec("SELECT path,name FROM lib WHERE id="+QString::number(id));
         while(query.next())
@@ -67,6 +66,9 @@ struct SLib
     qlonglong id;
     QString path;
     QString name;
+    QString sInpx;
+    bool bFirstAuthor;
+    bool bWoDeleted;
 };
 
 struct genre_info

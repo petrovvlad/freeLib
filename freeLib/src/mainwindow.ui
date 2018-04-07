@@ -301,7 +301,7 @@
                </size>
               </property>
               <property name="currentIndex">
-               <number>3</number>
+               <number>2</number>
               </property>
               <widget class="QWidget" name="pageAuthor">
                <layout class="QVBoxLayout" name="verticalLayout">

@@ -1,5 +1,5 @@
 #include <QtSql>
-#include <QtXml/QDomDocument>
+#include <QDomDocument>
 #include <QBuffer>
 #include <QByteArray>
 #include <QSqlDriver>
@@ -1506,7 +1506,7 @@ void MainWindow::UpdateJanre()
         item->setFont(0,bold_font);
         ui->JanreList->addTopLevelItem(item);
         ui->s_janre->addItem(query.value(1).toString().trimmed(),-query.value(0).toLongLong());
-        item->setExpanded(true);
+        item->setExpanded(false);
         if(query.value(0).toLongLong()==current_list_id)
         {
             item->setSelected(true);
