@@ -46,26 +46,26 @@ enum APP_MODE{MODE_LIBRARY,MODE_CONVERTER,MODE_SHELF};
 
 struct SLib
 {
-    void UpdateLib()
-    {
-        QSettings* settings=GetSettings();
-        id=settings->value("LibID",-1).toLongLong();
-        if(!db_is_open)
-            return;
-        QSqlQuery query(QSqlDatabase::database("libdb"));
-        query.exec("SELECT path,name FROM lib WHERE id="+QString::number(id));
-        while(query.next())
-        {
-            path=query.value(0).toString();
-            name=query.value(1).toString();
-        }
-        if(path.isEmpty() && name.isEmpty())
-            id=-1;
-    }
+//    void UpdateLib()
+//    {
+//        QSettings* settings=GetSettings();
+//        id=settings->value("LibID",-1).toLongLong();
+//        if(!db_is_open)
+//            return;
+//        QSqlQuery query(QSqlDatabase::database("libdb"));
+//        query.exec("SELECT path,name FROM lib WHERE id="+QString::number(id));
+//        while(query.next())
+//        {
+//            path=query.value(0).toString();
+//            name=query.value(1).toString();
+//        }
+//        if(path.isEmpty() && name.isEmpty())
+//            id=-1;
+//    }
 
-    qlonglong id;
-    QString path;
+//    qlonglong id;
     QString name;
+    QString path;
     QString sInpx;
     bool bFirstAuthor;
     bool bWoDeleted;

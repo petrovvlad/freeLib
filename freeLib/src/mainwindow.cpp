@@ -7,6 +7,7 @@
 #include <QCommandLineParser>
 #include <QSplashScreen>
 #include <QTextCodec>
+#include <QMap>
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -29,7 +30,8 @@
 #include "webpage.h"
 
 extern QSplashScreen *splash;
-
+extern QMap<int,SLib> mLibs;
+extern int idCurrentLib;
 HelpDialog *Help_dlg;
 bool db_is_open;
 
@@ -72,7 +74,7 @@ QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, qlonglong id_book, b
     QFileInfo fi;
     while(query.next())
     {
-        QString LibPath=current_lib.path;
+        QString LibPath=mLibs[idCurrentLib].path;
         if(!query.value(4).toString().trimmed().isEmpty())
             LibPath=query.value(4).toString().trimmed();
 
@@ -179,91 +181,13 @@ int sqliteLocaleAwareCompare(void* /*arg*/, int len1, const void* data1, int len
      return QString::localeAwareCompare( string1, string2 );
 }
 
-bool openDB(bool create, bool replace)
-{
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString db_file=HomeDir+"/freeLib/freeLib.sqlite";
-    if(QFileInfo(HomeDir+"/freeLib/my_db.sqlite").exists())
-        QFile::rename(HomeDir+"/freeLib/my_db.sqlite",db_file);
-    QSettings *settings=GetSettings();
-
-    QFileInfo fi(RelativeToAbsolutePath(settings->value("database_path").toString()));
-    if(fi.exists() && fi.isFile())
-    {
-        db_file=fi.canonicalFilePath();
-    }
-    else
-    {
-        fi.setFile(app->applicationDirPath()+"/freeLib.sqlite");
-        if(fi.exists() && fi.isFile())
-        {
-            db_file=fi.canonicalFilePath();
-        }
-        else
-        {
-            fi.setFile(app->applicationDirPath()+"/../../../freeLib/freeLib.sqlite");
-            if(fi.exists() && fi.isFile())
-                db_file=fi.canonicalFilePath();
-        }
-    }
-    settings->setValue("database_path",db_file);
-    settings->sync();
-    QFile file(db_file);
-    if(!file.exists() || replace)
-    {
-        if(replace)
-        {
-            QSqlDatabase dbase=QSqlDatabase::database("libdb",true);
-            dbase.close();
-            if(!file.remove())
-            {
-                qDebug()<<("Can't remove old database");
-                db_is_open=false;
-                return false;
-            }
-        }
-        if(!create && !replace)
-        {
-            db_is_open=false;
-            return true;
-        }
-        QDir dir;
-        dir.mkpath(QFileInfo(db_file).absolutePath());
-        file.setFileName(":/freeLib.sqlite");
-        file.open(QFile::ReadOnly);
-        QByteArray data=file.readAll();
-        file.close();
-        file.setFileName(db_file);
-        file.open(QFile::WriteOnly);
-        file.write(data);
-        file.close();
-    }
-    QSqlDatabase dbase=QSqlDatabase::database("libdb",false);
-    dbase.setDatabaseName(db_file);
-    if (!dbase.open())
-    {
-        qDebug() << ("Error connect! ")<<db_file;
-        db_is_open=false;
-        return false;
-    }
-    db_is_open=true;
-    qDebug()<<"Open DB OK. "<<db_file;
-    return true;
-}
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    db_is_open=false;
     trIcon=0;
     dropForm=0;
-    error_quit=false;
-    if(!openDB(false,false))
-        error_quit=true;
     if(db_is_open)
     {
         QSqlQuery query(QSqlDatabase::database("libdb"));
@@ -318,8 +242,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Review->setPage(new WebPage());
     connect(ui->Review->page(),SIGNAL(linkClicked(QUrl)),this,SLOT(ReviewLink(QUrl)));
 
-    current_lib.UpdateLib();
-    setWindowTitle(AppName+(current_lib.name.isEmpty()||current_lib.id<0?"":" - "+current_lib.name));
+    setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
 
     ui->searchString->setMaxLength(20);
     tbClear=new QToolButton(this);
@@ -592,7 +515,7 @@ void MainWindow::newLibWizard(bool AddLibOnly)
         UpdateJanre();
         UpdateTags();
         searchCanged(ui->searchString->text());
-        setWindowTitle(AppName+(current_lib.name.isEmpty()||current_lib.id<0?"":" - "+current_lib.name));
+        setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
         FillLibrariesMenu();
     }
 }
@@ -916,7 +839,7 @@ void MainWindow::Settings()
     connect(&dlg,SIGNAL(ChangingTrayIcon(int,int)),this,SLOT(ChangingTrayIcon(int,int)));
     dlg.exec();
     settings=GetSettings();
-    settings->setValue("LibID",current_lib.id);
+    settings->setValue("LibID",idCurrentLib);
     settings->sync();
     if(ShowDeleted!=settings->value("ShowDeleted").toBool() || use_tag!=settings->value("use_tag").toBool())
     {
@@ -1311,7 +1234,7 @@ void MainWindow::StartSearch()
                "left join seria on id_seria=seria.id "
                "left join book_janre on book_janre.id_book=book.id "
                "left join janre on book_janre.id_janre=janre.id "
-               "where book_author.id_lib="+QString::number(current_lib.id)+(ui->findLanguage->currentText()=="*"?"":" and UPPER(book.language)='"+ui->findLanguage->currentText()+"'")+
+               "where book_author.id_lib="+QString::number(idCurrentLib)+(ui->findLanguage->currentText()=="*"?"":" and UPPER(book.language)='"+ui->findLanguage->currentText()+"'")+
                " and date>='"+ui->date_from->date().toString("yyyy/MM/dd")+"' and date<='"+ui->date_to->date().toString("yyyy/MM/dd")+"'"+
                (ui->s_name->text().trimmed().length()==0?"":" and name_index LIKE '%"+ToIndex(ui->s_name->text().toLower().trimmed())+"%'")+
                (ui->s_author->text().trimmed().length()==0?"":" and "+where_author)+
@@ -1339,7 +1262,7 @@ void MainWindow::SelectJanre()
                "join author on first_author_id=author.id "
                "left join seria on id_seria=seria.id "
                "left join janre on book_janre.id_janre=janre.id "
-               "where book_janre.id_lib="+QString::number(current_lib.id)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_janre="+cur_item->data(0,Qt::UserRole).toString()+
+               "where book_janre.id_lib="+QString::number(idCurrentLib)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_janre="+cur_item->data(0,Qt::UserRole).toString()+
                (!ShowDeleted?" and not deleted":"")+
                (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
                " order by author.rus_index, seria.name,num_in_seria,book.name");
@@ -1362,7 +1285,7 @@ void MainWindow::SelectSeria()
                "left join seria on id_seria=seria.id "
                "left join book_janre on book_janre.id_book=book.id "
                "left join janre on book_janre.id_janre=janre.id "
-               "where book.id_lib="+QString::number(current_lib.id)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_seria="+cur_item->data(Qt::UserRole).toString()+
+               "where book.id_lib="+QString::number(idCurrentLib)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_seria="+cur_item->data(Qt::UserRole).toString()+
                (!ShowDeleted?" and not deleted":"")+
                (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
                " order by author.rus_index, seria.name,num_in_seria,book.name");
@@ -1385,7 +1308,7 @@ void MainWindow::SelectAuthor()
                "left join seria on id_seria=seria.id "
                "left join book_janre on book_janre.id_book=book.id "
                "left join janre on book_janre.id_janre=janre.id "
-               "where book_author.id_lib="+QString::number(current_lib.id)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_author="+cur_item->data(Qt::UserRole).toString()+
+               "where book_author.id_lib="+QString::number(idCurrentLib)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_author="+cur_item->data(Qt::UserRole).toString()+
                (!ShowDeleted?" and not deleted":"")+
                (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
                " order by author.rus_index, seria.name,num_in_seria,book.name");
@@ -1395,11 +1318,15 @@ void MainWindow::UpdateAuthor()
 {
     if(!db_is_open)
         return;
+
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QSqlQuery query(QSqlDatabase::database("libdb"));
     QSettings *settings=GetSettings();
     bool ShowDeleted=settings->value("ShowDeleted").toBool();
     int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    query.exec(QString("SELECT author.id,name1||' '||name2||' '||name3,count(),author.favorite FROM book_author join author on book_author.id_author=author.id join book on book.id=id_book left join seria on id_seria=seria.id where author.id_lib="+QString::number(current_lib.id)+
+    query.exec(QString("SELECT author.id,name1||' '||name2||' '||name3,count(),author.favorite FROM book_author join author on book_author.id_author=author.id join book on book.id=id_book left join seria on id_seria=seria.id where author.id_lib="+QString::number(idCurrentLib)+
                        (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
                        (ui->searchString->text()=="*"?"":(ui->searchString->text()=="#"?" and not((name1>='a' and name1<='z') or (name1>='A' and name1<='Z') or (author.rus_index>='01-' and substr(author.rus_index, 1, 3)<='33-' and substr(author.rus_index, 3, 1)='-')) ":" and  author.rus_index LIKE ('"+ToIndex(ui->searchString->text())+"%')"))+
                        (ui->language->currentText()=="*"?"":" and UPPER(book_author.language)='"+ui->language->currentText()+"'")+(!ShowDeleted?" and not deleted":"")+" GROUP BY author.id ORDER BY author.rus_index"));
@@ -1421,16 +1348,24 @@ void MainWindow::UpdateAuthor()
     }
     if(current_list_for_tag==(QObject*)ui->AuthorList)
         current_list_id=-1;
+
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateAuthor " << t_end-t_start << "msec";
+
+    QApplication::restoreOverrideCursor();
 }
 void MainWindow::UpdateSeria()
 {
     if(!db_is_open)
         return;
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database("libdb"));
     QSettings *settings=GetSettings();
     bool ShowDeleted=settings->value("ShowDeleted").toBool();
     int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    query.exec(QString("SELECT seria.id,seria.name,count(),seria.favorite FROM book join seria on id_seria=seria.id left join author on book.first_author_id=author.id where book.id_lib="+QString::number(current_lib.id)+
+    query.exec(QString("SELECT seria.id,seria.name,count(),seria.favorite FROM book join seria on id_seria=seria.id left join author on book.first_author_id=author.id where book.id_lib="+QString::number(idCurrentLib)+
                        (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
                        (ui->searchString->text()=="*"?"":(ui->searchString->text()=="#"?" and not((name>='a' and name<='z') or (name>='A' and name<='Z') or (seria.rus_index>='01-' and substr(seria.rus_index, 1, 3)<='33-' and substr(seria.rus_index, 3, 1)='-')) ":" and  seria.rus_index LIKE ('"+ToIndex(ui->searchString->text())+"%')"))+
                        (!ShowDeleted?" and not deleted":"")+
@@ -1454,6 +1389,10 @@ void MainWindow::UpdateSeria()
     }
     if(current_list_for_tag==(QObject*)ui->SeriaList)
         current_list_id=-1;
+
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateSeria " << t_end-t_start << "msec";
+    QApplication::restoreOverrideCursor();
 }
 void MainWindow::UpdateJanre()
 {
@@ -1461,11 +1400,13 @@ void MainWindow::UpdateJanre()
         return;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+
     QSqlQuery query_child(QSqlDatabase::database("libdb"));
     QSqlQuery query(QSqlDatabase::database("libdb"));
 
     disconnect(ui->language,SIGNAL(currentIndexChanged(int)),this,SLOT(LanguageChange()));
-    query.exec("SELECT DISTINCT UPPER(language) from book where id_lib="+QString::number(current_lib.id)+" ORDER BY UPPER(language)");
+    query.exec("SELECT DISTINCT UPPER(language) from book where id_lib="+QString::number(idCurrentLib)+" ORDER BY UPPER(language)");
     ui->language->clear();
     ui->language->addItem("*");
     ui->language->setCurrentIndex(0);
@@ -1513,7 +1454,7 @@ void MainWindow::UpdateJanre()
             ui->JanreList->scrollToItem(item);
         }
         query_child.exec(QString("SELECT janre.id,janre.name,id_parent,count() FROM janre  join book_janre on id_janre=janre.id join book on id_book=book.id left join author on book.first_author_id=author.id left join seria on seria.id=book.id_seria where book_janre.id_lib="+
-                                 QString::number(current_lib.id)+
+                                 QString::number(idCurrentLib)+
                                  (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
                                  (ui->language->currentText()=="*"?"":" and UPPER(book_janre.language)='"+ui->language->currentText()+"'")+
                                  (!ShowDeleted?" and not deleted":"")+
@@ -1535,6 +1476,9 @@ void MainWindow::UpdateJanre()
 
     if(current_list_for_tag==(QObject*)ui->JanreList)
         current_list_id=-1;
+
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateJanre " << t_end-t_start << "msec";
 
     QApplication::restoreOverrideCursor();
 }
@@ -1573,7 +1517,7 @@ void MainWindow::SelectBook()
             QString file;
             while(query.next())
             {
-                QString LibPath=current_lib.path;
+                QString LibPath=mLibs[idCurrentLib].path;
                 if(!query.value(4).toString().trimmed().isEmpty())
                     LibPath=query.value(4).toString().trimmed();
                 if(query.value(1).toString().trimmed().isEmpty())
@@ -1681,7 +1625,6 @@ void MainWindow::Add_Library()
     SaveLibPosition();
     AddLibrary al(this);
     al.exec();
-    //int result=al.result();
     if(al.bLibChanged){
         QSettings *settings=GetSettings();
         current_list_id=settings->value("current_list_id",0).toLongLong();
@@ -1689,15 +1632,9 @@ void MainWindow::Add_Library()
         UpdateJanre();
         UpdateTags();
         searchCanged(ui->searchString->text());
-        setWindowTitle(AppName+(current_lib.name.isEmpty()||current_lib.id<0?"":" - "+current_lib.name));
+        setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
         FillLibrariesMenu();
     }
-    //    if(result==1) //нажата кнопка экспорт
-//    {
-//        QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
-//        ExportDlg ed(this);
-//        ed.exec(current_lib.id,dirName);
-//    }
 }
 void MainWindow::btnAuthor()
 {
@@ -1964,16 +1901,15 @@ void MainWindow::FillLibrariesMenu()
     if(!db_is_open)
         return;
     QMenu *lib_menu=new QMenu(this);
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    query.exec("SELECT id,name FROM lib ORDER BY name");
-    while(query.next())
-    {
-        QAction *action=new QAction((query.value(1).toString().trimmed()), this);
-        action->setData(query.value(0).toLongLong());
+    auto i = mLibs.constBegin();
+    while(i!=mLibs.constEnd()){
+        QAction *action=new QAction(i->name, this);
+        action->setData(i.key());
         action->setCheckable(true);
         lib_menu->insertAction(0,action);
         connect(action,SIGNAL(triggered()),this,SLOT(SelectLibrary()));
-        action->setChecked(query.value(0).toLongLong()==current_lib.id);
+        action->setChecked(i.key()==idCurrentLib);
+        ++i;
     }
     if(lib_menu->actions().count()>0)
     {
@@ -1992,12 +1928,12 @@ void MainWindow::SelectLibrary()
     stored_book=settings->value("current_book_id",0).toLongLong();
     settings->setValue("LibID",action->data().toLongLong());
     settings->sync();
-    current_lib.id=action->data().toLongLong();
-    current_lib.UpdateLib();
+    idCurrentLib=action->data().toLongLong();
+    //current_lib.UpdateLib();
 
     UpdateJanre();
     searchCanged(ui->searchString->text());
-    setWindowTitle(AppName+(current_lib.name.isEmpty()||current_lib.id<0?"":" - "+current_lib.name));
+    setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
     FillLibrariesMenu();
 }
 
@@ -2241,7 +2177,7 @@ void MainWindow::on_actionSwitch_to_library_mode_triggered()
     ui->actionAddLibrary->setVisible(true);
     ui->actionNew_labrary_wizard->setVisible(true);
 
-    setWindowTitle(AppName+(current_lib.name.isEmpty()||current_lib.id<0?"":" - "+current_lib.name));
+    setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
 
     setMinimumSize(800,400);
     if(settings->contains("MainWnd/geometry"))

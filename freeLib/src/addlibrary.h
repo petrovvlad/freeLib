@@ -2,7 +2,6 @@
 #define ADDLIBRARY_H
 
 #include <QDialog>
-#include <QMap>
 #include "importthread.h"
 #include "common.h"
 
@@ -19,6 +18,8 @@ public:
     ~AddLibrary();
     //int exec();
     void AddNewLibrary(QString _name, QString _path, QString _fileName);
+    void StartImport(SLib &Lib);
+    void SelectLibrary(int idLib);
     bool bLibChanged;
     
 private:
@@ -26,9 +27,9 @@ private:
     ImportThread *imp_tr;
     QThread *thread;
     void UpdateLibList();
-    void SaveLibrary(int idLib,QString _name, QString _path, QString _fileName, bool _firstAuthor, bool bWoDeleted);
-    QMap<int,SLib> mapLib;
-    int IdCurrentLib_;
+    void SaveLibrary(int idLib, SLib& Lib);
+//    QMap<int,SLib> mapLib;
+    int idCurrentLib_;
 private slots:
     void LogMessage(QString msg);
     void InputINPX();

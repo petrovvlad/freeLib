@@ -769,6 +769,8 @@ void ImportThread::process()
             break;
         }
     }
+    bool trans = QSqlDatabase::database("libdb").transaction();
+
     foreach( QString str , list  )
     {
         app->processEvents();
@@ -793,8 +795,8 @@ void ImportThread::process()
         //uz.extractFile(str,&outbuff,UnZip::SkipPaths);
         QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
         qlonglong t1_=0,t2_=0,t3_=0,t4_=0,count=0;
-        if(lines.count()>0)
-            query->exec("BEGIN;");
+        //if(lines.count()>0)
+            //query->exec("BEGIN;");
         foreach(QString line,lines)
         {
             qlonglong t0=QDateTime::currentMSecsSinceEpoch();
@@ -937,7 +939,7 @@ void ImportThread::process()
                     t2_=0;
                     t3_=0;
                     t4_=0;
-                    query->exec("COMMIT;");
+                    //query->exec("COMMIT;");
                 }
 
             }
@@ -945,9 +947,11 @@ void ImportThread::process()
         if(count>0)
         {
             emit Message(tr("Books adds: ")+QString::number(book_count));
-            query->exec("COMMIT;");
+            //query->exec("COMMIT;");
         }
     }
+    trans = QSqlDatabase::database("libdb").commit();
+
     emit End();
 }
 

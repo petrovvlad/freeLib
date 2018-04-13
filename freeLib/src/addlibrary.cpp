@@ -8,7 +8,8 @@
 #include "quazip/quazip/quazipfile.h"
 #include "exportdlg.h"
 
-extern int IdCurrentLib;
+extern int idCurrentLib;
+extern QMap<int,SLib> mLibs;
 
 AddLibrary::AddLibrary(QWidget *parent) :
     QDialog(parent,Qt::Dialog|Qt::WindowSystemMenuHint),
@@ -35,7 +36,7 @@ AddLibrary::AddLibrary(QWidget *parent) :
     layout->setSpacing(0);
     layout->setMargin(0);
 
-    IdCurrentLib_ = -1;
+    idCurrentLib_ = idCurrentLib;
     UpdateLibList();
 
     connect(tbInpx,SIGNAL(clicked()),this,SLOT(InputINPX()));
@@ -48,7 +49,8 @@ AddLibrary::AddLibrary(QWidget *parent) :
     connect(ui->ExistingLibs->lineEdit(),SIGNAL(editingFinished()),this,SLOT(ExistingLibsChanged()));
     ui->add_new->setChecked(true);
 
-    SelectLibrary();
+    SelectLibrary(idCurrentLib_);
+//    SelectLibrary();
 }
 
 AddLibrary::~AddLibrary()
@@ -58,20 +60,15 @@ AddLibrary::~AddLibrary()
 
 void AddLibrary::Add_Library()
 {
-    IdCurrentLib_ =-1;
-    ui->ExistingLibs->addItem(tr("new"),"");
+    idCurrentLib_ =-1;
+    QString sNewName = tr("new");
+    ui->ExistingLibs->blockSignals(true);
+    ui->ExistingLibs->addItem(sNewName,-1);
+    SLib lib{sNewName,"","",false,false};
+    SaveLibrary(idCurrentLib_,lib);
+    ui->ExistingLibs->blockSignals(false);
     ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
-    app->processEvents();
-    SaveLibrary(IdCurrentLib_,ui->ExistingLibs->currentText().trimmed(),"","",false,false);
 }
-
-//int AddLibrary::exec()
-///{
-    //QString fileName = QFileDialog::getOpenFileName(this, tr("Add library"),"",tr("Library (*.inpx)"));
-    // it(this);
-    //imp_tr.start(fileName);
-   // return QDialog::exec();
-//}
 
 void AddLibrary::LogMessage(QString msg)
 {
@@ -115,50 +112,48 @@ void AddLibrary::SelectBooksDir()
 }
 
 void AddLibrary::UpdateLibList()
+
 {
     if(!db_is_open)
         return;
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    query.exec("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name");
+    bool block = ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->clear();
-    mapLib.clear();
-    while(query.next())
-    {
-        uint idLib = query.value(0).toUInt();
-        mapLib[idLib].id = idLib;
-        mapLib[idLib].name = query.value(1).toString().trimmed();
-        mapLib[idLib].path = query.value(2).toString().trimmed();
-        mapLib[idLib].sInpx = query.value(3).toString().trimmed();
-        mapLib[idLib].bFirstAuthor = query.value(4).toBool();
-        mapLib[idLib].bWoDeleted = query.value(5).toBool();
-        ui->ExistingLibs->addItem(mapLib[idLib].name,idLib);
-
-        if(idLib==current_lib.id)
-            ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
+    auto i = mLibs.constBegin();
+    while(i!=mLibs.constEnd()){
+        ui->ExistingLibs->addItem(i->name,i.key());
+        ++i;
     }
+    ui->ExistingLibs->blockSignals(block);
 }
+
 void AddLibrary::StartImport()
 {
+    SLib Lib{ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),
+                ui->firstAuthorOnly->isChecked(),ui->checkwoDeleted->isChecked()};
+    StartImport(Lib);
+}
+
+void AddLibrary::StartImport(SLib &Lib)
+{
+    QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+
     int update_type=(ui->add_new->isChecked()?UT_NEW:ui->del_old->isChecked()?UT_DEL_AND_NEW:UT_FULL);
+    SaveLibrary(idCurrentLib_,Lib);
     ui->btnUpdate->setDisabled(true);
     ui->BookDir->setDisabled(true);
     ui->inpx->setDisabled(true);
     ui->ExistingLibs->setDisabled(true);
     ui->Del->setDisabled(true);
     ui->Add->setDisabled(true);
+    ui->firstAuthorOnly->setDisabled(true);
+    ui->checkwoDeleted->setDisabled(true);
     ui->btnCancel->setText(tr("Break"));
     ui->update_group->hide();
-    QString sLibName = ui->ExistingLibs->currentText().trimmed();
-    QString sPath = ui->BookDir->text().trimmed();
-    QString sInpx = ui->inpx->text().trimmed();
-    bool bFirstAuthor = ui->firstAuthorOnly->isChecked();
-    bool bWoDeleted = ui->checkwoDeleted->isChecked();
-    SaveLibrary(IdCurrentLib_,sLibName ,sPath,sInpx,bFirstAuthor,bWoDeleted);
 
     thread = new QThread;
     imp_tr=new ImportThread();
-    imp_tr->start(sInpx,sLibName,sPath,IdCurrentLib_,update_type,false,
-                  bFirstAuthor&&sInpx.isEmpty(),bWoDeleted);
+    imp_tr->start(Lib.sInpx,Lib.name,Lib.path,idCurrentLib_,update_type,false,
+                  Lib.bFirstAuthor&&Lib.sInpx.isEmpty(),Lib.bWoDeleted);
     imp_tr->moveToThread(thread);
     connect(imp_tr, SIGNAL(Message(QString)), this, SLOT(LogMessage(QString)));
     connect(thread, SIGNAL(started()), imp_tr, SLOT(process()));
@@ -169,115 +164,131 @@ void AddLibrary::StartImport()
 
     thread->start();
 }
+
 void AddLibrary::AddNewLibrary(QString _name, QString _path, QString _fileName)
 {
-    //if(!db_is_open)
+    if(!db_is_open)
     {
         db_is_open=openDB(true,false);
     }
-    IdCurrentLib_ =-1;
-    ui->ExistingLibs->addItem(_name,"");
-    ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
-    app->processEvents();
-    ui->BookDir->setText(_path);
-    ui->inpx->setText(_fileName);
-    ui->add_new->setChecked(true);
-    StartImport();
+    idCurrentLib_ =-1;
+    SLib Lib{_name,_path,_fileName,false,false};
+    StartImport(Lib);
     exec();
 }
 
-void AddLibrary::SelectLibrary()
+
+void AddLibrary::SelectLibrary(int idLib)
 {
-    if(IdCurrentLib_>=0)
-    {
-        for(int i=0;i<ui->ExistingLibs->count();i++)
-        {
-            int idLib = ui->ExistingLibs->itemData(i).toInt();
-            if(idLib==IdCurrentLib_)
-            {
-                //ui->ExistingLibs->setItemData(i,QString::number(idLib)+"$#$?#-"+ui->BookDir->text()+"$#$?#-"+ui->inpx->text()+"$#$?#-"+(ui->firstAuthorOnly->isChecked()?"1":"0"));
-                SaveLibrary(idLib,ui->ExistingLibs->itemText(i),ui->BookDir->text(),ui->inpx->text(),ui->firstAuthorOnly->isChecked(),ui->checkwoDeleted->isChecked());
+    bool block = ui->ExistingLibs->blockSignals(true);
+    if(idLib>=0 && mLibs.count()>0){
+        for(int i=0;i<ui->ExistingLibs->count();i++){
+            if(ui->ExistingLibs->itemData(i).toInt()==idCurrentLib_){
+                ui->ExistingLibs->setCurrentIndex(i);
+                ui->BookDir->setText(mLibs[idCurrentLib_].path);
+                ui->inpx->setText(mLibs[idCurrentLib_].sInpx);
+                ui->firstAuthorOnly->setChecked(mLibs[idCurrentLib_].bFirstAuthor);
+                ui->checkwoDeleted->setChecked(mLibs[idCurrentLib_].bWoDeleted);
+                QSettings* settings=GetSettings();
+                ui->OPDS->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
+                ui->HTTP->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
                 break;
             }
         }
     }
+    ui->Del->setDisabled(idLib<0);
+    ui->ExistingLibs->setDisabled(idLib<0);
+    ui->inpx->setDisabled(idLib<0);
+    ui->BookDir->setDisabled(idLib<0);
+    ui->btnUpdate->setDisabled(idLib<0);
+    ui->ExistingLibs->blockSignals(block);
+}
+
+void AddLibrary::SelectLibrary()
+{
+    int nIndex = ui->ExistingLibs->currentIndex();
     QString dir,inpx;
     bool firstAuthor=false;
-    IdCurrentLib_ = ui->ExistingLibs->itemData(ui->ExistingLibs->currentIndex()).toInt(); //ExistingID;
-    if(IdCurrentLib_>=0){
-        dir = mapLib[IdCurrentLib_].path;
-        inpx = mapLib[IdCurrentLib_].sInpx;
-        firstAuthor = mapLib[IdCurrentLib_].bFirstAuthor;
+    bool bWoDeleted = false;
+    if(nIndex>=0)
+        idCurrentLib_ = ui->ExistingLibs->itemData(nIndex).toInt();
+    if(idCurrentLib_>=0){
+        dir = mLibs[idCurrentLib_].path;
+        inpx = mLibs[idCurrentLib_].sInpx;
+        firstAuthor = mLibs[idCurrentLib_].bFirstAuthor;
+        bWoDeleted = mLibs[idCurrentLib_].bWoDeleted;
     }
 
     ui->BookDir->setText(dir);
     ui->inpx->setText(inpx);
     ui->firstAuthorOnly->setChecked(firstAuthor);
-    ui->checkwoDeleted->setChecked(mapLib[IdCurrentLib_].bWoDeleted);
-    ui->Del->setDisabled(IdCurrentLib_<0);
-    ui->ExistingLibs->setDisabled(IdCurrentLib_<0);
-    ui->inpx->setDisabled(IdCurrentLib_<0);
-    ui->BookDir->setDisabled(IdCurrentLib_<0);
-    ui->btnUpdate->setDisabled(IdCurrentLib_<0);
+    ui->checkwoDeleted->setChecked(bWoDeleted);
+    ui->Del->setDisabled(idCurrentLib_<0);
+    ui->ExistingLibs->setDisabled(idCurrentLib_<0);
+    ui->inpx->setDisabled(idCurrentLib_<0);
+    ui->BookDir->setDisabled(idCurrentLib_<0);
+    ui->btnUpdate->setDisabled(idCurrentLib_<0);
     QSettings* settings=GetSettings();
-    ui->OPDS->setText(IdCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(IdCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
-    ui->HTTP->setText(IdCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(IdCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
+    ui->OPDS->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
+    ui->HTTP->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
 
-    settings->setValue("LibID",IdCurrentLib_);
-    settings->sync();
-    current_lib.id=IdCurrentLib_;
-    current_lib = mapLib[IdCurrentLib_];
-    IdCurrentLib = IdCurrentLib_;
+    settings->setValue("LibID",idCurrentLib_);
+    idCurrentLib = idCurrentLib_;
 }
 
-void AddLibrary::SaveLibrary(int idLib, QString _name, QString _path, QString _fileName, bool _firstAuthor, bool bWoDeleted)
+void AddLibrary::SaveLibrary(int idLib, SLib &Lib)
 {
     QSqlQuery query(QSqlDatabase::database("libdb"));
+    int idSaveLib = idLib;
     if(idLib<0)
     {
         LogMessage(tr("Add library"));
-        bool result = query.exec(QString("INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)").arg(_name,_path,_fileName,_firstAuthor?"1":"0",bWoDeleted?"1":"0"));
+        bool result = query.exec(QString("INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)").arg(Lib.name,Lib.path,Lib.sInpx,Lib.bFirstAuthor?"1":"0",Lib.bWoDeleted?"1":"0"));
         if(!result)
             qDebug()<<query.lastError().databaseText();
-        IdCurrentLib_ = query.lastInsertId().toInt();
+        idSaveLib = query.lastInsertId().toInt();
         QSettings* settings=GetSettings();
         settings->setValue("LibID",idLib);
         settings->sync();
-        UpdateLibList();
     }
     else
     {
         LogMessage(tr("Update library"));
-        bool result = query.exec(QString("UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6").arg(_name,_path,_fileName,_firstAuthor?"1":"0",bWoDeleted?"1":"0").arg(idLib));
+        bool result = query.exec(QString("UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6").arg(Lib.name,Lib.path,Lib.sInpx,Lib.bFirstAuthor?"1":"0",Lib.bWoDeleted?"1":"0").arg(idLib));
         if(!result)
             qDebug()<<query.lastError().databaseText();
 
     }
-    mapLib[IdCurrentLib_].name = _name;
-    mapLib[IdCurrentLib_].path = _path;
-    mapLib[IdCurrentLib_].sInpx = _fileName;
-    mapLib[IdCurrentLib_].bFirstAuthor = _firstAuthor;
-    mapLib[IdCurrentLib_].bWoDeleted = bWoDeleted;
-    mapLib[IdCurrentLib_].id = IdCurrentLib_;
-    current_lib = mapLib[IdCurrentLib_];
+    mLibs[idSaveLib] = Lib;
+    idCurrentLib_ = idSaveLib;
+    UpdateLibList();
+    SelectLibrary(idSaveLib);
     bLibChanged = true;
  }
 void AddLibrary::DeleteLibrary()
 {
-    if(IdCurrentLib_<0)
+    if(idCurrentLib_<0)
         return;
+
     if(QMessageBox::question(this,tr("Delete library"),tr("Delete library")+" \""+ui->ExistingLibs->currentText()+"\"",QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
         return;
-    ClearLib(IdCurrentLib_,false);
+
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    ClearLib(idCurrentLib_,false);
     QSqlQuery query(QSqlDatabase::database("libdb"));
-    query.exec("DELETE FROM lib where ID="+QString::number(IdCurrentLib_));
+    query.exec("DELETE FROM lib where ID="+QString::number(idCurrentLib_));
+    mLibs.remove(idCurrentLib_);
     UpdateLibList();
+    if(ui->ExistingLibs->count()>0){
+        ui->ExistingLibs->setCurrentIndex(0);
+        SelectLibrary();
+    }
     bLibChanged = true;
+    QApplication::restoreOverrideCursor();
 }
 void AddLibrary::EndUpdate()
 {
     LogMessage(tr("Ending"));
-    UpdateLibList();
     ui->btnUpdate->setDisabled(false);
     ui->btnCancel->setText(tr("Close"));
     ui->BookDir->setDisabled(false);
@@ -286,17 +297,19 @@ void AddLibrary::EndUpdate()
     ui->Add->setDisabled(false);
     ui->ExistingLibs->setDisabled(false);
     ui->update_group->show();
+    ui->firstAuthorOnly->setDisabled(false);
+    ui->checkwoDeleted->setDisabled(false);
     bLibChanged = true;
+    QApplication::restoreOverrideCursor();
+
 }
 void AddLibrary::terminateImport()
 {
-    if(IdCurrentLib_>0)
-    {
-        SaveLibrary(IdCurrentLib_,ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),ui->firstAuthorOnly->isChecked(),ui->checkwoDeleted->isChecked());
-    }
+//    if(idCurrentLib_>0)
+//    {
+//        SaveLibrary(idCurrentLib_,ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),ui->firstAuthorOnly->isChecked(),ui->checkwoDeleted->isChecked());
+//    }
     emit break_import();
-    //imp_tr->loop=false;
-    //imp_tr->wait();
 }
 
 void AddLibrary::reject()
@@ -321,7 +334,7 @@ void AddLibrary::ExportLib()
     //accept();
     QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
     ExportDlg ed(this);
-    ed.exec(IdCurrentLib_,dirName);
+    ed.exec(idCurrentLib_,dirName);
 
 }
 
