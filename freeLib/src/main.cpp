@@ -1,4 +1,4 @@
-#include <QtWidgets/QApplication>
+#include <QApplication>
 #include <QDesktopWidget>
 #include <QNetworkProxy>
 #include <QStyleFactory>
@@ -7,31 +7,35 @@
 #include <QTextCodec>
 #include <QTranslator>
 #include <QLibraryInfo>
-#include "fb2mobi/hyphenations.h"
 #include <QSplashScreen>
 #include <QPainter>
+#include <QMap>
+
 
 #include "mainwindow.h"
 #include "aboutdialog.h"
+#include "fb2mobi/hyphenations.h"
 #include "common.h"
 
 
-SLib current_lib;
+//SLib current_lib;
+int idCurrentLib;
 QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
 QSettings *global_settings=0;
+QMap<int,SLib> mLibs;
 QCommandLineParser CMDparser;
 QSplashScreen *splash;
 QApplication *app;
 
 bool SetCurrentZipFileName(QuaZip *zip,QString name)
 {
-    bool result=zip->setCurrentFile(name);
+    bool result=zip->setCurrentFile(name,QuaZip::csInsensitive);
     if(!result)
     {
         zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-        result=zip->setCurrentFile(name);
+        result=zip->setCurrentFile(name,QuaZip::csInsensitive);
     }
     return result;
 }
@@ -273,7 +277,6 @@ QString FindLocaleFile(QString locale,QString name,QString suffics)
     bool qm=true;
     while(!QFile(FileName).exists())
     {
-        //qDebug()<<FileName;
         if(qm)
         {
             FileName=FileName.left(FileName.length()-(suffics.length()+1));
@@ -372,6 +375,116 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
     }
 }
 
+bool openDB(bool create, bool replace)
+{
+    QString HomeDir="";
+    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
+        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+    QString db_file=HomeDir+"/freeLib/freeLib.sqlite";
+    if(QFileInfo(HomeDir+"/freeLib/my_db.sqlite").exists())
+        QFile::rename(HomeDir+"/freeLib/my_db.sqlite",db_file);
+    QSettings *settings=GetSettings();
+
+    QFileInfo fi(RelativeToAbsolutePath(settings->value("database_path").toString()));
+    if(fi.exists() && fi.isFile())
+    {
+        db_file=fi.canonicalFilePath();
+    }
+    else
+    {
+        fi.setFile(app->applicationDirPath()+"/freeLib.sqlite");
+        if(fi.exists() && fi.isFile())
+        {
+            db_file=fi.canonicalFilePath();
+        }
+        else
+        {
+            fi.setFile(app->applicationDirPath()+"/../../../freeLib/freeLib.sqlite");
+            if(fi.exists() && fi.isFile())
+                db_file=fi.canonicalFilePath();
+        }
+    }
+    settings->setValue("database_path",db_file);
+    settings->sync();
+    QFile file(db_file);
+    if(!file.exists() || replace)
+    {
+        if(replace)
+        {
+            QSqlDatabase dbase=QSqlDatabase::database("libdb",true);
+            dbase.close();
+            if(!file.remove())
+            {
+                qDebug()<<("Can't remove old database");
+                db_is_open=false;
+                return false;
+            }
+        }
+        if(!create && !replace)
+        {
+            db_is_open=false;
+            return true;
+        }
+        QDir dir;
+        dir.mkpath(QFileInfo(db_file).absolutePath());
+        file.setFileName(":/freeLib.sqlite");
+        file.open(QFile::ReadOnly);
+        QByteArray data=file.readAll();
+        file.close();
+        file.setFileName(db_file);
+        file.open(QFile::WriteOnly);
+        file.write(data);
+        file.close();
+    }
+    QSqlDatabase dbase=QSqlDatabase::database("libdb",false);
+    dbase.setDatabaseName(db_file);
+    if (!dbase.open())
+    {
+        qDebug() << ("Error connect! ")<<db_file;
+        db_is_open=false;
+        return false;
+    }
+    db_is_open=true;
+    qDebug()<<"Open DB OK. "<<db_file;
+    return true;
+}
+
+void UpdateLibs()
+{
+    db_is_open=false;
+    //error_quit=false;
+    openDB(true,false);
+//    if(!openDB(false,false))
+//        error_quit=true;
+    if(!db_is_open)
+        idCurrentLib=-1;
+    else{
+        QSettings* settings=GetSettings();
+        idCurrentLib=settings->value("LibID",-1).toLongLong();
+        QSqlQuery query(QSqlDatabase::database("libdb"));
+        query.exec("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name");
+        mLibs.clear();
+        while(query.next())
+        {
+            uint idLib = query.value(0).toUInt();
+            mLibs[idLib].name = query.value(1).toString().trimmed();
+            mLibs[idLib].path = query.value(2).toString().trimmed();
+            mLibs[idLib].sInpx = query.value(3).toString().trimmed();
+            mLibs[idLib].bFirstAuthor = query.value(4).toBool();
+            mLibs[idLib].bWoDeleted = query.value(5).toBool();
+        }
+        if(mLibs.empty())
+            idCurrentLib = -1;
+        else{
+            if(idCurrentLib ==-1)
+                idCurrentLib = mLibs.constBegin().key();
+            if(!mLibs.contains(idCurrentLib))
+                idCurrentLib = -1;
+        }
+    }
+}
+
+
 int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(resource);
@@ -396,28 +509,28 @@ int main(int argc, char *argv[])
     QPalette darkPalette;
     darkPalette.setColor(QPalette::Window, QColor("#E0E0E0")); //основной цвет интер
     darkPalette.setColor(QPalette::WindowText, Qt::black);
-   darkPalette.setColor(QPalette::Base, QColor("#FfFfFf"));
-   darkPalette.setColor(QPalette::AlternateBase, QColor("#F0F0F0"));
-   darkPalette.setColor(QPalette::ToolTipBase, Qt::black);
-   darkPalette.setColor(QPalette::ToolTipText, Qt::black);
-   darkPalette.setColor(QPalette::Text, Qt::black);
-   darkPalette.setColor(QPalette::Button, QColor("#e4e4e4"));
-   darkPalette.setColor(QPalette::ButtonText, Qt::black);
-   //darkPalette.setColor(QPalette::BrightText, Qt::red);
+    darkPalette.setColor(QPalette::Base, QColor("#FfFfFf"));
+    darkPalette.setColor(QPalette::AlternateBase, QColor("#F0F0F0"));
+    darkPalette.setColor(QPalette::ToolTipBase, Qt::black);
+    darkPalette.setColor(QPalette::ToolTipText, Qt::black);
+    darkPalette.setColor(QPalette::Text, Qt::black);
+    darkPalette.setColor(QPalette::Button, QColor("#e4e4e4"));
+    darkPalette.setColor(QPalette::ButtonText, Qt::black);
+    //darkPalette.setColor(QPalette::BrightText, Qt::red);
 
-   darkPalette.setColor(QPalette::Light, QColor("#c0c0c0"));
-   darkPalette.setColor(QPalette::Midlight, QColor("#b0b0b0"));
-   darkPalette.setColor(QPalette::Dark, QColor("#a0a0a0a"));
-   darkPalette.setColor(QPalette::Mid, QColor("#909090"));
-   darkPalette.setColor(QPalette::Shadow, QColor("#707070"));
+    darkPalette.setColor(QPalette::Light, QColor("#c0c0c0"));
+    darkPalette.setColor(QPalette::Midlight, QColor("#b0b0b0"));
+    darkPalette.setColor(QPalette::Dark, QColor("#a0a0a0a"));
+    darkPalette.setColor(QPalette::Mid, QColor("#909090"));
+    darkPalette.setColor(QPalette::Shadow, QColor("#707070"));
 
-   darkPalette.setColor(QPalette::Highlight, QColor("#0B61A4"));
-   darkPalette.setColor(QPalette::HighlightedText, Qt::white);
+    darkPalette.setColor(QPalette::Highlight, QColor("#0B61A4"));
+    darkPalette.setColor(QPalette::HighlightedText, Qt::white);
 
-   //darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-   //darkPalette.setColor(QPalette::LinkVisited, QColor(42, 130, 218));
+    //darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
+    //darkPalette.setColor(QPalette::LinkVisited, QColor(42, 130, 218));
 
-   //a.setPalette(darkPalette);
+    //a.setPalette(darkPalette);
 
     translator=0;
     translator_qt=0;
@@ -458,6 +571,8 @@ int main(int argc, char *argv[])
         splash->show();
     a.processEvents();
     setProxy();
+    //idCurrentLib=settings->value("LibID",-1).toInt();
+    UpdateLibs();
     MainWindow w;
 #ifdef Q_OS_OSX
   //  w.setWindowFlags(w.windowFlags() & ~Qt::WindowFullscreenButtonHint);
@@ -471,8 +586,8 @@ int main(int argc, char *argv[])
     else
         return 1;
     splash->finish(&w);
-    current_lib.UpdateLib();
-    if(current_lib.id<0 && settings->value("ApplicationMode",0).toInt()==0)
+    //current_lib.UpdateLib();
+    if(idCurrentLib<0 && settings->value("ApplicationMode",0).toInt()==0)
         w.newLibWizard(false);
     int result=a.exec();
     if(global_settings)

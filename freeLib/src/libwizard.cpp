@@ -1,14 +1,15 @@
-#include "libwizard.h"
-#include "ui_libwizard.h"
 #include <QDebug>
 #include <QDir>
 #include <QToolButton>
 #include <QHBoxLayout>
 #include <QFileDialog>
+#include <QBuffer>
+
+#include "libwizard.h"
+#include "ui_libwizard.h"
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "common.h"
-#include <QBuffer>
 
 LibWizard::LibWizard(QWidget *parent) :
     QWizard(parent),
@@ -28,14 +29,12 @@ LibWizard::LibWizard(QWidget *parent) :
     tbBooksDir->setFocusPolicy(Qt::NoFocus);
     tbBooksDir->setCursor(Qt::ArrowCursor);
     tbBooksDir->setText("...");
-    //tbClear->setVisible(false);
     layout=new QHBoxLayout(ui->Dir);
     layout->addWidget(tbBooksDir,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
     connect(tbInpx,SIGNAL(clicked()),this,SLOT(InputINPX()));
     connect(tbBooksDir,SIGNAL(clicked()),this,SLOT(SelectBooksDir()));
-//    AddLib=0;
     mode=-1;
 }
 
@@ -106,7 +105,6 @@ bool LibWizard::validateCurrentPage()
 
 void LibWizard::SetDir(int page)
 {
-    //qDebug()<<page;
     switch(page)
     {
     case 1:

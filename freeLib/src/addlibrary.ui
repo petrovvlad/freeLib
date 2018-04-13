@@ -186,8 +186,21 @@
    </item>
    <item>
     <widget class="QCheckBox" name="firstAuthorOnly">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="text">
       <string>import first author only</string>
+     </property>
+    </widget>
+   </item>
+   <item>
+    <widget class="QCheckBox" name="checkwoDeleted">
+     <property name="text">
+      <string>don`t add deleted books</string>
      </property>
     </widget>
    </item>
