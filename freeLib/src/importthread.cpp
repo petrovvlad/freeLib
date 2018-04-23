@@ -272,10 +272,14 @@ qlonglong ImportThread::AddSeria(QString str, qlonglong libID, int tag)
         qlonglong id=query->value(0).toLongLong();
         return id;
     }
-    query->exec("INSERT INTO seria(name,rus_index,id_lib,favorite) values('"+name+"','"+ToIndex(name)+"',"+QString::number(libID)+","+QString::number(tag)+")");
-    query->exec("select last_insert_rowid()");
-    query->next();
-    qlonglong id=query->value(0).toLongLong();
+    query->prepare("INSERT INTO seria(name,rus_index,id_lib,favorite) values(:name,:rus_index,:id_lib,:favorite)");
+    query->bindValue(":name",name);
+    query->bindValue(":rus_index",ToIndex(name));
+    query->bindValue(":id_lib",libID);
+    query->bindValue(":favorite",tag);
+    if(!query->exec())
+        qDebug() << query->lastError().text();
+    qlonglong id = query->lastInsertId().toLongLong();
     return id;
 }
 
@@ -293,7 +297,11 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
     QString name3;
     if(names.count()>2)
         name3=names[2].trimmed();
-    query->exec("SELECT id,favorite FROM author WHERE rus_index='"+ToIndex(name1+" "+name2+" "+name3)+"' and id_lib="+QString::number(libID));
+
+    query->prepare("SELECT id,favorite FROM author WHERE rus_index=:rus_index and id_lib=:id_lib");
+    query->bindValue(":rus_index",ToIndex(name1+" "+name2+" "+name3));
+    query->bindValue(":id_lib",libID);
+    query->exec();
     qlonglong id=0;
     if(query->next())
     {
@@ -301,10 +309,16 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
     }
     if(id==0)
     {
-        query->exec("INSERT INTO author(name1,name2,name3,rus_index,id_lib,favorite) values('"+name1+"','"+name2+"','"+name3+"','"+ToIndex(name1+" "+name2+" "+name3)+"',"+QString::number(libID)+","+QString::number(tag)+")");
-        query->exec("select last_insert_rowid()");
-        query->next();
-        id=query->value(0).toLongLong();
+        query->prepare("INSERT INTO author(name1,name2,name3,rus_index,id_lib,favorite) values(:name1,:name2,:name3,:rus_index,:id_lib,:favorite)");
+        query->bindValue(":name1",name1);
+        query->bindValue(":name2",name2);
+        query->bindValue(":name3",name3);
+        query->bindValue(":rus_index",ToIndex(name1+" "+name2+" "+name3));
+        query->bindValue(":id_lib",libID);
+        query->bindValue(":favorite",tag);
+        if(!query->exec())
+            qDebug() << query->lastError().text();
+        id = query->lastInsertId().toLongLong();
     }
     else
     {
@@ -319,16 +333,27 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
 qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria, int num_in_seria, QString file,
              int size, int IDinLib, bool deleted, QString format, QDate date, QString language, QString keys, qlonglong id_lib, QString archive, int tag)
 {
-    name=name.replace("'","''");
-    file=file.replace("'","''");
-    archive=archive.replace("'","''");
-    query->exec("INSERT INTO book(name,star,id_seria,num_in_seria,language,name_index,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive,favorite) values('"+
-               name+"',"+QString::number(star)+","+QString::number(id_seria)+","+QString::number(num_in_seria)+",'"+language+"','"+
-               ToIndex(name)+"','"+file+"',"+QString::number(size)+","+(deleted?"1":"0")+",'"+date.toString("yyyy/MM/dd")+"','"+keys+"',"+
-               QString::number(IDinLib)+","+QString::number(id_lib)+",'"+format+"','"+archive+"'"+","+QString::number(tag)+ ")");
-    query->exec("select last_insert_rowid()");
-    query->next();
-    qlonglong id=query->value(0).toLongLong();
+    query->prepare("INSERT INTO book(name,star,id_seria,num_in_seria,language,name_index,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive,favorite) "
+                   "values(:name,:star,:id_seria,:num_in_seria,:language,:name_index,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive,:favorite)");
+    query->bindValue(":name",name);
+    query->bindValue(":star",star);
+    query->bindValue(":id_seria",id_seria);
+    query->bindValue(":num_in_seria",num_in_seria);
+    query->bindValue(":language",language);
+    query->bindValue(":file",file);
+    query->bindValue(":size",size);
+    query->bindValue(":deleted",deleted);
+    query->bindValue(":date",date);
+    query->bindValue(":keys",keys);
+    query->bindValue(":id_inlib",IDinLib);
+    query->bindValue(":id_lib",id_lib);
+    query->bindValue(":format",format);
+    query->bindValue(":archive",archive);
+    query->bindValue(":favorite",tag);
+    if(!query->exec())
+        qDebug() << query->lastError().text();
+    qlonglong id = query->lastInsertId().toLongLong();
+
     return id;
 }
 qlonglong ImportThread::AddJanre(qlonglong id_book,QString janre,qlonglong id_lib,QString language)
@@ -769,7 +794,7 @@ void ImportThread::process()
             break;
         }
     }
-    bool trans = QSqlDatabase::database("libdb").transaction();
+    QSqlDatabase::database("libdb").transaction();
 
     foreach( QString str , list  )
     {
@@ -795,10 +820,13 @@ void ImportThread::process()
         //uz.extractFile(str,&outbuff,UnZip::SkipPaths);
         QStringList lines=(QString::fromUtf8(outbuff.data())).split('\n');
         qlonglong t1_=0,t2_=0,t3_=0,t4_=0,count=0;
-        //if(lines.count()>0)
-            //query->exec("BEGIN;");
         foreach(QString line,lines)
         {
+            if(line.isEmpty())
+                continue;
+
+            if(line.contains("388616"))
+                qDebug() << "bad line";
             qlonglong t0=QDateTime::currentMSecsSinceEpoch();
             app->processEvents();
             if(!loop)
@@ -939,7 +967,6 @@ void ImportThread::process()
                     t2_=0;
                     t3_=0;
                     t4_=0;
-                    //query->exec("COMMIT;");
                 }
 
             }
@@ -947,10 +974,9 @@ void ImportThread::process()
         if(count>0)
         {
             emit Message(tr("Books adds: ")+QString::number(book_count));
-            //query->exec("COMMIT;");
         }
     }
-    trans = QSqlDatabase::database("libdb").commit();
+    QSqlDatabase::database("libdb").commit();
 
     emit End();
 }
