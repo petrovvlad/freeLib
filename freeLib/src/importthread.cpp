@@ -825,8 +825,6 @@ void ImportThread::process()
             if(line.isEmpty())
                 continue;
 
-            if(line.contains("388616"))
-                qDebug() << "bad line";
             qlonglong t0=QDateTime::currentMSecsSinceEpoch();
             app->processEvents();
             if(!loop)

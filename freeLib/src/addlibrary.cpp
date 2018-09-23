@@ -64,7 +64,10 @@ void AddLibrary::Add_Library()
     QString sNewName = tr("new");
     ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->addItem(sNewName,-1);
-    SLib lib{sNewName,"","",false,false};
+    SLib lib;//{sNewName,"","",false,false};
+    lib.name = sNewName;
+    lib.bFirstAuthor = false;
+    lib.bWoDeleted = false;
     SaveLibrary(idCurrentLib_,lib);
     ui->ExistingLibs->blockSignals(false);
     ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
@@ -128,9 +131,14 @@ void AddLibrary::UpdateLibList()
 
 void AddLibrary::StartImport()
 {
-    SLib Lib{ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),
-                ui->firstAuthorOnly->isChecked(),ui->checkwoDeleted->isChecked()};
-    StartImport(Lib);
+    SLib lib;//{ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),
+               // ui->firstAuthorOnly->isChecked(),ui->checkwoDeleted->isChecked()};
+    lib.name = ui->ExistingLibs->currentText().trimmed();
+    lib.sInpx = ui->inpx->text().trimmed();
+    lib.path = ui->BookDir->text().trimmed();
+    lib.bFirstAuthor = ui->firstAuthorOnly->isChecked();
+    lib.bWoDeleted = ui->checkwoDeleted->isChecked();
+    StartImport(lib);
 }
 
 void AddLibrary::StartImport(SLib &Lib)
@@ -165,15 +173,14 @@ void AddLibrary::StartImport(SLib &Lib)
     thread->start();
 }
 
-void AddLibrary::AddNewLibrary(QString _name, QString _path, QString _fileName)
+void AddLibrary::AddNewLibrary(SLib &lib)
 {
     if(!db_is_open)
     {
         db_is_open=openDB(true,false);
     }
     idCurrentLib_ =-1;
-    SLib Lib{_name,_path,_fileName,false,false};
-    StartImport(Lib);
+    StartImport(lib);
     exec();
 }
 
@@ -233,7 +240,7 @@ void AddLibrary::SelectLibrary()
     ui->HTTP->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
 
     settings->setValue("LibID",idCurrentLib_);
-    idCurrentLib = idCurrentLib_;
+    //idCurrentLib = idCurrentLib_;
 }
 
 void AddLibrary::SaveLibrary(int idLib, SLib &Lib)
@@ -305,10 +312,6 @@ void AddLibrary::EndUpdate()
 }
 void AddLibrary::terminateImport()
 {
-//    if(idCurrentLib_>0)
-//    {
-//        SaveLibrary(idCurrentLib_,ui->ExistingLibs->currentText().trimmed(),ui->BookDir->text().trimmed(),ui->inpx->text().trimmed(),ui->firstAuthorOnly->isChecked(),ui->checkwoDeleted->isChecked());
-//    }
     emit break_import();
 }
 
@@ -316,7 +319,11 @@ void AddLibrary::reject()
 {
     if (ui->btnCancel->text()==tr("Close"))
     {
-       QDialog::reject();
+        if(idCurrentLib_!=idCurrentLib){
+            bLibChanged = true;
+            idCurrentLib=idCurrentLib_;
+        }
+        QDialog::reject();
     }
     else
     {

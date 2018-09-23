@@ -22,7 +22,7 @@ public:
 
     }
 
-    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &option, const QModelIndex &index) const
+    QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
     {
         QWidget *frame=new QWidget(parent);
         frame->setAttribute(Qt::WA_TranslucentBackground);

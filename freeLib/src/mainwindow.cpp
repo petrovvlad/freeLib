@@ -1,3 +1,4 @@
+
 #include <QtSql>
 #include <QDomDocument>
 #include <QBuffer>
@@ -8,6 +9,8 @@
 #include <QSplashScreen>
 #include <QTextCodec>
 #include <QMap>
+#include <QButtonGroup>
+
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -28,17 +31,20 @@
 #include "libwizard.h"
 #include "bookeditdlg.h"
 #include "webpage.h"
+#include "treebookitem.h"
+#include "genresortfilterproxymodel.h"
 
 extern QSplashScreen *splash;
 extern QMap<int,SLib> mLibs;
+extern QMap <uint,SGenre> mGenre;
+
+
 extern int idCurrentLib;
-HelpDialog *Help_dlg;
 bool db_is_open;
 
 
 QString ToIndex(QString str)
 {
-    //return str.toUpper().replace("Ё","Ее");
     QString fn;
     int i, rU, rL;
     QString rusUpper = QString("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789");
@@ -172,22 +178,14 @@ QPixmap GetTag(QColor color,int size)
     paint.drawEllipse(2,0,size-5,size-5);
     return pixmap;
 }
-int sqliteLocaleAwareCompare(void* /*arg*/, int len1, const void* data1, int len2, const void* data2)
-{
-    QString string1 = QString::fromRawData( reinterpret_cast<const QChar*>( data1 ),
-         len1 / sizeof( QChar ) );
-     QString string2 = QString::fromRawData( reinterpret_cast<const QChar*>( data2 ),
-         len2 / sizeof( QChar ) );
-     return QString::localeAwareCompare( string1, string2 );
-}
-
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
     trIcon=0;
-    dropForm=0;
+    pDropForm=nullptr;
+    error_quit=false;
     if(db_is_open)
     {
         QSqlQuery query(QSqlDatabase::database("libdb"));
@@ -244,7 +242,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
 
-    ui->searchString->setMaxLength(20);
     tbClear=new QToolButton(this);
     tbClear->setFocusPolicy(Qt::NoFocus);
     tbClear->setIcon(QIcon(":/icons/img/icons/clear.png"));
@@ -256,20 +253,16 @@ MainWindow::MainWindow(QWidget *parent) :
     layout->setSpacing(0);
     layout->setMargin(0);
 
-    searchTimer.setSingleShot(true);
-    connect(ui->searchString,SIGNAL(textEdited(QString)),this,SLOT(TimerResetSearch()));
+    connect(ui->searchString,SIGNAL(/*textEdited*/textChanged(QString)),this,SLOT(searchCanged(QString)));
     connect(tbClear,SIGNAL(clicked()),this,SLOT(searchClear()));
-    connect(ui->actionAddLibrary,SIGNAL(triggered()),this,SLOT(Add_Library()));
-    connect(ui->btnLibrary,SIGNAL(clicked()),this,SLOT(Add_Library()));
+    connect(ui->actionAddLibrary,SIGNAL(triggered()),this,SLOT(ManageLibrary()));
+    connect(ui->btnLibrary,SIGNAL(clicked()),this,SLOT(ManageLibrary()));
     connect(ui->btnOpenBook,SIGNAL(clicked()),this,SLOT(BookDblClick()));
     connect(ui->btnOption,SIGNAL(clicked()),this,SLOT(Settings()));
     connect(ui->actionPreference,SIGNAL(triggered()),this,SLOT(Settings()));
     connect(ui->actionCheck_uncheck,SIGNAL(triggered()),this,SLOT(CheckBooks()));
     connect(ui->btnCheck,SIGNAL(clicked()),this,SLOT(CheckBooks()));
     connect(ui->btnEdit,SIGNAL(clicked()),this,SLOT(EditBooks()));
-    connect(&searchTimer,SIGNAL(timeout()),this,SLOT(TimerSearch()));
-    //connect(ui->btnSendMail,SIGNAL(clicked()),this,SLOT(SendMail()));
-    //connect(ui->btnExport,SIGNAL(clicked()),this,SLOT(SendToDevice()));
     connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
@@ -284,13 +277,11 @@ MainWindow::MainWindow(QWidget *parent) :
     #ifdef Q_OS_WIN32
         ui->actionExit->setShortcut(QKeySequence(Qt::ALT|Qt::Key_F4));
     #endif
-
     connect(ui->AuthorList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectAuthor()));
     connect(ui->Books,SIGNAL(itemSelectionChanged()),this,SLOT(SelectBook()));
     connect(ui->Books,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this,SLOT(BookDblClick()));
     connect(ui->JanreList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectJanre()));
     connect(ui->SeriaList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectSeria()));
-
     connect(ui->btnAuthor,SIGNAL(clicked()),this,SLOT(btnAuthor()));
     connect(ui->btnJanre,SIGNAL(clicked()),this,SLOT(btnJanres()));
     connect(ui->btnSeries,SIGNAL(clicked()),this,SLOT(btnSeries()));
@@ -299,67 +290,91 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->s_author,SIGNAL(returnPressed()),this,SLOT(StartSearch()));
     connect(ui->s_seria,SIGNAL(returnPressed()),this,SLOT(StartSearch()));
     connect(ui->s_name,SIGNAL(returnPressed()),this,SLOT(StartSearch()));
-
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(About()));
     connect(ui->actionNew_labrary_wizard,SIGNAL(triggered()),this,SLOT(newLibWizard()));
+    connect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
 
-    //ui->Review->page()->setLinkDelegationPolicy(QWebPage::DelegateAllLinks);
-    //connect(ui->Review,SIGNAL(linkClicked(QUrl)),this,SLOT(ReviewLink(QUrl)));
-   // ui->Review->page()->mainFrame()->setScrollBarPolicy(Qt::Vertical,Qt::ScrollBarAlwaysOn);
 
     ChangingLanguage(false);
-
-    current_list_id=-1;
-    stored_book=-1;
-
     ExportBookListBtn(false);
-    UpdateTags();
+
+    idCurrentLanguage_ = -1;
+    bUseTag_=settings->value("use_tag",true).toBool();
+    bShowDeleted_ =settings->value("ShowDeleted").toBool();
+    int nCurrentTab;
+
     if(settings->value("store_position",false).toBool())
     {
-        current_list_id=settings->value("current_list_id",0).toLongLong();
-        stored_book=settings->value("current_book_id",0).toLongLong();
-        UpdateJanre();
-        switch(settings->value("current_tab",0).toInt())
-            {
-            case 1:
-                ui->btnSeries->click();
-                break;
-            case 2:
-                ui->btnJanre->click();
-                break;
-            case 3:
-                ui->btnSearch->click();
-                break;
-            }
-        if(settings->contains("filter_set"))
-        {
-            ui->searchString->setText(settings->value("filter_set").toString());
-            searchCanged(settings->value("filter_set").toString());
-        }
-        else
-        {
-            FirstButton->click();
-        }
+        idCurrentAuthor_= settings->value("current_author_id",0).toUInt();
+        idCurrentSerial_ = settings->value("current_serial_id",0).toUInt();
+        idCurrentBook_ = settings->value("current_book_id",0).toLongLong();
+        idCurrentGenre_ = settings->value("current_genre_id",0).toLongLong();
+        nCurrentTab = settings->value("current_tab",0).toInt();
+        ui->searchString->setText(settings->value("filter_set").toString());
+
     }
     else
     {
-        UpdateJanre();
-        FirstButton->click();
+        idCurrentAuthor_ = 0;
+        idCurrentSerial_ = 0;
+        idCurrentBook_ = 0;
+        idCurrentGenre_ = -1;
+        nCurrentTab = 0;
+//        FillAuthors();
+//        FillSerials();
+//        FillGenres();
+//        FirstButton->click();
     }
+    UpdateTags();
+    UpdateSeria();
+    UpdateAuthor();
+    UpdateJanre();
+    UpdateBooks();
+
+    FillAuthors();
+    FillSerials();
+    FillGenres();
+    switch(nCurrentTab)
+    {
+    case 0:
+        FillListBooks();
+        break;
+    case 1:
+        ui->btnSeries->click();
+        break;
+    case 2:
+        ui->btnJanre->click();
+        break;
+    case 3:
+        ui->btnSearch->click();
+        break;
+    }
+
+    if(ui->searchString->text().trimmed().isEmpty())
+        FirstButton->click();
+
     ui->date_to->setDate(QDate::currentDate());
-    Help_dlg=0;
+
+    pHelpDlg=0;
     connect(ui->actionHelp,SIGNAL(triggered()),this,SLOT(HelpDlg()));
     ui->Books->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->Books,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ContextMenu(QPoint)));
-    CurrentBookID=0;
-    CurrentSeriaID=0;
     ui->AuthorList->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->AuthorList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ContextMenu(QPoint)));
     ui->SeriaList->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->SeriaList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ContextMenu(QPoint)));
+    connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+
     opds.server_run();
     FillLibrariesMenu();
     UpdateExportMenu();
+
+    setMouseTracking(true);
+    centralWidget()->setMouseTracking(true);
+    ui->label_drop->setMouseTracking(true);
+    ui->frame_drop->setMouseTracking(true);
+    ui->pageConvert->setMouseTracking(true);
+    ui->stackedWidget->setMouseTracking(true);
 
     mode=(APP_MODE)settings->value("ApplicationMode",0).toInt();
     switch(mode)
@@ -375,14 +390,7 @@ MainWindow::MainWindow(QWidget *parent) :
         on_actionSwitch_to_convert_mode_triggered();
         break;
     }
-    setMouseTracking(true);
-    centralWidget()->setMouseTracking(true);
-    ui->label_drop->setMouseTracking(true);
-    ui->frame_drop->setMouseTracking(true);
-    ui->pageConvert->setMouseTracking(true);
-    ui->stackedWidget->setMouseTracking(true);
-
-    ui->stacked_books->setCurrentWidget(ui->page_books);
+    //ui->stacked_books->setCurrentWidget(ui->page_books);
     ChangingTrayIcon();
 
 #ifdef Q_OS_OSX
@@ -390,6 +398,11 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
     connect(ui->actionMinimize_window,SIGNAL(triggered(bool)),SLOT(MinimizeWindow()));
 
+    GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_janre);
+    MyProxySortModel->setSourceModel(ui->s_janre->model());
+    ui->s_janre->model()->setParent(MyProxySortModel);
+    ui->s_janre->setModel(MyProxySortModel);
+    ui->s_janre->model()->sort(0);
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
@@ -417,13 +430,15 @@ void MainWindow::UpdateTags()
 
     QButtonGroup *group=new QButtonGroup(this);
     group->setExclusive(true);
-    disconnect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+//    disconnect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+    const bool wasBlocked = ui->TagFilter->blockSignals(true);
+
     int size =ui->TagFilter->style()->pixelMetric(QStyle::PM_SmallIconSize)*app->devicePixelRatio();
     QSqlQuery query(QSqlDatabase::database("libdb"));
     query.exec("SELECT color,name,id from favorite");
     ui->TagFilter->clear();
     int con=1;
-    ui->TagFilter->addItem("*",-2);
+    ui->TagFilter->addItem("*",0);
     QSettings *settings=GetSettings();
     TagMenu.clear();
     QAction *ac=new QAction(tr("no tag"),&TagMenu);
@@ -435,14 +450,13 @@ void MainWindow::UpdateTags()
     pix.setDevicePixelRatio(app->devicePixelRatio());
     Stag new_tag={pix,0};
     tags_pic<<new_tag;
-    bool use_tag=settings->value("use_tag",true).toBool();
-    ui->TagFilter->setVisible(use_tag);
-    ui->tag_label->setVisible(use_tag);
+    ui->TagFilter->setVisible(bUseTag_);
+    ui->tag_label->setVisible(bUseTag_);
 
     while(query.next())
     {
         ui->TagFilter->addItem(query.value(1).toString().trimmed(),query.value(2).toInt());
-        if(settings->value("current_tag").toInt()==ui->TagFilter->count()-1 && use_tag)
+        if(settings->value("current_tag").toInt()==ui->TagFilter->count()-1 && bUseTag_)
             ui->TagFilter->setCurrentIndex(ui->TagFilter->count()-1);
         pix=::GetTag(QColor(query.value(0).toString().trimmed()),size);
         Stag new_tag={pix,query.value(2).toInt()};
@@ -456,39 +470,15 @@ void MainWindow::UpdateTags()
     }
 
     ui->TagFilter->addItem(tr("setup ..."),-1);
-    connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+//    connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+    ui->TagFilter->blockSignals(wasBlocked);
 
     QApplication::restoreOverrideCursor();
-}
-
-void MainWindow::TimerSearch()
-{
-    searchCanged(ui->searchString->text());
-}
-
-void MainWindow::TimerResetSearch()
-{
-    searchTimer.start(400);
 }
 
 MainWindow::~MainWindow()
 {
     delete ui;
-}
-
-void MainWindow::CheckBooks()
-{
-    QList<book_info> book_list;
-    FillCheckedBookList(book_list,0,false,true,true);
-
-    ui->Books->blockSignals(true);
-    Qt::CheckState cs=book_list.count()>0?Qt::Unchecked:Qt::Checked;
-    for(int i=0;i<ui->Books->topLevelItemCount();i++)
-    {
-        ui->Books->topLevelItem(i)->setCheckState(0,cs);
-        CheckChild(ui->Books->topLevelItem(i));
-    } 
-    ui->Books->blockSignals(false);
 }
 
 void MainWindow::EditBooks()
@@ -508,12 +498,21 @@ void MainWindow::newLibWizard(bool AddLibOnly)
             return;
         }
         AddLibrary al(this);
-        al.AddNewLibrary(wiz.name,wiz.dir,wiz.inpx);
-        QSettings *settings=GetSettings();
-        current_list_id=settings->value("current_list_id",0).toLongLong();
-        stored_book=settings->value("current_book_id",0).toLongLong();
+        SLib lib;
+        lib.name = wiz.name;
+        lib.path = wiz.dir;
+        lib.sInpx = wiz.inpx;
+        lib.bWoDeleted = false;
+        lib.bFirstAuthor = false;
+        al.AddNewLibrary(lib);
         UpdateJanre();
         UpdateTags();
+        UpdateSeria();
+        UpdateAuthor();
+        UpdateBooks();
+        FillAuthors();
+        FillSerials();
+        FillGenres();
         searchCanged(ui->searchString->text());
         setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
         FillLibrariesMenu();
@@ -538,7 +537,6 @@ void MainWindow::ReviewLink(QUrl url)
     {
         QSettings *settings=GetSettings();
         settings->setValue("show_fileinfo",!settings->value("show_fileinfo",false).toBool());
-        settings->sync();
         SelectBook();
     }
 }
@@ -571,14 +569,14 @@ void MainWindow::update_list_pix(qlonglong id, int list,int tag_id)
     {
         if(list==1)
         {
-            if(ui->Books->topLevelItem(i)->data(0,Qt::UserRole).toLongLong()==-id)
+            if(ui->Books->topLevelItem(i)->data(0,Qt::UserRole).toLongLong()==id)
                 ui->Books->topLevelItem(i)->setIcon(0,GetTag(tag_id));
         }
         else
         {
             for(int j=0;j<ui->Books->topLevelItem(i)->childCount();j++)
             {
-                if(ui->Books->topLevelItem(i)->child(j)->data(0,Qt::UserRole).toLongLong()==-id)
+                if(ui->Books->topLevelItem(i)->child(j)->data(0,Qt::UserRole).toLongLong()==id)
                     ui->Books->topLevelItem(i)->child(j)->setIcon(0,GetTag(tag_id));
             }
         }
@@ -617,7 +615,7 @@ void MainWindow::ChangingLanguage(bool change_language)
         }
         delete ui->abc->layout();
     }
-   //
+
     FirstButton=0;
     if(abc_local!="ABC")
     {
@@ -684,45 +682,65 @@ void MainWindow::ChangingLanguage(bool change_language)
 
 void MainWindow::set_tag()
 {
-    QString tag_id=((QAction*)QObject::sender())->data().toString();
-    qlonglong id;
+    int tag_id=((QAction*)QObject::sender())->data().toInt();
+    uint id;
     QSqlQuery query(QSqlDatabase::database("libdb"));
+
     if(current_list_for_tag==(QObject*)ui->Books)
     {
         QTreeWidgetItem* item=ui->Books->selectedItems()[0];
-        id=item->data(0,Qt::UserRole).toLongLong();
-        if(id<0)
-        {
-            if(item->parent())
-            {
-                update_list_pix(-id,2,tag_id.toInt());
-                query.exec(QString("UPDATE seria set favorite=%1 where id=%2").arg(tag_id,QString::number(-id)));
-            }
-            else
-            {
-                update_list_pix(-id,1,tag_id.toInt());
-                query.exec(QString("UPDATE author set favorite=%1 where id=%2").arg(tag_id,QString::number(-id)));
-            }
-        }
-        else
-        {
-            //update_list_pix(id,3,tag_id.toInt());
-            item->setIcon(0,GetTag(tag_id.toInt()));
-            query.exec(QString("UPDATE book set favorite=%1 where id=%2").arg(tag_id,QString::number(id)));
-        }
+        id=item->data(0,Qt::UserRole).toUInt();
+        switch (item->type()) {
+        case ITEM_TYPE_BOOK:
+            item->setIcon(0,GetTag(tag_id));
+            query.prepare("UPDATE book set favorite=:favorite where id=:id");
+            query.bindValue(":favorite",tag_id);
+            query.bindValue(":id",id);
+            query.exec();
+            mLibs[idCurrentLib].mBooks[id].nTag = tag_id;
+            break;
 
+        case ITEM_TYPE_SERIA:
+            update_list_pix(id,2,tag_id);
+            query.prepare("UPDATE seria set favorite=:favorite where id=:id");
+            query.bindValue(":favorite",tag_id);
+            query.bindValue(":id",id);
+            query.exec();
+            mLibs[idCurrentLib].mSerials[id].nTag = tag_id;
+            break;
+
+        case ITEM_TYPE_AUTHOR:
+            update_list_pix(id,1,tag_id);
+            query.prepare("UPDATE author set favorite=:favorite where id=:id");
+            query.bindValue(":favorite",tag_id);
+            query.bindValue(":id",id);
+            query.exec();
+            mLibs[idCurrentLib].mAuthors[id].nTag = tag_id;
+            break;
+
+        default:
+            break;
+        }
     }
     else if(current_list_for_tag==(QObject*)ui->AuthorList)
     {
-        id=ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong();
-        update_list_pix(id,1,tag_id.toInt());
-        query.exec(QString("UPDATE author set favorite=%1 where id=%2").arg(tag_id,QString::number(id)));
+        id=ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toUInt();
+        update_list_pix(id,1,tag_id);
+        query.prepare("UPDATE author set favorite=:favorite where id=:id");
+        query.bindValue(":favorite",tag_id);
+        query.bindValue(":id",id);
+        query.exec();
+        mLibs[idCurrentLib].mAuthors[id].nTag = tag_id;
     }
     else if(current_list_for_tag==(QObject*)ui->SeriaList)
     {
-        id=ui->SeriaList->selectedItems()[0]->data(Qt::UserRole).toLongLong();
-        update_list_pix(id,2 ,tag_id.toInt());
-        query.exec(QString("UPDATE seria set favorite=%1 where id=%2").arg(tag_id,QString::number(id)));
+        id=ui->SeriaList->selectedItems()[0]->data(Qt::UserRole).toUInt();
+        update_list_pix(id,2 ,tag_id);
+        query.prepare("UPDATE seria set favorite=:favorite where id=:id");
+        query.bindValue(":favorite",tag_id);
+        query.bindValue(":id",id);
+        query.exec();
+        mLibs[idCurrentLib].mSerials[id].nTag = tag_id;
     }
 }
 
@@ -731,9 +749,11 @@ void MainWindow::tag_select(int index)
     QSettings *settings=GetSettings();
     if(ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt()==-1)
     {
-        disconnect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+        //disconnect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+        const bool wasBlocked = ui->TagFilter->blockSignals(true);
         ui->TagFilter->setCurrentIndex(settings->value("current_tag",0).toInt());
-        connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+        ui->TagFilter->blockSignals(wasBlocked);
+        //connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
         TagDialog td(this);
         if(td.exec())
             UpdateTags();
@@ -741,11 +761,11 @@ void MainWindow::tag_select(int index)
     else if(index>=0)
     {
         settings->setValue("current_tag",index);
-        UpdateJanre();
-        UpdateAuthor();
-        UpdateSeria();
+        FillListBooks();
+        FillAuthors();
+        FillSerials();
+        FillGenres();
     }
-    settings->sync();
 }
 
 void MainWindow::SaveLibPosition()
@@ -753,44 +773,43 @@ void MainWindow::SaveLibPosition()
     QSettings *settings=GetSettings();
     settings->setValue("filter_set",ui->searchString->text());
     settings->setValue("current_tab",ui->tabWidget->currentIndex());
-    qlonglong id=-1;
-    switch (ui->tabWidget->currentIndex())
-    {
-    case 0:
-        if(ui->AuthorList->selectedItems().count()>0)
-        {
-            id=ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong();
-        }
-        break;
-    case 1:
-        if(ui->SeriaList->selectedItems().count()>0)
-        {
-            id=ui->SeriaList->selectedItems()[0]->data(Qt::UserRole).toLongLong();
-        }
-        break;
-    case 2:
-        if(ui->JanreList->selectedItems().count()>0)
-        {
-            id=ui->JanreList->selectedItems()[0]->data(0,Qt::UserRole).toLongLong();
-        }
-        break;
-    }
-    settings->setValue("current_list_id",id);
-    qlonglong book_id=-1;
-    if(ui->Books->selectedItems().count()>0)
-    {
-        book_id=ui->Books->selectedItems()[0]->data(0,Qt::UserRole).toLongLong();
-    }
-    settings->setValue("current_book_id",book_id);
-    settings->sync();
-    current_list_id=id;
-    stored_book=book_id;
+//    qlonglong id=-1;
+//    switch (ui->tabWidget->currentIndex())
+//    {
+//    case 0:
+//        if(ui->AuthorList->selectedItems().count()>0)
+//        {
+//            id=ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong();
+//        }
+//        break;
+//    case 1:
+//        if(ui->SeriaList->selectedItems().count()>0)
+//        {
+//            id=ui->SeriaList->selectedItems()[0]->data(Qt::UserRole).toLongLong();
+//        }
+//        break;
+//    case 2:
+//        if(ui->JanreList->selectedItems().count()>0)
+//        {
+//            id=ui->JanreList->selectedItems()[0]->data(0,Qt::UserRole).toLongLong();
+//        }
+//        break;
+//    }
+    //settings->setValue("current_list_id",id);
+    //qlonglong book_id=-1;
+//    if(ui->Books->selectedItems().count()>0)
+//    {
+//        book_id=ui->Books->selectedItems()[0]->data(0,Qt::UserRole).toLongLong();
+//    }
+    settings->setValue("current_book_id",idCurrentBook_);
+    //current_list_id=id;
+    //stored_book=book_id;
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if(Help_dlg!=0)
-        delete Help_dlg;
+    if(pHelpDlg!=0)
+        delete pHelpDlg;
     SaveLibPosition();
     QSettings *settings=GetSettings();
     settings->setValue("ApplicationMode", mode);
@@ -826,8 +845,8 @@ void MainWindow::ChangingPort(int i)
 void MainWindow::Settings()
 {
     QSettings *settings=GetSettings();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    bool use_tag=settings->value("use_tag").toBool();
+    //bool ShowDeleted=settings->value("ShowDeleted").toBool();
+    //bool use_tag=settings->value("use_tag").toBool();
     if(ui->btnExport->defaultAction())
     {
         settings->setValue("DefaultExport",ui->btnExport->defaultAction()->data().toInt());
@@ -841,18 +860,22 @@ void MainWindow::Settings()
     settings=GetSettings();
     settings->setValue("LibID",idCurrentLib);
     settings->sync();
-    if(ShowDeleted!=settings->value("ShowDeleted").toBool() || use_tag!=settings->value("use_tag").toBool())
+    if(bShowDeleted_!=settings->value("ShowDeleted").toBool() || bUseTag_!=settings->value("use_tag").toBool())
     {
+        bUseTag_ = settings->value("use_tag").toBool();
+        bShowDeleted_ = settings->value("ShowDeleted").toBool();
         UpdateTags();
         SaveLibPosition();
-        UpdateJanre();
-        UpdateAuthor();
         UpdateSeria();
+        FillAuthors();
+        FillGenres();
+        FillListBooks();
     }
     opds.server_run();
     UpdateExportMenu();
     resizeEvent(0);
 }
+
 void MainWindow::FillCheckedBookList(QList<book_info> &list,QTreeWidgetItem* item,bool send_all,bool count_only,bool checked_only)
 {
     FillCheckedItemsBookList(list,item,send_all,count_only);
@@ -902,16 +925,6 @@ void MainWindow::FillCheckedItemsBookList(QList<book_info> &list,QTreeWidgetItem
             }
         }
     }
-}
-
-void MainWindow::LanguageChange()
-{
-    QSettings *settings=GetSettings();
-    settings->setValue("BookLanguage",ui->language->currentText());
-    settings->sync();
-    UpdateJanre();
-    UpdateAuthor();
-    UpdateSeria();
 }
 
 void MainWindow::uncheck_books(QList<qlonglong> list)
@@ -999,6 +1012,7 @@ void MainWindow::BookDblClick()
 
     QSettings *settings=GetSettings();
     int count=settings->beginReadArray("application");
+    // проверит цикл
     for(int i=0;i<count;i++)
     {
         settings->setArrayIndex(i);
@@ -1020,6 +1034,20 @@ void MainWindow::BookDblClick()
 
     QDesktopServices::openUrl(QUrl::fromLocalFile(file.fileName()));
     settings->sync();
+}
+
+void MainWindow::CheckBooks()
+{
+    QList<book_info> book_list;
+    FillCheckedBookList(book_list,0,false,true,true);
+
+    const QSignalBlocker blocker( ui->Books);
+    Qt::CheckState cs=book_list.count()>0?Qt::Unchecked:Qt::Checked;
+    for(int i=0;i<ui->Books->topLevelItemCount();i++)
+    {
+        ui->Books->topLevelItem(i)->setCheckState(0,cs);
+        CheckChild(ui->Books->topLevelItem(i));
+    }
 }
 
 void MainWindow::CheckParent(QTreeWidgetItem *parent)
@@ -1066,7 +1094,8 @@ void MainWindow::CheckChild(QTreeWidgetItem *parent)
 }
 void MainWindow::itemChanged(QTreeWidgetItem *item, int)
 {
-    disconnect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
+    //disconnect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
+    const bool wasBlocked = ui->Books->blockSignals(true);
     CheckChild(item);
     QTreeWidgetItem* parent=item->parent();
     if(parent)
@@ -1075,135 +1104,136 @@ void MainWindow::itemChanged(QTreeWidgetItem *item, int)
     FillCheckedBookList(book_list,0,false,true);
     ExportBookListBtn(book_list.count()!=0);
 
-    connect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
+    ui->Books->blockSignals(wasBlocked);
+    //connect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
 }
 
-void MainWindow::FillBookList(QSqlQuery &query)
-{
-    disconnect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
-    QTreeWidgetItem* item;
-    QTreeWidgetItem* item_list;
-    QTreeWidgetItem* item_author=0;
-    QTreeWidgetItem* item_seria=0;
-    QFont bold_font(ui->Books->font());
-    bold_font.setBold(true);
-    qlonglong id_book=0;
-    qlonglong count=0;
-    QTreeWidgetItem* ScrollItem=0;
-    if(stored_book>0)
-    {
-        CurrentBookID=stored_book;
-        if(!(ui->tabWidget->currentIndex()==0 && current_list_for_tag!=(QObject*)ui->AuthorList))
-            stored_book=-1;
-    }
-    QSettings *settings=GetSettings();
-    bool use_tag=settings->value("use_tag",true).toBool();
+//void MainWindow::FillBookList(QSqlQuery &query)
+//{
+//    disconnect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
+//    QTreeWidgetItem* item;
+//    QTreeWidgetItem* item_list;
+//    QTreeWidgetItem* item_author=0;
+//    QTreeWidgetItem* item_seria=0;
+//    QFont bold_font(ui->Books->font());
+//    bold_font.setBold(true);
+//    qlonglong id_book=0;
+//    qlonglong count=0;
+//    QTreeWidgetItem* ScrollItem=0;
+//    if(stored_book>0)
+//    {
+//        CurrentBookID=stored_book;
+//        if(!(ui->tabWidget->currentIndex()==0 && current_list_for_tag!=(QObject*)ui->AuthorList))
+//            stored_book=-1;
+//    }
+//    QSettings *settings=GetSettings();
+//    bool use_tag=settings->value("use_tag",true).toBool();
 
-    QList<qlonglong> books_list;
-    while (query.next())
-    {
-        if(books_list.contains(query.value(0).toLongLong()))
-            continue;
-        books_list<<query.value(0).toLongLong();
-        if(id_book==query.value(0).toLongLong())
-        {
-            item->setText(5,item->text(5)+", "+query.value(8).toString().trimmed());
-            continue;
-        }
-        item_list=new QTreeWidgetItem(ui->BooksList);
-        id_book=query.value(0).toLongLong();
-        if(item_author==0 || (item_author==0?true:item_author->text(0)!=query.value(2).toString().trimmed()))
-        {
-            item_author=new QTreeWidgetItem(ui->Books);
-            ui->Books->addTopLevelItem(item_author);
-            item_author->setText(0,query.value(2).toString().trimmed());
-            item_author->setExpanded(true);
-            item_author->setFont(0,bold_font);
-            item_author->setCheckState(0,Qt::Unchecked);
-            item_author->setData(0,Qt::UserRole,-query.value(10).toLongLong());
-            if(use_tag)
-                item_author->setIcon(0,GetTag(query.value(12).toInt()));
-            item_seria=0;
-        }
-        item_list->setText(0,query.value(2).toString().trimmed());
-        item_list->setCheckState(0,Qt::Unchecked);
-        item_list->setData(0,Qt::UserRole,-query.value(10).toLongLong());
-        if(use_tag)
-            item_list->setIcon(0,GetTag(query.value(12).toInt()));
+//    QList<qlonglong> books_list;
+//    while (query.next())
+//    {
+//        if(books_list.contains(query.value(0).toLongLong()))
+//            continue;
+//        books_list<<query.value(0).toLongLong();
+//        if(id_book==query.value(0).toLongLong())
+//        {
+//            item->setText(5,item->text(5)+", "+query.value(8).toString().trimmed());
+//            continue;
+//        }
+//        //item_list=new QTreeWidgetItem(ui->BooksList);
+//        id_book=query.value(0).toLongLong();
+//        if(item_author==0 || (item_author==0?true:item_author->text(0)!=query.value(2).toString().trimmed()))
+//        {
+//            item_author=new QTreeWidgetItem(ui->Books);
+//            ui->Books->addTopLevelItem(item_author);
+//            item_author->setText(0,query.value(2).toString().trimmed());
+//            item_author->setExpanded(true);
+//            item_author->setFont(0,bold_font);
+//            item_author->setCheckState(0,Qt::Unchecked);
+//            item_author->setData(0,Qt::UserRole,-query.value(10).toLongLong());
+//            if(use_tag)
+//                item_author->setIcon(0,GetTag(query.value(12).toInt()));
+//            item_seria=0;
+//        }
+//        item_list->setText(0,query.value(2).toString().trimmed());
+//        item_list->setCheckState(0,Qt::Unchecked);
+//        item_list->setData(0,Qt::UserRole,-query.value(10).toLongLong());
+//        if(use_tag)
+//            item_list->setIcon(0,GetTag(query.value(12).toInt()));
 
-        if(query.value(3).toString().trimmed().isEmpty())
-        {
-            item_seria=0;
-        }
-        else
-        {
-            if(item_seria==0 || (item_seria==0?true:item_seria->text(0)!=query.value(3).toString().trimmed()))
-            {
-                item_seria=new QTreeWidgetItem(item_author);
-                item_seria->setText(0,query.value(3).toString().trimmed());
-                item_author->addChild(item_seria);
-                item_seria->setExpanded(true);
-                item_seria->setFont(0,bold_font);
-                item_seria->setCheckState(0,Qt::Unchecked);
-                item_seria->setData(0,Qt::UserRole,-query.value(11).toLongLong());
-                if(use_tag)
-                    item_seria->setIcon(0,GetTag(query.value(13).toInt()));
-                if(query.value(11).toLongLong()==CurrentSeriaID)
-                {
-                    ScrollItem=item_seria;
-                }
-           }
-        }
-        item=new QTreeWidgetItem(item_seria==0?item_author:item_seria);
-        item->setData(0,Qt::UserRole,query.value(0));
-        item->setText(0,query.value(1).toString().trimmed());
-        item->setText(1,(query.value(4).toString().trimmed()=="0"?"":query.value(4).toString().trimmed()));
-        item->setTextAlignment(1, Qt::AlignRight);
-        item->setText(2,(query.value(6).toString().trimmed()=="0"?"":query.value(6).toString().trimmed()));
-        item->setTextAlignment(2, Qt::AlignRight);
-        if(use_tag)
-            item->setIcon(0,GetTag(query.value(14).toInt()));
-        if(query.value(0).toLongLong()==CurrentBookID)
-        {
-            ScrollItem=item;
-        }
+//        if(query.value(3).toString().trimmed().isEmpty())
+//        {
+//            item_seria=0;
+//        }
+//        else
+//        {
+//            if(item_seria==0 || (item_seria==0?true:item_seria->text(0)!=query.value(3).toString().trimmed()))
+//            {
+//                item_seria=new QTreeWidgetItem(item_author);
+//                item_seria->setText(0,query.value(3).toString().trimmed());
+//                item_author->addChild(item_seria);
+//                item_seria->setExpanded(true);
+//                item_seria->setFont(0,bold_font);
+//                item_seria->setCheckState(0,Qt::Unchecked);
+//                item_seria->setData(0,Qt::UserRole,-query.value(11).toLongLong());
+//                if(use_tag)
+//                    item_seria->setIcon(0,GetTag(query.value(13).toInt()));
+//                if(query.value(11).toLongLong()==CurrentSeriaID)
+//                {
+//                    ScrollItem=item_seria;
+//                }
+//           }
+//        }
+//        item=new QTreeWidgetItem(item_seria==0?item_author:item_seria);
+//        item->setData(0,Qt::UserRole,query.value(0));
+//        item->setText(0,query.value(1).toString().trimmed());
+//        item->setText(1,(query.value(4).toString().trimmed()=="0"?"":query.value(4).toString().trimmed()));
+//        item->setTextAlignment(1, Qt::AlignRight);
+//        item->setText(2,(query.value(6).toString().trimmed()=="0"?"":query.value(6).toString().trimmed()));
+//        item->setTextAlignment(2, Qt::AlignRight);
+//        if(use_tag)
+//            item->setIcon(0,GetTag(query.value(14).toInt()));
+//        if(query.value(0).toLongLong()==CurrentBookID)
+//        {
+//            ScrollItem=item;
+//        }
 
-        if(query.value(9).toBool())
-        {
-            item->setTextColor(0,QColor::fromRgb(96,96,96));
-            item->setTextColor(1,QColor::fromRgb(96,96,96));
-            item->setTextColor(2,QColor::fromRgb(96,96,96));
-            item->setTextColor(3,QColor::fromRgb(96,96,96));
-            item->setTextColor(4,QColor::fromRgb(96,96,96));
-            item->setTextColor(5,QColor::fromRgb(96,96,96));
-        }
+//        if(query.value(9).toBool())
+//        {
+//            item->setTextColor(0,QColor::fromRgb(96,96,96));
+//            item->setTextColor(1,QColor::fromRgb(96,96,96));
+//            item->setTextColor(2,QColor::fromRgb(96,96,96));
+//            item->setTextColor(3,QColor::fromRgb(96,96,96));
+//            item->setTextColor(4,QColor::fromRgb(96,96,96));
+//            item->setTextColor(5,QColor::fromRgb(96,96,96));
+//        }
 
-        QPixmap pix(":/icons/img/icons/stars/"+query.value(5).toString().trimmed()+QString("star%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
-        pix.setDevicePixelRatio(app->devicePixelRatio());
-        item->setData(3,Qt::DecorationRole,pix);
+//        QPixmap pix(":/icons/img/icons/stars/"+query.value(5).toString().trimmed()+QString("star%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
+//        pix.setDevicePixelRatio(app->devicePixelRatio());
+//        item->setData(3,Qt::DecorationRole,pix);
 
-        item->setTextAlignment(3,Qt::AlignHCenter);
-        item->setText(4,query.value(7).toDate().toString("dd.MM.yyyy"));
-        item->setTextAlignment(4, Qt::AlignCenter);
-        item->setText(5,query.value(8).toString().trimmed());
-        item->setCheckState(0,Qt::Unchecked);
-        (item_seria==0?item_author:item_seria)->addChild(item);
+//        item->setTextAlignment(3,Qt::AlignHCenter);
+//        item->setText(4,query.value(7).toDate().toString("dd.MM.yyyy"));
+//        item->setTextAlignment(4, Qt::AlignCenter);
+//        item->setText(5,query.value(8).toString().trimmed());
+//        item->setCheckState(0,Qt::Unchecked);
+//        (item_seria==0?item_author:item_seria)->addChild(item);
 
-        count++;
-        if(count==ui->maxBooks->value() && ui->tabWidget->currentWidget()==ui->page)
-            break;
-    }
-    ui->Books->scrollToTop();
-    ui->find_books->setText((query.next()?">":"")+QString::number(count));
-    CurrentBookID=0;
-    CurrentSeriaID=0;
-    if(ScrollItem)
-    {
-        ScrollItem->setSelected(true);
-        ui->Books->scrollToItem(ScrollItem);
-    }
-    connect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
-}
+//        count++;
+//        if(count==ui->maxBooks->value() && ui->tabWidget->currentWidget()==ui->page)
+//            break;
+//    }
+//    ui->Books->scrollToTop();
+//    ui->find_books->setText((query.next()?">":"")+QString::number(count));
+//    CurrentBookID=0;
+//    CurrentSeriaID=0;
+//    if(ScrollItem)
+//    {
+//        ScrollItem->setSelected(true);
+//        ui->Books->scrollToItem(ScrollItem);
+//    }
+//    connect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
+//}
 
 void MainWindow::ExportBookListBtn(bool Enable)
 {
@@ -1214,37 +1244,78 @@ void MainWindow::ExportBookListBtn(bool Enable)
 
 void MainWindow::StartSearch()
 {
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
     app->processEvents();
     ui->Books->clear();
     ExportBookListBtn(false);
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    QSettings *settings=GetSettings();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    QStringList str_author=ui->s_author->text().split(' ');
-    QString where_author;
-    foreach (QString str, str_author)
-    {
-        if(str.trimmed().isEmpty())
-            continue;
-        where_author+=QString(where_author.isEmpty()?"":" AND ")+" author.rus_index LIKE '%"+ToIndex(str.trimmed().toLower())+"%'";
-    }
+    //QSqlQuery query(QSqlDatabase::database("libdb"));
+    //QSettings *settings=GetSettings();
+    //bool bShowDeleted=settings->value("ShowDeleted").toBool();
+    //QStringList str_author=ui->s_author->text().split(' ');
+    QString sName = ui->s_name->text().trimmed();
+    QString sAuthor = ui->s_author->text().trimmed();
+    QDate dateFrom = ui->date_from->date();
+    QDate dateTo = ui->date_to->date();
+    int nMaxCount = ui->maxBooks->value();
+    int idGenre = ui->s_janre->currentData().toInt();
 
-    query.exec("SELECT book.id,book.name,name1||' '||name2||' '||name3,seria.name,num_in_seria,star,size,date,janre.name,deleted,author.id,seria.id,author.favorite,seria.favorite,book.favorite from book_author join book on book.id=book_author.id_book "
-               "join author on id_author=author.id "
-               "left join seria on id_seria=seria.id "
-               "left join book_janre on book_janre.id_book=book.id "
-               "left join janre on book_janre.id_janre=janre.id "
-               "where book_author.id_lib="+QString::number(idCurrentLib)+(ui->findLanguage->currentText()=="*"?"":" and UPPER(book.language)='"+ui->findLanguage->currentText()+"'")+
-               " and date>='"+ui->date_from->date().toString("yyyy/MM/dd")+"' and date<='"+ui->date_to->date().toString("yyyy/MM/dd")+"'"+
-               (ui->s_name->text().trimmed().length()==0?"":" and name_index LIKE '%"+ToIndex(ui->s_name->text().toLower().trimmed())+"%'")+
-               (ui->s_author->text().trimmed().length()==0?"":" and "+where_author)+
-               (ui->s_seria->text().trimmed().length()==0?"":" and seria.rus_index LIKE '%"+ToIndex(ui->s_seria->text().toLower().trimmed())+"%'")+
-               (ui->s_janre->currentText()=="*"?"":
-                                                (QString(" and janre.")+(ui->s_janre->itemData(ui->s_janre->currentIndex()).toLongLong()>0?"id":"id_parent")+"="+QString::number(abs(ui->s_janre->itemData(ui->s_janre->currentIndex()).toLongLong())))
-               )+
-               (!ShowDeleted?" and not deleted":"")+
-               " order by author.rus_index, seria.name,num_in_seria,book.name");
-    FillBookList(query);
+    QList<uint> listBooks;
+    int nCount = 0;
+    auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
+    while(iBook != mLibs[idCurrentLib].mBooks.constEnd()){
+        if((bShowDeleted_ || !iBook->bDeleted)&&
+                iBook->date>= dateFrom && iBook->date <= dateTo &&
+                (sAuthor.isEmpty() || mLibs[idCurrentLib].mAuthors[iBook->idFirstAuthor].sName.contains(sAuthor,Qt::CaseInsensitive)) &&
+                (sName.isEmpty() || iBook->sName.contains(sName,Qt::CaseInsensitive)))
+        {
+            if(idGenre==0){
+                nCount++;
+                listBooks << iBook.key();
+            }else
+            {
+                foreach (int id,iBook->listIdGenres) {
+                   if(id==idGenre){
+                       nCount++;
+                       listBooks << iBook.key();
+                       break;
+                   }
+                }
+            }
+        }
+        ++iBook;
+        if(nCount==nMaxCount)
+            break;
+    }
+    ui->find_books->setText(QString::number(nCount));
+    FillListBooks(listBooks,0);
+
+    QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::SelectLibrary()
+{
+    QAction* action=(QAction*)sender();
+
+    SaveLibPosition();
+    QSettings *settings=GetSettings();
+    //current_list_id=settings->value("current_list_id",0).toLongLong();
+    //stored_book=settings->value("current_book_id",0).toLongLong();
+    settings->setValue("LibID",action->data().toLongLong());
+    settings->sync();
+    idCurrentLib=action->data().toLongLong();
+    //current_lib.UpdateLib();
+
+    //UpdateJanre();
+    UpdateAuthor();
+    UpdateBooks();
+    UpdateSeria();
+    FillAuthors();
+    FillSerials();
+    FillGenres();
+    searchCanged(ui->searchString->text());
+    setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
+    FillLibrariesMenu();
 }
 
 void MainWindow::SelectJanre()
@@ -1254,19 +1325,26 @@ void MainWindow::SelectJanre()
     if(ui->JanreList->selectedItems().count()==0)
         return;
     QTreeWidgetItem* cur_item=ui->JanreList->selectedItems()[0];
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    uint idGenre = cur_item->data(0,Qt::UserRole).toUInt();
+    QList<uint> listBooks;
+    auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
+    while(iBook != mLibs[idCurrentLib].mBooks.constEnd()){
+        if((idCurrentLanguage_==-1 || idCurrentLanguage_ == iBook->idLanguage)){
+            foreach (uint iGenre, iBook->listIdGenres) {
+                if(iGenre == idGenre){
+                    listBooks << iBook.key();
+                    break;
+                }
+            }
+        }
+        ++iBook;
+    }
+    idCurrentGenre_ = idGenre;
+    FillListBooks(listBooks,0);
     QSettings *settings=GetSettings();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    query.exec("SELECT book.id,book.name,name1||' '||name2||' '||name3,seria.name,num_in_seria,star,size,date,janre.name,deleted,author.id,seria.id,author.favorite,seria.favorite,book.favorite from book_janre join book on book.id=book_janre.id_book "
-               "join author on first_author_id=author.id "
-               "left join seria on id_seria=seria.id "
-               "left join janre on book_janre.id_janre=janre.id "
-               "where book_janre.id_lib="+QString::number(idCurrentLib)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_janre="+cur_item->data(0,Qt::UserRole).toString()+
-               (!ShowDeleted?" and not deleted":"")+
-               (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
-               " order by author.rus_index, seria.name,num_in_seria,book.name");
-    FillBookList(query);
+    if(settings->value("store_position",false).toBool()){
+        settings->setValue("current_genre_id",idCurrentGenre_);
+    }
 }
 
 void MainWindow::SelectSeria()
@@ -1276,238 +1354,70 @@ void MainWindow::SelectSeria()
     if(ui->SeriaList->selectedItems().count()==0)
         return;
     QListWidgetItem* cur_item=ui->SeriaList->selectedItems()[0];
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    uint idSerial = cur_item->data(Qt::UserRole).toUInt();
+    QList<uint> listBooks;
+    auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
+    while(iBook != mLibs[idCurrentLib].mBooks.constEnd()){
+        if(iBook->idSerial == idSerial && (idCurrentLanguage_==-1 || idCurrentLanguage_ == iBook->idLanguage)){
+            listBooks << iBook.key();
+        }
+        ++iBook;
+    }
+    FillListBooks(listBooks,0);
+
     QSettings *settings=GetSettings();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    query.exec("SELECT book.id,book.name,name1||' '||name2||' '||name3,seria.name,num_in_seria,star,size,date,janre.name,deleted,author.id,seria.id,author.favorite,seria.favorite,book.favorite from book "
-               "join author on first_author_id=author.id "
-               "left join seria on id_seria=seria.id "
-               "left join book_janre on book_janre.id_book=book.id "
-               "left join janre on book_janre.id_janre=janre.id "
-               "where book.id_lib="+QString::number(idCurrentLib)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_seria="+cur_item->data(Qt::UserRole).toString()+
-               (!ShowDeleted?" and not deleted":"")+
-               (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
-               " order by author.rus_index, seria.name,num_in_seria,book.name");
-    FillBookList(query);
+    idCurrentSerial_= idSerial;
+    if(settings->value("store_position",false).toBool()){
+        settings->setValue("current_serial_id",idSerial);
+    }
 }
 
 void MainWindow::SelectAuthor()
 {
-    ui->Books->clear();
     ExportBookListBtn(false);
     if(ui->AuthorList->selectedItems().count()==0)
         return;
     QListWidgetItem* cur_item=ui->AuthorList->selectedItems()[0];
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+
     QSettings *settings=GetSettings();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    query.exec("SELECT book.id,book.name,name1||' '||name2||' '||name3,seria.name,num_in_seria,star,size,date,janre.name,deleted,author.id,seria.id,author.favorite,seria.favorite,book.favorite from book_author join book on book.id=book_author.id_book "
-               "join author on id_author=author.id "
-               "left join seria on id_seria=seria.id "
-               "left join book_janre on book_janre.id_book=book.id "
-               "left join janre on book_janre.id_janre=janre.id "
-               "where book_author.id_lib="+QString::number(idCurrentLib)+(ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" and id_author="+cur_item->data(Qt::UserRole).toString()+
-               (!ShowDeleted?" and not deleted":"")+
-               (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
-               " order by author.rus_index, seria.name,num_in_seria,book.name");
-    FillBookList(query);
-}
-void MainWindow::UpdateAuthor()
-{
-    if(!db_is_open)
-        return;
 
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
 
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    QSettings *settings=GetSettings();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    query.exec(QString("SELECT author.id,name1||' '||name2||' '||name3,count(),author.favorite FROM book_author join author on book_author.id_author=author.id join book on book.id=id_book left join seria on id_seria=seria.id where author.id_lib="+QString::number(idCurrentLib)+
-                       (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
-                       (ui->searchString->text()=="*"?"":(ui->searchString->text()=="#"?" and not((name1>='a' and name1<='z') or (name1>='A' and name1<='Z') or (author.rus_index>='01-' and substr(author.rus_index, 1, 3)<='33-' and substr(author.rus_index, 3, 1)='-')) ":" and  author.rus_index LIKE ('"+ToIndex(ui->searchString->text())+"%')"))+
-                       (ui->language->currentText()=="*"?"":" and UPPER(book_author.language)='"+ui->language->currentText()+"'")+(!ShowDeleted?" and not deleted":"")+" GROUP BY author.id ORDER BY author.rus_index"));
-    QListWidgetItem *item;
-    ui->AuthorList->clear();
-    bool use_tag=settings->value("use_tag",true).toBool();
-    while(query.next())
-    {
-        item=new QListWidgetItem(query.value(1).toString().trimmed()+" ("+query.value(2).toString()+")");
-        item->setData(Qt::UserRole,query.value(0));
-        if(use_tag)
-            item->setIcon(GetTag(query.value(3).toInt()));
-        ui->AuthorList->addItem(item);
-        if(query.value(0).toLongLong()==current_list_id)
-        {
-            item->setSelected(true);
-            ui->AuthorList->scrollToItem(item);
-        }
+    QList<uint> booksId = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
+    FillListBooks(booksId,idCurrentAuthor_);
+    if(settings->value("store_position",false).toBool()){
+        settings->setValue("current_author_id",idCurrentAuthor_);
     }
-    if(current_list_for_tag==(QObject*)ui->AuthorList)
-        current_list_id=-1;
-
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateAuthor " << t_end-t_start << "msec";
-
-    QApplication::restoreOverrideCursor();
 }
-void MainWindow::UpdateSeria()
-{
-    if(!db_is_open)
-        return;
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    QSettings *settings=GetSettings();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    query.exec(QString("SELECT seria.id,seria.name,count(),seria.favorite FROM book join seria on id_seria=seria.id left join author on book.first_author_id=author.id where book.id_lib="+QString::number(idCurrentLib)+
-                       (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
-                       (ui->searchString->text()=="*"?"":(ui->searchString->text()=="#"?" and not((name>='a' and name<='z') or (name>='A' and name<='Z') or (seria.rus_index>='01-' and substr(seria.rus_index, 1, 3)<='33-' and substr(seria.rus_index, 3, 1)='-')) ":" and  seria.rus_index LIKE ('"+ToIndex(ui->searchString->text())+"%')"))+
-                       (!ShowDeleted?" and not deleted":"")+
-                       (ui->language->currentText()=="*"?"":" and UPPER(book.language)='"+ui->language->currentText()+"'")+" GROUP BY seria.id ORDER BY seria.rus_index"));
-    QListWidgetItem *item;
-    ui->SeriaList->clear();
-    bool use_tag=settings->value("use_tag",true).toBool();
-
-    while(query.next())
-    {
-        item=new QListWidgetItem(query.value(1).toString().trimmed()+" ("+query.value(2).toString()+")");
-        item->setData(Qt::UserRole,query.value(0));
-        if(use_tag)
-            item->setIcon(GetTag(query.value(3).toInt()));
-        ui->SeriaList->addItem(item);
-        if(query.value(0).toLongLong()==current_list_id)
-        {
-            item->setSelected(true);
-            ui->SeriaList->scrollToItem(item);
-         }
-    }
-    if(current_list_for_tag==(QObject*)ui->SeriaList)
-        current_list_id=-1;
-
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateSeria " << t_end-t_start << "msec";
-    QApplication::restoreOverrideCursor();
-}
-void MainWindow::UpdateJanre()
-{
-    if(!db_is_open)
-        return;
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-
-    QSqlQuery query_child(QSqlDatabase::database("libdb"));
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-
-    disconnect(ui->language,SIGNAL(currentIndexChanged(int)),this,SLOT(LanguageChange()));
-    query.exec("SELECT DISTINCT UPPER(language) from book where id_lib="+QString::number(idCurrentLib)+" ORDER BY UPPER(language)");
-    ui->language->clear();
-    ui->language->addItem("*");
-    ui->language->setCurrentIndex(0);
-    ui->findLanguage->clear();
-    ui->findLanguage->addItem("*");
-    ui->findLanguage->setCurrentIndex(0);
-    QSettings *settings=GetSettings();
-    QString Lang=settings->value("BookLanguage","*").toString();
-    bool ShowDeleted=settings->value("ShowDeleted").toBool();
-    while(query.next())
-    {
-        if(!query.value(0).toString().isEmpty())
-        {
-            ui->language->addItem(query.value(0).toString());
-            ui->findLanguage->addItem(query.value(0).toString());
-            if(query.value(0).toString()==Lang)
-                ui->language->setCurrentIndex(ui->language->count()-1);
-        }
-    }
-    settings->setValue("BookLanguage",ui->language->currentText());
-    settings->sync();
-
-    connect(ui->language,SIGNAL(currentIndexChanged(int)),this,SLOT(LanguageChange()));
-
-    query.exec(QString("SELECT id,name,id_parent FROM janre where ifnull(id_parent,0)=0 OR id_parent='' ORDER BY sort_index"));
-    QTreeWidgetItem *item;
-    ui->JanreList->clear();
-    QFont bold_font(ui->AuthorList->font());
-    bold_font.setBold(true);
-    ui->s_janre->clear();
-    ui->s_janre->addItem("*");
-    int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    while(query.next())
-    {
-        item=new QTreeWidgetItem(ui->JanreList);
-        item->setData(0,Qt::UserRole,query.value(0));
-        item->setText(0,query.value(1).toString().trimmed());
-        item->setFont(0,bold_font);
-        ui->JanreList->addTopLevelItem(item);
-        ui->s_janre->addItem(query.value(1).toString().trimmed(),-query.value(0).toLongLong());
-        item->setExpanded(false);
-        if(query.value(0).toLongLong()==current_list_id)
-        {
-            item->setSelected(true);
-            ui->JanreList->scrollToItem(item);
-        }
-        query_child.exec(QString("SELECT janre.id,janre.name,id_parent,count() FROM janre  join book_janre on id_janre=janre.id join book on id_book=book.id left join author on book.first_author_id=author.id left join seria on seria.id=book.id_seria where book_janre.id_lib="+
-                                 QString::number(idCurrentLib)+
-                                 (current_tag>0?" and (book.favorite="+QString::number(current_tag)+" or author.favorite="+QString::number(current_tag)+" or seria.favorite="+QString::number(current_tag)+")":"")+
-                                 (ui->language->currentText()=="*"?"":" and UPPER(book_janre.language)='"+ui->language->currentText()+"'")+
-                                 (!ShowDeleted?" and not deleted":"")+
-                                 " and id_parent="+query.value(0).toString().trimmed()+" GROUP BY janre.id,janre.name,id_parent ORDER BY sort_index"));
-        while(query_child.next())
-        {
-            QTreeWidgetItem* new_item=new QTreeWidgetItem(item);
-            new_item->setText(0,query_child.value(1).toString().trimmed()+" ("+query_child.value(3).toString()+")");
-            new_item->setData(0,Qt::UserRole,query_child.value(0));
-            item->addChild(new_item);
-            ui->s_janre->addItem("   "+query_child.value(1).toString().trimmed(),query_child.value(0));
-            if(query_child.value(0).toLongLong()==current_list_id)
-            {
-                new_item->setSelected(true);
-                ui->JanreList->scrollToItem(new_item);
-            }
-        }
-    }
-
-    if(current_list_for_tag==(QObject*)ui->JanreList)
-        current_list_id=-1;
-
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateJanre " << t_end-t_start << "msec";
-
-    QApplication::restoreOverrideCursor();
-}
 void MainWindow::SelectBook()
 {
-    ui->Review->setHtml("");
     if(ui->Books->selectedItems().count()==0)
     {
         ExportBookListBtn(false);
+        ui->Review->setHtml("");
         return;
     }
     QSettings *settings=GetSettings();
     ExportBookListBtn(true);
     QTreeWidgetItem* item=ui->Books->selectedItems()[0];
-    if(item->childCount()!=0)
+    if(item->type() != ITEM_TYPE_BOOK)
+    //if(item->childCount()!=0)
     {
         ui->btnOpenBook->setEnabled(false);
         ui->Review->setHtml("");
         return;
     }
-
+    uint idBook = item->data(0,Qt::UserRole).toUInt();
+    idCurrentBook_ = idBook;
 
     ui->btnOpenBook->setEnabled(true);
-    if(ui->splitter->sizes()[1]>0)
-    {
+    //if(ui->splitter->sizes()[1]>0)
+    //{
         QBuffer outbuff;
         QBuffer infobuff;
         QDateTime book_date;
-        QFileInfo fi=GetBookFile(outbuff,infobuff,item->data(0,Qt::UserRole).toLongLong(),false,&book_date);
+        QFileInfo fi=GetBookFile(outbuff,infobuff,idBook,false,&book_date);
         book_info bi;
         if(fi.fileName().isEmpty())
         {
@@ -1550,9 +1460,10 @@ void MainWindow::SelectBook()
 
         QString seria;
         QTreeWidgetItem *parent=item->parent();
-        if(parent->parent()) //если это серия
+        //if(parent->parent()) //если это серия
+        if(parent->type() == ITEM_TYPE_SERIA)
         {
-            seria=QString("<a href=seria_%3%1>%2</a>").arg(QString::number(-parent->data(0,Qt::UserRole).toLongLong()),parent->text(0),parent->text(0).left(1).toUpper());
+            seria=QString("<a href=seria_%3%1>%2</a>").arg(QString::number(/*-*/parent->data(0,Qt::UserRole).toLongLong()),parent->text(0),parent->text(0).left(1).toUpper());
         }
         QString img_width="220";
         if(!bi.img.isEmpty())
@@ -1617,20 +1528,205 @@ void MainWindow::SelectBook()
                 replace("#file_name#",fi.fileName()).
                 replace("#file_info#",settings->value("show_fileinfo",true).toBool()?"block":"none");
         ui->Review->page()->setHtml(content,QUrl("file:")/*QUrl("file:/"+QStandardPaths::writableLocation(QStandardPaths::TempLocation))*/);
-    }
+    //}
 }
 
-void MainWindow::Add_Library()
+void MainWindow::UpdateAuthor()
+{
+    if(!db_is_open)
+        return;
+
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QSqlQuery query(QSqlDatabase::database("libdb"));
+    query.prepare("SELECT author.id, name1||' '||name2||' '||name3, author.favorite FROM author WHERE id_lib=:id_lib;");
+    query.bindValue(":id_lib",idCurrentLib);
+    query.exec();
+    while (query.next()) {
+        quint64 idAuthor = query.value(0).toULongLong();
+        QString sName = query.value(1).toString().trimmed();
+        if(sName.isEmpty())
+            sName = tr("unknown author");
+        int nTag = query.value(2).toInt();
+        mLibs[idCurrentLib].mAuthors[idAuthor].sName = sName;
+        mLibs[idCurrentLib].mAuthors[idAuthor].nTag = nTag;
+    }
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "UpdateAuthor " << t_end-t_start << "msec";
+    QApplication::restoreOverrideCursor();
+}
+
+
+void MainWindow::UpdateBooks()
+{
+
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+    mLibs[idCurrentLib].mBooks.clear();
+    QSqlQuery query(QSqlDatabase::database("libdb"));
+    //query.setForwardOnly(true);
+    query.prepare("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, favorite FROM book WHERE id_lib=:id_lib;");
+    //                     0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
+    query.bindValue(":id_lib",idCurrentLib);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        QString sName = query.value(1).toString();
+        if(sName.isEmpty())
+            continue;
+        uint id = query.value(0).toUInt();
+        SBook &book = mLibs[idCurrentLib].mBooks[id];
+        book.sName = sName;
+        book.nStars = query.value(2).toUInt();
+        book.idSerial = query.value(3).toUInt();
+        book.numInSerial = query.value(4).toUInt();
+        QString sLaguage = query.value(5).toString().toLower();
+        int idLaguage = mLibs[idCurrentLib].vLaguages.indexOf(sLaguage);
+        if(idLaguage<0){
+            idLaguage = mLibs[idCurrentLib].vLaguages.count();
+            mLibs[idCurrentLib].vLaguages << sLaguage;
+        }
+        book.idLanguage = idLaguage;
+        book.nFile = query.value(6).toUInt();
+        book.nSize = query.value(7).toUInt();
+        book.bDeleted = query.value(8).toBool();
+        book.date = query.value(9).toDate();
+        book.sFormat = query.value(10).toString();
+        book.idInLib = query.value(11).toUInt();
+        book.sArchive = query.value(12).toString();
+        book.idFirstAuthor = query.value(13).toUInt();
+        book.nTag = query.value(14).toInt();
+    }
+    qDebug()<< "UpdateBooks1 " << QDateTime::currentMSecsSinceEpoch()-t_start << "msec";
+
+    mLibs[idCurrentLib].mAuthorBooksLink.clear();
+    query.prepare("SELECT id_book, id_author FROM book_author WHERE id_lib=:id_lib;");
+    //                     0       1
+    query.bindValue(":id_lib",idCurrentLib);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        uint idBook = query.value(0).toUInt();
+        uint idAuthor = query.value(1).toUInt();
+        if(mLibs[idCurrentLib].mBooks.contains(idBook) && mLibs[idCurrentLib].mAuthors.contains(idAuthor))
+            mLibs[idCurrentLib].mAuthorBooksLink.insert(idAuthor,idBook);
+    }
+
+    query.prepare("SELECT id_book, id_janre FROM book_janre WHERE id_lib=:id_lib;");
+    //                     0       1
+    query.bindValue(":id_lib",idCurrentLib);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        uint idBook = query.value(0).toUInt();
+        uint idGenre = query.value(1).toUInt();
+        if(mLibs[idCurrentLib].mBooks.contains(idBook))
+            mLibs[idCurrentLib].mBooks[idBook].listIdGenres << idGenre;
+    }
+
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateBooks " << t_end-t_start << "msec";
+
+    ui->language->blockSignals(true);
+    ui->findLanguage->blockSignals(true);
+    ui->language->clear();
+    ui->language->addItem("*",-1);
+    ui->language->setCurrentIndex(0);
+    ui->findLanguage->clear();
+    ui->findLanguage->addItem("*",-1);
+    ui->findLanguage->setCurrentIndex(0);
+
+    QSettings *settings=GetSettings();
+    QString sCurrentLanguage=settings->value("BookLanguage","*").toString();
+    for(int iLang=0;iLang<mLibs[idCurrentLib].vLaguages.size();iLang++){
+        QString sLanguage = mLibs[idCurrentLib].vLaguages[iLang].toUpper();
+        if(!sLanguage.isEmpty()){
+            ui->language->addItem(sLanguage,iLang);
+            ui->findLanguage->addItem(sLanguage,iLang);
+            if(sLanguage == sCurrentLanguage){
+                ui->language->setCurrentIndex(ui->language->count()-1);
+                idCurrentLanguage_ = iLang;
+            }
+        }
+    }
+    ui->language->model()->sort(0);
+    settings->setValue("BookLanguage",ui->language->currentText());
+    ui->language->blockSignals(false);
+    ui->findLanguage->blockSignals(false);
+    QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::UpdateSeria()
+{
+    if(!db_is_open)
+        return;
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    QSqlQuery query(QSqlDatabase::database("libdb"));
+
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateSeria " << t_end-t_start << "msec";
+    t_start = t_end;
+
+    mLibs[idCurrentLib].mSerials.clear();
+    query.prepare("SELECT id, name, favorite FROM seria WHERE id_lib=:id_lib;");
+    //                    0   1     2
+    query.bindValue(":id_lib",idCurrentLib);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        uint idSerial = query.value(0).toUInt();
+        QString sName = query.value(1).toString();
+        mLibs[idCurrentLib].mSerials[idSerial].sName = sName;
+        mLibs[idCurrentLib].mSerials[idSerial].nTag = query.value(2).toUInt();
+    }
+
+    t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateSeria2 " << t_end-t_start << "msec";
+    QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::UpdateJanre()
+{
+    if(!db_is_open)
+        return;
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+
+    QSqlQuery query(QSqlDatabase::database("libdb"));
+    mGenre.clear();
+    query.prepare("SELECT id, name, id_parent, sort_index FROM janre;");
+    //                    0   1     2          3
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        uint idGenre = query.value(0).toUInt();
+        SGenre &genre = mGenre[idGenre];
+        genre.sName = query.value(1).toString();
+        genre.idParrentGenre = query.value(2).toUInt();
+        genre.nSort = query.value(3).toUInt();
+    }
+
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateJanre " << t_end-t_start << "msec";
+
+    QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::ManageLibrary()
 {
     SaveLibPosition();
     AddLibrary al(this);
     al.exec();
     if(al.bLibChanged){
-        QSettings *settings=GetSettings();
-        current_list_id=settings->value("current_list_id",0).toLongLong();
-        stored_book=settings->value("current_book_id",0).toLongLong();
+        UpdateAuthor();
         UpdateJanre();
         UpdateTags();
+        UpdateBooks();
         searchCanged(ui->searchString->text());
         setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
         FillLibrariesMenu();
@@ -1644,14 +1740,6 @@ void MainWindow::btnAuthor()
     ui->language->setEnabled(true);
     SelectAuthor();
 }
-void MainWindow::btnJanres()
-{
-    ui->tabWidget->setCurrentIndex(2);
-    ui->SearchFrame->setEnabled(false);
-    ui->frame_3->setEnabled(false);
-    ui->language->setEnabled(true);
-    SelectJanre();
-}
 void MainWindow::btnSeries()
 {
     ui->tabWidget->setCurrentIndex(1);
@@ -1659,6 +1747,14 @@ void MainWindow::btnSeries()
     ui->frame_3->setEnabled(true);
     ui->language->setEnabled(true);
     SelectSeria();
+}
+void MainWindow::btnJanres()
+{
+    ui->tabWidget->setCurrentIndex(2);
+    ui->SearchFrame->setEnabled(false);
+    ui->frame_3->setEnabled(false);
+    ui->language->setEnabled(true);
+    SelectJanre();
 }
 void MainWindow::btnPageSearch()
 {
@@ -1710,8 +1806,8 @@ void MainWindow::searchCanged(QString str)
         }
         if(!find)
             btn_Hash->setChecked(true);
-        UpdateAuthor();
-        UpdateSeria();
+        FillSerials();
+        FillAuthors();
     }
     tbClear->setVisible(ui->searchString->text().length()>1);
 }
@@ -1731,9 +1827,9 @@ void MainWindow::btnSearch()
 
 void MainWindow::HelpDlg()
 {
-    if(Help_dlg==0)
-        Help_dlg=new HelpDialog();
-    Help_dlg->show();
+    if(pHelpDlg==0)
+        pHelpDlg=new HelpDialog();
+    pHelpDlg->show();
 }
 
 void MainWindow::ContextMenu(QPoint point)
@@ -1759,8 +1855,8 @@ void MainWindow::ContextMenu(QPoint point)
     }
     if(menu.actions().count()>0)
         menu.addSeparator();
-    QSettings *settings=GetSettings();
-    if(settings->value("use_tag",true).toBool())
+    //QSettings *settings=GetSettings();
+    if(bUseTag_)
         menu.addActions(TagMenu.actions());
     if(menu.actions().count()>0)
         menu.exec(QCursor::pos());
@@ -1769,7 +1865,7 @@ void MainWindow::ContextMenu(QPoint point)
 void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
 {
     QTreeWidgetItem* Item=ui->Books->selectedItems()[0];
-    qlonglong CurrentID=Item->data(0,Qt::UserRole).toLongLong();
+//    qlonglong CurrentID=Item->data(0,Qt::UserRole).toLongLong();
     bool IsBook=(Item->childCount()==0);
     bool IsAuthor=(Item->parent()==0);
     if(IsAuthor)
@@ -1792,11 +1888,11 @@ void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
             ui->SeriaList->scrollToItem(ui->SeriaList->item(i));
             if(IsBook)
             {
-                CurrentBookID=CurrentID;
+//                CurrentBookID=CurrentID;
             }
             else if(!IsAuthor)
             {
-                CurrentSeriaID=-CurrentID;
+//                CurrentSeriaID=-CurrentID;
             }
             SelectSeria();
             return;
@@ -1806,7 +1902,7 @@ void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
 void MainWindow::MoveToJanre(qlonglong id)
 {
     QTreeWidgetItem* Item=ui->Books->selectedItems()[0];
-    qlonglong CurrentID=Item->data(0,Qt::UserRole).toLongLong();
+//    qlonglong CurrentID=Item->data(0,Qt::UserRole).toLongLong();
     bool IsBook=(Item->childCount()==0);
     bool IsAuthor=(Item->parent()==0);
     while(Item->parent())
@@ -1825,11 +1921,11 @@ void MainWindow::MoveToJanre(qlonglong id)
                 ui->JanreList->scrollToItem(ui->JanreList->topLevelItem(i)->child(j));
                 if(IsBook)
                 {
-                    CurrentBookID=CurrentID;
+//                    CurrentBookID=CurrentID;
                 }
                 else if(!IsAuthor)
                 {
-                    CurrentSeriaID=-CurrentID;
+//                    CurrentSeriaID=-CurrentID;
                 }
                 SelectJanre();
                 return;
@@ -1840,33 +1936,21 @@ void MainWindow::MoveToJanre(qlonglong id)
 
 void MainWindow::MoveToAuthor(qlonglong id, QString FirstLetter)
 {
-    //QTreeWidgetItem* Item=ui->Books->selectedItems()[0];
     QTreeWidgetItem* Item=ui->Books->selectedItems()[0];
-    qlonglong CurrentID=Item->data(0,Qt::UserRole).toLongLong();
-    bool IsBook=(Item->childCount()==0);
-    bool IsAuthor=(Item->parent()==0);
-    while(Item->parent())
-        Item=Item->parent();
+    if(Item->type() == ITEM_TYPE_BOOK)
+        idCurrentBook_ = Item->data(0,Qt::UserRole).toUInt();
     ui->searchString->setText(id<0?Item->text(0).left(1).toUpper():FirstLetter);
-    qlonglong id_author=id<0?Item->data(0,Qt::UserRole).toLongLong():-id;
     ui->btnAuthor->setChecked(true);
-    searchCanged(id<0?Item->text(0).left(1).toUpper():FirstLetter);
+    searchCanged(FirstLetter);
     btnAuthor();
     ui->AuthorList->clearSelection();
     for (int i=0;i<ui->AuthorList->count();i++)
     {
-        if(ui->AuthorList->item(i)->data(Qt::UserRole).toLongLong()==-id_author)
+        if(ui->AuthorList->item(i)->data(Qt::UserRole).toLongLong()==id)
+
         {
             ui->AuthorList->item(i)->setSelected(true);
             ui->AuthorList->scrollToItem(ui->AuthorList->item(i));
-            if(IsBook)
-            {
-                CurrentBookID=CurrentID;
-            }
-            else if(!IsAuthor)
-            {
-                CurrentSeriaID=-CurrentID;
-            }
             SelectAuthor();
             break;
         }
@@ -1918,29 +2002,338 @@ void MainWindow::FillLibrariesMenu()
     }
 }
 
-void MainWindow::SelectLibrary()
+void MainWindow::FillAuthors()
 {
-    QAction* action=(QAction*)sender();
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    const bool wasBlocked = ui->AuthorList->blockSignals(true);
+    QListWidgetItem *item;
+    ui->AuthorList->clear();
+    SLib &currentLib = mLibs[idCurrentLib];
+    QListWidgetItem *selectedItem = nullptr;
+    QString sSearch = ui->searchString->text();
+    auto i = currentLib.mAuthors.constBegin();
 
-    SaveLibPosition();
-    QSettings *settings=GetSettings();
-    current_list_id=settings->value("current_list_id",0).toLongLong();
-    stored_book=settings->value("current_book_id",0).toLongLong();
-    settings->setValue("LibID",action->data().toLongLong());
-    settings->sync();
-    idCurrentLib=action->data().toLongLong();
-    //current_lib.UpdateLib();
+    while(i!=currentLib.mAuthors.constEnd()){
+        if(sSearch == "*" || (sSearch=="#" && !i->sName.left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) || i->sName.startsWith(sSearch,Qt::CaseInsensitive)){
+            QList<uint> booksId = currentLib.mAuthorBooksLink.values(i.key());
+            int count =0;
+            foreach( uint idBook, booksId) {
+                SBook &book = currentLib.mBooks[idBook];
+//                uint idSerial=book.idSerial;
+//                if((idCurrentLanguage_==-1 || idCurrentLanguage_ == book.idLanguage)
+//                        &&(bShowDeleted || !book.bDeleted) &&
+//                        (!use_tag || current_tag==0 || current_tag== book.nTag ||
+//                         (idSerial>0 && mLibs[idCurrentLib].mSerials[idSerial].nTag == current_tag)))
+                if(IsBookInList(book))
+                {
+                    count++;
+                }
+            }
+            if(count>0){
+                item=new QListWidgetItem(QString("%1 (%2)").arg(i->sName).arg(count));
+                item->setData(Qt::UserRole,i.key());
+                if(bUseTag_)
+                    item->setIcon(GetTag(i->nTag));
+                ui->AuthorList->addItem(item);
+                if(idCurrentAuthor_ == i.key()){
+                    item->setSelected(true);
+                    selectedItem = item;
+                }
+            }
+        }
 
-    UpdateJanre();
-    searchCanged(ui->searchString->text());
-    setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
-    FillLibrariesMenu();
+        ++i;
+    }
+    if(selectedItem!=nullptr)
+        ui->AuthorList->scrollToItem(selectedItem);
+
+    ui->AuthorList->blockSignals(wasBlocked);
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "FillAuthors " << t_end-t_start << "msec";
+    QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::FillSerials()
+{
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    const bool wasBlocked = ui->SeriaList->blockSignals(true);
+    ui->SeriaList->clear();
+    QString sSearch = ui->searchString->text();
+
+    QMap<uint,uint> mCounts;
+    auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
+    while(iBook!=mLibs[idCurrentLib].mBooks.constEnd()){
+        if(IsBookInList(*iBook) &&
+                (sSearch == "*" || (sSearch=="#" && !mLibs[idCurrentLib].mSerials[iBook->idSerial].sName.left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) || mLibs[idCurrentLib].mSerials[iBook->idSerial].sName.startsWith(sSearch,Qt::CaseInsensitive)))
+        {
+            if(mCounts.contains(iBook->idSerial))
+                mCounts[iBook->idSerial]++;
+            else
+                mCounts[iBook->idSerial] = 1;
+
+        }
+        ++iBook;
+    }
+
+    QListWidgetItem *item;
+    auto iSerial = mCounts.constBegin();
+    while(iSerial!=mCounts.constEnd()){
+        item=new QListWidgetItem(QString("%1 (%2)").arg(mLibs[idCurrentLib].mSerials[iSerial.key()].sName).arg(iSerial.value()));
+        item->setData(Qt::UserRole,iSerial.key());
+        if(bUseTag_)
+            item->setIcon(GetTag(mLibs[idCurrentLib].mSerials[iSerial.key()].nTag));
+        ui->SeriaList->addItem(item);
+        if(iSerial.key()==idCurrentSerial_)
+        {
+            item->setSelected(true);
+            ui->SeriaList->scrollToItem(item);
+         }
+
+        ++iSerial;
+    }
+//    if(current_list_for_tag==(QObject*)ui->SeriaList)
+//        current_list_id=-1;
+
+    ui->SeriaList->blockSignals(wasBlocked);
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "FillSerials " << t_end-t_start << "msec";
+}
+
+void MainWindow::FillGenres()
+{
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    const bool wasBlocked = ui->JanreList->blockSignals(true);
+    ui->JanreList->clear();
+    ui->s_janre->clear();
+    ui->s_janre->addItem("*",0);
+    QFont bold_font(ui->AuthorList->font());
+    bold_font.setBold(true);
+
+
+    QMap<uint,uint> mCounts;
+    auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
+    while(iBook!=mLibs[idCurrentLib].mBooks.constEnd()){
+        if(IsBookInList(*iBook))
+        {
+            foreach (uint iGenre, iBook->listIdGenres) {
+                if(mCounts.contains(iGenre))
+                    mCounts[iGenre]++;
+                else
+                    mCounts[iGenre] = 1;
+            }
+        }
+        ++iBook;
+    }
+
+    QMap<uint,QTreeWidgetItem*> mTopGenresItem;
+    auto iGenre = mGenre.constBegin();
+    while(iGenre!=mGenre.constEnd()){
+        QTreeWidgetItem *item;
+        if(iGenre->idParrentGenre==0 && !mTopGenresItem.contains(iGenre.key())){
+            item=new QTreeWidgetItem(ui->JanreList);
+            item->setFont(0,bold_font);
+            item->setText(0,iGenre->sName);
+            item->setData(0,Qt::UserRole,iGenre.key());
+            item->setExpanded(false);
+            mTopGenresItem[iGenre.key()] = item;
+            ui->s_janre->addItem(iGenre->sName,iGenre.key());
+        }else{
+            if(mCounts.contains(iGenre.key())){
+                if(!mTopGenresItem.contains(iGenre->idParrentGenre)){
+                    QTreeWidgetItem *itemTop = new QTreeWidgetItem(ui->JanreList);
+                    itemTop->setFont(0,bold_font);
+                    itemTop->setText(0,mGenre[iGenre->idParrentGenre].sName);
+                    itemTop->setData(0,Qt::UserRole,iGenre->idParrentGenre);
+                    itemTop->setExpanded(false);
+                    mTopGenresItem[iGenre->idParrentGenre] = itemTop;
+                }
+                item=new QTreeWidgetItem(mTopGenresItem[iGenre->idParrentGenre]);
+                item->setText(0,QString("%1 (%2)").arg(iGenre->sName).arg(mCounts[iGenre.key()]));
+                item->setData(0,Qt::UserRole,iGenre.key());
+                ui->s_janre->addItem("   "+iGenre->sName,iGenre.key());
+                if(iGenre.key()==idCurrentGenre_)
+                {
+                    item->setSelected(true);
+                    ui->JanreList->scrollToItem(item);
+                }
+            }
+        }
+        ++iGenre;
+    }
+
+    ui->JanreList->blockSignals(wasBlocked);
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "FillGenres " << t_end-t_start << "msec";
+}
+
+void MainWindow::FillListBooks()
+{
+    switch(ui->tabWidget->currentIndex()){
+        case 0:
+            SelectAuthor();
+        break;
+
+        case 1:
+            SelectSeria();
+        break;
+
+        case 2:
+            SelectJanre();
+        break;
+
+    }
+}
+
+void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
+{
+    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    QFont bold_font(ui->Books->font());
+    bold_font.setBold(true);
+    TreeBookItem* ScrollItem=0;
+
+    TreeBookItem* item_seria=0;
+    TreeBookItem* item_book;
+    TreeBookItem* item_author;
+    QMap<uint,TreeBookItem*> mAuthors;
+
+    QMultiMap<uint,TreeBookItem*> mSerias;
+
+    const bool wasBlocked = ui->Books->blockSignals(true);
+    ui->Books->clear();
+
+//    if(idCurrentAuthor>0){
+//        item_author = new TreeBookItem(ui->Books,ITEM_TYPE_AUTHOR);
+//        item_author->setText(0,mLibs[idCurrentLib].mAuthors[idCurrentAuthor].sName);
+//        item_author->setExpanded(true);
+//        item_author->setFont(0,bold_font);
+//        item_author->setCheckState(0,Qt::Unchecked);
+//        item_author->setData(0,Qt::UserRole,idCurrentAuthor);
+//        if(use_tag)
+//            item_author->setIcon(0,GetTag(mLibs[idCurrentLib].mAuthors[idCurrentAuthor].ntag));
+//        mAuthors[idCurrentAuthor] = item_author;
+
+//    }
+
+    foreach( uint idBook, listBook) {
+        SBook &book = mLibs[idCurrentLib].mBooks[idBook];
+        if(IsBookInList(book))
+        {
+            uint idSerial=book.idSerial;
+            uint idAuthor;
+            if(idCurrentAuthor>0)
+                idAuthor = idCurrentAuthor;
+            else{
+                idAuthor = book.idFirstAuthor;
+            }
+            if(!mAuthors.contains(idAuthor)){
+                item_author = new TreeBookItem(ui->Books,ITEM_TYPE_AUTHOR);
+                item_author->setText(0,mLibs[idCurrentLib].mAuthors[idAuthor].sName);
+                item_author->setExpanded(true);
+                item_author->setFont(0,bold_font);
+                item_author->setCheckState(0,Qt::Unchecked);
+                item_author->setData(0,Qt::UserRole,idAuthor);
+                if(bUseTag_)
+                    item_author->setIcon(0,GetTag(mLibs[idCurrentLib].mAuthors[idAuthor].nTag));
+                mAuthors[idAuthor] = item_author;
+            }else
+                item_author = mAuthors[idAuthor];
+
+            if(idSerial>0){
+                auto iSerial = mSerias.find(idSerial);
+                while(iSerial != mSerias.constEnd()){
+                    item_seria = iSerial.value();
+                    if(item_seria->parent()->data(0,Qt::UserRole)==idAuthor)
+                        break;
+                    ++iSerial;
+                }
+                if(iSerial==mSerias.constEnd()){
+                    item_seria = new TreeBookItem(mAuthors[idAuthor],ITEM_TYPE_SERIA);
+                    item_seria->setText(0,mLibs[idCurrentLib].mSerials[idSerial].sName);
+                    item_author->addChild(item_seria);
+                    item_seria->setExpanded(true);
+                    item_seria->setFont(0,bold_font);
+                    item_seria->setCheckState(0,Qt::Unchecked);
+                    item_seria->setData(0,Qt::UserRole,idSerial);
+                    if(bUseTag_)
+                        item_seria->setIcon(0,GetTag(mLibs[idCurrentLib].mSerials[idSerial].nTag));
+
+                    mSerias.insert(idSerial,item_seria);
+
+                }
+                item_book = new TreeBookItem(item_seria,ITEM_TYPE_BOOK);
+            }else
+                item_book = new TreeBookItem(item_author,ITEM_TYPE_BOOK);
+
+            item_book->setCheckState(0,Qt::Unchecked);
+            item_book->setData(0,Qt::UserRole,idBook);
+            if(bUseTag_)
+                item_book->setIcon(0,GetTag(book.nTag));
+
+            item_book->setText(0,book.sName);
+            if(book.numInSerial>0){
+                item_book->setText(1,QString::number(book.numInSerial));
+                item_book->setTextAlignment(1, Qt::AlignRight);
+            }
+
+            if(book.nSize>0)
+                item_book->setText(2,QString::number(book.nSize));
+            item_book->setTextAlignment(2, Qt::AlignRight);
+
+            QPixmap pix(":/icons/img/icons/stars/"+QString::number(book.nStars).trimmed()+QString("star%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
+            pix.setDevicePixelRatio(app->devicePixelRatio());
+            item_book->setData(3,Qt::DecorationRole,pix);
+
+            item_book->setText(4,book.date.toString("dd.MM.yyyy"));
+            item_book->setTextAlignment(4, Qt::AlignCenter);
+
+            item_book->setText(5,mGenre[book.listIdGenres.first()].sName);
+            item_book->setTextAlignment(5, Qt::AlignLeft);
+
+            if(book.bDeleted)
+            {
+                item_book->setTextColor(0,QColor::fromRgb(96,96,96));
+                item_book->setTextColor(1,QColor::fromRgb(96,96,96));
+                item_book->setTextColor(2,QColor::fromRgb(96,96,96));
+                item_book->setTextColor(3,QColor::fromRgb(96,96,96));
+                item_book->setTextColor(4,QColor::fromRgb(96,96,96));
+                item_book->setTextColor(5,QColor::fromRgb(96,96,96));
+            }
+
+            if(idBook==idCurrentBook_)
+            {
+                ScrollItem=item_book;
+            }
+        }
+    }
+    if(ScrollItem)
+    {
+        ScrollItem->setSelected(true);
+        ui->Books->scrollToItem(ScrollItem);
+    }
+    SelectBook();
+
+    ui->Books->blockSignals(wasBlocked);
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "FillListBooks " << t_end-t_start << "msec";
+}
+
+bool MainWindow::IsBookInList(const SBook &book)
+{
+    int current_tag=ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
+    uint idSerial=book.idSerial;
+
+    return (idCurrentLanguage_==-1 || idCurrentLanguage_ == book.idLanguage)
+            &&(bShowDeleted_ || !book.bDeleted)&&
+            (!bUseTag_ || current_tag==0 || current_tag==book.nTag
+             ||(idSerial>0 && mLibs[idCurrentLib].mSerials[idSerial].nTag == current_tag)
+             ||(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].nTag == current_tag));
 }
 
 void MainWindow::dropEvent(QDropEvent *ev)
 {
     if(mode==MODE_LIBRARY)
-        dropForm->hide();
+        pDropForm->hide();
     QList<QUrl> urls = ev->mimeData()->urls();
     QStringList book_list;
     foreach(QUrl url, urls)
@@ -1950,55 +2343,55 @@ void MainWindow::dropEvent(QDropEvent *ev)
     if(book_list.count())
     {
         ExportDlg dlg(this);
-        int id=dropForm->get_command(ev->pos());
+        int id=pDropForm->get_command(ev->pos());
         if(id<0)
         {
-            dropForm->get_command(QPoint(-1,-1));
+            pDropForm->get_command(QPoint(-1,-1));
             return;
         }
         dlg.exec(book_list,SetCurrentExportSettings(id));
     }
-    dropForm->get_command(QPoint(-1,-1));
+    pDropForm->get_command(QPoint(-1,-1));
 }
 
 void MainWindow::DeleteDropForm()
 {
-    if(dropForm!=0)
+    if(pDropForm!=nullptr)
     {
-        if(dropForm->isHidden())
+        if(pDropForm->isHidden())
         {
-            delete dropForm;
-            dropForm=0;
+            delete pDropForm;
+            pDropForm=nullptr;
         }
     }
 }
 
 void MainWindow::ShowDropForm()
 {
-    if(dropForm==0)
-        dropForm=new DropForm(this);
+    if(pDropForm==0)
+        pDropForm=new DropForm(this);
     if(mode==MODE_CONVERTER)
     {
-        dropForm->setFixedWidth(ui->drop_buttons->rect().width());
-        dropForm->setFixedHeight(ui->drop_buttons->rect().height());
-        dropForm->move(ui->drop_buttons->mapToGlobal(ui->drop_buttons->pos())-this->mapToGlobal(QPoint(0,0)));
+        pDropForm->setFixedWidth(ui->drop_buttons->rect().width());
+        pDropForm->setFixedHeight(ui->drop_buttons->rect().height());
+        pDropForm->move(ui->drop_buttons->mapToGlobal(ui->drop_buttons->pos())-this->mapToGlobal(QPoint(0,0)));
     }
     else
     {
-        dropForm->setFixedWidth(rect().width()/10*9);
-        dropForm->setFixedHeight(rect().height()/10*9);
-        dropForm->move(QPoint(rect().width()/20,rect().height()/20));
+        pDropForm->setFixedWidth(rect().width()/10*9);
+        pDropForm->setFixedHeight(rect().height()/10*9);
+        pDropForm->move(QPoint(rect().width()/20,rect().height()/20));
     }
     QStringList cmd;
     foreach (QAction* action, ui->btnExport->menu()->actions())
     {
         cmd<<action->text();
     }
-    dropForm->AddCommand(cmd);
-    dropForm->setWindowFlags(Qt::WindowStaysOnTopHint);
-    dropForm->show();
-    dropForm->activateWindow();
-    dropForm->raise();
+    pDropForm->AddCommand(cmd);
+    pDropForm->setWindowFlags(Qt::WindowStaysOnTopHint);
+    pDropForm->show();
+    pDropForm->activateWindow();
+    pDropForm->raise();
 }
 
 void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
@@ -2016,19 +2409,20 @@ void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
     {
         ev->setAccepted(false);
         if(mode==MODE_LIBRARY)
-            dropForm->hide();
+            pDropForm->hide();
     }
 }
 void MainWindow::dragMoveEvent(QDragMoveEvent *ev)
 {
-    dropForm->switch_command(ev->pos());
+    pDropForm->switch_command(ev->pos());
 }
 
 void MainWindow::dragLeaveEvent(QDragLeaveEvent *)
 {
     if(mode==MODE_LIBRARY)
-        dropForm->hide();
+        pDropForm->hide();
 }
+
 void MainWindow::UpdateExportMenu()
 {
     QSettings *settings=GetSettings();
@@ -2085,7 +2479,6 @@ void MainWindow::UpdateExportMenu()
     ui->btnExport->defaultAction()->setFont(font);
     ui->btnExport->setIcon(QIcon(":/icons/img/icons/Streamline.png"));
     ui->btnExport->setEnabled(ui->Books->selectedItems().count()>0);
-    //delete settings;
 }
 
 void MainWindow::ExportAction()
@@ -2147,9 +2540,9 @@ void MainWindow::on_actionSwitch_to_convert_mode_triggered()
 
     settings->setValue("ApplicationMode", mode);
     settings->sync();
-    if(dropForm!=0)
+    if(pDropForm!=nullptr)
     {
-        dropForm->hide();
+        pDropForm->hide();
         DeleteDropForm();
     }
     ShowDropForm();
@@ -2163,10 +2556,10 @@ void MainWindow::on_actionSwitch_to_library_mode_triggered()
         settings->setValue("MainWndConvertMode/geometry", saveGeometry());
     }
     mode=MODE_LIBRARY;
-    if(dropForm!=0)
+    if(pDropForm!=nullptr)
     {
-        delete dropForm;
-        dropForm=0;
+        delete pDropForm;
+        pDropForm=nullptr;
     }
     ui->stackedWidget->setCurrentWidget(ui->pageLabrary);
     ui->actionSwitch_to_library_mode->setVisible(false);
@@ -2186,7 +2579,7 @@ void MainWindow::on_actionSwitch_to_library_mode_triggered()
         restoreState(settings->value("MainWnd/windowState").toByteArray());
     if(settings->contains("MainWnd/tab/geometry"))
         ui->splitter->restoreState(settings->value("MainWnd/tab/geometry").toByteArray());
-    on_splitter_splitterMoved(0,0);
+    //on_splitter_splitterMoved(0,0);
     if(settings->contains("MainWnd/books/geometry"))
         ui->splitter_2->restoreState(settings->value("MainWnd/books/geometry").toByteArray());
     settings->setValue("ApplicationMode", mode);
@@ -2203,14 +2596,17 @@ void MainWindow::on_btnPreference_clicked()
     Settings();
 }
 
-void MainWindow::resizeEvent(QResizeEvent *e)
+void MainWindow::resizeEvent(QResizeEvent */*e*/)
 {
-    if(dropForm!=0)
+
+    if(pDropForm!=nullptr)
     {
-        if(dropForm->isVisible())
+        if(pDropForm->isVisible())
         {
-            delete dropForm;
-            dropForm=0;
+            const QSignalBlocker blocker(this);
+            //delete dropForm;
+            pDropForm->deleteLater();
+            pDropForm=nullptr;
             ShowDropForm();
         }
     }
@@ -2219,19 +2615,19 @@ void MainWindow::mouseMoveEvent(QMouseEvent *ev)
 {
     if(mode==MODE_CONVERTER)
     {
-        if(dropForm==0)
+        if(pDropForm==nullptr)
         {
             ShowDropForm();
         }
-        dropForm->switch_command(ev->pos());
+        pDropForm->switch_command(ev->pos());
     }
 }
 
-void MainWindow::leaveEvent(QEvent *ev)
+void MainWindow::leaveEvent(QEvent */*ev*/)
 {
-    if(dropForm!=0)
+    if(pDropForm!=nullptr)
     {
-        dropForm->switch_command(QPoint(-1,-1));
+        pDropForm->switch_command(QPoint(-1,-1));
     }
 }
 
@@ -2239,11 +2635,11 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *ev)
 {
     if(mode==MODE_CONVERTER)
     {
-        if(dropForm==0)
+        if(pDropForm==nullptr)
         {
             ShowDropForm();
         }
-        int id=dropForm->get_command(ev->pos());
+        int id=pDropForm->get_command(ev->pos());
         if(id<0)
             return;
         QFileDialog dialog(this);
@@ -2263,15 +2659,6 @@ void MainWindow::mouseReleaseEvent(QMouseEvent *ev)
             dlg.exec(book_list,SetCurrentExportSettings(id));
         }
     }
-}
-
-
-void MainWindow::on_splitter_splitterMoved(int , int )
-{
-//    if(ui->Review->page()->mainFrame()->toPlainText().isEmpty())
-//    {
-//        SelectBook();
-//    }
 }
 
 void MainWindow::ChangingTrayIcon(int index,int color)
@@ -2387,4 +2774,16 @@ void MainWindow::changeEvent(QEvent *event)
             event->ignore();
         }
     }
+}
+
+void MainWindow::on_language_currentIndexChanged(const QString &arg1)
+{
+    QSettings *settings=GetSettings();
+    settings->setValue("BookLanguage",arg1);
+    idCurrentLanguage_ = ui->language->currentData().toInt();
+
+    FillSerials();
+    FillAuthors();
+    FillGenres();
+    FillListBooks();
 }

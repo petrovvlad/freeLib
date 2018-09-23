@@ -17,7 +17,7 @@ public:
     explicit AddLibrary(QWidget *parent = 0);
     ~AddLibrary();
     //int exec();
-    void AddNewLibrary(QString _name, QString _path, QString _fileName);
+    void AddNewLibrary(SLib &lib);
     void StartImport(SLib &Lib);
     void SelectLibrary(int idLib);
     bool bLibChanged;
@@ -28,7 +28,6 @@ private:
     QThread *thread;
     void UpdateLibList();
     void SaveLibrary(int idLib, SLib& Lib);
-//    QMap<int,SLib> mapLib;
     int idCurrentLib_;
 private slots:
     void LogMessage(QString msg);
@@ -36,7 +35,6 @@ private slots:
     void SelectBooksDir();
     void StartImport();
     void SelectLibrary();
-    //void Ok();
     void DeleteLibrary();
     void Add_Library();
     void EndUpdate();

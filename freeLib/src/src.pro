@@ -109,7 +109,9 @@ SOURCES += main.cpp\
     quazip/quazip/unzip.c \
     quazip/quazip/zip.c \
     bookeditdlg.cpp \
-    webpage.cpp
+    webpage.cpp \
+    treebookitem.cpp \
+    genresortfilterproxymodel.cpp
 
 HEADERS  += mainwindow.h \
     common.h \
@@ -158,7 +160,9 @@ HEADERS  += mainwindow.h \
     quazip/quazip/crypt.h \
     myapplicationclass.h \
     bookeditdlg.h \
-    webpage.h
+    webpage.h \
+    treebookitem.h \
+    genresortfilterproxymodel.h
 
 FORMS    += mainwindow.ui \
     addlibrary.ui \
