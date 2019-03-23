@@ -58,6 +58,7 @@ struct SBook
     QDate date;
     QString sFormat;
     QList<uint> listIdGenres;
+    QList<uint> listIdAuthors;
     uint idInLib;
     uint nFile;
     uint idSerial;
