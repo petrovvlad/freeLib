@@ -38,7 +38,6 @@ extern QSplashScreen *splash;
 extern QMap<int,SLib> mLibs;
 extern QMap <uint,SGenre> mGenre;
 
-
 extern int idCurrentLib;
 bool db_is_open;
 
@@ -74,27 +73,18 @@ QString ToIndex(QString str)
 
 QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, qlonglong id_book, bool caption, QDateTime *file_data)
 {
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    query.exec("SELECT file,archive,format,id_lib,path from book left join lib ON lib.id=id_lib where book.id="+QString::number(id_book));
     QString file,archive;
     QFileInfo fi;
-    while(query.next())
-    {
-        QString LibPath=mLibs[idCurrentLib].path;
-        if(!query.value(4).toString().trimmed().isEmpty())
-            LibPath=query.value(4).toString().trimmed();
-
-        LibPath=RelativeToAbsolutePath(LibPath);
-        if(query.value(1).toString().trimmed().isEmpty())
-        {
-            file=LibPath+"/"+query.value(0).toString().trimmed()+"."+query.value(2).toString().trimmed();
-        }
-        else
-        {
-            file=query.value(0).toString().trimmed()+"."+query.value(2).toString().trimmed();
-            archive=LibPath+"/"+query.value(1).toString().trimmed().replace(".inp",".zip");
-        }
+    SBook &book = mLibs[idCurrentLib].mBooks[id_book];
+    QString LibPath=mLibs[idCurrentLib].path;
+    LibPath=RelativeToAbsolutePath(LibPath);
+    if(book.sArchive.isEmpty()){
+        file = QString("%1/%2.%3").arg(LibPath).arg(book.nFile).arg(book.sFormat);
+    }else{
+        file = QString("%1.%2").arg(book.nFile).arg(book.sFormat);
+        archive = QString("%1/%2").arg(LibPath).arg(book.sArchive.replace(".inp",".zip"));
     }
+
     archive=archive.replace("\\","/");
     if(archive.isEmpty())
     {
@@ -1402,7 +1392,6 @@ void MainWindow::SelectBook()
     ExportBookListBtn(true);
     QTreeWidgetItem* item=ui->Books->selectedItems()[0];
     if(item->type() != ITEM_TYPE_BOOK)
-    //if(item->childCount()!=0)
     {
         ui->btnOpenBook->setEnabled(false);
         ui->Review->setHtml("");
@@ -1410,7 +1399,7 @@ void MainWindow::SelectBook()
     }
     uint idBook = item->data(0,Qt::UserRole).toUInt();
     idCurrentBook_ = idBook;
-
+    SBook &book = mLibs[idCurrentLib].mBooks[idBook];
     ui->btnOpenBook->setEnabled(true);
     //if(ui->splitter->sizes()[1]>0)
     //{
@@ -1421,23 +1410,16 @@ void MainWindow::SelectBook()
         book_info bi;
         if(fi.fileName().isEmpty())
         {
-            GetBookInfo(bi,QByteArray(),"",true,item->data(0,Qt::UserRole).toInt());
-            QSqlQuery query(QSqlDatabase::database("libdb"));
-            query.exec("SELECT file,archive,format,id_lib,path from book left join lib ON lib.id=id_lib where book.id="+QString::number(item->data(0,Qt::UserRole).toLongLong()));
+            GetBookInfo(bi,QByteArray(),"",true,idBook);
             QString file;
-            while(query.next())
+            QString LibPath=mLibs[idCurrentLib].path;
+            if(book.sArchive.trimmed().isEmpty() )
             {
-                QString LibPath=mLibs[idCurrentLib].path;
-                if(!query.value(4).toString().trimmed().isEmpty())
-                    LibPath=query.value(4).toString().trimmed();
-                if(query.value(1).toString().trimmed().isEmpty())
-                {
-                    file=LibPath+"/"+query.value(0).toString().trimmed()+"."+query.value(2).toString().trimmed();
-                }
-                else
-                {
-                    file=LibPath+"/"+query.value(1).toString().trimmed().replace(".inp",".zip");
-                }
+                file=QString("%1/%2.%3").arg(LibPath).arg(book.nFile).arg(book.sFormat);
+            }
+            else
+            {
+                file=LibPath+"/"+book.sArchive.trimmed().replace(".inp",".zip");
             }
             file=file.replace("\\","/");
             bi.annotation="<font color=\"red\">"+tr("Can't find file: %1").arg(file)+"</font>";
@@ -1562,6 +1544,7 @@ void MainWindow::UpdateBooks()
 {
 
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 t_map = 0;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
     mLibs[idCurrentLib].mBooks.clear();
@@ -1577,6 +1560,7 @@ void MainWindow::UpdateBooks()
         if(sName.isEmpty())
             continue;
         uint id = query.value(0).toUInt();
+        quint64 t_map_start =  QDateTime::currentMSecsSinceEpoch();
         SBook &book = mLibs[idCurrentLib].mBooks[id];
         book.sName = sName;
         book.nStars = query.value(2).toUInt();
@@ -1598,7 +1582,9 @@ void MainWindow::UpdateBooks()
         book.sArchive = query.value(12).toString();
         book.idFirstAuthor = query.value(13).toUInt();
         book.nTag = query.value(14).toInt();
+        t_map += QDateTime::currentMSecsSinceEpoch()-t_map_start;
     }
+    qDebug() << "mBooks insert " << t_map << "msec";
     qDebug()<< "UpdateBooks1 " << QDateTime::currentMSecsSinceEpoch()-t_start << "msec";
 
     mLibs[idCurrentLib].mAuthorBooksLink.clear();
@@ -1610,8 +1596,10 @@ void MainWindow::UpdateBooks()
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idAuthor = query.value(1).toUInt();
-        if(mLibs[idCurrentLib].mBooks.contains(idBook) && mLibs[idCurrentLib].mAuthors.contains(idAuthor))
+        if(mLibs[idCurrentLib].mBooks.contains(idBook) && mLibs[idCurrentLib].mAuthors.contains(idAuthor)){
             mLibs[idCurrentLib].mAuthorBooksLink.insert(idAuthor,idBook);
+            mLibs[idCurrentLib].mBooks[idBook].listIdAuthors << idAuthor;
+        }
     }
 
     query.prepare("SELECT id_book, id_janre FROM book_janre WHERE id_lib=:id_lib;");
