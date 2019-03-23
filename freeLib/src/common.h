@@ -17,7 +17,8 @@
 #include <QApplication>
 #include "quazip/quazip/quazip.h"
 #include <QCommandLineParser>
-//#include "myapplicationclass.h"
+#include <QMultiMap>
+#include <QList>
 
 #define AppName  QString("freeLib")
 #define OrgName  QString("freeLibOrg")
@@ -44,31 +45,57 @@ SendType SetCurrentExportSettings(int index);
 
 enum APP_MODE{MODE_LIBRARY,MODE_CONVERTER,MODE_SHELF};
 
+struct SAuthor
+{
+    int nTag;
+    QString sName;
+};
+
+struct SBook
+{
+    QString sName;
+    QString sArchive;
+    QDate date;
+    QString sFormat;
+    QList<uint> listIdGenres;
+    QList<uint> listIdAuthors;
+    uint idInLib;
+    uint nFile;
+    uint idSerial;
+    uint idFirstAuthor;
+    uint numInSerial;
+    int nSize;
+    uchar nStars;
+    uchar idLanguage;
+    uchar nTag;
+    bool bDeleted;
+};
+
+struct SSerial
+{
+    QString sName;
+    uchar nTag;
+};
+
+struct SGenre
+{
+    QString sName;
+    ushort idParrentGenre;
+    ushort nSort;
+};
+
 struct SLib
 {
-//    void UpdateLib()
-//    {
-//        QSettings* settings=GetSettings();
-//        id=settings->value("LibID",-1).toLongLong();
-//        if(!db_is_open)
-//            return;
-//        QSqlQuery query(QSqlDatabase::database("libdb"));
-//        query.exec("SELECT path,name FROM lib WHERE id="+QString::number(id));
-//        while(query.next())
-//        {
-//            path=query.value(0).toString();
-//            name=query.value(1).toString();
-//        }
-//        if(path.isEmpty() && name.isEmpty())
-//            id=-1;
-//    }
-
-//    qlonglong id;
     QString name;
     QString path;
     QString sInpx;
     bool bFirstAuthor;
     bool bWoDeleted;
+    QMap<uint,SAuthor> mAuthors;
+    QMultiMap<uint,uint> mAuthorBooksLink;
+    QMap<uint,SBook> mBooks;
+    QMap <uint,SSerial> mSerials;
+    QVector<QString> vLaguages;
 };
 
 struct genre_info

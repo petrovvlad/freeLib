@@ -6,6 +6,10 @@
 #include "quazip/quazip/quazipfile.h"
 #include "common.h"
 
+extern QMap<int,SLib> mLibs;
+extern QMap <uint,SGenre> mGenre;
+
+extern int idCurrentLib;
 
 
 void ClearLib(qlonglong existingID,bool delete_only)
@@ -201,32 +205,23 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
     {
         bi.authors.clear();
         QSqlQuery query(QSqlDatabase::database("libdb"));
-        query.exec("SELECT book.name,num_in_seria,language,seria.name,id_seria from book left join seria on id_seria=seria.id where book.id="+QString::number(id_book));
-        if(query.next())
-        {
-            bi.title=query.value(0).toString();
-            bi.num_in_seria=query.value(1).toLongLong();
-            bi.language=query.value(2).toString();
-            bi.seria=query.value(3).toString();
-            bi.id_seria=query.value(4).toLongLong();
-        }
+        bi.title = mLibs[idCurrentLib].mBooks[id_book].sName;
+        bi.num_in_seria = mLibs[idCurrentLib].mBooks[id_book].numInSerial;
+        bi.language = mLibs[idCurrentLib].vLaguages[mLibs[idCurrentLib].mBooks[id_book].idLanguage];
+        bi.seria = mLibs[idCurrentLib].mSerials[mLibs[idCurrentLib].mBooks[id_book].idSerial].sName;
+        bi.id_seria = mLibs[idCurrentLib].mBooks[id_book].idSerial;
 
-        query.exec("SELECT author.name1,author.name2,author.name3,id_author from book_author join author on id_author=author.id where id_book="+QString::number(id_book));
-        while(query.next())
-        {
+        foreach (uint idAuthor,  mLibs[idCurrentLib].mBooks[id_book].listIdAuthors) {
             author_info ti("",0);
-            ti.id=query.value(3).toLongLong();
-            ti.firstname=query.value(1).toString();
-            ti.lastname=query.value(0).toString();
-            ti.middlename=query.value(2).toString();
-            ti.author=ti.lastname+","+ti.firstname+","+ti.middlename;
+            ti.id = idAuthor;
+            ti.author = mLibs[idCurrentLib].mAuthors[idAuthor].sName;
             bi.authors<<ti;
         }
 
-        query.exec("SELECT janre.name,id_janre from book_janre join janre on id_janre=janre.id where id_book="+QString::number(id_book));
         bi.genres.clear();
-        while(query.next())
-            bi.genres<<genre_info(query.value(0).toString().trimmed(),query.value(1).toLongLong());
+        foreach (uint idGenre, mLibs[idCurrentLib].mBooks[id_book].listIdGenres) {
+            bi.genres << genre_info(mGenre[idGenre].sName,idGenre);
+        }
 
 
     }
@@ -825,8 +820,6 @@ void ImportThread::process()
             if(line.isEmpty())
                 continue;
 
-            if(line.contains("388616"))
-                qDebug() << "bad line";
             qlonglong t0=QDateTime::currentMSecsSinceEpoch();
             app->processEvents();
             if(!loop)

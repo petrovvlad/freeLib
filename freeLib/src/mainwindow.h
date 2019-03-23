@@ -29,7 +29,6 @@ struct Stag
     int id;
 };
 
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -46,15 +45,14 @@ private:
     void UpdateAuthor();
     void UpdateSeria();
     void UpdateJanre();
-    DropForm *dropForm;
+    void UpdateBooks();
+    DropForm *pDropForm;
+    HelpDialog *pHelpDlg;
     QString last_search_symbol;
     //QMenu ContextBookMenu;
-    qlonglong CurrentBookID,CurrentSeriaID;
-//    QSqlDatabase dbase;
     void UpdateTags();
     QMenu TagMenu;
     QObject* current_list_for_tag;
-    qlonglong current_list_id,stored_book;
     void SaveLibPosition();
     QList<Stag> tags_pic;
     QPixmap GetTag(int id);
@@ -65,7 +63,21 @@ private:
     QToolButton *btn_Hash;
     void UpdateExportMenu();
     void DeleteDropForm();
-//    void closeEvent(QCloseEvent *event);
+    void FillAuthors();
+    void FillSerials();
+    void FillGenres();
+    void FillListBooks();
+    void FillListBooks(QList<uint> listBook, uint idCurrentAuthor);
+    bool IsBookInList(const SBook &book);
+
+    int idCurrentLanguage_;
+    uint idCurrentAuthor_;
+    uint idCurrentGenre_;
+    uint idCurrentSerial_;
+    uint idCurrentBook_;
+    bool bUseTag_;
+    bool bShowDeleted_;
+
 protected:
     void showEvent(QShowEvent *ev);
     void resizeEvent(QResizeEvent * e);
@@ -89,14 +101,11 @@ protected:
     void FillLibrariesMenu();
     void SendMail();
     void SendToDevice();
-    QTimer searchTimer;
     void changeEvent(QEvent *event);
 private slots:
     void ShowDropForm();
-    void TimerSearch();
-    void TimerResetSearch();
     void ExportAction();
-    void Add_Library();
+    void ManageLibrary();
     void CheckBooks();
     void EditBooks();
     void Settings();
@@ -115,7 +124,7 @@ private slots:
     void itemChanged(QTreeWidgetItem*,int);
     void BookDblClick();
     void About();
-    void LanguageChange();
+//    void LanguageChange();
     void StartSearch();
     void HelpDlg();
     void ContextMenu(QPoint point);
@@ -135,7 +144,7 @@ private slots:
 
     void on_btnPreference_clicked();
 
-    void on_splitter_splitterMoved(int pos, int index);
+    //void on_splitter_splitterMoved(int pos, int index);
 
     void ChangingTrayIcon(int index=-1, int color=-1);
 
@@ -143,6 +152,9 @@ private slots:
 
     void dockClicked();
     void MinimizeWindow();
+
+    void on_language_currentIndexChanged(const QString &arg1);
+
 public slots:
     void newLibWizard(bool AddLibOnly=true);
 signals:

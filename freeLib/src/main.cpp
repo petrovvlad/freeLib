@@ -25,6 +25,7 @@ QTranslator* translator_qt;
 QList<tag> tag_list;
 QSettings *global_settings=0;
 QMap<int,SLib> mLibs;
+QMap <uint,SGenre> mGenre;
 QCommandLineParser CMDparser;
 QSplashScreen *splash;
 QApplication *app;
@@ -215,6 +216,11 @@ QStringList fillParams(QStringList str, book_info &bi,QFileInfo book_file)
         }
         result[i]=result[i].trimmed();
     }
+    result.replaceInStrings("/ ","/");
+    result.replaceInStrings("/.","/");
+    result.replaceInStrings("////","/");
+    result.replaceInStrings("///","/");
+    result.replaceInStrings("//","/");
     return result;
 }
 
@@ -372,6 +378,8 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
     case QtFatalMsg:
         fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
         abort();
+    default:
+        break;
     }
 }
 
@@ -583,8 +591,9 @@ int main(int argc, char *argv[])
         if(!CMDparser.isSet("tray") && settings->value("tray_icon",0).toInt()!=2)
             w.show();
     }
-    else
+    else{
         return 1;
+    }
     splash->finish(&w);
     //current_lib.UpdateLib();
     if(idCurrentLib<0 && settings->value("ApplicationMode",0).toInt()==0)

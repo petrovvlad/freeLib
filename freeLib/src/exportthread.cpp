@@ -346,25 +346,19 @@ void ExportThread::export_books()
     QSettings *settings=GetSettings();
     QDir dir=export_dir;
     QFileInfo fi;
-    QSqlQuery query(QSqlDatabase::database("libdb"));
 
     if(settings->value("originalFileName",false).toBool() && send_type!=ST_Mail && settings->value("OutputFormat").toString()=="-")
     {
         foreach(book_info i,book_list)
         {
-            query.exec("SELECT file,archive,format,id_lib,path from book left join lib ON lib.id=id_lib where book.id="+QString::number(i.id));
             QString archive,file;
             QString LibPath=mLibs[idCurrentLib].path;
-            while(query.next())
+            SBook &book = mLibs[idCurrentLib].mBooks[i.id];
+            if(!book.sArchive.isEmpty())
             {
-                if(!query.value(1).toString().trimmed().isEmpty())
-                {
-                    archive=query.value(1).toString().trimmed().replace(".inp",".zip");
-                }
-                file=query.value(0).toString().trimmed()+"."+query.value(2).toString().trimmed();
-                if(!query.value(4).toString().trimmed().isEmpty())
-                    LibPath=query.value(4).toString().trimmed();
+                archive=book.sArchive.replace(".inp",".zip");
             }
+            file=book.sName+"."+book.sFormat;
             LibPath=RelativeToAbsolutePath(LibPath);
             archive=archive.replace("\\","/");
             file=file.replace("\\","/");
@@ -430,7 +424,6 @@ void ExportThread::export_books()
             break;
         QList<QBuffer*> buffers;
         QString file_name;
-        QString language;
         foreach(book_info i,bi)
         {
             app->processEvents();
@@ -440,52 +433,38 @@ void ExportThread::export_books()
             buffers<<new QBuffer(this);
             QBuffer infobuff;
             fi=GetBookFile(*buffers.last(),infobuff,i.id);
-            //qDebug()<<2;
+            SBook &book = mLibs[idCurrentLib].mBooks[i.id];
             if(fi.fileName().isEmpty())
             {
                 emit Progress(count*100/book_list.count(),count);
                 continue;
             }
-            if(IDauthor==0)
+            if(settings->value("originalFileName",false).toBool())
             {
-                query.exec("SELECT book.name,format,author.name1||' '||author.name2||' '||author.name3,seria.name,num_in_seria,book.language,file,archive  from book "
-                           "left join author on first_author_id=author.id left join seria on id_seria=seria.id where book.id="+QString::number(i.id));
+                QString arh=book.sArchive;
+                arh=arh.left(arh.length()-4);
+                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh).arg(book.nFile).arg(book.sFormat);
             }
             else
             {
-                query.exec("SELECT book.name,format,author.name1||' '||author.name2||' '||author.name3,seria.name,num_in_seria,book.language,file,archive  from book left join book_author on id_book=book.id "
-                           "left join author on book_author.id_author=author.id left join seria on id_seria=seria.id where book.id="+QString::number(i.id)+" and author.id="+QString::number(IDauthor));
-            }
-            if(query.next())
-            {
-                if(settings->value("originalFileName",false).toBool())
+                file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
+                if(file_name.isEmpty())
+                    file_name=default_exp_file_name;
+                QString author=BuildFileName(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].sName);
+                QString seria_name=BuildFileName(mLibs[idCurrentLib].mSerials[book.idSerial].sName);
+                QString book_name=BuildFileName(book.sName);
+                QString ser_num = QString::number(book.numInSerial);
+                if(buffers.count()>1)
                 {
-                    QString arh=query.value(7).toString().trimmed();
-                    arh=arh.left(arh.length()-4);
-                    file_name=QString(arh.isEmpty()?"":(arh+"/"))+query.value(6).toString()+"."+query.value(1).toString();
+                    ser_num="0";
+                    book_name=seria_name;
+                    seria_name="";
                 }
-                else
-                {
-                    file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
-                    if(file_name.isEmpty())
-                        file_name=default_exp_file_name;
-                    QString author=BuildFileName(query.value(2).toString().trimmed());
-                    QString seria_name=BuildFileName(query.value(3).toString().trimmed());
-                    QString book_name=BuildFileName(query.value(0).toString().trimmed());
-                    QString ser_num=query.value(4).toString().trimmed();
-                    if(buffers.count()>1)
-                    {
-                        ser_num="0";
-                        book_name=seria_name;
-                        seria_name="";
-                    }
-                    file_name=fillParams(file_name,QFileInfo(),seria_name,book_name,author,ser_num)+"."+query.value(1).toString().trimmed();
-                    if(settings->value("transliteration",false).toBool())
-                        file_name=Transliteration(file_name);
-                }
-                file_name=dir.path()+"/"+file_name;
-                language=query.value(5).toString();
+                file_name=fillParams(file_name,QFileInfo(),seria_name,book_name,author,ser_num)+"."+book.sFormat;
+                if(settings->value("transliteration",false).toBool())
+                    file_name=Transliteration(file_name);
             }
+            file_name=dir.path()+"/"+file_name;
         }
 
         if(convert(buffers, file_name,count,true,bi[0]))
