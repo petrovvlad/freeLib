@@ -216,6 +216,11 @@ QStringList fillParams(QStringList str, book_info &bi,QFileInfo book_file)
         }
         result[i]=result[i].trimmed();
     }
+    result.replaceInStrings("/ ","/");
+    result.replaceInStrings("/.","/");
+    result.replaceInStrings("////","/");
+    result.replaceInStrings("///","/");
+    result.replaceInStrings("//","/");
     return result;
 }
 
