@@ -12,7 +12,7 @@
 
 
 
-void ClearLib(qlonglong existingID, bool delete_only);
+void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only);
 
 
 class ImportThread : public QObject

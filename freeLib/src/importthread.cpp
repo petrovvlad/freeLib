@@ -12,20 +12,20 @@ extern QMap <uint,SGenre> mGenre;
 extern int idCurrentLib;
 
 
-void ClearLib(qlonglong existingID,bool delete_only)
+void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
 {
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    QSqlQuery query(dbase);
     if(delete_only)
     {
-        query.exec("update book set deleted=1 where id_lib="+QString::number(existingID));
+        query.exec("update book set deleted=1 where id_lib="+QString::number(id_lib));
     }
     else
     {
-        query.exec("delete from book where id_lib="+QString::number(existingID));
-        query.exec("delete from author where id_lib="+QString::number(existingID));
-        query.exec("delete from seria where id_lib="+QString::number(existingID));
-        query.exec("delete from book_author where id_lib="+QString::number(existingID));
-        query.exec("delete from book_janre where id_lib="+QString::number(existingID));
+        query.exec("delete from book where id_lib="+QString::number(id_lib));
+        query.exec("delete from author where id_lib="+QString::number(id_lib));
+        query.exec("delete from seria where id_lib="+QString::number(id_lib));
+        query.exec("delete from book_author where id_lib="+QString::number(id_lib));
+        query.exec("delete from book_janre where id_lib="+QString::number(id_lib));
         query.exec("VACUUM");
     }
 }
@@ -204,7 +204,6 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
     if(id_book>=0)
     {
         bi.authors.clear();
-        QSqlQuery query(QSqlDatabase::database("libdb"));
         bi.title = mLibs[idCurrentLib].mBooks[id_book].sName;
         bi.num_in_seria = mLibs[idCurrentLib].mBooks[id_book].numInSerial;
         bi.language = mLibs[idCurrentLib].vLaguages[mLibs[idCurrentLib].mBooks[id_book].idLanguage];
@@ -654,15 +653,31 @@ void ImportThread::process()
         emit End();
         return;
     }
-    query=new QSqlQuery(QSqlDatabase::database("libdb"));
+    QString HomeDir="";
+    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
+        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+    QString db_file=HomeDir+"/freeLib/freeLib.sqlite";
+    if(QFileInfo(HomeDir+"/freeLib/my_db.sqlite").exists())
+        QFile::rename(HomeDir+"/freeLib/my_db.sqlite",db_file);
+
+    QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE","importdb");
+    //QSqlDatabase::database("importdb",false);
+    dbase.setDatabaseName(db_file);
+    if (!dbase.open())
+    {
+        qDebug() << ("Error connect! ")<<db_file;
+        return;
+    }
+
+    query=new QSqlQuery(QSqlDatabase::database("importdb"));
 
     switch(_update_type)
     {
     case UT_FULL:
-        ClearLib(existingID,false);
+        ClearLib(QSqlDatabase::database("importdb"),existingID,false);
         break;
     case UT_DEL_AND_NEW:
-        ClearLib(existingID,true);
+        ClearLib(QSqlDatabase::database("importdb"),existingID,true);
         break;
     }
 
@@ -789,7 +804,7 @@ void ImportThread::process()
             break;
         }
     }
-    QSqlDatabase::database("libdb").transaction();
+    QSqlDatabase::database("importdb").transaction();
 
     foreach( QString str , list  )
     {
@@ -969,7 +984,7 @@ void ImportThread::process()
             emit Message(tr("Books adds: ")+QString::number(book_count));
         }
     }
-    QSqlDatabase::database("libdb").commit();
+    QSqlDatabase::database("importdb").commit();
 
     emit End();
 }
