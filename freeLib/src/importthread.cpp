@@ -350,7 +350,7 @@ qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria
 
     return id;
 }
-qlonglong ImportThread::AddJanre(qlonglong id_book,QString janre,qlonglong id_lib,QString language)
+qlonglong ImportThread::AddGenre(qlonglong id_book,QString janre,qlonglong id_lib,QString language)
 {
     qlonglong id_janre=0;
     query->exec("SELECT id,main_janre FROM janre where keys LIKE '"+janre.toLower()+";'");
@@ -359,7 +359,7 @@ qlonglong ImportThread::AddJanre(qlonglong id_book,QString janre,qlonglong id_li
         id_janre=query->value(0).toLongLong();
     }
     else
-        qDebug()<<"Unknown janre: "+janre;
+        qDebug()<<"Неизвестный жанр: "+janre;
     query->exec("INSERT INTO book_janre(id_book,id_janre,id_lib,language) values("+QString::number(id_book)+","+QString::number(id_janre)+","+QString::number(id_lib)+",'"+language+"')");
     query->exec("select last_insert_rowid()");
     query->next();
@@ -419,7 +419,7 @@ void ImportThread::readFB2_test(const QByteArray& ba,QString file_name,QString a
     AddAuthor("Иванов, Иван,Иванович ",
               existingID,id_book,first_author,language,0);
     first_author=false;
-    AddJanre(id_book,"sf",existingID,language);
+    AddGenre(id_book,"sf",existingID,language);
 }
 
 void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_name, qint32 file_size)
@@ -460,7 +460,7 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
             break;
     }
     foreach(genre_info genre,bi.genres)
-        AddJanre(id_book,genre.genre,existingID,bi.language);
+        AddGenre(id_book,genre.genre,existingID,bi.language);
 }
 void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh_name, qint32 file_size)
 {
@@ -502,7 +502,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
         first_author=false;
     }
     foreach(genre_info genre,bi.genres)
-        AddJanre(id_book,genre.genre,existingID,bi.language);
+        AddGenre(id_book,genre.genre,existingID,bi.language);
 }
 
 void ImportThread::importFB2_main(QString path)
@@ -653,31 +653,26 @@ void ImportThread::process()
         emit End();
         return;
     }
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString db_file=HomeDir+"/freeLib/freeLib.sqlite";
-    if(QFileInfo(HomeDir+"/freeLib/my_db.sqlite").exists())
-        QFile::rename(HomeDir+"/freeLib/my_db.sqlite",db_file);
-
+    QSettings *settings=GetSettings();
+    QFileInfo fi(RelativeToAbsolutePath(settings->value("database_path").toString()));
+    QString sDbFile=fi.canonicalFilePath();
     QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE","importdb");
-    //QSqlDatabase::database("importdb",false);
-    dbase.setDatabaseName(db_file);
+    dbase.setDatabaseName(sDbFile);
     if (!dbase.open())
     {
-        qDebug() << ("Error connect! ")<<db_file;
+        qDebug() << ("Error connect! ")<<sDbFile;
         return;
     }
 
-    query=new QSqlQuery(QSqlDatabase::database("importdb"));
+    query=new QSqlQuery(dbase);
 
     switch(_update_type)
     {
     case UT_FULL:
-        ClearLib(QSqlDatabase::database("importdb"),existingID,false);
+        ClearLib(dbase,existingID,false);
         break;
     case UT_DEL_AND_NEW:
-        ClearLib(QSqlDatabase::database("importdb"),existingID,true);
+        ClearLib(dbase,existingID,true);
         break;
     }
 
@@ -804,7 +799,7 @@ void ImportThread::process()
             break;
         }
     }
-    QSqlDatabase::database("importdb").transaction();
+    dbase.transaction();
 
     foreach( QString str , list  )
     {
@@ -956,7 +951,7 @@ void ImportThread::process()
                     {
                         if(!first && janre.trimmed().isEmpty())
                             continue;
-                        AddJanre(id_book,janre.trimmed(),existingID,language);
+                        AddGenre(id_book,janre.trimmed(),existingID,language);
                         first=false;
                     }
                 }
@@ -984,9 +979,9 @@ void ImportThread::process()
             emit Message(tr("Books adds: ")+QString::number(book_count));
         }
     }
-    QSqlDatabase::database("importdb").commit();
-
+    dbase.commit();
     emit End();
+    dbase.close();
 }
 
 void ImportThread::break_import()
