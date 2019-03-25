@@ -1549,7 +1549,7 @@ void MainWindow::UpdateBooks()
 
     mLibs[idCurrentLib].mBooks.clear();
     QSqlQuery query(QSqlDatabase::database("libdb"));
-    //query.setForwardOnly(true);
+    query.setForwardOnly(true);
     query.prepare("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, favorite FROM book WHERE id_lib=:id_lib;");
     //                     0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
     query.bindValue(":id_lib",idCurrentLib);
@@ -1610,6 +1610,7 @@ void MainWindow::UpdateBooks()
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idGenre = query.value(1).toUInt();
+        if(idGenre==0) idGenre = 1112; // Прочие/Неотсортированное
         if(mLibs[idCurrentLib].mBooks.contains(idBook))
             mLibs[idCurrentLib].mBooks[idBook].listIdGenres << idGenre;
     }

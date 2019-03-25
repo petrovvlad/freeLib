@@ -12,7 +12,7 @@
 
 
 
-void ClearLib(qlonglong existingID, bool delete_only);
+void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only);
 
 
 class ImportThread : public QObject
@@ -51,7 +51,7 @@ private:
     qlonglong AddBook(qlonglong star, QString name, qlonglong id_seria, int num_in_seria, QString file,
                  int size, int IDinLib, bool deleted, QString format, QDate date, QString language, QString keys, qlonglong id_lib, QString archive, int tag);
 
-    qlonglong AddJanre(qlonglong id_book,QString janre,qlonglong id_lib,QString language);
+    qlonglong AddGenre(qlonglong id_book,QString janre,qlonglong id_lib,QString language);
 
 };
 
