@@ -1,9 +1,12 @@
-#include "treebookitem.h"
+#include <QCollator>
 
+#include "treebookitem.h"
 #include "common.h"
 
 extern QMap<int,SLib> mLibs;
 extern int idCurrentLib;
+
+QCollator collator;
 
 TreeBookItem::TreeBookItem(QTreeWidget *parent, int type)
     :QTreeWidgetItem(parent, type)
@@ -29,14 +32,13 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
         SBook& bookOther = mLibs[idCurrentLib].mBooks[other.data(0,Qt::UserRole).toUInt()];
         if(bookThis.idSerial>0 && bookOther.idSerial)
             return bookThis.numInSerial > bookOther.numInSerial;
-        return text(0) > other.text(0);
+        return collator.compare(text(0),other.text(0))>0;
     }
     if(type()==ITEM_TYPE_AUTHOR && other.type()==ITEM_TYPE_AUTHOR){
-        return text(0) > other.text(0);
+        return collator.compare(text(0),other.text(0))>0;
     }
     if(type()==ITEM_TYPE_SERIA && other.type()==ITEM_TYPE_SERIA){
-        return text(0) > other.text(0);
+        return collator.compare(text(0),other.text(0))>0;
     }
-    //uint idThis = data(Qt::UserRole)
     return true;
 }
