@@ -1610,6 +1610,7 @@ void MainWindow::UpdateBooks()
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idGenre = query.value(1).toUInt();
+        if(idGenre==0) idGenre = 1112; // Прочие/Неотсортированное
         if(mLibs[idCurrentLib].mBooks.contains(idBook))
             mLibs[idCurrentLib].mBooks[idBook].listIdGenres << idGenre;
     }
