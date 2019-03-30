@@ -293,7 +293,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bShowDeleted_ =settings->value("ShowDeleted").toBool();
     int nCurrentTab;
 
-    if(settings->value("store_position",false).toBool())
+    if(settings->value("store_position",true).toBool())
     {
         idCurrentAuthor_= settings->value("current_author_id",0).toUInt();
         idCurrentSerial_ = settings->value("current_serial_id",0).toUInt();
@@ -1332,7 +1332,7 @@ void MainWindow::SelectJanre()
     idCurrentGenre_ = idGenre;
     FillListBooks(listBooks,0);
     QSettings *settings=GetSettings();
-    if(settings->value("store_position",false).toBool()){
+    if(settings->value("store_position",true).toBool()){
         settings->setValue("current_genre_id",idCurrentGenre_);
     }
 }
@@ -1357,7 +1357,7 @@ void MainWindow::SelectSeria()
 
     QSettings *settings=GetSettings();
     idCurrentSerial_= idSerial;
-    if(settings->value("store_position",false).toBool()){
+    if(settings->value("store_position",true).toBool()){
         settings->setValue("current_serial_id",idSerial);
     }
 }
@@ -1375,7 +1375,7 @@ void MainWindow::SelectAuthor()
 
     QList<uint> booksId = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
     FillListBooks(booksId,idCurrentAuthor_);
-    if(settings->value("store_position",false).toBool()){
+    if(settings->value("store_position",true).toBool()){
         settings->setValue("current_author_id",idCurrentAuthor_);
     }
 }
