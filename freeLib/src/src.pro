@@ -7,7 +7,7 @@
 
 #contains(sql-drivers,sqlite):include("$${_PRO_FILE_PWD_}/../../sqlite/qsql_sqlite.pri")
 #QT       += core
-QT += sql xml network widgets xmlpatterns concurrent printsupport gui quickwidgets quick webenginewidgets
+QT += sql xml network widgets xmlpatterns concurrent printsupport gui webenginewidgets
 TARGET = freeLib
 TEMPLATE = app
 
@@ -180,8 +180,7 @@ FORMS    += mainwindow.ui \
 RESOURCES += \
     resource.qrc
 
-OTHER_FILES += \
-    shelf.qml
+OTHER_FILES +=
 
 OBJECTIVE_SOURCES += \
     myapplicationclass.mm

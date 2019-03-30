@@ -11,7 +11,6 @@
         <file>img/tray1.png</file>
         <file>img/tray2.png</file>
         <file>img/tray0.png</file>
-        <file>shelf.qml</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>
