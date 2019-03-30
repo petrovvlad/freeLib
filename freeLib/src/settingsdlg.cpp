@@ -198,10 +198,11 @@ void SettingsDlg::LoadSettings()
             ui->ABC->setCurrentIndex(ui->ABC->count()-1);
         }
     }
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    ui->database_path->setText(settings->value("database_path",HomeDir+"/freeLib/freeLib.sqlite").toString());
+    //QString HomeDir="";
+    //if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
+    //    HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+    QString sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
+    ui->database_path->setText(settings->value("database_path",sAppDir+"/freeLib.sqlite").toString());
 
     {
         int id=settings->value("DefaultExport",0).toInt();
