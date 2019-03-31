@@ -157,7 +157,6 @@
        <widget class="QComboBox" name="font_bi"/>
       </item>
      </layout>
-     <zorder>gridLayoutWidget</zorder>
      <zorder>label_3</zorder>
      <zorder>label_6</zorder>
      <zorder>font</zorder>
