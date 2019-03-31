@@ -76,7 +76,7 @@ QSettings* GetSettings(bool need_copy,bool reopen)
         if(fi.exists())
             current_settings=new QSettings(fi.absoluteFilePath(),QSettings::IniFormat);
         else
-            current_settings=new QSettings(OrgName,AppName);
+            current_settings=new QSettings(AppName,AppName);
     }
     if(need_copy)
         return current_settings;
@@ -385,12 +385,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 
 bool openDB(bool create, bool replace)
 {
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString db_file=HomeDir+"/freeLib/freeLib.sqlite";
-    if(QFileInfo(HomeDir+"/freeLib/my_db.sqlite").exists())
-        QFile::rename(HomeDir+"/freeLib/my_db.sqlite",db_file);
+    QString sAppDir,db_file;
     QSettings *settings=GetSettings();
 
     QFileInfo fi(RelativeToAbsolutePath(settings->value("database_path").toString()));
@@ -400,20 +395,10 @@ bool openDB(bool create, bool replace)
     }
     else
     {
-        fi.setFile(app->applicationDirPath()+"/freeLib.sqlite");
-        if(fi.exists() && fi.isFile())
-        {
-            db_file=fi.canonicalFilePath();
-        }
-        else
-        {
-            fi.setFile(app->applicationDirPath()+"/../../../freeLib/freeLib.sqlite");
-            if(fi.exists() && fi.isFile())
-                db_file=fi.canonicalFilePath();
-        }
+        sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
+        db_file=sAppDir+"/freeLib.sqlite";
+        settings->setValue("database_path",db_file);
     }
-    settings->setValue("database_path",db_file);
-    settings->sync();
     QFile file(db_file);
     if(!file.exists() || replace)
     {
@@ -543,7 +528,8 @@ int main(int argc, char *argv[])
     translator=0;
     translator_qt=0;
     app=&a;
-    a.setOrganizationName("freeLib");
+    a.setOrganizationName("");
+    a.setApplicationName("freeLib");
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
     QSqlDatabase::addDatabase("QSQLITE","libdb");
 
