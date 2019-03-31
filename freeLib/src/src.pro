@@ -156,7 +156,6 @@ HEADERS  += mainwindow.h \
     quazip/quazip/quazipdir.h \
     quazip/quazip/quazipfile.h \
     quazip/quazip/crypt.h \
-    myapplicationclass.h \
     bookeditdlg.h \
     webpage.h \
     treebookitem.h \
