@@ -270,10 +270,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->AuthorList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectAuthor()));
     connect(ui->Books,SIGNAL(itemSelectionChanged()),this,SLOT(SelectBook()));
     connect(ui->Books,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this,SLOT(BookDblClick()));
-    connect(ui->JanreList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectJanre()));
+    connect(ui->GenreList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectGenre()));
     connect(ui->SeriaList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectSeria()));
     connect(ui->btnAuthor,SIGNAL(clicked()),this,SLOT(btnAuthor()));
-    connect(ui->btnJanre,SIGNAL(clicked()),this,SLOT(btnJanres()));
+    connect(ui->btnGenre,SIGNAL(clicked()),this,SLOT(btnGenres()));
     connect(ui->btnSeries,SIGNAL(clicked()),this,SLOT(btnSeries()));
     connect(ui->btnSearch,SIGNAL(clicked()),this,SLOT(btnPageSearch()));
     connect(ui->do_search,SIGNAL(clicked()),this,SLOT(StartSearch()));
@@ -301,24 +301,19 @@ MainWindow::MainWindow(QWidget *parent) :
         idCurrentGenre_ = settings->value("current_genre_id",0).toLongLong();
         nCurrentTab = settings->value("current_tab",0).toInt();
         ui->searchString->setText(settings->value("filter_set").toString());
-
     }
     else
     {
         idCurrentAuthor_ = 0;
         idCurrentSerial_ = 0;
         idCurrentBook_ = 0;
-        idCurrentGenre_ = -1;
+        idCurrentGenre_ = 0;
         nCurrentTab = 0;
-//        FillAuthors();
-//        FillSerials();
-//        FillGenres();
-//        FirstButton->click();
     }
     UpdateTags();
     UpdateSeria();
     UpdateAuthor();
-    UpdateJanre();
+    UpdateGenre();
     UpdateBooks();
 
     FillAuthors();
@@ -333,7 +328,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->btnSeries->click();
         break;
     case 2:
-        ui->btnJanre->click();
+        ui->btnGenre->click();
         break;
     case 3:
         ui->btnSearch->click();
@@ -388,11 +383,11 @@ MainWindow::MainWindow(QWidget *parent) :
 #endif
     connect(ui->actionMinimize_window,SIGNAL(triggered(bool)),SLOT(MinimizeWindow()));
 
-    GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_janre);
-    MyProxySortModel->setSourceModel(ui->s_janre->model());
-    ui->s_janre->model()->setParent(MyProxySortModel);
-    ui->s_janre->setModel(MyProxySortModel);
-    ui->s_janre->model()->sort(0);
+    GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
+    MyProxySortModel->setSourceModel(ui->s_genre->model());
+    ui->s_genre->model()->setParent(MyProxySortModel);
+    ui->s_genre->setModel(MyProxySortModel);
+    ui->s_genre->model()->sort(0);
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
@@ -495,7 +490,7 @@ void MainWindow::newLibWizard(bool AddLibOnly)
         lib.bWoDeleted = false;
         lib.bFirstAuthor = false;
         al.AddNewLibrary(lib);
-        UpdateJanre();
+        UpdateGenre();
         UpdateTags();
         UpdateSeria();
         UpdateAuthor();
@@ -515,9 +510,9 @@ void MainWindow::ReviewLink(QUrl url)
     {
         MoveToAuthor(url.toString().right(url.toString().length()-8-8).toLongLong(),url.toString().mid(7+8,1).toUpper());
     }
-    else if(url.toString().startsWith("file:///janre_"))
+    else if(url.toString().startsWith("file:///genre_"))
     {
-        MoveToJanre(url.toString().right(url.toString().length()-7-8).toLongLong());
+        MoveToGenre(url.toString().right(url.toString().length()-7-8).toLongLong());
     }
     else if(url.toString().startsWith("file:///seria_"))
     {
@@ -1248,7 +1243,7 @@ void MainWindow::StartSearch()
     QDate dateFrom = ui->date_from->date();
     QDate dateTo = ui->date_to->date();
     int nMaxCount = ui->maxBooks->value();
-    int idGenre = ui->s_janre->currentData().toInt();
+    int idGenre = ui->s_genre->currentData().toInt();
 
     QList<uint> listBooks;
     int nCount = 0;
@@ -1308,13 +1303,13 @@ void MainWindow::SelectLibrary()
     FillLibrariesMenu();
 }
 
-void MainWindow::SelectJanre()
+void MainWindow::SelectGenre()
 {
     ui->Books->clear();
     ExportBookListBtn(false);
-    if(ui->JanreList->selectedItems().count()==0)
+    if(ui->GenreList->selectedItems().count()==0)
         return;
-    QTreeWidgetItem* cur_item=ui->JanreList->selectedItems()[0];
+    QTreeWidgetItem* cur_item=ui->GenreList->selectedItems()[0];
     uint idGenre = cur_item->data(0,Qt::UserRole).toUInt();
     QList<uint> listBooks;
     auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
@@ -1457,10 +1452,10 @@ void MainWindow::SelectBook()
         {
             author+=(author.isEmpty()?"":"; ")+QString("<a href='author_%3%1'>%2</a>").arg(QString::number(auth.id),auth.author.replace(","," "),auth.author.left(1));
         }
-        QString janre;
-        foreach (genre_info jan, bi.genres)
+        QString sGenre;
+        foreach (genre_info genre, bi.genres)
         {
-            janre+=(janre.isEmpty()?"":"; ")+QString("<a href='janre_%3%1'>%2</a>").arg(QString::number(jan.id),jan.genre,jan.genre.left(1));
+            sGenre+=(sGenre.isEmpty()?"":"; ")+QString("<a href='genre_%3%1'>%2</a>").arg(QString::number(genre.id),genre.genre,genre.genre.left(1));
         }
         QFile file_html(":/preview.html");
         file_html.open(QIODevice::ReadOnly);
@@ -1502,7 +1497,7 @@ void MainWindow::SelectBook()
                 replace("#image#",bi.img).
                 replace("#width#",(bi.img.isEmpty()?"0":img_width)).
                 replace("#author#",author).
-                replace("#janre#",janre).
+                replace("#genre#",sGenre).
                 replace("#series#",seria).
                 replace("#file_path#",arh.filePath()).
                 replace("#file_size#",QString::number(size)+(mem_i>0?"."+QString::number((rest*10+5)/1024):"")+" "+mem[mem_i]).
@@ -1678,7 +1673,7 @@ void MainWindow::UpdateSeria()
     QApplication::restoreOverrideCursor();
 }
 
-void MainWindow::UpdateJanre()
+void MainWindow::UpdateGenre()
 {
     if(!db_is_open)
         return;
@@ -1696,12 +1691,12 @@ void MainWindow::UpdateJanre()
         uint idGenre = query.value(0).toUInt();
         SGenre &genre = mGenre[idGenre];
         genre.sName = query.value(1).toString();
-        genre.idParrentGenre = query.value(2).toUInt();
-        genre.nSort = query.value(3).toUInt();
+        genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
+        genre.nSort = static_cast<ushort>(query.value(3).toUInt());
     }
 
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateJanre " << t_end-t_start << "msec";
+    qDebug()<< "UpdateGenre " << t_end-t_start << "msec";
 
     QApplication::restoreOverrideCursor();
 }
@@ -1713,7 +1708,7 @@ void MainWindow::ManageLibrary()
     al.exec();
     if(al.bLibChanged){
         UpdateAuthor();
-        UpdateJanre();
+        UpdateGenre();
         UpdateTags();
         UpdateBooks();
         searchCanged(ui->searchString->text());
@@ -1737,13 +1732,13 @@ void MainWindow::btnSeries()
     ui->language->setEnabled(true);
     SelectSeria();
 }
-void MainWindow::btnJanres()
+void MainWindow::btnGenres()
 {
     ui->tabWidget->setCurrentIndex(2);
     ui->SearchFrame->setEnabled(false);
     ui->frame_3->setEnabled(false);
     ui->language->setEnabled(true);
-    SelectJanre();
+    SelectGenre();
 }
 void MainWindow::btnPageSearch()
 {
@@ -1844,7 +1839,6 @@ void MainWindow::ContextMenu(QPoint point)
     }
     if(menu.actions().count()>0)
         menu.addSeparator();
-    //QSettings *settings=GetSettings();
     if(bUseTag_)
         menu.addActions(TagMenu.actions());
     if(menu.actions().count()>0)
@@ -1853,70 +1847,36 @@ void MainWindow::ContextMenu(QPoint point)
 
 void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
 {
-    QTreeWidgetItem* Item=ui->Books->selectedItems()[0];
-//    qlonglong CurrentID=Item->data(0,Qt::UserRole).toLongLong();
-    bool IsBook=(Item->childCount()==0);
-    bool IsAuthor=(Item->parent()==0);
-    if(IsAuthor)
-        return;
-    while(Item->parent()->parent())
-        Item=Item->parent();
-    if(Item->childCount()==0)
-        return;
-    ui->searchString->setText(id<0?Item->text(0).left(1).toUpper():FirstLetter);
-    qlonglong id_seria=id<0?-Item->data(0,Qt::UserRole).toLongLong():-id;
+    ui->searchString->setText(FirstLetter);
     ui->btnSeries->setChecked(true);
-    searchCanged(id<0?Item->text(0).left(1).toUpper():FirstLetter);
     btnSeries();
     ui->SeriaList->clearSelection();
     for (int i=0;i<ui->SeriaList->count();i++)
     {
-        if(ui->SeriaList->item(i)->data(Qt::UserRole).toLongLong()==-id_seria)
+        if(ui->SeriaList->item(i)->data(Qt::UserRole).toLongLong()==id)
         {
             ui->SeriaList->item(i)->setSelected(true);
             ui->SeriaList->scrollToItem(ui->SeriaList->item(i));
-            if(IsBook)
-            {
-//                CurrentBookID=CurrentID;
-            }
-            else if(!IsAuthor)
-            {
-//                CurrentSeriaID=-CurrentID;
-            }
             SelectSeria();
             return;
         }
     }
 }
-void MainWindow::MoveToJanre(qlonglong id)
+
+void MainWindow::MoveToGenre(qlonglong id)
 {
-    QTreeWidgetItem* Item=ui->Books->selectedItems()[0];
-//    qlonglong CurrentID=Item->data(0,Qt::UserRole).toLongLong();
-    bool IsBook=(Item->childCount()==0);
-    bool IsAuthor=(Item->parent()==0);
-    while(Item->parent())
-        Item=Item->parent();
-    qlonglong id_janre=id;
-    ui->btnJanre->setChecked(true);
-    btnJanres();
-    ui->JanreList->clearSelection();
-    for (int i=0;i<ui->JanreList->topLevelItemCount();i++)
+    ui->btnGenre->setChecked(true);
+    btnGenres();
+    ui->GenreList->clearSelection();
+    for (int i=0;i<ui->GenreList->topLevelItemCount();i++)
     {
-        for (int j=0;j<ui->JanreList->topLevelItem(i)->childCount();j++)
+        for (int j=0;j<ui->GenreList->topLevelItem(i)->childCount();j++)
         {
-            if(ui->JanreList->topLevelItem(i)->child(j)->data(0,Qt::UserRole).toLongLong()==id_janre)
+            if(ui->GenreList->topLevelItem(i)->child(j)->data(0,Qt::UserRole).toLongLong()==id)
             {
-                ui->JanreList->topLevelItem(i)->child(j)->setSelected(true);
-                ui->JanreList->scrollToItem(ui->JanreList->topLevelItem(i)->child(j));
-                if(IsBook)
-                {
-//                    CurrentBookID=CurrentID;
-                }
-                else if(!IsAuthor)
-                {
-//                    CurrentSeriaID=-CurrentID;
-                }
-                SelectJanre();
+                ui->GenreList->topLevelItem(i)->child(j)->setSelected(true);
+                ui->GenreList->scrollToItem(ui->GenreList->topLevelItem(i)->child(j));
+                SelectGenre();
                 return;
             }
         }
@@ -1925,10 +1885,7 @@ void MainWindow::MoveToJanre(qlonglong id)
 
 void MainWindow::MoveToAuthor(qlonglong id, QString FirstLetter)
 {
-    QTreeWidgetItem* Item=ui->Books->selectedItems()[0];
-    if(Item->type() == ITEM_TYPE_BOOK)
-        idCurrentBook_ = Item->data(0,Qt::UserRole).toUInt();
-    ui->searchString->setText(id<0?Item->text(0).left(1).toUpper():FirstLetter);
+    ui->searchString->setText(/*id<0?Item->text(0).left(1).toUpper():*/FirstLetter);
     ui->btnAuthor->setChecked(true);
     searchCanged(FirstLetter);
     btnAuthor();
@@ -1936,7 +1893,6 @@ void MainWindow::MoveToAuthor(qlonglong id, QString FirstLetter)
     for (int i=0;i<ui->AuthorList->count();i++)
     {
         if(ui->AuthorList->item(i)->data(Qt::UserRole).toLongLong()==id)
-
         {
             ui->AuthorList->item(i)->setSelected(true);
             ui->AuthorList->scrollToItem(ui->AuthorList->item(i));
@@ -2092,10 +2048,10 @@ void MainWindow::FillSerials()
 void MainWindow::FillGenres()
 {
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-    const bool wasBlocked = ui->JanreList->blockSignals(true);
-    ui->JanreList->clear();
-    ui->s_janre->clear();
-    ui->s_janre->addItem("*",0);
+    const bool wasBlocked = ui->GenreList->blockSignals(true);
+    ui->GenreList->clear();
+    ui->s_genre->clear();
+    ui->s_genre->addItem("*",0);
     QFont bold_font(ui->AuthorList->font());
     bold_font.setBold(true);
 
@@ -2120,17 +2076,17 @@ void MainWindow::FillGenres()
     while(iGenre!=mGenre.constEnd()){
         QTreeWidgetItem *item;
         if(iGenre->idParrentGenre==0 && !mTopGenresItem.contains(iGenre.key())){
-            item=new QTreeWidgetItem(ui->JanreList);
+            item=new QTreeWidgetItem(ui->GenreList);
             item->setFont(0,bold_font);
             item->setText(0,iGenre->sName);
             item->setData(0,Qt::UserRole,iGenre.key());
             item->setExpanded(false);
             mTopGenresItem[iGenre.key()] = item;
-            ui->s_janre->addItem(iGenre->sName,iGenre.key());
+            ui->s_genre->addItem(iGenre->sName,iGenre.key());
         }else{
             if(mCounts.contains(iGenre.key())){
                 if(!mTopGenresItem.contains(iGenre->idParrentGenre)){
-                    QTreeWidgetItem *itemTop = new QTreeWidgetItem(ui->JanreList);
+                    QTreeWidgetItem *itemTop = new QTreeWidgetItem(ui->GenreList);
                     itemTop->setFont(0,bold_font);
                     itemTop->setText(0,mGenre[iGenre->idParrentGenre].sName);
                     itemTop->setData(0,Qt::UserRole,iGenre->idParrentGenre);
@@ -2140,18 +2096,18 @@ void MainWindow::FillGenres()
                 item=new QTreeWidgetItem(mTopGenresItem[iGenre->idParrentGenre]);
                 item->setText(0,QString("%1 (%2)").arg(iGenre->sName).arg(mCounts[iGenre.key()]));
                 item->setData(0,Qt::UserRole,iGenre.key());
-                ui->s_janre->addItem("   "+iGenre->sName,iGenre.key());
+                ui->s_genre->addItem("   "+iGenre->sName,iGenre.key());
                 if(iGenre.key()==idCurrentGenre_)
                 {
                     item->setSelected(true);
-                    ui->JanreList->scrollToItem(item);
+                    ui->GenreList->scrollToItem(item);
                 }
             }
         }
         ++iGenre;
     }
 
-    ui->JanreList->blockSignals(wasBlocked);
+    ui->GenreList->blockSignals(wasBlocked);
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
     qDebug()<< "FillGenres " << t_end-t_start << "msec";
 }
@@ -2168,7 +2124,7 @@ void MainWindow::FillListBooks()
         break;
 
         case 2:
-            SelectJanre();
+            SelectGenre();
         break;
 
     }
