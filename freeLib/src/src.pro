@@ -85,7 +85,6 @@ SOURCES += main.cpp\
     exportdlg.cpp \
     aboutdialog.cpp \
     helpdialog.cpp \
-    filenamelineedit.cpp \
     fb2mobi/hyphenations.cpp \
     tagdialog.cpp \
     fb2mobi/fb2mobi.cpp \
@@ -134,7 +133,6 @@ HEADERS  += mainwindow.h \
     exportdlg.h \
     aboutdialog.h \
     helpdialog.h \
-    filenamelineedit.h \
     fb2mobi/fb2mobi.h \
     fb2mobi/hyphenations.h \
     tagdialog.h \
