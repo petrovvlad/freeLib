@@ -17,13 +17,12 @@
 #include "common.h"
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
-#include "addlibrary.h"
-
 #include "SmtpClient/smtpclient.h"
-#include "settingsdlg.h"
 #include "SmtpClient/mimefile.h"
 #include "SmtpClient/mimetext.h"
 #include "SmtpClient/mimeattachment.h"
+#include "addlibrary.h"
+#include "settingsdlg.h"
 #include "exportdlg.h"
 #include "exportthread.h"
 #include "aboutdialog.h"
@@ -35,10 +34,7 @@
 #include "genresortfilterproxymodel.h"
 
 extern QSplashScreen *splash;
-extern QMap<int,SLib> mLibs;
-extern QMap <uint,SGenre> mGenre;
 
-extern int idCurrentLib;
 bool db_is_open;
 
 
@@ -186,19 +182,7 @@ MainWindow::MainWindow(QWidget *parent) :
         {
             version=query.value(0).toInt();
         }
-        switch(version)
-        {
-        case 0:
-        {
-            query.exec("INSERT INTO params (name,value) VALUES ('version','1')");
-            query.exec("CREATE INDEX \"seria_name\" ON \"seria\" (\"name\" ASC, \"id_lib\" ASC)");
-        }
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        {
+        if(version<6){
             splash->hide();
             if(QMessageBox::question(nullptr,tr("Database"),tr("This version needs new database version. All your old books data will be lost. Continue?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::Yes)
             {
@@ -209,9 +193,6 @@ MainWindow::MainWindow(QWidget *parent) :
             {
                 error_quit=true;
             }
-        }
-        default:
-            break;
         }
     }
 
