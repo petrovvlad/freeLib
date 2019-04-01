@@ -64,7 +64,7 @@ struct SBook
     uint idSerial;
     uint idFirstAuthor;
     uint numInSerial;
-    int nSize;
+    uint nSize;
     uchar nStars;
     uchar idLanguage;
     uchar nTag;
@@ -156,14 +156,14 @@ struct tag
     QString css;
     QString font_name;
     quint16 font_size;
-    tag(QString name,QString css,QString font_name,int font_size):name(name),css(css),font_name(font_name),font_size(font_size)
+    tag(QString name,QString css,QString font_name,quint16 font_size):name(name),css(css),font_name(font_name),font_size(font_size)
     {
     }
 };
 extern QList<tag> tag_list;
 
-QFileInfo GetBookFile(QBuffer &buffer, QBuffer &buffer_info, qlonglong id_book, bool caption=false, QDateTime *file_data=0);
-void GetBookInfo(book_info &bi, const QByteArray &data, QString type, bool info_only=false, qlonglong id_book=-1);
+QFileInfo GetBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book, bool caption=false, QDateTime *file_data=nullptr);
+void GetBookInfo(book_info &bi, const QByteArray &data, QString type, bool info_only=false, int id_book=-1);
 QPixmap GetTag(QColor color,int size);
 void SetLocale();
 QString FindLocaleFile(QString locale,QString name,QString suffics);
