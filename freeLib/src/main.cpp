@@ -40,7 +40,6 @@ bool SetCurrentZipFileName(QuaZip *zip,QString name)
     return result;
 }
 
-
 QString RelativeToAbsolutePath(QString path)
 {
     if(QDir(path).isRelative() && path.indexOf("%")<0)
@@ -63,20 +62,8 @@ QSettings* GetSettings(bool need_copy,bool reopen)
         global_settings->sync();
         return global_settings;
     }
-    QFileInfo fi(app->applicationDirPath()+"/freeLib.cfg");
     QSettings* current_settings;
-    if(fi.exists())
-    {
-        current_settings=new QSettings(fi.absoluteFilePath(),QSettings::IniFormat);
-    }
-    else
-    {
-        fi.setFile(app->applicationDirPath()+"/../../../freeLib/freeLib.cfg");
-        if(fi.exists())
-            current_settings=new QSettings(fi.absoluteFilePath(),QSettings::IniFormat);
-        else
-            current_settings=new QSettings(AppName,AppName);
-    }
+            current_settings=new QSettings();
     if(need_copy)
         return current_settings;
     global_settings=current_settings;
@@ -385,9 +372,10 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 bool openDB(bool create, bool replace)
 {
     QString sAppDir,db_file;
-    QSettings *settings=GetSettings();
+    //QSettings *settings=GetSettings();
+    QSettings settings;
 
-    QFileInfo fi(RelativeToAbsolutePath(settings->value("database_path").toString()));
+    QFileInfo fi(RelativeToAbsolutePath(settings.value("database_path").toString()));
     if(fi.exists() && fi.isFile())
     {
         db_file=fi.canonicalFilePath();
@@ -396,7 +384,7 @@ bool openDB(bool create, bool replace)
     {
         sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
         db_file=sAppDir+"/freeLib.sqlite";
-        settings->setValue("database_path",db_file);
+        settings.setValue("database_path",db_file);
     }
     QFile file(db_file);
     if(!file.exists() || replace)
@@ -451,8 +439,8 @@ void UpdateLibs()
     if(!db_is_open)
         idCurrentLib=-1;
     else{
-        QSettings* settings=GetSettings();
-        idCurrentLib=settings->value("LibID",-1).toInt();
+        QSettings settings/*=GetSettings()*/;
+        idCurrentLib=settings.value("LibID",-1).toInt();
         QSqlQuery query(QSqlDatabase::database("libdb"));
         query.exec("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name");
         mLibs.clear();
@@ -527,7 +515,7 @@ int main(int argc, char *argv[])
     translator=nullptr;
     translator_qt=nullptr;
     app=&a;
-    a.setOrganizationName("");
+    a.setOrganizationName("freeLib");
     a.setApplicationName("freeLib");
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
     QSqlDatabase::addDatabase("QSQLITE","libdb");
@@ -554,13 +542,13 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_LINUX
     splash->setWindowIcon(QIcon(":/library_128x128.png"));
 #endif
-    QSettings* settings=GetSettings();
-    if(!settings->contains("ApplicationMode"))
+    QSettings settings;
+    if(!settings.contains("ApplicationMode"))
     {
         ResetToDefaultSettings();
     }
 
-    if(!settings->value("no_splash",false).toBool())
+    if(!settings.value("no_splash",false).toBool())
         splash->show();
     a.processEvents();
     setProxy();
@@ -573,7 +561,7 @@ int main(int argc, char *argv[])
 
     if(!w.error_quit)
     {
-        if(!CMDparser.isSet("tray") && settings->value("tray_icon",0).toInt()!=2)
+        if(!CMDparser.isSet("tray") && settings.value("tray_icon",0).toInt()!=2)
             w.show();
     }
     else{
@@ -581,7 +569,7 @@ int main(int argc, char *argv[])
     }
     splash->finish(&w);
     //current_lib.UpdateLib();
-    if(idCurrentLib<0 && settings->value("ApplicationMode",0).toInt()==0)
+    if(idCurrentLib<0 && settings.value("ApplicationMode",0).toInt()==0)
         w.newLibWizard(false);
     int result=a.exec();
     if(global_settings)
