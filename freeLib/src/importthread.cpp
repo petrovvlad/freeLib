@@ -6,12 +6,6 @@
 #include "quazip/quazip/quazipfile.h"
 #include "common.h"
 
-extern QMap<int,SLib> mLibs;
-extern QMap <uint,SGenre> mGenre;
-
-extern int idCurrentLib;
-
-
 void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
 {
     QSqlQuery query(dbase);
@@ -30,10 +24,10 @@ void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
     }
 }
 
-void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_only,int id_book)
+void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_only,uint id_book)
 {
     bi.id=id_book;
-    if(id_book<0 || !info_only)
+    if(id_book==0 || !info_only)
     {
         if(type=="epub")
         {
