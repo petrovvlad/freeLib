@@ -90,15 +90,16 @@ class SettingsDlg : public QDialog
     Q_OBJECT
     
 public:
-    explicit SettingsDlg(QWidget *parent = 0);
+    explicit SettingsDlg(QWidget *parent = nullptr);
     ~SettingsDlg();
     
 private:
     Ui::SettingsDlg *ui;
+    QSettings settings;
     void LoadSettings();
 private slots:
     void btnOK();
-    void SaveTools(QSettings *settings=0);
+    void SaveTools();
     void AddExt();
     void DelExt();
     void AddApp();
