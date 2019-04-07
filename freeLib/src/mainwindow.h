@@ -33,7 +33,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     bool error_quit;
     
@@ -45,10 +45,10 @@ private:
     void UpdateSeria();
     void UpdateGenre();
     void UpdateBooks();
+    void UpdateTags();
     DropForm *pDropForm;
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
-    void UpdateTags();
     QMenu TagMenu;
     QObject* current_list_for_tag;
     void SaveLibPosition();
@@ -87,7 +87,7 @@ protected:
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
-    void FillCheckedBookList(QList<book_info> &list, QTreeWidgetItem* item=0, bool send_all=false, bool count_only=false, bool checked_only=false);
+    void FillCheckedBookList(QList<book_info> &list, QTreeWidgetItem* item=nullptr, bool send_all=false, bool count_only=false, bool checked_only=false);
     void FillCheckedItemsBookList(QList<book_info> &list, QTreeWidgetItem* item, bool send_all,bool count_only);
     void ExportBookListBtn(bool Enable);
     void dropEvent(QDropEvent *ev);
