@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>721</width>
-    <height>682</height>
+    <height>718</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -47,7 +47,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_common">
       <attribute name="title">
@@ -188,6 +188,9 @@
        </item>
        <item>
         <widget class="QCheckBox" name="settings_to_file">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Save settings in application folder</string>
          </property>

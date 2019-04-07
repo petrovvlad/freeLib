@@ -7,17 +7,16 @@
 #include <QSqlQuery>
 #include <QtWidgets/QTreeWidgetItem>
 #include <QBuffer>
-#include "helpdialog.h"
 #include <QMenu>
 #include <QDropEvent>
 #include <QDragEnterEvent>
-#include "dropform.h"
 #include <QTcpServer>
+#include <QSystemTrayIcon>
+
+#include "helpdialog.h"
+#include "dropform.h"
 #include "opds_server.h"
 #include "common.h"
-#include <QSystemTrayIcon>
-#include <QTimer>
-#include "myapplicationclass.h"
 
 namespace Ui {
 class MainWindow;
@@ -34,7 +33,7 @@ class MainWindow : public QMainWindow
     Q_OBJECT
     
 public:
-    explicit MainWindow(QWidget *parent = 0);
+    explicit MainWindow(QWidget *parent = nullptr);
     ~MainWindow();
     bool error_quit;
     
@@ -44,13 +43,12 @@ private:
     QToolButton *tbClear;
     void UpdateAuthor();
     void UpdateSeria();
-    void UpdateJanre();
+    void UpdateGenre();
     void UpdateBooks();
+    void UpdateTags();
     DropForm *pDropForm;
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
-    //QMenu ContextBookMenu;
-    void UpdateTags();
     QMenu TagMenu;
     QObject* current_list_for_tag;
     void SaveLibPosition();
@@ -89,7 +87,7 @@ protected:
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
-    void FillCheckedBookList(QList<book_info> &list, QTreeWidgetItem* item=0, bool send_all=false, bool count_only=false, bool checked_only=false);
+    void FillCheckedBookList(QList<book_info> &list, QTreeWidgetItem* item=nullptr, bool send_all=false, bool count_only=false, bool checked_only=false);
     void FillCheckedItemsBookList(QList<book_info> &list, QTreeWidgetItem* item, bool send_all,bool count_only);
     void ExportBookListBtn(bool Enable);
     void dropEvent(QDropEvent *ev);
@@ -97,7 +95,6 @@ protected:
     void dragLeaveEvent(QDragLeaveEvent *);
     void dragMoveEvent(QDragMoveEvent *ev);
     void proc_path(QString path, QStringList *book_list);
-    void MoveToJanre(qlonglong id);
     void FillLibrariesMenu();
     void SendMail();
     void SendToDevice();
@@ -116,10 +113,10 @@ private slots:
     void btnSeries();
     void btnPageSearch();
     void DoSearch();
-    void btnJanres();
+    void btnGenres();
     void SelectAuthor();
     void SelectBook();
-    void SelectJanre();
+    void SelectGenre();
     void SelectSeria();
     void itemChanged(QTreeWidgetItem*,int);
     void BookDblClick();
@@ -129,6 +126,7 @@ private slots:
     void HelpDlg();
     void ContextMenu(QPoint point);
     void MoveToAuthor(qlonglong id=-1,QString FirstLetter="");
+    void MoveToGenre(qlonglong id);
     void MoveToSeria(qlonglong id=-1,QString FirstLetter="");
     void tag_select(int index);
     void set_tag();
@@ -137,22 +135,16 @@ private slots:
     void ReviewLink(QUrl url);
     void SelectLibrary();
     void on_actionSwitch_to_convert_mode_triggered();
-    //void on_actionSwitch_to_shelf_mode_triggered();
     void on_actionSwitch_to_library_mode_triggered();
-
     void on_btnSwitchToLib_clicked();
-
     void on_btnPreference_clicked();
 
     //void on_splitter_splitterMoved(int pos, int index);
 
     void ChangingTrayIcon(int index=-1, int color=-1);
-
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
-
     void dockClicked();
     void MinimizeWindow();
-
     void on_language_currentIndexChanged(const QString &arg1);
 
 public slots:

@@ -18,12 +18,11 @@
 #include "common.h"
 
 
-//SLib current_lib;
 int idCurrentLib;
 QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
-QSettings *global_settings=0;
+QSettings *global_settings=nullptr;
 QMap<int,SLib> mLibs;
 QMap <uint,SGenre> mGenre;
 QCommandLineParser CMDparser;
@@ -41,7 +40,6 @@ bool SetCurrentZipFileName(QuaZip *zip,QString name)
     return result;
 }
 
-
 QString RelativeToAbsolutePath(QString path)
 {
     if(QDir(path).isRelative() && path.indexOf("%")<0)
@@ -57,27 +55,15 @@ QSettings* GetSettings(bool need_copy,bool reopen)
     {
         global_settings->sync();
         delete global_settings;
-        global_settings=0;
+        global_settings=nullptr;
     }
     if(global_settings && !need_copy)
     {
         global_settings->sync();
         return global_settings;
     }
-    QFileInfo fi(app->applicationDirPath()+"/freeLib.cfg");
     QSettings* current_settings;
-    if(fi.exists())
-    {
-        current_settings=new QSettings(fi.absoluteFilePath(),QSettings::IniFormat);
-    }
-    else
-    {
-        fi.setFile(app->applicationDirPath()+"/../../../freeLib/freeLib.cfg");
-        if(fi.exists())
-            current_settings=new QSettings(fi.absoluteFilePath(),QSettings::IniFormat);
-        else
-            current_settings=new QSettings(AppName,AppName);
-    }
+            current_settings=new QSettings();
     if(need_copy)
         return current_settings;
     global_settings=current_settings;
@@ -88,7 +74,7 @@ QNetworkProxy proxy;
 void setProxy()
 {
     QSettings* settings=GetSettings();
-    proxy.setPort(settings->value("proxy_port",default_proxy_port).toInt());
+    proxy.setPort(static_cast<ushort>(settings->value("proxy_port",default_proxy_port).toInt()));
     proxy.setHostName(settings->value("proxy_host").toString());
     proxy.setPassword(settings->value("proxy_password").toString());
     proxy.setUser(settings->value("proxy_user").toString());
@@ -326,7 +312,7 @@ void SetLocale()
     else
     {
         delete translator;
-        translator=0;
+        translator=nullptr;
     }
 
     translator_qt=new QTranslator(app);
@@ -337,7 +323,7 @@ void SetLocale()
     else
     {
         delete translator_qt;
-        translator_qt=0;
+        translator_qt=nullptr;
     }
     settings->setValue("localeUI",locale);
     settings->sync();
@@ -386,9 +372,10 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 bool openDB(bool create, bool replace)
 {
     QString sAppDir,db_file;
-    QSettings *settings=GetSettings();
+    //QSettings *settings=GetSettings();
+    QSettings settings;
 
-    QFileInfo fi(RelativeToAbsolutePath(settings->value("database_path").toString()));
+    QFileInfo fi(RelativeToAbsolutePath(settings.value("database_path").toString()));
     if(fi.exists() && fi.isFile())
     {
         db_file=fi.canonicalFilePath();
@@ -397,7 +384,7 @@ bool openDB(bool create, bool replace)
     {
         sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
         db_file=sAppDir+"/freeLib.sqlite";
-        settings->setValue("database_path",db_file);
+        settings.setValue("database_path",db_file);
     }
     QFile file(db_file);
     if(!file.exists() || replace)
@@ -452,14 +439,14 @@ void UpdateLibs()
     if(!db_is_open)
         idCurrentLib=-1;
     else{
-        QSettings* settings=GetSettings();
-        idCurrentLib=settings->value("LibID",-1).toLongLong();
+        QSettings settings/*=GetSettings()*/;
+        idCurrentLib=settings.value("LibID",-1).toInt();
         QSqlQuery query(QSqlDatabase::database("libdb"));
         query.exec("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name");
         mLibs.clear();
         while(query.next())
         {
-            uint idLib = query.value(0).toUInt();
+            int idLib = query.value(0).toInt();
             mLibs[idLib].name = query.value(1).toString().trimmed();
             mLibs[idLib].path = query.value(2).toString().trimmed();
             mLibs[idLib].sInpx = query.value(3).toString().trimmed();
@@ -525,10 +512,10 @@ int main(int argc, char *argv[])
 
     //a.setPalette(darkPalette);
 
-    translator=0;
-    translator_qt=0;
+    translator=nullptr;
+    translator_qt=nullptr;
     app=&a;
-    a.setOrganizationName("");
+    a.setOrganizationName("freeLib");
     a.setApplicationName("freeLib");
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
     QSqlDatabase::addDatabase("QSQLITE","libdb");
@@ -539,6 +526,11 @@ int main(int argc, char *argv[])
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QDir::setCurrent(HomeDir);
+    QString sDirTmp = QString("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first());
+    QDir dirTmp(sDirTmp);
+    if(!dirTmp.exists())
+        dirTmp.mkpath(sDirTmp);
+
 
     QPixmap pixmap(QString(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
     pixmap.setDevicePixelRatio(app->devicePixelRatio());
@@ -555,13 +547,13 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_LINUX
     splash->setWindowIcon(QIcon(":/library_128x128.png"));
 #endif
-    QSettings* settings=GetSettings();
-    if(!settings->contains("ApplicationMode"))
+    QSettings settings;
+    if(!settings.contains("ApplicationMode"))
     {
         ResetToDefaultSettings();
     }
 
-    if(!settings->value("no_splash",false).toBool())
+    if(!settings.value("no_splash",false).toBool())
         splash->show();
     a.processEvents();
     setProxy();
@@ -574,7 +566,7 @@ int main(int argc, char *argv[])
 
     if(!w.error_quit)
     {
-        if(!CMDparser.isSet("tray") && settings->value("tray_icon",0).toInt()!=2)
+        if(!CMDparser.isSet("tray") && settings.value("tray_icon",0).toInt()!=2)
             w.show();
     }
     else{
@@ -582,7 +574,7 @@ int main(int argc, char *argv[])
     }
     splash->finish(&w);
     //current_lib.UpdateLib();
-    if(idCurrentLib<0 && settings->value("ApplicationMode",0).toInt()==0)
+    if(idCurrentLib<0 && settings.value("ApplicationMode",0).toInt()==0)
         w.newLibWizard(false);
     int result=a.exec();
     if(global_settings)

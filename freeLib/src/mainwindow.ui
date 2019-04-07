@@ -165,7 +165,7 @@
                 </widget>
                </item>
                <item>
-                <widget class="QToolButton" name="btnJanre">
+                <widget class="QToolButton" name="btnGenre">
                  <property name="minimumSize">
                   <size>
                    <width>70</width>
@@ -304,7 +304,7 @@
                </size>
               </property>
               <property name="currentIndex">
-               <number>2</number>
+               <number>3</number>
               </property>
               <widget class="QWidget" name="pageAuthor">
                <layout class="QVBoxLayout" name="verticalLayout">
@@ -367,7 +367,7 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="pageJanre">
+              <widget class="QWidget" name="pageGenre">
                <layout class="QVBoxLayout" name="verticalLayout_7">
                 <property name="leftMargin">
                  <number>0</number>
@@ -382,7 +382,7 @@
                  <number>0</number>
                 </property>
                 <item>
-                 <widget class="QTreeWidget" name="JanreList">
+                 <widget class="QTreeWidget" name="GenreList">
                   <property name="focusPolicy">
                    <enum>Qt::WheelFocus</enum>
                   </property>
@@ -461,7 +461,7 @@
                     </widget>
                    </item>
                    <item>
-                    <widget class="QComboBox" name="s_janre">
+                    <widget class="QComboBox" name="s_genre">
                      <property name="maxVisibleItems">
                       <number>15</number>
                      </property>
@@ -938,6 +938,9 @@
                   <enum>Qt::Vertical</enum>
                  </property>
                  <widget class="QTreeWidget" name="Books">
+                  <property name="styleSheet">
+                   <string notr="true"/>
+                  </property>
                   <property name="frameShape">
                    <enum>QFrame::StyledPanel</enum>
                   </property>
@@ -950,7 +953,19 @@
                   <property name="selectionBehavior">
                    <enum>QAbstractItemView::SelectRows</enum>
                   </property>
+                  <property name="indentation">
+                   <number>15</number>
+                  </property>
+                  <property name="rootIsDecorated">
+                   <bool>true</bool>
+                  </property>
+                  <property name="uniformRowHeights">
+                   <bool>true</bool>
+                  </property>
                   <property name="sortingEnabled">
+                   <bool>true</bool>
+                  </property>
+                  <property name="animated">
                    <bool>true</bool>
                   </property>
                   <attribute name="headerShowSortIndicator" stdset="0">
@@ -1156,7 +1171,7 @@
      <x>0</x>
      <y>0</y>
      <width>1297</width>
-     <height>24</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">

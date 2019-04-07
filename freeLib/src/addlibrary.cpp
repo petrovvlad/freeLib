@@ -8,9 +8,6 @@
 #include "quazip/quazip/quazipfile.h"
 #include "exportdlg.h"
 
-extern int idCurrentLib;
-extern QMap<int,SLib> mLibs;
-
 AddLibrary::AddLibrary(QWidget *parent) :
     QDialog(parent,Qt::Dialog|Qt::WindowSystemMenuHint),
     ui(new Ui::AddLibrary)

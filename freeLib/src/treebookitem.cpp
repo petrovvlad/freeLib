@@ -3,11 +3,6 @@
 #include "treebookitem.h"
 #include "common.h"
 
-extern QMap<int,SLib> mLibs;
-extern int idCurrentLib;
-
-QCollator collator;
-
 TreeBookItem::TreeBookItem(QTreeWidget *parent, int type)
     :QTreeWidgetItem(parent, type)
 {
@@ -22,6 +17,8 @@ TreeBookItem::TreeBookItem(QTreeWidgetItem *parent, int type)
 
 bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
 {
+    static QCollator collator;
+
     if(type()==ITEM_TYPE_BOOK && other.type()==ITEM_TYPE_SERIA && parent()->type()==ITEM_TYPE_AUTHOR)
         return false;
     if(type()==ITEM_TYPE_SERIA && other.type()==ITEM_TYPE_BOOK && other.parent()->type()==ITEM_TYPE_AUTHOR)

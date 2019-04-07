@@ -1,16 +1,11 @@
 #include <QDomDocument>
+#include <QByteArray>
 #include <QBuffer>
 
 #include "importthread.h"
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "common.h"
-
-extern QMap<int,SLib> mLibs;
-extern QMap <uint,SGenre> mGenre;
-
-extern int idCurrentLib;
-
 
 void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
 {
@@ -30,10 +25,10 @@ void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
     }
 }
 
-void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_only,qlonglong id_book)
+void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_only,uint id_book)
 {
     bi.id=id_book;
-    if(id_book<0 || !info_only)
+    if(id_book==0 || !info_only)
     {
         if(type=="epub")
         {
@@ -130,8 +125,15 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                                                 img.setData(zip_file.readAll());
                                                 zip_file.close();
 
-                                                bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+manifest.childNodes().at(man).attributes().namedItem("media-type").toAttr().value()+
-                                                        ";base64,"+img.data().toBase64()+"\"></center></td>");
+                                                //проверить как работает
+                                                QString sImgFile = QString("%1/freeLib/cover.jpg").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first());
+                                                QPixmap image;
+                                                image.loadFromData(img.data());
+                                                image.save(sImgFile);
+
+                                                //bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+manifest.childNodes().at(man).attributes().namedItem("media-type").toAttr().value()+
+                                                //        ";base64,"+img.data().toBase64()+"\"></center></td>");
+                                                bi.img=QString("<td valign=top style=\"width:1px\"><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
                                                 break;
                                             }
                                         }
@@ -162,7 +164,15 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                     {
                         if(binarys.at(i).attributes().namedItem("id").toAttr().value()==cover.right(cover.length()-1))
                         {
-                            bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+binarys.at(i).attributes().namedItem("content-type").toAttr().value()+";base64,"+binarys.at(i).toElement().text()+"\"></center></td>");
+                            QString sImgFile = QString("%1/freeLib/cover.jpg").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first());
+                            QPixmap image;
+                            QByteArray ba;
+                            ba.append(binarys.at(i).toElement().text());
+                            QByteArray ba64 = QByteArray::fromBase64(ba);
+                            image.loadFromData(ba64);
+                            image.save(sImgFile);
+                            //bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+binarys.at(i).attributes().namedItem("content-type").toAttr().value()+";base64,"+binarys.at(i).toElement().text()+"\"></center></td>");
+                            bi.img=QString("<td valign=top style=\"width:1px\"><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
                             break;
                         }
                     }
@@ -201,7 +211,7 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
             bi.isbn=publish_info.elementsByTagName("isbn").at(0).toElement().text();
         }
     }
-    if(id_book>=0)
+    if(id_book>0)
     {
         bi.authors.clear();
         bi.title = mLibs[idCurrentLib].mBooks[id_book].sName;
