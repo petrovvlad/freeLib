@@ -1200,8 +1200,8 @@ void MainWindow::SelectBook()
     idCurrentBook_ = idBook;
     SBook &book = mLibs[idCurrentLib].mBooks[idBook];
     ui->btnOpenBook->setEnabled(true);
-    //if(ui->splitter->sizes()[1]>0)
-    //{
+    if(ui->splitter->sizes()[1]>0)
+    {
         QBuffer outbuff;
         QBuffer infobuff;
         QDateTime book_date;
@@ -1316,7 +1316,7 @@ void MainWindow::SelectBook()
         fT.open( QIODevice::ReadWrite);
         QTextStream out(&fT);
         out << content;
-    //}
+    }
 }
 
 void MainWindow::UpdateAuthor()
