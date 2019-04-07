@@ -54,6 +54,8 @@ struct SAuthor
 struct SBook
 {
     QString sName;
+    QString sAnnotation;
+    QString sImg;
     QString sArchive;
     QDate date;
     QString sFormat;
@@ -163,7 +165,7 @@ struct tag
 extern QList<tag> tag_list;
 
 QFileInfo GetBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book, bool caption=false, QDateTime *file_data=nullptr);
-void GetBookInfo(book_info &bi, const QByteArray &data, QString type, bool info_only=false, int id_book=-1);
+void GetBookInfo(book_info &bi, const QByteArray &data, QString type, bool info_only=false, uint id_book=0);
 QPixmap GetTag(QColor color,int size);
 void SetLocale();
 QString FindLocaleFile(QString locale,QString name,QString suffics);
@@ -181,6 +183,9 @@ QString decodeStr(const QString &str);
 bool SetCurrentZipFileName(QuaZip *zip,QString name);
 QString RelativeToAbsolutePath(QString path);
 
-
+extern int idCurrentLib;
 extern SLib current_lib;
+extern QMap<int,SLib> mLibs;
+extern QMap <uint,SGenre> mGenre;
+
 #endif // COMMON_H

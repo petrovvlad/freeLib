@@ -14,9 +14,6 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 
-extern QMap<int,SLib> mLibs;
-extern int idCurrentLib;
-
 QString Transliteration(QString str)
 {
     str=str.trimmed();

@@ -1,9 +1,6 @@
 #include "common.h"
 #include "genresortfilterproxymodel.h"
 
-extern QMap <uint,SGenre> mGenre;
-extern int idCurrentLib;
-
 GenreSortFilterProxyModel::GenreSortFilterProxyModel(QObject *parent): QSortFilterProxyModel(parent)
 {
 }
