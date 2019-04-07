@@ -526,6 +526,11 @@ int main(int argc, char *argv[])
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QDir::setCurrent(HomeDir);
+    QString sDirTmp = QString("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first());
+    QDir dirTmp(sDirTmp);
+    if(!dirTmp.exists())
+        dirTmp.mkpath(sDirTmp);
+
 
     QPixmap pixmap(QString(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
     pixmap.setDevicePixelRatio(app->devicePixelRatio());
