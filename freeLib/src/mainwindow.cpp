@@ -293,6 +293,22 @@ MainWindow::MainWindow(QWidget *parent) :
         idCurrentGenre_ = 0;
         nCurrentTab = 0;
     }
+
+    mode=static_cast<APP_MODE>(settings.value("ApplicationMode",0).toInt());
+    switch(mode)
+    {
+    case MODE_LIBRARY:
+        on_actionSwitch_to_library_mode_triggered();
+        break;
+    case MODE_SHELF:
+        //on_actionSwitch_to_shelf_mode_triggered();
+        break;
+    default:
+        connect(this, SIGNAL(window_loaded()), this, SLOT(on_actionSwitch_to_convert_mode_triggered()));
+        on_actionSwitch_to_convert_mode_triggered();
+        break;
+    }
+
     UpdateTags();
     UpdateSeria();
     UpdateAuthor();
@@ -344,21 +360,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->pageConvert->setMouseTracking(true);
     ui->stackedWidget->setMouseTracking(true);
 
-    mode=static_cast<APP_MODE>(settings.value("ApplicationMode",0).toInt());
-    switch(mode)
-    {
-    case MODE_LIBRARY:
-        on_actionSwitch_to_library_mode_triggered();
-        break;
-    case MODE_SHELF:
-        //on_actionSwitch_to_shelf_mode_triggered();
-        break;
-    default:
-        connect(this, SIGNAL(window_loaded()), this, SLOT(on_actionSwitch_to_convert_mode_triggered()));
-        on_actionSwitch_to_convert_mode_triggered();
-        break;
-    }
-    //ui->stacked_books->setCurrentWidget(ui->page_books);
     ChangingTrayIcon();
 
 #ifdef Q_OS_OSX
