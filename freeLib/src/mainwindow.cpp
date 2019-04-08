@@ -1309,13 +1309,6 @@ void MainWindow::SelectBook()
                 replace("#image#",bi.img).
                 replace("#file_info#",settings->value("show_fileinfo",true).toBool()?"block":"none");
         ui->Review->page()->setHtml(content,/*QUrl("file:")*/QUrl("file:/"+QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
-
-        QString sT = QString("%1/t.html").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first());
-        QFile fT(sT);
-        fT.remove();
-        fT.open( QIODevice::ReadWrite);
-        QTextStream out(&fT);
-        out << content;
     }
 }
 
