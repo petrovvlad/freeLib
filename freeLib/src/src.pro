@@ -164,7 +164,8 @@ HEADERS  += mainwindow.h \
     bookeditdlg.h \
     webpage.h \
     treebookitem.h \
-    genresortfilterproxymodel.h
+    genresortfilterproxymodel.h \
+    build_number.h
 
 FORMS    += mainwindow.ui \
     addlibrary.ui \
@@ -186,3 +187,6 @@ OTHER_FILES +=
 
 OBJECTIVE_SOURCES += \
     myapplicationclass.mm
+
+DISTFILES += \
+    build_number.sh
