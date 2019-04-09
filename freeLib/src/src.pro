@@ -19,7 +19,12 @@ LIBS += -lz
 
 #LIBS += -lsqlite3
 
-#VERSION = "2.14"
+CONFIG(release, debug|release) {
+build_nr.commands = ../../freeLib/src/build_number.sh
+build_nr.depends = FORCE
+QMAKE_EXTRA_TARGETS += build_nr
+PRE_TARGETDEPS += build_nr
+}
 
 #TRANSLATIONS += ru.ts
 DEFINES+= QUAZIP_STATIC
@@ -159,7 +164,8 @@ HEADERS  += mainwindow.h \
     bookeditdlg.h \
     webpage.h \
     treebookitem.h \
-    genresortfilterproxymodel.h
+    genresortfilterproxymodel.h \
+    build_number.h
 
 FORMS    += mainwindow.ui \
     addlibrary.ui \
@@ -181,3 +187,6 @@ OTHER_FILES +=
 
 OBJECTIVE_SOURCES += \
     myapplicationclass.mm
+
+DISTFILES += \
+    build_number.sh

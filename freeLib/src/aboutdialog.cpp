@@ -1,6 +1,8 @@
 #include "aboutdialog.h"
 #include "ui_aboutdialog.h"
 #include "common.h"
+#include "build_number.h"
+
 
 AboutDialog::AboutDialog(QWidget *parent) :
     QDialog(parent,Qt::Window | Qt::FramelessWindowHint),
@@ -10,6 +12,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
     ui->setupUi(this);
     //setFixedSize(400,200);
     ui->version->setText(PROG_VERSION);
+
     connect(ui->toolButton,SIGNAL(clicked()),this,SLOT(CloseBtn()));
  //   connect(ui->donate,SIGNAL(clicked()),this,SLOT());
     QPixmap pix(QString(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));

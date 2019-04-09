@@ -1,11 +1,13 @@
-#include "opds_server.h"
-#include "common.h"
 #include <QSettings>
 #include <QTcpSocket>
 #include <QApplication>
-#include "fb2mobi/fb2mobi.h"
 #include <QNetworkProxy>
 #include <aboutdialog.h>
+
+#include "opds_server.h"
+#include "common.h"
+#include "build_number.h"
+#include "fb2mobi/fb2mobi.h"
 
 #define SAVE_INDEX  4
 //#define MAX_BOOKS_PER_PAGE  15
