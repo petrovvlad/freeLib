@@ -19,7 +19,12 @@ LIBS += -lz
 
 #LIBS += -lsqlite3
 
-#VERSION = "2.14"
+CONFIG(release, debug|release) {
+build_nr.commands = ../../freeLib/src/build_number.sh
+build_nr.depends = FORCE
+QMAKE_EXTRA_TARGETS += build_nr
+PRE_TARGETDEPS += build_nr
+}
 
 #TRANSLATIONS += ru.ts
 DEFINES+= QUAZIP_STATIC

@@ -16,7 +16,7 @@
 #include "aboutdialog.h"
 #include "fb2mobi/hyphenations.h"
 #include "common.h"
-
+#include "build_number.h"
 
 int idCurrentLib;
 QTranslator* translator;
