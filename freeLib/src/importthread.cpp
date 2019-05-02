@@ -171,8 +171,7 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                             QByteArray ba64 = QByteArray::fromBase64(ba);
                             image.loadFromData(ba64);
                             image.save(sImgFile);
-                            //bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+binarys.at(i).attributes().namedItem("content-type").toAttr().value()+";base64,"+binarys.at(i).toElement().text()+"\"></center></td>");
-                            bi.img=QString("<td valign=top style=\"width:1px\"><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
+                            bi.img=QString("<td valign=top><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
                             break;
                         }
                     }

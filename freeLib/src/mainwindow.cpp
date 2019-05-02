@@ -1242,15 +1242,10 @@ void MainWindow::SelectBook()
 
         QString seria;
         QTreeWidgetItem *parent=item->parent();
-        //if(parent->parent()) //если это серия
-        if(parent->type() == ITEM_TYPE_SERIA)
+        if(parent->type() == ITEM_TYPE_SERIA) //если это серия
         {
             seria=QString("<a href=seria_%3%1>%2</a>").arg(QString::number(/*-*/parent->data(0,Qt::UserRole).toLongLong()),parent->text(0),parent->text(0).left(1).toUpper());
         }
-        QString img_width="220";
-        if(!bi.img.isEmpty())
-            bi.img=bi.img.arg(img_width);
-
 
         QString author;
         foreach (author_info auth, bi.authors)
@@ -1297,6 +1292,7 @@ void MainWindow::SelectBook()
                 size=size/1024;
              }
         }
+        QString img_width="220";
         content.replace("#annotation#",bi.annotation).
                 replace("#title#",bi.title).
                 replace("#width#",(bi.img.isEmpty()?"0":img_width)).
