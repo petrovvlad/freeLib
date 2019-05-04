@@ -93,10 +93,10 @@ struct SLib
     QString sInpx;
     bool bFirstAuthor;
     bool bWoDeleted;
-    QMap<uint,SAuthor> mAuthors;
-    QMultiMap<uint,uint> mAuthorBooksLink;
-    QMap<uint,SBook> mBooks;
-    QMap <uint,SSerial> mSerials;
+    QHash<uint,SAuthor> mAuthors;
+    QMultiHash<uint,uint> mAuthorBooksLink;
+    QHash<uint,SBook> mBooks;
+    QHash<uint,SSerial> mSerials;
     QVector<QString> vLaguages;
 };
 
