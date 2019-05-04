@@ -515,8 +515,6 @@ int main(int argc, char *argv[])
     translator=nullptr;
     translator_qt=nullptr;
     app=&a;
-    a.setOrganizationName("freeLib");
-    a.setApplicationName("freeLib");
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
     QSqlDatabase::addDatabase("QSQLITE","libdb");
 
