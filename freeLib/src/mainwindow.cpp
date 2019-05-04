@@ -1342,8 +1342,9 @@ void MainWindow::UpdateBooks()
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     qint64 t_map = 0;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    SLib &currentLib = mLibs[idCurrentLib];
 
-    mLibs[idCurrentLib].mBooks.clear();
+    currentLib.mBooks.clear();
     QSqlQuery query(QSqlDatabase::database("libdb"));
     query.setForwardOnly(true);
     query.prepare("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, favorite FROM book WHERE id_lib=:id_lib;");
@@ -1357,16 +1358,16 @@ void MainWindow::UpdateBooks()
             continue;
         uint id = query.value(0).toUInt();
         qint64 t_map_start =  QDateTime::currentMSecsSinceEpoch();
-        SBook &book = mLibs[idCurrentLib].mBooks[id];
+        SBook &book = currentLib.mBooks[id];
         book.sName = sName;
         book.nStars = qvariant_cast<uchar>(query.value(2));
         book.idSerial = query.value(3).toUInt();
         book.numInSerial = query.value(4).toUInt();
         QString sLaguage = query.value(5).toString().toLower();
-        int idLaguage = mLibs[idCurrentLib].vLaguages.indexOf(sLaguage);
+        int idLaguage = currentLib.vLaguages.indexOf(sLaguage);
         if(idLaguage<0){
-            idLaguage = mLibs[idCurrentLib].vLaguages.count();
-            mLibs[idCurrentLib].vLaguages << sLaguage;
+            idLaguage =currentLib.vLaguages.count();
+            currentLib.vLaguages << sLaguage;
         }
         book.idLanguage = static_cast<uchar>(idLaguage);
         book.nFile = query.value(6).toUInt();
@@ -1383,7 +1384,7 @@ void MainWindow::UpdateBooks()
     qDebug() << "mBooks insert " << t_map << "msec";
     qDebug()<< "UpdateBooks1 " << QDateTime::currentMSecsSinceEpoch()-t_start << "msec";
 
-    mLibs[idCurrentLib].mAuthorBooksLink.clear();
+    currentLib.mAuthorBooksLink.clear();
     query.prepare("SELECT id_book, id_author FROM book_author WHERE id_lib=:id_lib;");
     //                     0       1
     query.bindValue(":id_lib",idCurrentLib);
@@ -1392,9 +1393,9 @@ void MainWindow::UpdateBooks()
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idAuthor = query.value(1).toUInt();
-        if(mLibs[idCurrentLib].mBooks.contains(idBook) && mLibs[idCurrentLib].mAuthors.contains(idAuthor)){
-            mLibs[idCurrentLib].mAuthorBooksLink.insert(idAuthor,idBook);
-            mLibs[idCurrentLib].mBooks[idBook].listIdAuthors << idAuthor;
+        if(currentLib.mBooks.contains(idBook) && currentLib.mAuthors.contains(idAuthor)){
+            currentLib.mAuthorBooksLink.insert(idAuthor,idBook);
+            currentLib.mBooks[idBook].listIdAuthors << idAuthor;
         }
     }
 
@@ -1407,8 +1408,8 @@ void MainWindow::UpdateBooks()
         uint idBook = query.value(0).toUInt();
         uint idGenre = query.value(1).toUInt();
         if(idGenre==0) idGenre = 1112; // Прочие/Неотсортированное
-        if(mLibs[idCurrentLib].mBooks.contains(idBook))
-            mLibs[idCurrentLib].mBooks[idBook].listIdGenres << idGenre;
+        if(currentLib.mBooks.contains(idBook))
+            currentLib.mBooks[idBook].listIdGenres << idGenre;
     }
 
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
@@ -1425,8 +1426,8 @@ void MainWindow::UpdateBooks()
 
     QSettings settings;
     QString sCurrentLanguage=settings.value("BookLanguage","*").toString();
-    for(int iLang=0;iLang<mLibs[idCurrentLib].vLaguages.size();iLang++){
-        QString sLanguage = mLibs[idCurrentLib].vLaguages[iLang].toUpper();
+    for(int iLang=0;iLang<currentLib.vLaguages.size();iLang++){
+        QString sLanguage = currentLib.vLaguages[iLang].toUpper();
         if(!sLanguage.isEmpty()){
             ui->language->addItem(sLanguage,iLang);
             ui->findLanguage->addItem(sLanguage,iLang);
@@ -1452,10 +1453,6 @@ void MainWindow::UpdateSeria()
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database("libdb"));
 
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateSeria " << t_end-t_start << "msec";
-    t_start = t_end;
-
     mLibs[idCurrentLib].mSerials.clear();
     query.prepare("SELECT id, name, favorite FROM seria WHERE id_lib=:id_lib;");
     //                    0   1     2
@@ -1469,8 +1466,8 @@ void MainWindow::UpdateSeria()
         mLibs[idCurrentLib].mSerials[idSerial].nTag = static_cast<uchar>(query.value(2).toUInt());
     }
 
-    t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateSeria2 " << t_end-t_start << "msec";
+    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
+    qDebug()<< "UpdateSeria " << t_end-t_start << "msec";
     QApplication::restoreOverrideCursor();
 }
 
