@@ -209,6 +209,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnWidth(3,90);
     ui->Books->setColumnWidth(4,120);
     ui->Books->setColumnWidth(5,250);
+    ui->Books->setColumnWidth(6,50);
 
     ui->Review->setPage(new WebPage());
     connect(ui->Review->page(),SIGNAL(linkClicked(QUrl)),this,SLOT(ReviewLink(QUrl)));
@@ -348,6 +349,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->SeriaList->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->SeriaList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ContextMenu(QPoint)));
     connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+    ui->Books->header()->setContextMenuPolicy(Qt::CustomContextMenu);
+    connect(ui->Books->header(),SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(HeaderContextMenu(QPoint)));
 
     opds.server_run();
     FillLibrariesMenu();
@@ -372,6 +375,17 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->s_genre->model()->setParent(MyProxySortModel);
     ui->s_genre->setModel(MyProxySortModel);
     ui->s_genre->model()->sort(0);
+
+    settings.beginGroup("Columns");
+    ui->Books->setColumnHidden(0,!settings.value("ShowName",true).toBool());
+    ui->Books->setColumnHidden(1,!settings.value("ShowNumber",true).toBool());
+    ui->Books->setColumnHidden(2,!settings.value("ShowSize",true).toBool());
+    ui->Books->setColumnHidden(3,!settings.value("ShowMark",true).toBool());
+    ui->Books->setColumnHidden(4,!settings.value("ShowImportDate",true).toBool());
+    ui->Books->setColumnHidden(5,!settings.value("ShowGenre",true).toBool());
+    ui->Books->setColumnHidden(6,!settings.value("ShowLanguage",false).toBool());
+
+    settings.endGroup();
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
@@ -1644,6 +1658,65 @@ void MainWindow::ContextMenu(QPoint point)
         menu.exec(QCursor::pos());
 }
 
+void MainWindow::HeaderContextMenu(QPoint /*point*/)
+{
+    QMenu menu;
+    QAction *action;
+
+    action=new QAction(tr("Name"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(0));
+    action->setData(0);
+    connect(action,&QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(0,!action->isChecked());});
+    menu.addAction(action);
+
+    action=new QAction(tr("No."), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(1));
+    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(1,"ShowName",!action->isChecked());});
+    menu.addAction(action);
+
+    action=new QAction(tr("Size"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(2));
+    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(2,"ShowSize",!action->isChecked());});
+    menu.addAction(action);
+
+    action=new QAction(tr("Mark"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(3));
+    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(3,"ShowMark",!action->isChecked());});
+    menu.addAction(action);
+
+    action=new QAction(tr("Import date"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(4));
+    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(4,"ShowImportDate",!action->isChecked());});
+    menu.addAction(action);
+
+    action=new QAction(tr("Genre"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(5));
+    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(5,"ShowGenre",!action->isChecked());});
+    menu.addAction(action);
+
+    action=new QAction(tr("Language"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(6));
+    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(6,"ShowLanguage",!action->isChecked());});
+    menu.addAction(action);
+
+    menu.exec(QCursor::pos());
+}
+
+void MainWindow::ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide)
+{
+    ui->Books->setColumnHidden(nColumn,bHide);
+    QSettings settings;
+    settings.beginGroup("Columns");
+    settings.setValue(sSetting,!bHide);
+}
+
 void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
 {
     ui->searchString->setText(FirstLetter);
@@ -2015,6 +2088,9 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
 
             item_book->setText(5,mGenre[book.listIdGenres.first()].sName);
             item_book->setTextAlignment(5, Qt::AlignLeft);
+
+            item_book->setText(6,mLibs[idCurrentLib].vLaguages[book.idLanguage]);
+            item_book->setTextAlignment(6, Qt::AlignCenter);
 
             if(book.bDeleted)
             {
