@@ -171,8 +171,7 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
                             QByteArray ba64 = QByteArray::fromBase64(ba);
                             image.loadFromData(ba64);
                             image.save(sImgFile);
-                            //bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+binarys.at(i).attributes().namedItem("content-type").toAttr().value()+";base64,"+binarys.at(i).toElement().text()+"\"></center></td>");
-                            bi.img=QString("<td valign=top style=\"width:1px\"><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
+                            bi.img=QString("<td valign=top><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
                             break;
                         }
                     }
@@ -270,15 +269,14 @@ qlonglong ImportThread::AddSeria(QString str, qlonglong libID, int tag)
     if(str.trimmed().isEmpty())
         return -1;
     QString name=str.trimmed();
-    query->exec("SELECT id FROM seria WHERE rus_index='"+ToIndex(name)+"' and id_lib="+QString::number(libID));
+    query->exec("SELECT id FROM seria WHERE name='"+name+"' and id_lib="+QString::number(libID));
     if(query->next())
     {
         qlonglong id=query->value(0).toLongLong();
         return id;
     }
-    query->prepare("INSERT INTO seria(name,rus_index,id_lib,favorite) values(:name,:rus_index,:id_lib,:favorite)");
+    query->prepare("INSERT INTO seria(name,id_lib,favorite) values(:name,:id_lib,:favorite)");
     query->bindValue(":name",name);
-    query->bindValue(":rus_index",ToIndex(name));
     query->bindValue(":id_lib",libID);
     query->bindValue(":favorite",tag);
     if(!query->exec())
@@ -302,9 +300,11 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
     if(names.count()>2)
         name3=names[2].trimmed();
 
-    query->prepare("SELECT id,favorite FROM author WHERE rus_index=:rus_index and id_lib=:id_lib");
-    query->bindValue(":rus_index",ToIndex(name1+" "+name2+" "+name3));
+    query->prepare("SELECT id,favorite FROM author WHERE id_lib=:id_lib and name1=:name1 and name2=:name2 and name3=:name3");
     query->bindValue(":id_lib",libID);
+    query->bindValue(":name1",name1);
+    query->bindValue(":name2",name2);
+    query->bindValue(":name3",name3);
     query->exec();
     qlonglong id=0;
     if(query->next())
@@ -313,11 +313,10 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
     }
     if(id==0)
     {
-        query->prepare("INSERT INTO author(name1,name2,name3,rus_index,id_lib,favorite) values(:name1,:name2,:name3,:rus_index,:id_lib,:favorite)");
+        query->prepare("INSERT INTO author(name1,name2,name3,id_lib,favorite) values(:name1,:name2,:name3,:id_lib,:favorite)");
         query->bindValue(":name1",name1);
         query->bindValue(":name2",name2);
         query->bindValue(":name3",name3);
-        query->bindValue(":rus_index",ToIndex(name1+" "+name2+" "+name3));
         query->bindValue(":id_lib",libID);
         query->bindValue(":favorite",tag);
         if(!query->exec())
@@ -337,8 +336,9 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
 qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria, int num_in_seria, QString file,
              int size, int IDinLib, bool deleted, QString format, QDate date, QString language, QString keys, qlonglong id_lib, QString archive, int tag)
 {
-    query->prepare("INSERT INTO book(name,star,id_seria,num_in_seria,language,name_index,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive,favorite) "
-                   "values(:name,:star,:id_seria,:num_in_seria,:language,:name_index,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive,:favorite)");
+    query->prepare("INSERT INTO book(name,star,id_seria,num_in_seria,language,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive,favorite) "
+                   "values(:name,:star,:id_seria,:num_in_seria,:language,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive,:favorite)");
+
     query->bindValue(":name",name);
     query->bindValue(":star",star);
     query->bindValue(":id_seria",id_seria);
@@ -363,7 +363,7 @@ qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria
 qlonglong ImportThread::AddGenre(qlonglong id_book,QString janre,qlonglong id_lib,QString language)
 {
     qlonglong id_janre=0;
-    query->exec("SELECT id,main_janre FROM janre where keys LIKE '"+janre.toLower()+";'");
+    query->exec("SELECT id,main_janre FROM janre where keys LIKE '%"+janre.toLower()+";%'");
     if(query->next())
     {
         id_janre=query->value(0).toLongLong();

@@ -482,6 +482,9 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setStyleSheet("QComboBox { combobox-popup: 0; }");
 
+    a.setOrganizationName("");
+    a.setApplicationName("freeLib");
+
     QCommandLineOption trayOption("tray", "minimize to tray on start");
     CMDparser.addOption(trayOption);
     CMDparser.process(a);
@@ -515,8 +518,6 @@ int main(int argc, char *argv[])
     translator=nullptr;
     translator_qt=nullptr;
     app=&a;
-    a.setOrganizationName("freeLib");
-    a.setApplicationName("freeLib");
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
     QSqlDatabase::addDatabase("QSQLITE","libdb");
 

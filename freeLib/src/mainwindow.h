@@ -99,6 +99,7 @@ protected:
     void SendMail();
     void SendToDevice();
     void changeEvent(QEvent *event);
+    void ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide);
 private slots:
     void ShowDropForm();
     void ExportAction();
@@ -125,6 +126,7 @@ private slots:
     void StartSearch();
     void HelpDlg();
     void ContextMenu(QPoint point);
+    void HeaderContextMenu(QPoint point);
     void MoveToAuthor(qlonglong id=-1,QString FirstLetter="");
     void MoveToGenre(qlonglong id);
     void MoveToSeria(qlonglong id=-1,QString FirstLetter="");
