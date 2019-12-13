@@ -384,6 +384,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnHidden(4,!settings.value("ShowImportDate",true).toBool());
     ui->Books->setColumnHidden(5,!settings.value("ShowGenre",true).toBool());
     ui->Books->setColumnHidden(6,!settings.value("ShowLanguage",false).toBool());
+    QVariant varHeaders = settings.value("headers");
+    if(varHeaders.type() == QVariant::ByteArray){
+        ui->Books->header()->restoreState(varHeaders.toByteArray());
+    }
 
     settings.endGroup();
 }
@@ -459,6 +463,10 @@ void MainWindow::UpdateTags()
 
 MainWindow::~MainWindow()
 {
+    QSettings settings;
+    settings.beginGroup("Columns");
+    QByteArray baHeaders = ui->Books->header()->saveState();
+    settings.setValue("headers",baHeaders);
     delete ui;
 }
 
@@ -1064,10 +1072,12 @@ void MainWindow::StartSearch()
     ExportBookListBtn(false);
     QString sName = ui->s_name->text().trimmed();
     QString sAuthor = ui->s_author->text().trimmed();
+    QString sSeria = ui->s_seria->text().trimmed();
     QDate dateFrom = ui->date_from->date();
     QDate dateTo = ui->date_to->date();
     int nMaxCount = ui->maxBooks->value();
     uint idGenre = ui->s_genre->currentData().toUInt();
+    int idLanguage = ui->findLanguage->currentData().toInt();
 
     QList<uint> listBooks;
     int nCount = 0;
@@ -1076,7 +1086,9 @@ void MainWindow::StartSearch()
         if((bShowDeleted_ || !iBook->bDeleted)&&
                 iBook->date>= dateFrom && iBook->date <= dateTo &&
                 (sAuthor.isEmpty() || mLibs[idCurrentLib].mAuthors[iBook->idFirstAuthor].sName.contains(sAuthor,Qt::CaseInsensitive)) &&
-                (sName.isEmpty() || iBook->sName.contains(sName,Qt::CaseInsensitive)))
+                (sName.isEmpty() || iBook->sName.contains(sName,Qt::CaseInsensitive)) &&
+                (sSeria.isEmpty() || (iBook->idSerial>0 && mLibs[idCurrentLib].mSerials[iBook->idSerial].sName.contains(sSeria,Qt::CaseInsensitive))) &&
+                (idLanguage == -1 ||(iBook->idLanguage == idLanguage)))
         {
             if(idGenre==0){
                 nCount++;
@@ -1666,7 +1678,6 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     action=new QAction(tr("Name"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(0));
-    action->setData(0);
     connect(action,&QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(0,!action->isChecked());});
     menu.addAction(action);
 
@@ -2586,3 +2597,4 @@ void MainWindow::changeEvent(QEvent *event)
         }
     }
 }
+
