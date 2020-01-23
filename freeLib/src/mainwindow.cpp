@@ -510,19 +510,20 @@ void MainWindow::newLibWizard(bool AddLibOnly)
 
 void MainWindow::ReviewLink(QUrl url)
 {
-    if(url.toString().startsWith("file:///author_"))
+    QString sPath = url.path();
+    if(sPath.startsWith("/author_"))
     {
-        MoveToAuthor(url.toString().right(url.toString().length()-8-8).toLongLong(),url.toString().mid(7+8,1).toUpper());
+        MoveToAuthor(sPath.right(sPath.length()-9).toLongLong(),sPath.mid(8,1).toUpper());
     }
-    else if(url.toString().startsWith("file:///genre_"))
+    else if(sPath.startsWith("/genre_"))
     {
-        MoveToGenre(url.toString().right(url.toString().length()-7-8).toLongLong());
+        MoveToGenre(sPath.right(sPath.length()-8).toLongLong());
     }
-    else if(url.toString().startsWith("file:///seria_"))
+    else if(sPath.startsWith("/seria_"))
     {
-        MoveToSeria(url.toString().right(url.toString().length()-7-8).toLongLong(),url.toString().mid(6+8,1).toUpper());
+        MoveToSeria(sPath.right(sPath.length()-8).toLongLong(),sPath.mid(7,1).toUpper());
     }
-    else if(url.toString().startsWith("file:///show_fileinfo"))
+    else if(sPath.startsWith("/show_fileinfo"))
     {
         QSettings settings;
         settings.setValue("show_fileinfo",!settings.value("show_fileinfo",false).toBool());
@@ -1273,15 +1274,17 @@ void MainWindow::SelectBook()
             seria=QString("<a href=seria_%3%1>%2</a>").arg(QString::number(/*-*/parent->data(0,Qt::UserRole).toLongLong()),parent->text(0),parent->text(0).left(1).toUpper());
         }
 
-        QString author;
-        foreach (author_info auth, bi.authors)
+        QString sAuthors;
+        foreach (auto idAuthor, book.listIdAuthors)
         {
-            author+=(author.isEmpty()?"":"; ")+QString("<a href='author_%3%1'>%2</a>").arg(QString::number(auth.id),auth.author.replace(","," "),auth.author.left(1));
+            QString sAuthor = mLibs[idCurrentLib].mAuthors[idAuthor].sName;
+            sAuthors+=(sAuthors.isEmpty()?"":"; ")+QString("<a href='author_%3%1'>%2</a>").arg(QString::number(idAuthor),sAuthor.replace(","," "),sAuthor.left(1));
         }
-        QString janre;
-        foreach (genre_info jan, bi.genres)
+        QString sGenres;
+        foreach (auto idGenre, book.listIdGenres)
         {
-            janre+=(janre.isEmpty()?"":"; ")+QString("<a href='janre_%3%1'>%2</a>").arg(QString::number(jan.id),jan.genre,jan.genre.left(1));
+            QString sGenre = mGenre[idGenre].sName;
+            sGenres+=(sGenres.isEmpty()?"":"; ")+QString("<a href='genre_%3%1'>%2</a>").arg(QString::number(idGenre),sGenre,sGenre.left(1));
         }
         QFile file_html(":/preview.html");
         file_html.open(QIODevice::ReadOnly);
@@ -1320,10 +1323,10 @@ void MainWindow::SelectBook()
         }
         QString img_width="220";
         content.replace("#annotation#",bi.annotation).
-                replace("#title#",bi.title).
+                replace("#title#",book.sName).
                 replace("#width#",(bi.img.isEmpty()?"0":img_width)).
-                replace("#author#",author).
-                replace("#genre#",janre).
+                replace("#author#",sAuthors).
+                replace("#genre#",sGenres).
                 replace("#series#",seria).
                 replace("#file_path#",arh.filePath()).
                 replace("#file_size#",QString::number(size)+(mem_i>0?"."+QString::number((rest*10+5)/1024):"")+" "+mem[mem_i]).

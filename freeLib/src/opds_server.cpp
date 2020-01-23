@@ -2,10 +2,10 @@
 #include <QTcpSocket>
 #include <QApplication>
 #include <QNetworkProxy>
-#include <aboutdialog.h>
+#include <algorithm>
 
+#include "aboutdialog.h"
 #include "opds_server.h"
-#include "common.h"
 #include "build_number.h"
 #include "fb2mobi/fb2mobi.h"
 
@@ -137,7 +137,6 @@ QDomElement opds_server::doc_header(QString session, bool html, QString lib_name
         hr.setAttribute("color","black");
         body.appendChild(hr);
 
-
         return body;
     }
     else
@@ -154,6 +153,7 @@ QDomElement opds_server::doc_header(QString session, bool html, QString lib_name
     }
 }
 
+/*
 QString opds_server::books_list(QString lib_url, QString current_url, QString id_lib, QString author, QString seria, QString ganre, QTextStream &ts, bool opds, QString lib_name, QString session, bool all, QString search)
 {
     if(current_url.right(1)=="/")
@@ -276,7 +276,8 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
             where_author+=QString(where_author.isEmpty()?"":" AND ")+" author.rus_index LIKE '%"+ToIndex(str.trimmed())+"%'";
         }
 
-        condition+="(("+where_author+") or book.name_index LIKE '%"+ToIndex(search)+"%' ) and ";
+        //condition+="(("+where_author+") or book.name_index LIKE '%"+ToIndex(search)+"%' ) and ";
+        condition+="(("+where_author+") or book.name LIKE '%"+search+"%' ) and ";
     }
     if(!id_lib.isEmpty())
         condition+="book_author.id_lib="+id_lib+" and ";
@@ -286,7 +287,7 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
     {
         query.exec(QString("SELECT book.name,book.id,book.file,book.format,seria.name,name1||' '||name2||' '||name3,seria.id,author.id,num_in_seria,book.language from book_author "
                    "join book on book.id=book_author.id_book left join author on book_author.id_author=author.id left join seria on book.id_seria=seria.id "+add_ganre+" WHERE "+
-               condition.left(condition.length()-5)+" ORDER BY author.rus_index, seria.name,num_in_seria,book.name_index LIMIT %1 OFFSET %2").
+               condition.left(condition.length()-5)+" ORDER BY author.name1, seria.name,num_in_seria,book.name LIMIT %1 OFFSET %2").
                arg(QString::number(MAX_BOOKS_PER_PAGE+1),QString::number(first_book*MAX_BOOKS_PER_PAGE)));
     }
     else
@@ -446,7 +447,6 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
         {
             QDomElement entry=doc.createElement("div");
             entry.setAttribute("class","author");
-            //entry.setAttribute("style",QString("height:%1em").arg(for_mobile?"8":"5"));
             feed.appendChild(entry);
             QDomElement table=doc.createElement("table");
             table.setAttribute("width","100%");
@@ -610,6 +610,363 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
         return str;
     }
 }
+*/
+
+QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint idGenre, QString sSearch, bool sequenceless = false)
+{
+    QList<uint> listBooks;
+    if(idAuthor!=0 && idSeria>0){
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
+        while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+            if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == idSeria)
+                listBooks<<i.value();
+            ++i;
+        }
+        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
+    }
+    if(idAuthor != 0 && idSeria==0){
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
+        if(sequenceless){
+            while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+                if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == 0)
+                    listBooks<<i.value();
+                ++i;
+            }
+        }else{
+            while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+                if(!lib.mBooks[i.value()].bDeleted)
+                    listBooks<<i.value();
+                ++i;
+            }
+        }
+        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
+    }
+    if(idAuthor==0 && idSeria>0){
+        auto iBook = lib.mBooks.constBegin();
+        while(iBook != lib.mBooks.constEnd()){
+            if(!iBook->bDeleted && iBook->idSerial == idSeria)
+                listBooks << iBook.key();
+            ++iBook;
+        }
+        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
+    }
+    if(idGenre!=0){
+        auto iBook = lib.mBooks.constBegin();
+        while(iBook != lib.mBooks.constEnd()){
+            if(!iBook->bDeleted)
+                foreach(auto iGenre,iBook->listIdGenres){
+                    if(iGenre == idGenre){
+                        listBooks << iBook.key();
+                        break;
+                    }
+                }
+            ++iBook;
+        }
+        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
+    }
+    if(!sSearch.isEmpty()){
+        auto iBook = lib.mBooks.constBegin();
+        while(iBook != lib.mBooks.constEnd()){
+            if(!iBook->bDeleted){
+                if(iBook->sName.contains(sSearch,Qt::CaseInsensitive))
+                    listBooks << iBook.key();
+                else{
+                    foreach(uint idAuthor,iBook->listIdAuthors){
+                        if(lib.mAuthors[idAuthor].sName.contains(sSearch,Qt::CaseInsensitive)){
+                            listBooks<< iBook.key();
+                            break;
+                        }
+                    }
+                }
+            }
+            ++iBook;
+        }
+        std::sort(listBooks.begin(), listBooks.end(), [lib](const uint& lhs, const uint& rhs){
+            if(lib.mBooks[lhs].idFirstAuthor != lib.mBooks[rhs].idFirstAuthor)
+                return lib.mAuthors[lib.mBooks[lhs].idFirstAuthor].sName<lib.mAuthors[lib.mBooks[rhs].idFirstAuthor].sName;
+            else
+                return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;
+
+        });
+
+    }
+    return listBooks;
+}
+
+QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, QString lib_url, QString current_url, QTextStream &ts, bool opds, uint nPage, QString session, bool bShowAuthor)
+{
+    QSettings *settings=GetSettings();
+    long MAX_BOOKS_PER_PAGE=settings->value("books_per_page",15).toInt();
+    if(MAX_BOOKS_PER_PAGE==0)
+        MAX_BOOKS_PER_PAGE=1000000;
+    bool show_covers=settings->value("srv_covers",true).toBool();
+    bool show_annotation=settings->value("srv_annotation",true).toBool();
+    QDomElement feed;
+    if(opds)
+    {
+        ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+        feed=doc_header(session);
+    }
+    else
+    {
+        ts<<WriteSuccess();
+        feed=doc_header(session,true,lib.name,lib_url);
+    }
+    if(listBooks.isEmpty())
+        return "";
+    QString parameters="";
+    QStringList keys=params.keys();
+    foreach (QString param, keys)
+    {
+        //qDebug()<<"param="<<param;
+        if(param!="page")
+        {
+            parameters+="&"+param+"="+params.value(param);
+        }
+    }
+    parameters+=(session.isEmpty()?"":QString((parameters.isEmpty()?"?":"&"))+"session="+session);
+
+    if(opds)
+    {
+        AddTextNode("title",sTitle,feed);
+        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+        AddTextNode("icon","/icon_256x256.png",feed);
+        int iBook =0;
+        foreach(uint idBook,listBooks){
+            if(iBook>=nPage*MAX_BOOKS_PER_PAGE && iBook<(nPage+1)*MAX_BOOKS_PER_PAGE){
+                SBook& book = lib.mBooks[idBook];
+                QString sIdBook = QString::number(idBook);
+                QDomElement entry=doc.createElement("entry");
+                feed.appendChild(entry);
+                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode("id",QString("tag:book:%1").arg(idBook),entry);
+                AddTextNode("title",book.sName+(book.idSerial==0?"":" ("+lib.mSerials[book.idSerial].sName+")"),entry);
+                foreach(uint idAuthor,book.listIdAuthors){
+                    QDomElement author=doc.createElement("author");
+                    entry.appendChild(author);
+                    AddTextNode("name",lib.mAuthors[idAuthor].sName,author);
+                }
+                foreach(uint idGenre,book.listIdGenres){
+                    QDomElement category=doc.createElement("category");
+                    entry.appendChild(category);
+                    category.setAttribute("term",mGenre[idGenre].sName);
+                    category.setAttribute("label",mGenre[idGenre].sName);
+                }
+                if(book.sFormat=="fb2")
+                {
+                    QDomElement el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/fb2"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
+                    el.setAttribute("type","application/fb2");
+                }
+                else if(book.sFormat=="epub" || book.sFormat=="mobi"){
+                    QDomElement el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
+                    el.setAttribute("type","application/" + book.sFormat);
+                }
+                QDomElement el;
+
+                el=AddTextNode("link","",entry);
+                el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?"":"?session="+session));
+                el.setAttribute("rel","alternate");
+                el.setAttribute("type","application/"+book.sFormat);
+                el.setAttribute("title",tr("Download"));
+
+                if(show_covers)
+                {
+                    el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("rel","http://opds-spec.org/image");
+                    el.setAttribute("type","image/jpeg");
+                    el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("rel","x-stanza-cover-image");
+                    el.setAttribute("type","image/jpeg");
+                    el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("rel","http://opds-spec.org/thumbnail");
+                    el.setAttribute("type","image/jpeg");
+                    el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("rel","x-stanza-cover-image-thumbnail");
+                    el.setAttribute("type","image/jpeg");
+                }
+                AddTextNode("dc:language",lib.vLaguages[book.idLanguage],entry);
+                AddTextNode("dc:format",book.sFormat,entry);
+
+                if(show_annotation)
+                {
+                    QBuffer outbuff;
+                    QBuffer infobuff;
+                    QFileInfo fi_book;
+                    fi_book=GetBookFile(outbuff,infobuff,idBook);
+                    if(fi_book.suffix().toLower()=="fb2")
+                    {
+                        if(book.sAnnotation.isEmpty()){
+                            book_info book_inf_tmp;
+                            GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",false,idBook);
+                            book.sAnnotation = book_inf_tmp.annotation;
+                        }
+                        el=AddTextNode("content",book.sAnnotation,entry);
+                        el.setAttribute("type","text/html");
+                    }
+                }
+            }
+            iBook++;
+        }
+        if(nPage>=1){
+            QDomElement entry=doc.createElement("entry");
+            feed.appendChild(entry);
+            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+            AddTextNode("id","tag:root",entry);
+            AddTextNode("title",tr("Previous page"),entry);
+            QDomElement el=AddTextNode("link","",entry);
+            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(nPage-1)+parameters);
+            el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+
+            el=AddTextNode("link","",entry);
+            el.setAttribute("href","/arrow_left.png"+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("rel","http://opds-spec.org/image");
+            el.setAttribute("type","image/jpeg");
+        }
+        if(listBooks.size()>(nPage+1)*MAX_BOOKS_PER_PAGE){
+            QDomElement entry=doc.createElement("entry");
+            feed.appendChild(entry);
+            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+            AddTextNode("id","tag:root",entry);
+            AddTextNode("title",tr("Next page"),entry);
+            QDomElement el=AddTextNode("link","",entry);
+            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(QString::number(nPage+1))+parameters);
+            el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+            el=AddTextNode("link","",entry);
+            el.setAttribute("href","/arrow_right.png"+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("rel","http://opds-spec.org/image");
+            el.setAttribute("type","image/jpeg");
+        }
+        return doc.toString();
+    }
+    else
+    {
+        QDomElement div=AddTextNode("DIV",sTitle,feed);
+        div.setAttribute("class","caption");
+        int iBook =0;
+        foreach(uint idBook,listBooks){
+            if(iBook>=nPage*MAX_BOOKS_PER_PAGE && iBook<(nPage+1)*MAX_BOOKS_PER_PAGE){
+                SBook& book = lib.mBooks[idBook];
+                QString sIdBook = QString::number(idBook);
+                QDomElement entry=doc.createElement("div");
+                entry.setAttribute("class","author");
+                feed.appendChild(entry);
+
+                QDomElement table=doc.createElement("table");
+                table.setAttribute("width","100%");
+                entry.appendChild(table);
+                QDomElement tr=doc.createElement("tr");
+                table.appendChild(tr);
+                entry=doc.createElement("td");
+                tr.appendChild(entry);
+
+                if(show_covers)
+                {
+                    QDomElement el=doc.createElement("img");
+                    entry.appendChild(el);
+                    el.setAttribute("src",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg");
+                    el.setAttribute("class","cover");
+                }
+                if(bShowAuthor){
+                    QDomElement el=AddTextNode("a",lib.mAuthors[book.idFirstAuthor].sName,entry);
+                    el.setAttribute("class","book");
+                    el.setAttribute("href",QString("/author/%1").arg(book.idFirstAuthor)+(session.isEmpty()?"":"?session="+session));
+                }
+                QDomElement el=AddTextNode("div",
+                     book.sName+(book.idSerial==0?"":" ("+lib.mSerials[book.idSerial].sName+"["+QString::number(book.numInSerial)+"])"),entry);
+                el.setAttribute("class","book");
+                QDomElement br=doc.createElement("br");
+                entry.appendChild(br);
+
+                if(book.sFormat=="fb2")
+                {
+                    QDomElement el=AddTextNode("a","fb2",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/fb2"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                    el=AddTextNode("a","epub",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/epub"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                    el=AddTextNode("a","mobi",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/mobi"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                    el=AddTextNode("a","azw3",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/azw3"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                }
+                else if(book.sFormat=="epub")
+                {
+                    QDomElement el=AddTextNode("a","epub",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/epub"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                    el=AddTextNode("a","mobi",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/mobi"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                }
+                else if(book.sFormat=="mobi")
+                {
+                    QDomElement el=AddTextNode("a","mobi",entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/mobi"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                }
+                else
+                {
+                    QDomElement el=AddTextNode("a",book.sFormat,entry);
+                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("class","author");
+                }
+
+                if(show_annotation)
+                {
+                    QBuffer outbuff;
+                    QBuffer infobuff;
+                    QFileInfo fi_book;
+                    fi_book=GetBookFile(outbuff,infobuff,idBook);
+                    if(fi_book.suffix().toLower()=="fb2")
+                    {
+                        if(book.sAnnotation.isEmpty()){
+                            book_info book_inf_tmp;
+                            GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",false,idBook);
+                            book.sAnnotation = book_inf_tmp.annotation;
+                        }
+                        QDomDocument an;
+                        an.setContent(QString("<dev>%1</dev>").arg(book.sAnnotation));
+                        QDomNode an_node=doc.importNode(an.childNodes().at(0),true);
+                        entry.appendChild(an_node);
+                    }
+                }
+            }
+            iBook++;
+        }
+        if(nPage>=1){
+            QDomElement entry=doc.createElement("div");
+            feed.appendChild(entry);
+            QDomElement el=AddTextNode("a",tr("Previous page"),entry);
+            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(QString::number(nPage-1))+parameters);
+            el.setAttribute("class","author");
+        }
+        if(listBooks.size()>(nPage+1)*MAX_BOOKS_PER_PAGE){
+            QDomElement entry=doc.createElement("div");
+            feed.appendChild(entry);
+
+            QDomElement el=AddTextNode("a",tr("Next page"),entry);
+            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(QString::number(nPage+1))+parameters);
+            el.setAttribute("class","author");
+
+        }
+        QString str;
+        QTextStream t(&str,QIODevice::WriteOnly);
+        doc.namedItem("HTML").save(t,SAVE_INDEX);
+        return str;
+    }
+    //return "";
+}
 
 void opds_server::process(QString url, QTextStream &ts, QString session)
 {
@@ -629,10 +986,8 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         strings=url.split("/");
     }
     //qDebug()<<strings;
-    int id_lib=-1;
-    QString lib_url="";
-    QString lib_sql="";
-    QString libName="freeLib";
+    int id_lib=idCurrentLib;
+    QString lib_url="/http";
     qDebug()<<"url:"<<url;
     QSqlQuery query(QSqlDatabase::database("libdb"));
     bool opds=false;
@@ -645,19 +1000,12 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             if(strings[1].startsWith("opds_"))
             {
                 id_lib=strings[1].replace("opds_","").toInt();
-                query.exec("SELECT name FROM lib WHERE id="+QString::number(id_lib));
-                if(query.next())
-                    libName+=" ("+query.value(0).toString()+")";
                 lib_url="/opds_"+QString::number(id_lib);
-                lib_sql=" id_lib="+QString::number(id_lib);
             }
             else
             {
                 lib_url="/opds";
-        //        if(strings[1]=="opds")
-          //      {
-            //        qDebug()<<"opds";
-             //   }
+                id_lib = idCurrentLib;
             }
             strings.removeFirst();
             url.remove(0,1);
@@ -670,15 +1018,15 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             if(strings[1].startsWith("http_"))
             {
                 id_lib=strings[1].replace("http_","").toInt();
-                query.exec("SELECT name FROM lib WHERE id="+QString::number(id_lib));
-                if(query.next())
-                    libName+=" ("+query.value(0).toString()+")";
+//                query.exec("SELECT name FROM lib WHERE id="+QString::number(id_lib));
+//                if(query.next())
+//                    libName+=" ("+query.value(0).toString()+")";
                 lib_url="/http_"+QString::number(id_lib);
-                lib_sql=" id_lib="+QString::number(id_lib);
             }
             else
             {
- //               lib_url="/";
+                lib_url="/http";
+                id_lib = idCurrentLib;
             }
             strings.removeFirst();
             url.remove(0,1);
@@ -686,17 +1034,18 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             opds=false;
         }
     }
-    //qDebug()<<url<<QFileInfo(url).exists();
+    SLib &lib = mLibs[id_lib];
+
+    uint nPage = 0;
     if(!QFileInfo(url).exists())
     {
         if(strings.count()>0)
         {
             QString last=strings.last();
             int pos=last.indexOf('?');
-            if(pos>0)
+            if(pos>=0)
             {
                 QStringList str_params=last.right(last.length()-pos-1).split('&');
-                //qDebug()<<str_params;
                 foreach (QString str, str_params)
                 {
                     int pos_eqv=str.indexOf('=');
@@ -704,6 +1053,8 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                         params.insert(str.left(pos_eqv),str.right(str.length()-pos_eqv-1));
                     else
                         params.insert(str,"");
+                    if(str.left(pos_eqv) == "page")
+                        nPage = str.right(str.length()-pos_eqv-1).toUInt();
                 }
                 strings.last()=strings.last().left(pos);
             }
@@ -747,7 +1098,6 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     }
     else if((url.endsWith("cover.jpg/",Qt::CaseInsensitive) || url.endsWith("cover.jpg",Qt::CaseInsensitive)) && !QFileInfo(url).exists())
     {
-        //qDebug()<<"2223"<<strings[2];
         QString id=strings[2];
         fb2mobi fb;
         QString file=fb.convert(id.toLongLong());
@@ -793,7 +1143,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         {
             QDomElement feed=doc_header(session);
             AddTextNode("id","tag:root",feed);
-            AddTextNode("title",libName,feed);
+            AddTextNode("title",lib.name,feed);
            // QDateTime td=QDateTime::currentDateTime();
            // td.setTimeSpec(Qt::OffsetFromUTC);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
@@ -862,7 +1212,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         else
         {
             ts<<WriteSuccess();
-            QDomElement feed=doc_header(session,true,libName,lib_url);
+            QDomElement feed=doc_header(session,true,lib.name,lib_url);
             QDomElement div=doc.createElement("DIV");
             feed.appendChild(div);
             QDomElement el;
@@ -956,19 +1306,17 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             ts<<"<!DOCTYPE html>";
             doc.namedItem("HTML").save(ts,SAVE_INDEX);
         }
-        //result=doc.toString();
     }
     else if(url.startsWith("/convert",Qt::CaseInsensitive) && !opds)
     {
         QDomElement feed;
-        feed=doc_header(session,true,libName,lib_url);
+        feed=doc_header(session,true,lib.name,lib_url);
         ts<<WriteSuccess();
         ts<<"<!DOCTYPE html>";
         doc.namedItem("HTML").save(ts,SAVE_INDEX);
     }
     else if(url.startsWith("/search",Qt::CaseInsensitive))
     {
-        //strings;
         if(!params.contains("search_string"))
         {
             process("/",ts,session);
@@ -982,14 +1330,20 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
 
         //qDebug()<<(params.value("search_string"))<<123;
         //qDebug()<<QUrl::fromPercentEncoding(params.value("search_string").toUtf8())<<1234;
-        ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"","","","",ts,opds,libName,session,false,QString(params.value("search_string")).replace("+"," ").replace("%20"," "));
+        //ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"","","","",ts,opds,libName,session,false,QString(params.value("search_string")).replace("+"," ").replace("%20"," "));
+        QList<uint> listBooks = book_list(lib,0,0,0,QString(params.value("search_string")).replace("+"," ").replace("%20"," "));
+        ts<<FillPage(listBooks,lib,tr("Books search"),lib_url, url,ts,opds,nPage,session,true);
+
 
     }
     else if(url.startsWith("/sequencebooks",Qt::CaseInsensitive) && strings.count()>=3)
     {
-        QString id_author="";
+        //QString id_author="";
         QString id_sequence=strings[2];
-        ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"",id_author,id_sequence,"",ts,opds,libName,session,true);
+        //ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"",id_author,id_sequence,"",ts,opds,libName,session,true);
+        QList<uint> listBooks = book_list(lib,0,id_sequence.toUInt(),0,"");
+        ts<<FillPage(listBooks,lib,tr("Books of sequence")+" ("+lib.mSerials[id_sequence.toUInt()].sName+")",lib_url, url,ts,opds,nPage,session,false);
+
     }
     else if(url.startsWith("/sequencesindex",Qt::CaseInsensitive))
     {
@@ -1013,157 +1367,171 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         }
         else
         {
-            feed=doc_header(session,true,libName,lib_url);
+            feed=doc_header(session,true,lib.name,lib_url);
             ts<<WriteSuccess();
         }
-        {
-            QString condition="WHERE ";
-            if(id_lib>=0)
-            {
-                condition+="id_lib="+QString::number(id_lib)+" and ";
+        auto iSerial = lib.mSerials.constBegin();
+        QMap <QString,int> mCount;
+        QSet <QString> setSerials;
+        int count=0;
+        while(iSerial != lib.mSerials.constEnd()){
+            if(iSerial->sName.left(index.length()).toLower()==index.toLower()){
+                count++;
+                QString sNewIndex = iSerial->sName.left(index.length()+1).toLower();
+                sNewIndex[0] = sNewIndex[0].toUpper();
+                if(mCount.contains(sNewIndex))
+                    mCount[sNewIndex]++;
+                else
+                    mCount[sNewIndex] = 1;
+                if(sNewIndex.length()==iSerial->sName.length())
+                    setSerials.insert(sNewIndex);
             }
-            QString rus_index=ToIndex(index);
-            if(index.length()>0)
-            {
-                condition+="substr(rus_index,1,"+QString::number(rus_index.length())+")='"+rus_index+"' and ";
-            }
-            query.exec(QString("SELECT min(substr(name,1,%1)),count(),max(name),max(id) FROM  seria %2 GROUP BY substr(rus_index,1,%3) ORDER BY rus_index").
-                       arg(QString::number(index.length()+1),
-                       condition.left(condition.length()-5),
-                       QString::number(rus_index.length()+3)));
-            int count=0;
-            while(query.next())
-                count+=query.value(1).toInt();
-            if(count>30 && !by_books)
-            {
-                query.seek(-1,false);
-                QDomElement tag_table;
-                QDomElement tag_tr;
-                int current_column=0;
-                if(!opds)
-                {
-                    tag_table=doc.createElement("TABLE");
-                    feed.appendChild(tag_table);
-                }
-                while(query.next())
-                {
-                    if(query.value(0).toString().trimmed().isEmpty())
-                        continue;
-                    if(opds)
-                    {
+            ++iSerial;
+        }
+        QList<QString> listKeys = mCount.keys();
+        std::sort(listKeys.begin(), listKeys.end(),[](const QString& lhs, const QString& rhs) {return QString::localeAwareCompare(lhs,rhs)<0;});
 
-                        QDomElement entry=doc.createElement("entry");
-                        feed.appendChild(entry);
-                        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                        AddTextNode("id","tag:sequences:"+query.value(0).toString(),entry);
-                        AddTextNode("title",query.value(0).toString(),entry);
-                        QDomElement el=AddTextNode("content",query.value(1).toString()+" "+tr("series beginning with")+" '"+query.value(0).toString()+"'",entry);
-                        el.setAttribute("type","text");
-                        el=AddTextNode("link","",entry);
-                        if(query.value(1).toInt()==1)
-                        {
-                            el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(3).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+        if(count>30 && !by_books)
+        {
+            QDomElement tag_table;
+            QDomElement tag_tr;
+            int current_column=0;
+            if(!opds)
+            {
+                tag_table=doc.createElement("TABLE");
+                feed.appendChild(tag_table);
+            }
+            foreach(auto iIndex,listKeys)
+            {
+                if(iIndex.trimmed().isEmpty() || iIndex[0] == '\0')
+                    continue;
+                if(opds)
+                {
+
+                    QDomElement entry=doc.createElement("entry");
+                    feed.appendChild(entry);
+                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode("id","tag:sequences:"+iIndex,entry);
+                    AddTextNode("title",iIndex,entry);
+                    QDomElement el=AddTextNode("content",QString::number(mCount[iIndex])+" "+tr("series beginning with")+" '"+iIndex+"'",entry);
+                    el.setAttribute("type","text");
+                    el=AddTextNode("link","",entry);
+                    if(mCount[iIndex]==1)
+                    {
+                        auto iSerial = lib.mSerials.constBegin();
+                        while(iSerial != lib.mSerials.constEnd()){
+                            if(iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            {
+                                el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key())))+(session.isEmpty()?"":"?session="+session));
+                                break;
+                            }
+                            ++iSerial;
                         }
-                        else
-                        {
-                            el.setAttribute("href",lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+
-                                        (query.value(0).toString()==query.value(2).toString()?"/books":"")+(session.isEmpty()?"":"?session="+session));
-                        }
-                        el.setAttribute("type","application/atom+xml;profile=opds-catalog");
 
                     }
                     else
                     {
-
-                        if(current_column==0)
-                        {
-                            tag_tr=doc.createElement("tr");
-                            tag_table.appendChild(tag_tr);
-                        }
-                        QDomElement td=doc.createElement("td");
-                        tag_tr.appendChild(td);
-
-                        QDomElement div=doc.createElement("DIV");
-                        div.setAttribute("class","author");
-                        td.appendChild(div);
-                        QDomElement el=AddTextNode("a",query.value(0).toString(),div);
-                        el.setAttribute("class","block");
-                        AddTextNode("div",query.value(1).toString()+" "+tr("series beginning with")+" '"+query.value(0).toString()+"'",div);
-                        if(query.value(1).toInt()==1)
-                        {
-                            el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(3).toString()).constData())+(session.isEmpty()?"":"?session="+session));
-                        }
-                        else
-                        {
-                            el.setAttribute("href",lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+
-                                        (query.value(0).toString()==query.value(2).toString()?"/books":"")+(session.isEmpty()?"":"?session="+session));
-                        }
-                        current_column++;
-                        if(current_column==MAX_COLUMN_COUNT)
-                            current_column=0;
+                        el.setAttribute("href",lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setSerials.contains(iIndex) ?"/books":"")+(session.isEmpty()?"":"?session="+session));
                     }
-
+                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
                 }
+                else
+                {
+
+                    if(current_column==0)
+                    {
+                        tag_tr=doc.createElement("tr");
+                        tag_table.appendChild(tag_tr);
+                    }
+                    QDomElement td=doc.createElement("td");
+                    tag_tr.appendChild(td);
+
+                    QDomElement div=doc.createElement("DIV");
+                    div.setAttribute("class","author");
+                    td.appendChild(div);
+                    QDomElement el=AddTextNode("a",iIndex,div);
+                    el.setAttribute("class","block");
+                    AddTextNode("div",QString::number(mCount[iIndex])+" "+tr("series beginning with")+" '"+iIndex+"'",div);
+                    if(mCount[iIndex]==1)
+                    {
+                        auto iSerial = lib.mSerials.constBegin();
+                        while(iSerial != lib.mSerials.constEnd()){
+                            if(iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            {
+                                el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key())))+(session.isEmpty()?"":"?session="+session));
+                                break;
+                            }
+                            ++iSerial;
+                        }
+
+                    }
+                    else
+                    {
+                        el.setAttribute("href",lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setSerials.contains(iIndex) ?"/books":"")+(session.isEmpty()?"":"?session="+session));
+
+                    }
+                    current_column++;
+                    if(current_column==MAX_COLUMN_COUNT)
+                        current_column=0;
+                }
+            }
+            if(!opds)
                 while(current_column<MAX_COLUMN_COUNT)
                 {
                     AddTextNode("td", "",tag_tr);
                     current_column++;
                 }
-            }
-            else
+        }
+        else
+        {
+            QList<uint> listSerialId;
+            iSerial = lib.mSerials.constBegin();
+            while(iSerial != lib.mSerials.constEnd())
             {
-                condition="WHERE ";
-                if(id_lib>=0)
+                if(iSerial->sName.left((index.length())).toLower() == index.toLower())
                 {
-                    condition+="seria.id_lib="+QString::number(id_lib)+" and ";
+                    listSerialId << iSerial.key();
                 }
-                if(by_books)
+                ++iSerial;
+            }
+            std::sort(listSerialId.begin(),listSerialId.end(),[lib](const uint& lhs,const uint& rhs) {return lib.mSerials[lhs].sName < lib.mSerials[rhs].sName;});
+
+            foreach(auto iIndex,listSerialId)
+            {
+                uint nBooksCount=0;
+                auto iBook = lib.mBooks.constBegin();
+                while(iBook != lib.mBooks.constEnd())
                 {
-                    condition+="seria.rus_index='"+ToIndex(index)+"' and ";
+                    if(iBook->idSerial == iIndex)
+                        nBooksCount++;
+                    ++iBook;
+                }
+                if(opds)
+                {
+                    QDomElement entry=doc.createElement("entry");
+                    feed.appendChild(entry);
+                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode("id","tag:sequences:"+QString::number(iIndex),entry);
+                    AddTextNode("title",lib.mSerials[iIndex].sName,entry);
+                    QDomElement el=AddTextNode("content",QString::number(nBooksCount)+" "+tr("books"),entry);
+                    el.setAttribute("type","text");
+                    el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
                 }
                 else
                 {
-                    if(index.length()>0)
-                        condition+="substr(seria.rus_index,1,"+QString::number(ToIndex(index).length())+")='"+ToIndex(index)+"' and ";
+                    QDomElement div=doc.createElement("DIV");
+                    div.setAttribute("class","author");
+                    feed.appendChild(div);
+                    QDomElement el=AddTextNode("a",lib.mSerials[iIndex].sName,div);
+                    el.setAttribute("class","block");
+                    el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
+                    AddTextNode("div",QString::number(nBooksCount)+" "+tr("books"),div);
                 }
-                QSettings* settings=GetSettings();
-                if(!settings->value("ShowDeleted",false).toBool())
-                    condition+="not deleted and ";
-                query.exec(QString("SELECT seria.id,seria.name,count() FROM "
-                                   "seria left join book ON book.id_seria=seria.id "+
-                                   condition.left(condition.length()-5)+
-                                   " GROUP BY seria.id ORDER BY seria.rus_index"));
-                //qDebug()<<query.lastError();
-                while(query.next())
-                {
-                    //qDebug()<<query.value(0).toString();
-                    if(opds)
-                    {
-
-                        QDomElement entry=doc.createElement("entry");
-                        feed.appendChild(entry);
-                        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                        AddTextNode("id","tag:sequences:"+query.value(0).toString(),entry);
-                        AddTextNode("title",query.value(1).toString(),entry);
-                        QDomElement el=AddTextNode("content",query.value(2).toString()+" "+tr("books"),entry);
-                        el.setAttribute("type","text");
-                        el=AddTextNode("link","",entry);
-                        el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
-                        el.setAttribute("type","application/atom+xml;profile=opds-catalog");
-
-                    }
-                    else
-                    {
-                        QDomElement div=doc.createElement("DIV");
-                        div.setAttribute("class","author");
-                        feed.appendChild(div);
-                        QDomElement el=AddTextNode("a",query.value(1).toString(),div);
-                        el.setAttribute("class","block");
-                        el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
-                        AddTextNode("div",query.value(2).toString()+" "+tr("books"),div);
-                    }
-                }
-             }
+            }
         }
         if(opds)
             ts<<doc.toString();
@@ -1172,21 +1540,43 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     }
     else if(url.startsWith("/genres",Qt::CaseInsensitive))
     {
+        QList<uint> listIdGenres;
+        QMap<uint,uint> mCounts;
         if(strings.count()>2)
         {
-            query.exec("SELECT count() FROM janre WHERE id_parent="+strings[2]);
-            if(!query.next() || query.value(0).toInt()==0)
-            {
-                ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"","","",strings[2],ts,opds,libName,session,false);
+            uint idParrentGenre = strings[2].toUInt();
+            if(mGenre[idParrentGenre].idParrentGenre>0){
+                QList<uint> listBooks = book_list(lib,0,0,idParrentGenre,"");
+                ts<<FillPage(listBooks,lib,tr("Books by ABC"),lib_url, url,ts,opds,nPage,session,true);
                 return;
             }
-            query.exec(QString("SELECT janre.name,janre.id,count() FROM janre  join book_janre on id_janre=janre.id join book on id_book=book.id left join author on book.first_author_id=author.id left join seria on seria.id=book.id_seria where "
-                                     " id_parent="+strings[2]+" GROUP BY janre.id,janre.name ORDER BY sort_index"));
+            auto iGenre = mGenre.constBegin();
+            while(iGenre!=mGenre.constEnd()){
+                if(iGenre->idParrentGenre==idParrentGenre)
+                    listIdGenres << iGenre.key();
+                ++iGenre;
+            }
+            auto iBook = lib.mBooks.constBegin();
+            while(iBook!=lib.mBooks.constEnd()){
+                foreach (uint iGenre, iBook->listIdGenres){
+                    if(mGenre[iGenre].idParrentGenre==idParrentGenre){
+                        if(mCounts.contains(iGenre))
+                            mCounts[iGenre]++;
+                        else
+                            mCounts[iGenre] = 1;
+                    }
+                }
+                ++iBook;
+            }
         }
         else
         {
-            query.exec("SELECT name,id FROM janre WHERE ifnull(id_parent,0)=0 OR id_parent='' ORDER BY name");
-            //return;
+            auto iGenre = mGenre.constBegin();
+            while(iGenre!=mGenre.constEnd()){
+                if(iGenre->idParrentGenre==0)
+                    listIdGenres << iGenre.key();
+                ++iGenre;
+            }
         }
         QDomElement feed;
         if(opds)
@@ -1199,31 +1589,31 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         }
         else
         {
-            feed=doc_header(session,true,libName,lib_url);
+            feed=doc_header(session,true,lib.name,lib_url);
             ts<<WriteSuccess();
         }
-        while(query.next())
+        foreach(uint idGenre,listIdGenres)
         {
             if(opds)
             {
                 QDomElement entry=doc.createElement("entry");
                 feed.appendChild(entry);
                 AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:root:genre:"+query.value(0).toString(),entry);
-                AddTextNode("title",query.value(0).toString(),entry);
+                AddTextNode("id","tag:root:genre:"+mGenre[idGenre].sName ,entry);
+                AddTextNode("title",mGenre[idGenre].sName,entry);
                 if(strings.count()>2)
                 {
-                    QDomElement el=AddTextNode("content",query.value(2).toString()+" "+tr("books"),entry);
+                    QDomElement el=AddTextNode("content",QString::number(mCounts[idGenre])/*query.value(2).toString()*/+" "+tr("books"),entry);
                     el.setAttribute("type","text");
                 }
                 else
                 {
-                    QDomElement el=AddTextNode("content",tr("Books of genre")+" "+query.value(0).toString(),entry);
+                    QDomElement el=AddTextNode("content",tr("Books of genre")+" "+mGenre[idGenre].sName,entry);
                     el.setAttribute("type","text");
                 }
                 QDomElement el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/genres/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(1).toString()).constData())+(session.isEmpty()?"":"?session="+session));
-                el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                el.setAttribute("href",lib_url+"/genres/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idGenre)))+(session.isEmpty()?"":"?session="+session));
+                        el.setAttribute("type","application/atom+xml;profile=opds-catalog");
 
             }
             else
@@ -1231,12 +1621,12 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 QDomElement div=doc.createElement("DIV");
                 feed.appendChild(div);
                 div.setAttribute("class","author");
-                QDomElement el=AddTextNode("A",query.value(0).toString(),div);
+                QDomElement el=AddTextNode("A",mGenre[idGenre].sName,div);
                 el.setAttribute("class","block");
-                el.setAttribute("href","/genres/"+query.value(1).toString()+(session.isEmpty()?"":"?session="+session));
+                el.setAttribute("href","/genres/"+QString::number(idGenre)+(session.isEmpty()?"":"?session="+session));
                 if(strings.count()>2)
                 {
-                    QDomElement el=AddTextNode("div",query.value(2).toString()+" "+tr("books"),div);
+                    QDomElement el=AddTextNode("div",QString::number(mCounts[idGenre])+" "+tr("books"),div);
                 }
             }
         }
@@ -1244,6 +1634,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             ts<<doc.toString();
         else
             doc.namedItem("HTML").save(ts,SAVE_INDEX);
+        qDebug() << doc.toString();
     }
     else if(url.startsWith("/authorsindex",Qt::CaseInsensitive))
     {
@@ -1255,7 +1646,6 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         {
             by_books=strings[3]=="books";
         }
-      //  qDebug()<<strings<<index;
         QDomElement feed;
         if(opds)
         {
@@ -1267,164 +1657,175 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         }
         else
         {
-            feed=doc_header(session,true,libName,lib_url);
+            feed=doc_header(session,true,lib.name,lib_url);
             ts<<WriteSuccess();
         }
+        auto iAuthor = lib.mAuthors.constBegin();
+        QMap <QString,int> mCount;
+
+        QSet <QString> setAuthors;
+        int count=0;
+        while(iAuthor != lib.mAuthors.constEnd())
         {
-            QString condition="WHERE ";
-            QString rus_index=ToIndex(index);
-            //qDebug()<<index;
-            if(id_lib>=0)
+            if(iAuthor->sName.left(index.length()).toLower()==index.toLower())
             {
-                condition+="id_lib="+QString::number(id_lib)+" and ";
+                count++;
+                QString sNewIndex = iAuthor->sName.left(index.length()+1).toLower();
+                sNewIndex[0] = sNewIndex[0].toUpper();
+                if(mCount.contains(sNewIndex))
+                    mCount[sNewIndex]++;
+                else
+                    mCount[sNewIndex] = 1;
+                if(sNewIndex.length()==iAuthor->sName.length())
+                    setAuthors.insert(sNewIndex);
             }
-            if(index.length()>0)
+            ++iAuthor;
+        }
+        QList<QString> listKeys = mCount.keys();
+        std::sort(listKeys.begin(), listKeys.end(),[](const QString& lhs, const QString& rhs) {return QString::localeAwareCompare(lhs,rhs)<0;});
+
+        if(count>30 && !by_books)
+        {
+            QDomElement tag_table;
+            QDomElement tag_tr;
+            int current_column=0;
+            if(!opds)
             {
-                condition+="substr(rus_index,1,"+QString::number(rus_index.length())+")='"+rus_index+"' and ";
+                tag_table=doc.createElement("TABLE");
+                feed.appendChild(tag_table);
             }
-            query.exec(QString("SELECT min(substr(name1||' '||name2||' '||name3,1,%1)),count(),max(name1||' '||name2||' '||name3),max(id) FROM  author %2 GROUP BY substr(rus_index,1,%3) ORDER BY rus_index").
-                       arg(QString::number(index.length()+1),
-                       condition.left(condition.length()-5),
-                       QString::number(rus_index.length()+3)));
-            //qDebug()<<query.lastError();
-            int count=0;
-            while(query.next())
+
+            foreach(auto iIndex,listKeys)
             {
-                //qDebug()<<query.value(0).toString();
-                count+=query.value(1).toInt();
-            }
-            //qDebug()<<count;
-            if(count>30 && !by_books)
-            {
-                //qDebug()<<"ss";
-                query.seek(-1,false);
-                QDomElement tag_table;
-                QDomElement tag_tr;
-                int current_column=0;
-                if(!opds)
+                if(opds)
                 {
-                    tag_table=doc.createElement("TABLE");
-                    feed.appendChild(tag_table);
-                }
-                while(query.next())
-                {
-                    //qDebug()<<query.value(0).toString();
-                    if(query.value(0).toString().trimmed().isEmpty())
-                        continue;
-                    if(opds)
+                    QDomElement entry=doc.createElement("entry");
+                    feed.appendChild(entry);
+                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode("id","tag:authors:"+iIndex,entry);
+                    AddTextNode("title",iIndex,entry);
+                    QDomElement el=AddTextNode("content",QString::number(mCount[iIndex])+" "+tr("authors beginning with")+" '"+iIndex+"'",entry);
+                    el.setAttribute("type","text");
+                    el=AddTextNode("link","",entry);
+                    if(mCount[iIndex]==1)
                     {
-                        QDomElement entry=doc.createElement("entry");
-                        feed.appendChild(entry);
-                        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                        AddTextNode("id","tag:authors:"+query.value(0).toString(),entry);
-                        AddTextNode("title",query.value(0).toString(),entry);
-                        QDomElement el=AddTextNode("content",query.value(1).toString()+" "+tr("authors beginning with")+" '"+query.value(0).toString()+"'",entry);
-                        el.setAttribute("type","text");
-                        el=AddTextNode("link","",entry);
-                        if(query.value(1).toInt()==1)
+                        iAuthor = lib.mAuthors.constBegin();
+                        while(iAuthor != lib.mAuthors.constEnd())
                         {
-                            el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(3).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+                            if(iAuthor.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            {
+                                el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?"":"?session="+session));
+                                break;
+                            }
+                            ++iAuthor;
                         }
-                        else
-                        {
-                            el.setAttribute("href",lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+
-                                        (query.value(0).toString()==query.value(2).toString()?"/books":"")+(session.isEmpty()?"":"?session="+session));
-                        }
-                        el.setAttribute("type","application/atom+xml;profile=opds-catalog");
                     }
                     else
                     {
-                        if(current_column==0)
-                        {
-                            tag_tr=doc.createElement("tr");
-                            tag_table.appendChild(tag_tr);
-                        }
-                        QDomElement td=doc.createElement("td");
-                        tag_tr.appendChild(td);
-                        QDomElement div=doc.createElement("div");
-                        div.setAttribute("class","author");
-                        td.appendChild(div);
-                        QDomElement el=AddTextNode("a",query.value(0).toString(),div);
-                        el.setAttribute("class","block");
-                        AddTextNode("div",query.value(1).toString()+" "+tr("authors beginning with")+" '"+query.value(0).toString()+"'",div);
-                        if(query.value(1).toInt()==1)
-                        {
-                            el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(3).toString()).constData())+(session.isEmpty()?"":"?session="+session));
-                        }
-                        else
-                        {
-                            el.setAttribute("href",lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+
-                                        (query.value(0).toString()==query.value(2).toString()?"/books":"")+(session.isEmpty()?"":"?session="+session));
-                        }
+                        el.setAttribute("href",lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setAuthors.contains(iIndex)?"/books":"")+(session.isEmpty()?"":"?session="+session));
 
-                        current_column++;
-                        if(current_column==MAX_COLUMN_COUNT)
-                            current_column=0;
                     }
-
-                }
-                if(!opds)
-                {
-                    while(current_column<MAX_COLUMN_COUNT)
-                    {
-                        AddTextNode("td", "",tag_tr);
-                        current_column++;
-                    }
-                }
-            }
-            else
-            {
-                condition="WHERE ";
-                if(id_lib>=0)
-                {
-                    condition+="book_author.id_lib="+QString::number(id_lib)+" and ";
-                }
-                if(by_books)
-                {
-                    condition+="rus_index='"+ToIndex(index)+"' and ";
+                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
                 }
                 else
                 {
-                    if(index.length()>0)
-                        condition+="substr(rus_index,1,"+QString::number(ToIndex(index).length())+")='"+ToIndex(index)+"' and ";
-                }
-                QSettings* settings=GetSettings();
-                if(!settings->value("ShowDeleted",false).toBool())
-                    condition+="not book.deleted and ";
-                query.exec(QString("SELECT author.id,name1||' '||name2||' '||name3,count() FROM "
-                                   " book_author join author on book_author.id_author=author.id join book on book.id=book_author.id_book "+
-                                   condition.left(condition.length()-5)+
-                                   " GROUP BY author.id ORDER BY author.rus_index"));
-                //qDebug()<<query.lastError();
-                while(query.next())
-                {
-                    //qDebug()<<query.value(0).toString();
-                    if(opds)
+                    if(current_column==0)
                     {
-                        QDomElement entry=doc.createElement("entry");
-                        feed.appendChild(entry);
-                        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                        AddTextNode("id","tag:author:"+query.value(0).toString(),entry);
-                        AddTextNode("title",query.value(1).toString(),entry);
-                        QDomElement el=AddTextNode("content",query.value(2).toString()+" "+tr("books"),entry);
-                        el.setAttribute("type","text");
-                        el=AddTextNode("link","",entry);
-                        el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
-                        el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                        tag_tr=doc.createElement("tr");
+                        tag_table.appendChild(tag_tr);
+                    }
+                    QDomElement td=doc.createElement("td");
+                    tag_tr.appendChild(td);
+                    QDomElement div=doc.createElement("div");
+                    div.setAttribute("class","author");
+                    td.appendChild(div);
+                    QDomElement el=AddTextNode("a",iIndex,div);
+                    el.setAttribute("class","block");
+                    AddTextNode("div",QString::number(mCount[iIndex])+" "+tr("authors beginning with")+" '"+iIndex+"'",div);
+                    if(mCount[iIndex]==1)
+                    {
+                        iAuthor = lib.mAuthors.constBegin();
+                        while(iAuthor != lib.mAuthors.constEnd())
+                        {
+                            if(iAuthor.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            {
+                                el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?"":"?session="+session));
+                                break;
+                            }
+                            ++iAuthor;
+                        }
                     }
                     else
                     {
-                        QDomElement div=doc.createElement("DIV");
-                        div.setAttribute("class","author");
-                        feed.appendChild(div);
-                        QDomElement el=AddTextNode("a",query.value(1).toString(),div);
-                        el.setAttribute("class","block");
-                        el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
-                        AddTextNode("div",query.value(2).toString()+" "+tr("books"),div);
+                        el.setAttribute("href",lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setAuthors.contains(iIndex)?"/books":"")+(session.isEmpty()?"":"?session="+session));
+
                     }
+
+                    current_column++;
+                    if(current_column==MAX_COLUMN_COUNT)
+                        current_column=0;
                 }
-             }
+            }
+            if(!opds)
+            {
+                while(current_column<MAX_COLUMN_COUNT)
+                {
+                    AddTextNode("td", "",tag_tr);
+                    current_column++;
+                }
+            }
         }
+        else
+        {
+            QList<uint> listAuthorId;
+            iAuthor =lib.mAuthors.constBegin();
+            while(iAuthor != lib.mAuthors.constEnd())
+            {
+                if(iAuthor->sName.left(index.length()).toLower()==index.toLower())
+                {
+                    listAuthorId << iAuthor.key();
+                }
+                ++iAuthor;
+            }
+            std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](const uint& lhs,const uint& rhs) {return lib.mAuthors[lhs].sName < lib.mAuthors[rhs].sName;});
+            foreach(auto iIndex,listAuthorId)
+            {
+                uint nBooksCount=0;
+                QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(iIndex);
+                while(i!=lib.mAuthorBooksLink.end() && i.key()==iIndex){
+                    nBooksCount++;
+                    ++i;
+                }
+
+                if(opds)
+                {
+                    QDomElement entry=doc.createElement("entry");
+                    feed.appendChild(entry);
+                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode("id","tag:author:"+QString::number(iIndex),entry);
+                    AddTextNode("title",lib.mAuthors[iIndex].sName,entry);
+                    QDomElement el=AddTextNode("content",QString::number(nBooksCount)+" "+tr("books"),entry);
+                    el.setAttribute("type","text");
+                    el=AddTextNode("link","",entry);
+                    el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
+                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                }
+                else
+                {
+                    QDomElement div=doc.createElement("DIV");
+                    div.setAttribute("class","author");
+                    feed.appendChild(div);
+                    QDomElement el=AddTextNode("a",lib.mAuthors[iIndex].sName,div);
+                    el.setAttribute("class","block");
+                    el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
+                    AddTextNode("div",QString::number(nBooksCount)+" "+tr("books"),div);
+                }
+            }
+
+        }
+
         if(opds)
             ts<<doc.toString();
         else
@@ -1432,53 +1833,67 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     }
     else if(url.startsWith("/authorsequenceless/",Qt::CaseInsensitive) && strings.count()>=3)
     {
-        QString id_author=strings[2];
-        QString id_sequence="-1";
-        ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"",id_author,id_sequence,"",ts,opds,libName,session);
+        uint idAuthor = strings[2].toUInt();
+
+        QList<uint> listBooks = book_list(lib,idAuthor,0,0,"",true);
+        ts<<FillPage(listBooks,lib,tr("Books without sequence")+" ("+lib.mAuthors[idAuthor].sName+")",lib_url, url,ts,opds,nPage,session,false);
+
     }
     else if(url.startsWith("/authorbooks/",Qt::CaseInsensitive) && strings.count()>=3)
     {
-        QString id_author=strings[2];
-        QString id_sequence="";
-        ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"",id_author,id_sequence,"",ts,opds,libName,session,true);
+        uint idAuthor = strings[2].toUInt();
+        QList<uint> listBooks = book_list(lib,idAuthor,0,0,"",false);
+        ts<<FillPage(listBooks,lib,tr("Books by ABC")+" ("+lib.mAuthors[idAuthor].sName+")",lib_url, url,ts,opds,nPage,session,false);
+
     }
     else if(url.startsWith("/authorsequences/",Qt::CaseInsensitive) && strings.count()>=3)
     {
         QString id=strings[2];
-        query.exec("SELECT id,name1||' '||name2||' '||name3 FROM author WHERE id="+id);
-        query.next();
+        uint idAuthor = id.toUInt();
         QDomElement feed;
         if(opds)
         {
             feed=doc_header(session);
             AddTextNode("id","tag:author:"+query.value(0).toString(),feed);
-            AddTextNode("title",tr("Book sequences")+" "+query.value(1).toString(),feed);
+            AddTextNode("title",tr("Book sequences")+" "+lib.mAuthors[idAuthor].sName,feed);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
             AddTextNode("icon","/icon_256x256.png",feed);
         }
         else
         {
-             feed=doc_header(session,true,libName,lib_url);
-             QDomElement div=AddTextNode("DIV",tr("Book sequences")+" "+query.value(1).toString(),feed);
+             feed=doc_header(session,true,lib.name,lib_url);
+             QDomElement div=AddTextNode("DIV",tr("Book sequences")+" "+lib.mAuthors[idAuthor].sName,feed);
              div.setAttribute("class","caption");
         }
-        query.exec(QString("SELECT seria.name,seria.id,count() FROM "
-                           "book_author join book on book_author.id_book=book.id  join seria on seria.id=book.id_seria "
-                           "WHERE book_author.id_author="+id+
-                           " GROUP BY seria.id ORDER BY seria.rus_index"));
-        while(query.next())
+
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
+        QMap<uint,uint> mapCountBooks;
+        while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+            SBook& book = lib.mBooks[i.value()];
+            if(book.idSerial>0){
+                if(mapCountBooks.contains(book.idSerial))
+                    mapCountBooks[book.idSerial]++;
+                        else
+                    mapCountBooks[book.idSerial]=1;
+            }
+            ++i;
+        }
+        QList<uint> listSerials = mapCountBooks.keys();
+        std::sort(listSerials.begin(),listSerials.end(),[lib](const uint& lhs,const uint& rhs) {return QString::localeAwareCompare(lib.mSerials[lhs].sName, lib.mSerials[rhs].sName) < 0;});
+
+        foreach(uint idSerial,listSerials)
         {
             if(opds)
             {
                 QDomElement entry=doc.createElement("entry");
                 feed.appendChild(entry);
                 AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:author:"+id+":sequence:"+query.value(1).toString(),entry);
-                AddTextNode("title",query.value(0).toString(),entry);
-                QDomElement el=AddTextNode("content",query.value(2).toString()+" "+tr("books in sequence"),entry);
+                AddTextNode("id","tag:author:"+id+":sequence:"+QString::number(idSerial),entry);
+                AddTextNode("title",lib.mSerials[idSerial].sName,entry);
+                QDomElement el=AddTextNode("content",QString::number(mapCountBooks[idSerial])+" "+tr("books in sequence"),entry);
                 el.setAttribute("type","text");
                 el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(query.value(1).toString()))+(session.isEmpty()?"":"?session="+session));
+                el.setAttribute("href",lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idSerial)))+(session.isEmpty()?"":"?session="+session));
                 el.setAttribute("type","application/atom+xml;profile=opds-catalog");
             }
             else
@@ -1486,10 +1901,10 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 QDomElement entry=doc.createElement("div");
                 entry.setAttribute("class","author");
                 feed.appendChild(entry);
-                QDomElement el=AddTextNode("a",query.value(0).toString(),entry);
+                QDomElement el=AddTextNode("a",lib.mSerials[idSerial].sName,entry);
                 el.setAttribute("class","block");
-                el.setAttribute("href",lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(query.value(1).toString()))+(session.isEmpty()?"":"?session="+session));
-                AddTextNode("div",query.value(2).toString()+" "+tr("books in sequence"),entry);
+                el.setAttribute("href",lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idSerial)))+(session.isEmpty()?"":"?session="+session));
+                AddTextNode("div",QString::number(mapCountBooks[idSerial])+" "+tr("books in sequence"),entry);
             }
         }
         if(opds)
@@ -1508,47 +1923,48 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     {
         QString id_author=strings[2];
         QString id_sequence=strings[3];
-
-        ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"",id_author,id_sequence,"",ts,opds,libName,session);
+        uint idSequence = id_sequence.toUInt();
+        QList<uint> listBooks = book_list(lib,id_author.toUInt(),idSequence,0,"");
+        ts<<FillPage(listBooks,lib,tr("Books of sequence")+" ("+lib.mSerials[idSequence].sName +")",lib_url, url,ts,opds,nPage,session,false);
     }
     else if(url.startsWith("/author/",Qt::CaseInsensitive) && strings.count()>=3)
     {
-        QString id=strings[2];
-        query.exec("SELECT id,name1||' '||name2||' '||name3 FROM author WHERE id="+id);
-        query.next();
+        QString sIdAuthor = strings[2];
+        uint idAuthor = sIdAuthor.toUInt();
+        QString sAuthor = lib.mAuthors[idAuthor].sName;
         if(opds)
         {
             QDomElement feed=doc_header(session);
             AddTextNode("id","tag:author:"+query.value(0).toString(),feed);
-            AddTextNode("title",tr("Books by")+" "+query.value(1).toString(),feed);
+            AddTextNode("title",tr("Books by")+" "+sAuthor,feed);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
             AddTextNode("icon","/icon_256x256.png"+(session.isEmpty()?"":"?session="+session),feed);
 
             QDomElement entry=doc.createElement("entry");
             feed.appendChild(entry);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:author:"+query.value(0).toString()+":sequences",entry);
+            AddTextNode("id","tag:author:"+sIdAuthor+":sequences",entry);
             AddTextNode("title",tr("Books by sequences"),entry);
             QDomElement el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("href",lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
             el.setAttribute("type","application/atom+xml;profile=opds-catalog");
 
             entry=doc.createElement("entry");
             feed.appendChild(entry);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:author:"+query.value(0).toString()+":sequenceless",entry);
+            AddTextNode("id","tag:author:"+sIdAuthor+":sequenceless",entry);
             AddTextNode("title",tr("Books without sequence"),entry);
             el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("href",lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
             el.setAttribute("type","application/atom+xml;profile=opds-catalog");
 
             entry=doc.createElement("entry");
             feed.appendChild(entry);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:author:"+query.value(0).toString()+":sequences",entry);
+            AddTextNode("id","tag:author:"+sIdAuthor+":sequences",entry);
             AddTextNode("title",tr("All books"),entry);
             el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("href",lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
             el.setAttribute("type","application/atom+xml;profile=opds-catalog");
 
             ts<<WriteSuccess("application/atom+xml;charset=utf-8");
@@ -1556,31 +1972,31 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         }
         else
         {
-            QDomElement feed=doc_header(session,true,libName,lib_url);
+            QDomElement feed=doc_header(session,true,lib.name,lib_url);
             QDomElement div_auth=doc.createElement("DIV");;
             div_auth.setAttribute("class","author");
             feed.appendChild(div_auth);
-            QDomElement div_caption=AddTextNode("div",tr("Books by")+" "+query.value(1).toString(),div_auth);
+            QDomElement div_caption=AddTextNode("div",tr("Books by")+" "+sAuthor,div_auth);
             div_caption.setAttribute("class","caption");
 
             QDomElement div=doc.createElement("DIV");
             div_auth.appendChild(div);
             QDomElement el=AddTextNode("a",tr("Books by sequences"),div);
             el.setAttribute("class","block");
-            el.setAttribute("href",lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("href",lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
 
             div=doc.createElement("DIV");
             div_auth.appendChild(div);
             el=AddTextNode("a",tr("Books without sequence"),div);
             el.setAttribute("class","block");
-            el.setAttribute("href",lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("href",lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
 
 
             div=doc.createElement("DIV");
             div_auth.appendChild(div);
             el=AddTextNode("a",tr("All books"),div);
             el.setAttribute("class","block");
-            el.setAttribute("href",lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(query.value(0).toString()).constData())+(session.isEmpty()?"":"?session="+session));
+            el.setAttribute("href",lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
 
             ts<<WriteSuccess();
             doc.namedItem("HTML").save(ts,SAVE_INDEX);
@@ -1684,7 +2100,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         }
         else
         {
-            QDomElement feed=doc_header(session,true,libName,lib_url);
+            QDomElement feed=doc_header(session,true,lib.name,lib_url);
             QDomElement div_auth=doc.createElement("DIV");;
             div_auth.setAttribute("class","author");
             feed.appendChild(div_auth);
@@ -1822,10 +2238,10 @@ void opds_server::server_run(int _port)
 
 void opds_server::slotRead()
 {
-    QTcpSocket* clientSocket = (QTcpSocket*)sender();
+    QTcpSocket* clientSocket = dynamic_cast<QTcpSocket*>(sender());
     if(clientSocket->bytesAvailable()==0)
         return;
-    int idusersocs=clientSocket->socketDescriptor();
+    qintptr idusersocs=clientSocket->socketDescriptor();
     QStringList TCPtokens;
     QStringList AUTHtokens;
     for_preview=false;
