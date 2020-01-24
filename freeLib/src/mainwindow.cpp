@@ -2108,12 +2108,13 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
 
             if(book.bDeleted)
             {
-                item_book->setTextColor(0,QColor::fromRgb(96,96,96));
-                item_book->setTextColor(1,QColor::fromRgb(96,96,96));
-                item_book->setTextColor(2,QColor::fromRgb(96,96,96));
-                item_book->setTextColor(3,QColor::fromRgb(96,96,96));
-                item_book->setTextColor(4,QColor::fromRgb(96,96,96));
-                item_book->setTextColor(5,QColor::fromRgb(96,96,96));
+                QBrush brush(QColor::fromRgb(96,96,96));
+                item_book->setForeground(0,brush);
+                item_book->setForeground(1,brush);
+                item_book->setForeground(2,brush);
+                item_book->setForeground(3,brush);
+                item_book->setForeground(4,brush);
+                item_book->setForeground(5,brush);
             }
 
             if(idBook==idCurrentBook_)
