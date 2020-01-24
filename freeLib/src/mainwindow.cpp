@@ -467,6 +467,7 @@ MainWindow::~MainWindow()
     settings.beginGroup("Columns");
     QByteArray baHeaders = ui->Books->header()->saveState();
     settings.setValue("headers",baHeaders);
+    delete ui->Review->page();
     delete ui;
 }
 
