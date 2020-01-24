@@ -37,36 +37,6 @@ extern QSplashScreen *splash;
 
 bool db_is_open;
 
-
-QString ToIndex(QString str)
-{
-    QString fn;
-    int i, rU, rL;
-    QString rusUpper = QString("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ0123456789");
-    QString rusLower = QString("абвгдеёжзийклмнопрстуфхцчшщъыьэюя");
-    QStringList latUpper;
-    latUpper <<"01-"<<"02-"<<"03-"<<"04-"<<"05-"<<"06-"<<"07-"<<"08-"<<"09-"<<"10-"<<"11-"<<"12-"<<"13-"<<"14-"<<"15-"
-        <<"16-"<<"17-"<<"18-"<<"19-"<<"20-"<<"21-"<<"22-"<<"23-"<<"24-"<<"25-"<<"26-"<<"27-"<<"28-"<<"29-"<<"30-"<<"31-"<<"32-"<<"33-"
-        <<"!0-"<<"!1-"<<"!2-"<<"!3-"<<"!4-"<<"!5-"<<"!6-"<<"!7-"<<"!8-"<<"!9-";
-    for (i=0; i < str.size(); ++i)
-    {
-        if ( !rusUpper.contains(str[i]) && !rusLower.contains(str[i]))
-        {
-            fn = fn + "z"+str[i].toUpper()+"-";
-        }
-        else
-        {
-            rU = rusUpper.indexOf(str[i]);
-            rL = rusLower.indexOf(str[i]);
-            if (rU >= 0)
-                fn = fn + latUpper[rU];
-            else
-                fn = fn + latUpper[rL];
-        }
-    }
-    return fn;
-}
-
 QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool caption, QDateTime *file_data)
 {
     QString file,archive;

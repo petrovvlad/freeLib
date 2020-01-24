@@ -31,8 +31,6 @@
 
 #define default_dropcaps_font "sangha.ttf"
 
-//extern QSqlDatabase dbase;
-QString ToIndex(QString str);
 extern QApplication *app;
 extern QTranslator* translator;
 extern QTranslator* translator_qt;
