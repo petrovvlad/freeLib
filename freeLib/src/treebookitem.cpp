@@ -2,6 +2,7 @@
 
 #include "treebookitem.h"
 #include "common.h"
+#include "library.h"
 
 TreeBookItem::TreeBookItem(QTreeWidget *parent, int type)
     :QTreeWidgetItem(parent, type)

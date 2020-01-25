@@ -4,6 +4,7 @@
 #include <QDialog>
 #include "importthread.h"
 #include "common.h"
+#include "library.h"
 
 namespace Ui {
 class AddLibrary;

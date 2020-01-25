@@ -23,8 +23,6 @@ QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
 QSettings *global_settings=nullptr;
-QMap<int,SLib> mLibs;
-QMap <uint,SGenre> mGenre;
 QCommandLineParser CMDparser;
 QSplashScreen *splash;
 QApplication *app;
@@ -446,7 +444,7 @@ void UpdateLibs()
         mLibs.clear();
         while(query.next())
         {
-            int idLib = query.value(0).toInt();
+            int idLib = query.value(0).toUInt();
             mLibs[idLib].name = query.value(1).toString().trimmed();
             mLibs[idLib].path = query.value(2).toString().trimmed();
             mLibs[idLib].sInpx = query.value(3).toString().trimmed();
@@ -482,7 +480,7 @@ int main(int argc, char *argv[])
     QApplication a(argc, argv);
     a.setStyleSheet("QComboBox { combobox-popup: 0; }");
 
-    a.setOrganizationName("");
+    a.setOrganizationName("freeLib");
     a.setApplicationName("freeLib");
 
     QCommandLineOption trayOption("tray", "minimize to tray on start");
@@ -538,13 +536,13 @@ int main(int argc, char *argv[])
     QPainter painter(&pixmap);
     painter.setFont(QFont(painter.font().family(),VERSION_FONT,QFont::Bold));
     painter.setPen(Qt::white);
-    painter.drawText(QRect(30,140,261,111),Qt::AlignLeft|Qt::AlignVCenter,PROG_VERSION);
+    painter.drawText(QRect(30,140,360,111),Qt::AlignLeft|Qt::AlignVCenter,PROG_VERSION);
     splash=new QSplashScreen(pixmap);
     splash->resize(640,400);
-    QRect screenRect=QDesktopWidget().screenGeometry();
-    splash->move(
-                (screenRect.width()-splash->width())/2,
-                (screenRect.height()-splash->height())/2);
+//    QRect screenRect=QDesktopWidget().screenGeometry();
+//    splash->move(
+//                (screenRect.width()-splash->width())/2,
+//                (screenRect.height()-splash->height())/2);
 #ifdef Q_OS_LINUX
     splash->setWindowIcon(QIcon(":/library_128x128.png"));
 #endif

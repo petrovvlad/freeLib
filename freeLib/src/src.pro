@@ -70,6 +70,7 @@ win32{
 }
 
 SOURCES += main.cpp\
+	library.cpp \
         mainwindow.cpp \
     addlibrary.cpp \
     importthread.cpp \
@@ -133,6 +134,7 @@ HEADERS  += mainwindow.h \
     SmtpClient/mimecontentformatter.h \
     SmtpClient/mimeattachment.h \
     SmtpClient/emailaddress.h \
+    library.h \
     settingsdlg.h \
     exportthread.h \
     exportdlg.h \
