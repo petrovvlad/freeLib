@@ -125,6 +125,7 @@ QStringList fillParams(QStringList str, QFileInfo book_file, QString seria_name,
 QString decodeStr(const QString &str);
 bool SetCurrentZipFileName(QuaZip *zip,QString name);
 QString RelativeToAbsolutePath(QString path);
+QString sizeToString(uint size);
 
 extern int idCurrentLib;
 
