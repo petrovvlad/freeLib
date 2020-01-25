@@ -217,11 +217,6 @@ MainWindow::MainWindow(QWidget *parent) :
     layout->setSpacing(0);
     layout->setMargin(0);
 
-    UpdateTags();
-    loadGenres();
-    loadLibrary(idCurrentLib);
-    UpdateBooks();
-
     idCurrentLanguage_ = -1;
     bUseTag_=settings.value("use_tag",true).toBool();
     bShowDeleted_ =settings.value("ShowDeleted").toBool();
@@ -244,6 +239,11 @@ MainWindow::MainWindow(QWidget *parent) :
         idCurrentGenre_ = 0;
         nCurrentTab = 0;
     }
+
+    UpdateTags();
+    loadGenres();
+    loadLibrary(idCurrentLib);
+    UpdateBooks();
 
     FillAuthors();
     FillSerials();
