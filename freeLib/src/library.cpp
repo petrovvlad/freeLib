@@ -1,9 +1,4 @@
-#include <QSqlDatabase>
-#include <QSqlQuery>
-#include <QSqlError>
-#include <QDebug>
-#include <QTranslator>
-
+#include "common.h"
 #include "library.h"
 
 
@@ -42,7 +37,7 @@ void loadLibrary(uint idLibrary)
         uint idAuthor = query.value(0).toUInt();
         QString sName = query.value(1).toString().trimmed();
         if(sName.isEmpty())
-            sName = QObject::tr("unknown author");
+            sName = QCoreApplication::translate("MainWindow","unknown author");
         int nTag = query.value(2).toInt();
         lib.mAuthors[idAuthor].sName = sName;
         lib.mAuthors[idAuthor].nTag = nTag;
