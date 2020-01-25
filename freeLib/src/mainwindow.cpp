@@ -134,6 +134,27 @@ QPixmap GetTag(QColor color,int size)
     return pixmap;
 }
 
+QString sizeToString(uint size)
+{
+    QStringList mem;
+    mem <<QCoreApplication::translate("MainWindow","B")<<QCoreApplication::translate("MainWindow","kB")<<QCoreApplication::translate("MainWindow","MB")<<QCoreApplication::translate("MainWindow","GB")<<QCoreApplication::translate("MainWindow","TB")<<QCoreApplication::translate("MainWindow","PB");
+    uint rest=0;
+    int mem_i=0;
+
+    while(size>1024)
+    {
+        mem_i++;
+        if(mem_i==mem.count())
+        {
+            mem_i--;
+            break;
+        }
+        rest=size%1024;
+        size=size/1024;
+     }
+    double size_d = (float)size + (float)rest / 1024.0;
+    return QString("%L1 %2").arg(size_d,0,'f',mem_i>0?1:0).arg(mem[mem_i]);
+}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1257,11 +1278,7 @@ void MainWindow::SelectBook()
         file_html.open(QIODevice::ReadOnly);
         QString content(file_html.readAll());
         qint64 size=0;
-        qint64 rest=0;
-        int mem_i=0;
-        QStringList mem;
         QFileInfo arh;
-        mem<<tr("B")<<tr("kB")<<tr("MB")<<tr("GB")<<tr("TB")<<tr("PB");
         if(!fi.fileName().isEmpty())
         {
             arh=fi;
@@ -1272,21 +1289,6 @@ void MainWindow::SelectBook()
                     break;
             }
             size=arh.size();
-            rest=0;
-            if(!arh.isDir() && arh.suffix().toLower()!="zip")
-                arh.setFile(arh.absolutePath());
-            mem_i=0;
-            while(size>1024)
-            {
-                mem_i++;
-                if(mem_i==mem.count())
-                {
-                    mem_i--;
-                    break;
-                }
-                rest=size%1024;
-                size=size/1024;
-             }
         }
         QString img_width="220";
         content.replace("#annotation#",bi.annotation).
@@ -1296,7 +1298,7 @@ void MainWindow::SelectBook()
                 replace("#genre#",sGenres).
                 replace("#series#",seria).
                 replace("#file_path#",arh.filePath()).
-                replace("#file_size#",QString::number(size)+(mem_i>0?"."+QString::number((rest*10+5)/1024):"")+" "+mem[mem_i]).
+                replace("#file_size#",sizeToString(size)/*QString::number(size)+(mem_i>0?"."+QString::number((rest*10+5)/1024):"")+" "+mem[mem_i]*/).
                 replace("#file_data#",book_date.toString("dd.MM.yyyy hh:mm:ss")).
                 replace("#file_name#",fi.fileName()).
                 replace("#image#",bi.img).
@@ -1901,7 +1903,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
             }
 
             if(book.nSize>0)
-                item_book->setText(2,QString::number(book.nSize));
+                item_book->setText(2,sizeToString(book.nSize));
             item_book->setTextAlignment(2, Qt::AlignRight);
 
             QPixmap pix(":/icons/img/icons/stars/"+QString::number(book.nStars).trimmed()+QString("star%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
