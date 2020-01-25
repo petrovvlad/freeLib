@@ -7,6 +7,7 @@
 #include <QDateTime>
 
 #include "common.h"
+#include "library.h"
 
 class opds_server : public QObject
 {

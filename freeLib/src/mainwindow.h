@@ -41,9 +41,6 @@ private:
     Ui::MainWindow *ui;
     QSystemTrayIcon *trIcon;
     QToolButton *tbClear;
-    void UpdateAuthor();
-    void UpdateSeria();
-    void UpdateGenre();
     void UpdateBooks();
     void UpdateTags();
     DropForm *pDropForm;

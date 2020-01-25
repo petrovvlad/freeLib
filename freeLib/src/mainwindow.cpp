@@ -1,4 +1,3 @@
-
 #include <QtSql>
 #include <QDomDocument>
 #include <QBuffer>
@@ -10,7 +9,6 @@
 #include <QTextCodec>
 #include <QMap>
 #include <QButtonGroup>
-
 
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -32,6 +30,7 @@
 #include "webpage.h"
 #include "treebookitem.h"
 #include "genresortfilterproxymodel.h"
+#include "library.h"
 
 extern QSplashScreen *splash;
 
@@ -197,6 +196,38 @@ MainWindow::MainWindow(QWidget *parent) :
     layout->setSpacing(0);
     layout->setMargin(0);
 
+    UpdateTags();
+    loadGenres();
+    loadLibrary(idCurrentLib);
+    UpdateBooks();
+
+    idCurrentLanguage_ = -1;
+    bUseTag_=settings.value("use_tag",true).toBool();
+    bShowDeleted_ =settings.value("ShowDeleted").toBool();
+    int nCurrentTab;
+
+    if(settings.value("store_position",true).toBool())
+    {
+        idCurrentAuthor_= settings.value("current_author_id",0).toUInt();
+        idCurrentSerial_ = settings.value("current_serial_id",0).toUInt();
+        idCurrentBook_ = settings.value("current_book_id",0).toUInt();
+        idCurrentGenre_ = settings.value("current_genre_id",0).toUInt();
+        nCurrentTab = settings.value("current_tab",0).toInt();
+        ui->searchString->setText(settings.value("filter_set").toString());
+    }
+    else
+    {
+        idCurrentAuthor_ = 0;
+        idCurrentSerial_ = 0;
+        idCurrentBook_ = 0;
+        idCurrentGenre_ = 0;
+        nCurrentTab = 0;
+    }
+
+    FillAuthors();
+    FillSerials();
+    FillGenres();
+
     connect(ui->searchString,SIGNAL(/*textEdited*/textChanged(QString)),this,SLOT(searchCanged(QString)));
     connect(tbClear,SIGNAL(clicked()),this,SLOT(searchClear()));
     connect(ui->actionAddLibrary,SIGNAL(triggered()),this,SLOT(ManageLibrary()));
@@ -242,28 +273,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ChangingLanguage(false);
     ExportBookListBtn(false);
 
-    idCurrentLanguage_ = -1;
-    bUseTag_=settings.value("use_tag",true).toBool();
-    bShowDeleted_ =settings.value("ShowDeleted").toBool();
-    int nCurrentTab;
-
-    if(settings.value("store_position",true).toBool())
-    {
-        idCurrentAuthor_= settings.value("current_author_id",0).toUInt();
-        idCurrentSerial_ = settings.value("current_serial_id",0).toUInt();
-        idCurrentBook_ = settings.value("current_book_id",0).toUInt();
-        idCurrentGenre_ = settings.value("current_genre_id",0).toUInt();
-        nCurrentTab = settings.value("current_tab",0).toInt();
-        ui->searchString->setText(settings.value("filter_set").toString());
-    }
-    else
-    {
-        idCurrentAuthor_ = 0;
-        idCurrentSerial_ = 0;
-        idCurrentBook_ = 0;
-        idCurrentGenre_ = 0;
-        nCurrentTab = 0;
-    }
 
     mode=static_cast<APP_MODE>(settings.value("ApplicationMode",0).toInt());
     switch(mode)
@@ -280,15 +289,7 @@ MainWindow::MainWindow(QWidget *parent) :
         break;
     }
 
-    UpdateTags();
-    UpdateSeria();
-    UpdateAuthor();
-    UpdateGenre();
-    UpdateBooks();
 
-    FillAuthors();
-    FillSerials();
-    FillGenres();
     switch(nCurrentTab)
     {
     case 0:
@@ -465,10 +466,7 @@ void MainWindow::newLibWizard(bool AddLibOnly)
         lib.bWoDeleted = false;
         lib.bFirstAuthor = false;
         al.AddNewLibrary(lib);
-        UpdateGenre();
-        UpdateTags();
-        UpdateSeria();
-        UpdateAuthor();
+        loadLibrary(idCurrentLib);
         UpdateBooks();
         FillAuthors();
         FillSerials();
@@ -788,7 +786,6 @@ void MainWindow::Settings()
         bShowDeleted_ = settings.value("ShowDeleted").toBool();
         UpdateTags();
         SaveLibPosition();
-        UpdateSeria();
         FillAuthors();
         FillGenres();
         FillListBooks();
@@ -1095,9 +1092,8 @@ void MainWindow::SelectLibrary()
     settings.setValue("LibID",action->data().toLongLong());
     idCurrentLib=action->data().toInt();
 
-    UpdateAuthor();
+    loadLibrary(idCurrentLib);
     UpdateBooks();
-    UpdateSeria();
     FillAuthors();
     FillSerials();
     FillGenres();
@@ -1309,111 +1305,11 @@ void MainWindow::SelectBook()
     }
 }
 
-void MainWindow::UpdateAuthor()
-{
-    if(!db_is_open)
-        return;
-
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    query.prepare("SELECT author.id, name1||' '||name2||' '||name3, author.favorite FROM author WHERE id_lib=:id_lib;");
-    query.bindValue(":id_lib",idCurrentLib);
-    query.exec();
-    while (query.next()) {
-        uint idAuthor = query.value(0).toUInt();
-        QString sName = query.value(1).toString().trimmed();
-        if(sName.isEmpty())
-            sName = tr("unknown author");
-        int nTag = query.value(2).toInt();
-        mLibs[idCurrentLib].mAuthors[idAuthor].sName = sName;
-        mLibs[idCurrentLib].mAuthors[idAuthor].nTag = nTag;
-    }
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-        qDebug()<< "UpdateAuthor " << t_end-t_start << "msec";
-    QApplication::restoreOverrideCursor();
-}
-
 
 void MainWindow::UpdateBooks()
 {
-
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-    qint64 t_map = 0;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     SLib &currentLib = mLibs[idCurrentLib];
-
-    currentLib.mBooks.clear();
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    query.setForwardOnly(true);
-    query.prepare("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, favorite FROM book WHERE id_lib=:id_lib;");
-    //                     0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
-    query.bindValue(":id_lib",idCurrentLib);
-    if(!query.exec())
-        qDebug() << query.lastError().text();
-    while (query.next()) {
-        QString sName = query.value(1).toString();
-        if(sName.isEmpty())
-            continue;
-        uint id = query.value(0).toUInt();
-        qint64 t_map_start =  QDateTime::currentMSecsSinceEpoch();
-        SBook &book = currentLib.mBooks[id];
-        book.sName = sName;
-        book.nStars = qvariant_cast<uchar>(query.value(2));
-        book.idSerial = query.value(3).toUInt();
-        book.numInSerial = query.value(4).toUInt();
-        QString sLaguage = query.value(5).toString().toLower();
-        int idLaguage = currentLib.vLaguages.indexOf(sLaguage);
-        if(idLaguage<0){
-            idLaguage =currentLib.vLaguages.count();
-            currentLib.vLaguages << sLaguage;
-        }
-        book.idLanguage = static_cast<uchar>(idLaguage);
-        book.nFile = query.value(6).toUInt();
-        book.nSize = query.value(7).toUInt();
-        book.bDeleted = query.value(8).toBool();
-        book.date = query.value(9).toDate();
-        book.sFormat = query.value(10).toString();
-        book.idInLib = query.value(11).toUInt();
-        book.sArchive = query.value(12).toString();
-        book.idFirstAuthor = query.value(13).toUInt();
-        book.nTag = qvariant_cast<uchar>(query.value(14));
-        t_map += QDateTime::currentMSecsSinceEpoch()-t_map_start;
-    }
-    qDebug() << "mBooks insert " << t_map << "msec";
-    qDebug()<< "UpdateBooks1 " << QDateTime::currentMSecsSinceEpoch()-t_start << "msec";
-
-    currentLib.mAuthorBooksLink.clear();
-    query.prepare("SELECT id_book, id_author FROM book_author WHERE id_lib=:id_lib;");
-    //                     0       1
-    query.bindValue(":id_lib",idCurrentLib);
-    if(!query.exec())
-        qDebug() << query.lastError().text();
-    while (query.next()) {
-        uint idBook = query.value(0).toUInt();
-        uint idAuthor = query.value(1).toUInt();
-        if(currentLib.mBooks.contains(idBook) && currentLib.mAuthors.contains(idAuthor)){
-            currentLib.mAuthorBooksLink.insert(idAuthor,idBook);
-            currentLib.mBooks[idBook].listIdAuthors << idAuthor;
-        }
-    }
-
-    query.prepare("SELECT id_book, id_janre FROM book_janre WHERE id_lib=:id_lib;");
-    //                     0       1
-    query.bindValue(":id_lib",idCurrentLib);
-    if(!query.exec())
-        qDebug() << query.lastError().text();
-    while (query.next()) {
-        uint idBook = query.value(0).toUInt();
-        uint idGenre = query.value(1).toUInt();
-        if(idGenre==0) idGenre = 1112; // Прочие/Неотсортированное
-        if(currentLib.mBooks.contains(idBook))
-            currentLib.mBooks[idBook].listIdGenres << idGenre;
-    }
-
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateBooks " << t_end-t_start << "msec";
 
     ui->language->blockSignals(true);
     ui->findLanguage->blockSignals(true);
@@ -1444,69 +1340,13 @@ void MainWindow::UpdateBooks()
     QApplication::restoreOverrideCursor();
 }
 
-void MainWindow::UpdateSeria()
-{
-    if(!db_is_open)
-        return;
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-
-    mLibs[idCurrentLib].mSerials.clear();
-    query.prepare("SELECT id, name, favorite FROM seria WHERE id_lib=:id_lib;");
-    //                    0   1     2
-    query.bindValue(":id_lib",idCurrentLib);
-    if(!query.exec())
-        qDebug() << query.lastError().text();
-    while (query.next()) {
-        uint idSerial = query.value(0).toUInt();
-        QString sName = query.value(1).toString();
-        mLibs[idCurrentLib].mSerials[idSerial].sName = sName;
-        mLibs[idCurrentLib].mSerials[idSerial].nTag = static_cast<uchar>(query.value(2).toUInt());
-    }
-
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateSeria " << t_end-t_start << "msec";
-    QApplication::restoreOverrideCursor();
-}
-
-void MainWindow::UpdateGenre()
-{
-    if(!db_is_open)
-        return;
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    mGenre.clear();
-    query.prepare("SELECT id, name, id_parent, sort_index FROM janre;");
-    //                    0   1     2          3
-    if(!query.exec())
-        qDebug() << query.lastError().text();
-    while (query.next()) {
-        uint idGenre = query.value(0).toUInt();
-        SGenre &genre = mGenre[idGenre];
-        genre.sName = query.value(1).toString();
-        genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
-        genre.nSort = static_cast<ushort>(query.value(3).toUInt());
-    }
-
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "UpdateGenre " << t_end-t_start << "msec";
-
-    QApplication::restoreOverrideCursor();
-}
-
 void MainWindow::ManageLibrary()
 {
     SaveLibPosition();
     AddLibrary al(this);
     al.exec();
     if(al.bLibChanged){
-        UpdateAuthor();
-        UpdateGenre();
+        loadLibrary(idCurrentLib);
         UpdateTags();
         UpdateBooks();
         searchCanged(ui->searchString->text());
@@ -1538,6 +1378,7 @@ void MainWindow::btnGenres()
     ui->language->setEnabled(true);
     SelectGenre();
 }
+
 void MainWindow::btnPageSearch()
 {
     ui->tabWidget->setCurrentIndex(3);
@@ -1557,7 +1398,6 @@ void MainWindow::btnSearch()
 }
 
 void MainWindow::About()
-
 {
     AboutDialog* dlg=new AboutDialog(this);
     dlg->exec();

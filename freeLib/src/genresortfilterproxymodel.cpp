@@ -1,5 +1,6 @@
 #include "common.h"
 #include "genresortfilterproxymodel.h"
+#include "library.h"
 
 GenreSortFilterProxyModel::GenreSortFilterProxyModel(QObject *parent): QSortFilterProxyModel(parent)
 {

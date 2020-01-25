@@ -6,6 +6,7 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "common.h"
+#include "library.h"
 
 void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
 {
@@ -363,6 +364,7 @@ qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria
 qlonglong ImportThread::AddGenre(qlonglong id_book,QString janre,qlonglong id_lib,QString language)
 {
     qlonglong id_janre=0;
+    janre.replace(" ","_");
     query->exec("SELECT id,main_janre FROM janre where keys LIKE '%"+janre.toLower()+";%'");
     if(query->next())
     {

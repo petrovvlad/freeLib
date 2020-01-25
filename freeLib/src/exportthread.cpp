@@ -13,6 +13,7 @@
 #include "fb2mobi/fb2mobi.h"
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
+#include "library.h"
 
 QString Transliteration(QString str)
 {
