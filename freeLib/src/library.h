@@ -53,6 +53,7 @@ struct SLib
     QString sInpx;
     bool bFirstAuthor;
     bool bWoDeleted;
+    bool bLoaded = false;
     QHash<uint,SAuthor> mAuthors;
     QMultiHash<uint,uint> mAuthorBooksLink;
     QHash<uint,SBook> mBooks;

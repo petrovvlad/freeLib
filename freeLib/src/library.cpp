@@ -105,6 +105,7 @@ void loadLibrary(uint idLibrary)
         if(lib.mBooks.contains(idBook))
             lib.mBooks[idBook].listIdGenres << idGenre;
     }
+    lib.bLoaded = true;
 
     t_end = QDateTime::currentMSecsSinceEpoch();
     qDebug()<< "loadBooks " << t_end-t_start << "msec";
