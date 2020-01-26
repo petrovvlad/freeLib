@@ -1035,6 +1035,8 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         }
     }
     SLib &lib = mLibs[id_lib];
+    if(!lib.bLoaded)
+        loadLibrary(id_lib);
 
     uint nPage = 0;
     if(!QFileInfo(url).exists())
