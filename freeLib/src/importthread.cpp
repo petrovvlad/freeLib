@@ -223,7 +223,7 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
         foreach (uint idAuthor,  mLibs[idCurrentLib].mBooks[id_book].listIdAuthors) {
             author_info ti("",0);
             ti.id = idAuthor;
-            ti.author = mLibs[idCurrentLib].mAuthors[idAuthor].sName;
+            ti.author = mLibs[idCurrentLib].mAuthors[idAuthor].getName();
             bi.authors<<ti;
         }
 

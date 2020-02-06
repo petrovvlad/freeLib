@@ -672,7 +672,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
                     listBooks << iBook.key();
                 else{
                     foreach(uint idAuthor,iBook->listIdAuthors){
-                        if(lib.mAuthors[idAuthor].sName.contains(sSearch,Qt::CaseInsensitive)){
+                        if(lib.mAuthors[idAuthor].getName().contains(sSearch,Qt::CaseInsensitive)){
                             listBooks<< iBook.key();
                             break;
                         }
@@ -683,7 +683,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
         }
         std::sort(listBooks.begin(), listBooks.end(), [lib](const uint& lhs, const uint& rhs){
             if(lib.mBooks[lhs].idFirstAuthor != lib.mBooks[rhs].idFirstAuthor)
-                return lib.mAuthors[lib.mBooks[lhs].idFirstAuthor].sName<lib.mAuthors[lib.mBooks[rhs].idFirstAuthor].sName;
+                return lib.mAuthors[lib.mBooks[lhs].idFirstAuthor].getName()<lib.mAuthors[lib.mBooks[rhs].idFirstAuthor].getName();
             else
                 return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;
 
@@ -744,7 +744,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                 foreach(uint idAuthor,book.listIdAuthors){
                     QDomElement author=doc.createElement("author");
                     entry.appendChild(author);
-                    AddTextNode("name",lib.mAuthors[idAuthor].sName,author);
+                    AddTextNode("name",lib.mAuthors[idAuthor].getName(),author);
                 }
                 foreach(uint idGenre,book.listIdGenres){
                     QDomElement category=doc.createElement("category");
@@ -875,7 +875,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     el.setAttribute("class","cover");
                 }
                 if(bShowAuthor){
-                    QDomElement el=AddTextNode("a",lib.mAuthors[book.idFirstAuthor].sName,entry);
+                    QDomElement el=AddTextNode("a",lib.mAuthors[book.idFirstAuthor].getName(),entry);
                     el.setAttribute("class","book");
                     el.setAttribute("href",QString("/author/%1").arg(book.idFirstAuthor)+(session.isEmpty()?"":"?session="+session));
                 }
@@ -1669,16 +1669,16 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         int count=0;
         while(iAuthor != lib.mAuthors.constEnd())
         {
-            if(iAuthor->sName.left(index.length()).toLower()==index.toLower())
+            if(iAuthor->getName().left(index.length()).toLower()==index.toLower())
             {
                 count++;
-                QString sNewIndex = iAuthor->sName.left(index.length()+1).toLower();
+                QString sNewIndex = iAuthor->getName().left(index.length()+1).toLower();
                 sNewIndex[0] = sNewIndex[0].toUpper();
                 if(mCount.contains(sNewIndex))
                     mCount[sNewIndex]++;
                 else
                     mCount[sNewIndex] = 1;
-                if(sNewIndex.length()==iAuthor->sName.length())
+                if(sNewIndex.length()==iAuthor->getName().length())
                     setAuthors.insert(sNewIndex);
             }
             ++iAuthor;
@@ -1714,7 +1714,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                         iAuthor = lib.mAuthors.constBegin();
                         while(iAuthor != lib.mAuthors.constEnd())
                         {
-                            if(iAuthor.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            if(iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
                             {
                                 el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?"":"?session="+session));
                                 break;
@@ -1750,7 +1750,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                         iAuthor = lib.mAuthors.constBegin();
                         while(iAuthor != lib.mAuthors.constEnd())
                         {
-                            if(iAuthor.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            if(iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
                             {
                                 el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?"":"?session="+session));
                                 break;
@@ -1785,13 +1785,13 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             iAuthor =lib.mAuthors.constBegin();
             while(iAuthor != lib.mAuthors.constEnd())
             {
-                if(iAuthor->sName.left(index.length()).toLower()==index.toLower())
+                if(iAuthor->getName().left(index.length()).toLower()==index.toLower())
                 {
                     listAuthorId << iAuthor.key();
                 }
                 ++iAuthor;
             }
-            std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](const uint& lhs,const uint& rhs) {return lib.mAuthors[lhs].sName < lib.mAuthors[rhs].sName;});
+            std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](const uint& lhs,const uint& rhs) {return lib.mAuthors[lhs].getName() < lib.mAuthors[rhs].getName();});
             foreach(auto iIndex,listAuthorId)
             {
                 uint nBooksCount=0;
@@ -1807,7 +1807,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                     feed.appendChild(entry);
                     AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
                     AddTextNode("id","tag:author:"+QString::number(iIndex),entry);
-                    AddTextNode("title",lib.mAuthors[iIndex].sName,entry);
+                    AddTextNode("title",lib.mAuthors[iIndex].getName(),entry);
                     QDomElement el=AddTextNode("content",QString::number(nBooksCount)+" "+tr("books"),entry);
                     el.setAttribute("type","text");
                     el=AddTextNode("link","",entry);
@@ -1819,7 +1819,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                     QDomElement div=doc.createElement("DIV");
                     div.setAttribute("class","author");
                     feed.appendChild(div);
-                    QDomElement el=AddTextNode("a",lib.mAuthors[iIndex].sName,div);
+                    QDomElement el=AddTextNode("a",lib.mAuthors[iIndex].getName(),div);
                     el.setAttribute("class","block");
                     el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
                     AddTextNode("div",QString::number(nBooksCount)+" "+tr("books"),div);
@@ -1838,14 +1838,14 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         uint idAuthor = strings[2].toUInt();
 
         QList<uint> listBooks = book_list(lib,idAuthor,0,0,"",true);
-        ts<<FillPage(listBooks,lib,tr("Books without sequence")+" ("+lib.mAuthors[idAuthor].sName+")",lib_url, url,ts,opds,nPage,session,false);
+        ts<<FillPage(listBooks,lib,tr("Books without sequence")+" ("+lib.mAuthors[idAuthor].getName()+")",lib_url, url,ts,opds,nPage,session,false);
 
     }
     else if(url.startsWith("/authorbooks/",Qt::CaseInsensitive) && strings.count()>=3)
     {
         uint idAuthor = strings[2].toUInt();
         QList<uint> listBooks = book_list(lib,idAuthor,0,0,"",false);
-        ts<<FillPage(listBooks,lib,tr("Books by ABC")+" ("+lib.mAuthors[idAuthor].sName+")",lib_url, url,ts,opds,nPage,session,false);
+        ts<<FillPage(listBooks,lib,tr("Books by ABC")+" ("+lib.mAuthors[idAuthor].getName()+")",lib_url, url,ts,opds,nPage,session,false);
 
     }
     else if(url.startsWith("/authorsequences/",Qt::CaseInsensitive) && strings.count()>=3)
@@ -1857,14 +1857,14 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         {
             feed=doc_header(session);
             AddTextNode("id","tag:author:"+query.value(0).toString(),feed);
-            AddTextNode("title",tr("Book sequences")+" "+lib.mAuthors[idAuthor].sName,feed);
+            AddTextNode("title",tr("Book sequences")+" "+lib.mAuthors[idAuthor].getName(),feed);
             AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
             AddTextNode("icon","/icon_256x256.png",feed);
         }
         else
         {
              feed=doc_header(session,true,lib.name,lib_url);
-             QDomElement div=AddTextNode("DIV",tr("Book sequences")+" "+lib.mAuthors[idAuthor].sName,feed);
+             QDomElement div=AddTextNode("DIV",tr("Book sequences")+" "+lib.mAuthors[idAuthor].getName(),feed);
              div.setAttribute("class","caption");
         }
 
@@ -1933,7 +1933,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     {
         QString sIdAuthor = strings[2];
         uint idAuthor = sIdAuthor.toUInt();
-        QString sAuthor = lib.mAuthors[idAuthor].sName;
+        QString sAuthor = lib.mAuthors[idAuthor].getName();
         if(opds)
         {
             QDomElement feed=doc_header(session);
