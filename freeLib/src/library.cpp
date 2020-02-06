@@ -30,16 +30,17 @@ void loadLibrary(uint idLibrary)
     qDebug()<< "loadSeria " << t_end-t_start << "msec";
 
     t_start = QDateTime::currentMSecsSinceEpoch();
-    query.prepare("SELECT author.id, name1||' '||name2||' '||name3, author.favorite FROM author WHERE id_lib=:id_lib;");
+    query.prepare("SELECT author.id, name1, name2, name3, author.favorite FROM author WHERE id_lib=:id_lib;");
+    //                    0          1      2      3      4
     query.bindValue(":id_lib",idLibrary);
     query.exec();
     while (query.next()) {
         uint idAuthor = query.value(0).toUInt();
-        QString sName = query.value(1).toString().trimmed();
-        if(sName.isEmpty())
-            sName = QCoreApplication::translate("MainWindow","unknown author");
-        int nTag = query.value(2).toInt();
-        lib.mAuthors[idAuthor].sName = sName;
+        int nTag = query.value(4).toInt();
+        SAuthor &author = lib.mAuthors[idAuthor];
+        author.sFirstName = query.value(2).toString().trimmed();;
+        author.sLastName = query.value(1).toString().trimmed();;
+        author.sMiddleName = query.value(3).toString().trimmed();;
         lib.mAuthors[idAuthor].nTag = nTag;
     }
     t_end = QDateTime::currentMSecsSinceEpoch();
@@ -134,4 +135,12 @@ void loadGenres()
     }
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
     qDebug()<< "loadGenre " << t_end-t_start << "msec";
+}
+
+QString SAuthor::getName() const
+{
+    QString sAuthorName = QString("%1 %2 %3").arg(sLastName,sFirstName,sMiddleName).trimmed();
+    if(sAuthorName.isEmpty())
+        sAuthorName = QCoreApplication::translate("MainWindow","unknown author");
+    return sAuthorName;
 }

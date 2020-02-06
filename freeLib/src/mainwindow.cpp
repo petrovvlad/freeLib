@@ -1075,7 +1075,7 @@ void MainWindow::StartSearch()
     while(iBook != mLibs[idCurrentLib].mBooks.constEnd()){
         if((bShowDeleted_ || !iBook->bDeleted)&&
                 iBook->date>= dateFrom && iBook->date <= dateTo &&
-                (sAuthor.isEmpty() || mLibs[idCurrentLib].mAuthors[iBook->idFirstAuthor].sName.contains(sAuthor,Qt::CaseInsensitive)) &&
+                (sAuthor.isEmpty() || mLibs[idCurrentLib].mAuthors[iBook->idFirstAuthor].getName().contains(sAuthor,Qt::CaseInsensitive)) &&
                 (sName.isEmpty() || iBook->sName.contains(sName,Qt::CaseInsensitive)) &&
                 (sSeria.isEmpty() || (iBook->idSerial>0 && mLibs[idCurrentLib].mSerials[iBook->idSerial].sName.contains(sSeria,Qt::CaseInsensitive))) &&
                 (idLanguage == -1 ||(iBook->idLanguage == idLanguage)))
@@ -1265,7 +1265,7 @@ void MainWindow::SelectBook()
         QString sAuthors;
         foreach (auto idAuthor, book.listIdAuthors)
         {
-            QString sAuthor = mLibs[idCurrentLib].mAuthors[idAuthor].sName;
+            QString sAuthor = mLibs[idCurrentLib].mAuthors[idAuthor].getName();
             sAuthors+=(sAuthors.isEmpty()?"":"; ")+QString("<a href='author_%3%1'>%2</a>").arg(QString::number(idAuthor),sAuthor.replace(","," "),sAuthor.left(1));
         }
         QString sGenres;
@@ -1659,7 +1659,7 @@ void MainWindow::FillAuthors()
     auto i = currentLib.mAuthors.constBegin();
 
     while(i!=currentLib.mAuthors.constEnd()){
-        if(sSearch == "*" || (sSearch=="#" && !i->sName.left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) || i->sName.startsWith(sSearch,Qt::CaseInsensitive)){
+        if(sSearch == "*" || (sSearch=="#" && !i->getName().left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) || i->getName().startsWith(sSearch,Qt::CaseInsensitive)){
             QList<uint> booksId = currentLib.mAuthorBooksLink.values(i.key());
             int count =0;
             foreach( uint idBook, booksId) {
@@ -1670,7 +1670,7 @@ void MainWindow::FillAuthors()
                 }
             }
             if(count>0){
-                item=new QListWidgetItem(QString("%1 (%2)").arg(i->sName).arg(count));
+                item=new QListWidgetItem(QString("%1 (%2)").arg(i->getName()).arg(count));
                 item->setData(Qt::UserRole,i.key());
                 if(bUseTag_)
                     item->setIcon(GetTag(i->nTag));
@@ -1854,7 +1854,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
             }
             if(!mAuthors.contains(idAuthor)){
                 item_author = new TreeBookItem(ui->Books,ITEM_TYPE_AUTHOR);
-                item_author->setText(0,mLibs[idCurrentLib].mAuthors[idAuthor].sName);
+                item_author->setText(0,mLibs[idCurrentLib].mAuthors[idAuthor].getName());
                 item_author->setExpanded(true);
                 item_author->setFont(0,bold_font);
                 item_author->setCheckState(0,Qt::Unchecked);

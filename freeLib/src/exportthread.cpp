@@ -448,7 +448,7 @@ void ExportThread::export_books()
                 file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
                 if(file_name.isEmpty())
                     file_name=default_exp_file_name;
-                QString author=BuildFileName(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].sName);
+                QString author=BuildFileName(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].getName());
                 QString seria_name=BuildFileName(mLibs[idCurrentLib].mSerials[book.idSerial].sName);
                 QString book_name=BuildFileName(book.sName);
                 QString ser_num = QString::number(book.numInSerial);
