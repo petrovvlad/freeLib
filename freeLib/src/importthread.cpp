@@ -300,6 +300,8 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
     QString name3;
     if(names.count()>2)
         name3=names[2].trimmed();
+    if(name1.isEmpty() && name2.isEmpty() && name3.isEmpty())
+        return -1;
 
     query->prepare("SELECT id,favorite FROM author WHERE id_lib=:id_lib and name1=:name1 and name2=:name2 and name3=:name3");
     query->bindValue(":id_lib",libID);
@@ -701,6 +703,7 @@ void ImportThread::process()
         emit End();
         return;
     }
+    QuaZip archiveFile;
     QuaZip uz(_fileName);
     if (!uz.open(QuaZip::mdUnzip))
     {
@@ -950,8 +953,48 @@ void ImportThread::process()
                         if(!tag_author[author_count].trimmed().isEmpty())
                             tag_auth=tag_author[author_count].trimmed().toInt();
                     }
-                    AddAuthor(author,existingID,id_book,author_count==0,language,tag_auth);
-                    author_count++;
+                    QString sAuthorLow = author.toLower();
+                    if(format == "fb2" && sAuthorLow.contains("автор") && (sAuthorLow.contains("неизвестен") || sAuthorLow.contains("неизвестный")))
+                    {
+                        QString sFile, sArchive;
+                        QBuffer buffer;
+                        sFile = QString("%1.%2").arg(file).arg(format);
+                        sArchive = QString("%1/%2").arg(_path).arg(folder.replace(".inp",".zip"));
+                        if(archiveFile.getZipName() != sArchive){
+                            archiveFile.close();
+                            archiveFile.setZipName(sArchive);
+                            if (!archiveFile.open(QuaZip::mdUnzip))
+                                qDebug()<<("Error open archive!")<<" "<<sArchive;
+                        }
+                        QuaZipFile zip_file(&archiveFile);
+                        SetCurrentZipFileName(&archiveFile,sFile);
+                        if(!zip_file.open(QIODevice::ReadOnly))
+                            qDebug()<<"Error open file: "<<sFile;
+                        buffer.setData(zip_file.read(16*1024));
+                        zip_file.close();
+
+                        QDomDocument doc;
+                        doc.setContent(buffer.data());
+                        QDomElement title_info=doc.elementsByTagName("title-info").at(0).toElement();
+                        QDomNodeList listAuthor=title_info.elementsByTagName("author");
+
+                        for(int i=0;i<listAuthor.count();i++)
+                        {
+                            QString firstname=listAuthor.at(i).toElement().elementsByTagName("first-name").at(0).toElement().text();
+                            QString lastname=listAuthor.at(i).toElement().elementsByTagName("last-name").at(0).toElement().text();
+                            QString middlename=listAuthor.at(i).toElement().elementsByTagName("middle-name").at(0).toElement().text();
+                            QString sAuthor = author=lastname+","+firstname+","+middlename;
+                            sAuthorLow = sAuthor.toLower();
+                            if(!sAuthorLow.contains("неизвестен") && !sAuthorLow.contains("неизвестный")){
+                                QString sAuthor = QString("%1,%2,%3").arg(lastname,firstname,middlename);
+                                AddAuthor(sAuthor,existingID,id_book,author_count==0,language,tag_auth);
+                                author_count++;
+                            }
+                        }
+                    }else{
+                        AddAuthor(author,existingID,id_book,author_count==0,language,tag_auth);
+                        author_count++;
+                    }
                 }
 
                 qlonglong t3=QDateTime::currentMSecsSinceEpoch();

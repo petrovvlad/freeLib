@@ -30,6 +30,7 @@ void loadLibrary(uint idLibrary)
     qDebug()<< "loadSeria " << t_end-t_start << "msec";
 
     t_start = QDateTime::currentMSecsSinceEpoch();
+    lib.mAuthors.insert(0,SAuthor());
     query.prepare("SELECT author.id, name1, name2, name3, author.favorite FROM author WHERE id_lib=:id_lib;");
     //                    0          1      2      3      4
     query.bindValue(":id_lib",idLibrary);
@@ -93,6 +94,16 @@ void loadLibrary(uint idLibrary)
             lib.mAuthorBooksLink.insert(idAuthor,idBook);
             lib.mBooks[idBook].listIdAuthors << idAuthor;
         }
+    }
+    auto iBook = lib.mBooks.begin();
+    uint emptycount = 0;
+    while(iBook != lib.mBooks.end()){
+        if(iBook->listIdAuthors.isEmpty()){
+            iBook->listIdAuthors << 0;
+            lib.mAuthorBooksLink.insert(0,iBook.key());
+            emptycount++;
+        }
+        ++iBook;
     }
     query.prepare("SELECT id_book, id_janre FROM book_janre WHERE id_lib=:id_lib;");
     //                     0       1
