@@ -1,7 +1,6 @@
 #include "common.h"
 #include "library.h"
 
-
 //SLib current_lib;
 QMap<int,SLib> mLibs;
 QMap <uint,SGenre> mGenre;
@@ -13,6 +12,7 @@ void loadLibrary(uint idLibrary)
 
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database("libdb"));
+    query.setForwardOnly(true);
     SLib& lib = mLibs[idLibrary];
     lib.mSerials.clear();
     query.prepare("SELECT id, name, favorite FROM seria WHERE id_lib=:id_lib;");
@@ -71,7 +71,7 @@ void loadLibrary(uint idLibrary)
             lib.vLaguages << sLaguage;
         }
         book.idLanguage = static_cast<uchar>(idLaguage);
-        book.nFile = query.value(6).toUInt();
+        book.sFile = query.value(6).toString();
         book.nSize = query.value(7).toUInt();
         book.bDeleted = query.value(8).toBool();
         book.date = query.value(9).toDate();
@@ -81,6 +81,7 @@ void loadLibrary(uint idLibrary)
         book.idFirstAuthor = query.value(13).toUInt();
         book.nTag = qvariant_cast<uchar>(query.value(14));
     }
+
     lib.mAuthorBooksLink.clear();
     query.prepare("SELECT id_book, id_author FROM book_author WHERE id_lib=:id_lib;");
     //                     0       1
@@ -121,7 +122,6 @@ void loadLibrary(uint idLibrary)
 
     t_end = QDateTime::currentMSecsSinceEpoch();
     qDebug()<< "loadBooks " << t_end-t_start << "msec";
-
 }
 
 void loadGenres()

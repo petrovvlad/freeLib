@@ -28,7 +28,7 @@ struct SBook
     QList<uint> listIdGenres;
     QList<uint> listIdAuthors;
     uint idInLib;
-    uint nFile;
+    QString sFile;
     uint idSerial;
     uint idFirstAuthor;
     uint numInSerial;
