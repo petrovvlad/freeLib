@@ -88,7 +88,7 @@
         <location filename="addlibrary.ui" line="203"/>
         <source>don`t add deleted books</source>
         <oldsource>don`t add deleted</oldsource>
-        <translation type="unfinished">не добавлять удаленные книги</translation>
+        <translation>не добавлять удаленные книги</translation>
     </message>
     <message>
         <location filename="addlibrary.ui" line="238"/>
@@ -167,7 +167,7 @@
     <message>
         <location filename="addlibrary.cpp" line="339"/>
         <source>Select destination directory</source>
-        <translation type="unfinished">Выберите директорию</translation>
+        <translation>Выберите директорию</translation>
     </message>
 </context>
 <context>
@@ -1153,7 +1153,7 @@
     <message>
         <location filename="mainwindow.cpp" line="1339"/>
         <source>unknown author</source>
-        <translation type="unfinished"></translation>
+        <translation>неизвестный автор</translation>
     </message>
     <message>
         <source>Select destination directory</source>

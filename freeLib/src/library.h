@@ -4,11 +4,16 @@
 #include <QMultiMap>
 #include <QList>
 #include <QDateTime>
+#include "common.h"
 
-struct SAuthor
+class SAuthor
 {
+public:
+    QString getName() const;
     int nTag;
-    QString sName;
+    QString sFirstName;
+    QString sLastName;
+    QString sMiddleName;
 };
 
 struct SBook
@@ -17,12 +22,13 @@ struct SBook
     QString sAnnotation;
     QString sImg;
     QString sArchive;
+    QString sIsbn;
     QDate date;
     QString sFormat;
     QList<uint> listIdGenres;
     QList<uint> listIdAuthors;
     uint idInLib;
-    uint nFile;
+    QString sFile;
     uint idSerial;
     uint idFirstAuthor;
     uint numInSerial;
@@ -66,7 +72,7 @@ void loadGenres();
 
 extern bool db_is_open;
 
-extern SLib current_lib;
+extern SLib currentLib;
 extern QMap<int,SLib> mLibs;
 extern QMap <uint,SGenre> mGenre;
 

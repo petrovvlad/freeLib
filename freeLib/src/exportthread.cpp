@@ -1,4 +1,4 @@
-#include <QXmlQuery>
+﻿#include <QXmlQuery>
 #include <QApplication>
 #include <QTextStream>
 #include <QTimer>
@@ -441,14 +441,14 @@ void ExportThread::export_books()
             {
                 QString arh=book.sArchive;
                 arh=arh.left(arh.length()-4);
-                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh).arg(book.nFile).arg(book.sFormat);
+                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh).arg(book.sFile).arg(book.sFormat);
             }
             else
             {
                 file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
                 if(file_name.isEmpty())
                     file_name=default_exp_file_name;
-                QString author=BuildFileName(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].sName);
+                QString author=BuildFileName(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].getName());
                 QString seria_name=BuildFileName(mLibs[idCurrentLib].mSerials[book.idSerial].sName);
                 QString book_name=BuildFileName(book.sName);
                 QString ser_num = QString::number(book.numInSerial);
