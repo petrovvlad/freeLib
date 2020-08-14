@@ -86,6 +86,7 @@ SOURCES += main.cpp\
     SmtpClient/mimecontentformatter.cpp \
     SmtpClient/mimeattachment.cpp \
     SmtpClient/emailaddress.cpp \
+    quazip/quazip/quachecksum32.cpp \
     settingsdlg.cpp \
     exportthread.cpp \
     exportdlg.cpp \
@@ -162,7 +163,6 @@ HEADERS  += mainwindow.h \
     quazip/quazip/quaziodevice.h \
     quazip/quazip/quazipdir.h \
     quazip/quazip/quazipfile.h \
-    quazip/quazip/crypt.h \
     bookeditdlg.h \
     webpage.h \
     treebookitem.h \
