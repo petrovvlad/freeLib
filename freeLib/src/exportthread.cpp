@@ -66,7 +66,8 @@ QString ValidateFileName(QString str)
 
         str=str.replace("\"","'");
         str=str.replace(QRegExp("^([a-zA-Z]\\:|\\\\\\\\[^\\/\\\\:*?\"<>|]+\\\\[^\\/\\\\:*?\"<>|]+)(\\\\[^\\/\\\\:*?\"<>|]+)+(\\.[^\\/\\\\:*?\"<>|]+)$"),"_");
-        str=str.left(2)+str.mid(2).replace(":","_");
+        //мешает экспорту на mtp, проверить для чего было нужно
+        //str=str.left(2)+str.mid(2).replace(":","_");
     }
     else
     {
@@ -257,7 +258,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
         current_out_file=conv.convert(out_file,remove_old,settings->value("OutputFormat").toString(),bi);
     }
 
-    QString book_file_name=fi.absolutePath()+"/"+fi.completeBaseName()+"."+QFileInfo(current_out_file).suffix();
+    QString book_file_name=/*fi.absolutePath()*/fi.path()+"/"+fi.completeBaseName()+"."+QFileInfo(current_out_file).suffix();
 
     if(send_type==ST_Mail)
     {
@@ -314,9 +315,19 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
         book_file_name=ValidateFileName(book_file_name);
         if(!settings->value("PostprocessingCopy",false).toBool())
         {
-            book_dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
-            QFile::remove(book_file_name);
-            QFile::rename(current_out_file,book_file_name);
+            //book_dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
+            if(book_file_name.startsWith("mtp:/")){
+                QString sArg = QString("move \"%1\" \"%2\"").arg(current_out_file,book_file_name);
+                QStringList sArgList;
+                sArgList << sArg;
+                QProcess::execute("kioclient5",sArgList);
+
+            }else{
+                QDir dir(fi.path());
+                dir.mkpath(fi.path());
+                QFile::remove(book_file_name);
+                QFile::rename(current_out_file,book_file_name);
+            }
         }
         else
             book_file_name=current_out_file;
