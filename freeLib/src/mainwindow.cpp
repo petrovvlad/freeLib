@@ -287,6 +287,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnWidth(5,250);
     ui->Books->setColumnWidth(6,50);
 
+    GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
+    MyProxySortModel->setSourceModel(ui->s_genre->model());
+    ui->s_genre->model()->setParent(MyProxySortModel);
+    ui->s_genre->setModel(MyProxySortModel);
+    MyProxySortModel->setDynamicSortFilter(false);
+
     ui->Review->setPage(new WebPage());
     connect(ui->Review->page(),SIGNAL(linkClicked(QUrl)),this,SLOT(ReviewLink(QUrl)));
 
@@ -440,12 +446,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
     connect(ui->actionMinimize_window,SIGNAL(triggered(bool)),SLOT(MinimizeWindow()));
-
-    GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
-    MyProxySortModel->setSourceModel(ui->s_genre->model());
-    ui->s_genre->model()->setParent(MyProxySortModel);
-    ui->s_genre->setModel(MyProxySortModel);
-    ui->s_genre->model()->sort(0);
 
     settings.beginGroup("Columns");
     ui->Books->setColumnHidden(0,!settings.value("ShowName",true).toBool());
@@ -1884,7 +1884,6 @@ void MainWindow::FillGenres()
     QFont bold_font(ui->AuthorList->font());
     bold_font.setBold(true);
 
-
     QMap<uint,uint> mCounts;
     auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
     while(iBook!=mLibs[idCurrentLib].mBooks.constEnd()){
@@ -1935,6 +1934,8 @@ void MainWindow::FillGenres()
         }
         ++iGenre;
     }
+
+    ui->s_genre->model()->sort(0);
 
     ui->GenreList->blockSignals(wasBlocked);
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
