@@ -2,7 +2,10 @@
 #define EXPORTDLG_H
 
 #include <QDialog>
+
 #include "exportthread.h"
+#include "library.h"
+
 namespace Ui {
 class ExportDlg;
 }
@@ -14,8 +17,7 @@ class ExportDlg : public QDialog
 public:
     explicit ExportDlg(QWidget *parent = 0);
     ~ExportDlg();
-    void exec(const QList<book_info> &list_books,SendType send, qlonglong id_author);
-    void exec(const QStringList &list_books, SendType send);
+    void exec(const QList<uint> &list_books,SendType send, qlonglong id_author);
     void exec(qlonglong id_lib, QString path);
     int exec();
     QList<qlonglong> succesfull_export_books;

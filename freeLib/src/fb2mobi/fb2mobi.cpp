@@ -15,6 +15,8 @@
 #include <importthread.h>
 #include "fb2mobi.h"
 
+QString fillParams(QString str, SBook& book);
+
 fb2mobi::fb2mobi()
 {
     QSettings *settings=GetSettings();
@@ -92,15 +94,14 @@ void fb2mobi::parse_description(QDomNode elem)
     QSettings* settings=GetSettings();
     if(join_seria)
     {
-        book_inf->title=book_inf->seria;
-        book_inf->seria="";
-        book_inf->num_in_seria=0;
+        pBook->sName = mLibs[idCurrentLib].mSerials[pBook->idSerial].sName;
+        pBook->idSerial = 0;
     }
     book_author=authorstring;
-    book_author=fillParams(book_author,*book_inf);
+    book_author=fillParams(book_author,*pBook);
     if(settings->value("authorTranslit",false).toBool())
         book_author=Transliteration(book_author);
-    isbn=book_inf->isbn;
+    isbn = pBook->sIsbn;
     for(int e=0;e<elem.childNodes().count();e++)
     {
          if(elem.childNodes().at(e).toElement().tagName() == "title-info")
@@ -135,7 +136,6 @@ void fb2mobi::parse_description(QDomNode elem)
                              {
                                  if(image.childNodes().at(i).attributes().item(j).nodeName().right(href_pref.length())==href_pref)
                                  {
-                                    //book_cover=QString("img%1/").arg(QString::number(current_book))+image.childNodes().at(i).attributes().namedItem(href_pref).toAttr().value().replace("#","");
                                      book_cover=QString("img%1/").arg(QString::number(current_book))+image.childNodes().at(i).attributes().item(j).toAttr().value().replace("#","");
                                  }
                              }
@@ -157,7 +157,7 @@ void fb2mobi::parse_description(QDomNode elem)
              }
          }
     }
-    hyphenator.init(test_language(book_inf->language));
+    hyphenator.init(test_language(mLibs[idCurrentLib].vLaguages[pBook->idLanguage] /*book_inf->language*/));
 }
 
 void fb2mobi::parse_binary(QDomNode elem)
@@ -1125,22 +1125,22 @@ void fb2mobi::generate_opf_epub()
     buf+="<package xmlns=\"http://www.idpf.org/2007/opf\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" unique-identifier=\"bookid\" version=\"2.0\">";
     buf+=QString("<metadata xmlns:opf=\"http://www.idpf.org/2007/opf\">");
     QSettings *settings=GetSettings();
-    if(book_inf->seria=="")
-        buf+=QString("<dc:title>%1</dc:title>").arg(book_inf->title);
+    if(pBook->idSerial==0/*book_inf->seria==""*/)
+        buf+=QString("<dc:title>%1</dc:title>").arg(pBook->sName/*book_inf->title*/);
     else
     {
 
         QString title = bookseriestitle;
-        title=fillParams(title,*book_inf);
+        title=fillParams(title,*pBook);
         if(settings->value("seriaTranslit",false).toBool())
             title=Transliteration(title);
         buf+=QString("<dc:title>%1</dc:title>").arg(title);
      }
-    buf+=QString("<dc:language>%1</dc:language>").arg(test_language(book_inf->language));
-    buf+=QString("<dc:identifier id=\"bookid\">%1</dc:identifier>").arg(isbn.isEmpty()?(book_inf->id<=0?QUuid::createUuid().toString():QString::number(book_inf->id)):isbn);
+    buf+=QString("<dc:language>%1</dc:language>").arg(test_language(mLibs[idCurrentLib].vLaguages[pBook->idLanguage]/*book_inf->language*/));
+    buf+=QString("<dc:identifier id=\"bookid\">%1</dc:identifier>").arg(isbn.isEmpty()?(/*book_inf->id<=0?*/QUuid::createUuid().toString()/*:QString::number(book_inf->id)*/):isbn);
     buf+=QString("<dc:creator opf:role=\"aut\">%1</dc:creator>").arg(book_author);
 
-    buf+=QString("<dc:subject>%1</dc:subject> ").arg(book_inf->genres[0].genre);
+    buf+=QString("<dc:subject>%1</dc:subject> ").arg(mGenre[pBook->listIdGenres.first()].sName/*book_inf->genres[0].genre*/);
     if(!book_anntotation.isEmpty())
         buf+=QString("<dc:description>%1</dc:description>").arg(book_anntotation.replace(QRegExp("<[^>]*>"),"").trimmed());
     if(!book_cover.isEmpty())
@@ -1202,26 +1202,26 @@ void fb2mobi::generate_opf()
     buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
     buf+="<package><metadata><dc-metadata xmlns:dc=\"http://\">";
     QSettings* settings=GetSettings();
-    if(book_inf->seria=="")
-        buf+=QString("<dc:Title>%1</dc:Title>").arg(book_inf->title);
+    if(pBook->idSerial==0/*book_inf->seria==""*/)
+        buf+=QString("<dc:Title>%1</dc:Title>").arg(pBook->sName/*book_inf->title*/);
     else
     {
         QString abbr = "";
-        foreach(QString str,book_inf->seria.split(" "))
+        foreach(QString str,/*book_inf->seria*/mLibs[idCurrentLib].mSerials[pBook->idSerial].sName.split(" "))
         {
             abbr+=str.left(1);
         }
 
         QString title = bookseriestitle;
-        title=fillParams(title,*book_inf);
+        title=fillParams(title,*pBook);
         if(settings->value("seriaTranslit",false).toBool())
             title=Transliteration(title);
 
         buf+=QString("<dc:Title>%1</dc:Title>").arg(title);
      }
-    buf+=QString("<dc:Language>%1</dc:Language>").arg(test_language(book_inf->language));
+    buf+=QString("<dc:Language>%1</dc:Language>").arg(test_language(mLibs[idCurrentLib].vLaguages[pBook->idLanguage]/*book_inf->language*/));
     buf+=QString("<dc:Creator>%1</dc:Creator>").arg(book_author);
-    buf+=QString("<dc:identifier id=\"BookId\" opf:scheme=\"ISBN\">%1</dc:identifier>").arg(isbn.isEmpty()?(book_inf->id<=0?QUuid::createUuid().toString():QString::number(book_inf->id)):isbn);
+    buf+=QString("<dc:identifier id=\"BookId\" opf:scheme=\"ISBN\">%1</dc:identifier>").arg(isbn.isEmpty()?(/*book_inf->id<=0?*/QUuid::createUuid().toString()/*:QString::number(book_inf->id)*/):isbn);
     buf+=QString("<dc:Publisher /><dc:date /><x-metadata>");
     if(!book_cover.isEmpty())
         buf+=QString("<EmbeddedCover>%1</EmbeddedCover>").arg(book_cover);
@@ -1456,17 +1456,19 @@ void fb2mobi::InsertSeriaNumberToCover(QString number,CreateCover create_cover)
 
         font.setPixelSize(img.height()/15);
         painter->setFont(font);
-        PaintText(painter,QRect(delta,delta,r_width,r_heigthTopBottom-delta2),Qt::AlignHCenter|Qt::AlignTop|Qt::TextWordWrap,book_inf->authors[0].author.replace(","," "));
+        PaintText(painter,QRect(delta,delta,r_width,r_heigthTopBottom-delta2),Qt::AlignHCenter|Qt::AlignTop|Qt::TextWordWrap,mLibs[idCurrentLib].mAuthors[pBook->idFirstAuthor].getName() /*book_inf->authors[0].author.replace(","," ")*/);
 
         font.setPixelSize(img.height()/12);
         font.setBold(true);
         painter->setFont(font);
-        PaintText(painter,QRect(delta,delta+r_heigthTopBottom+delta2,r_width,r_heigth-r_heigthTopBottom*2-delta2*2),Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, book_inf->title);
+        PaintText(painter,QRect(delta,delta+r_heigthTopBottom+delta2,r_width,r_heigth-r_heigthTopBottom*2-delta2*2),Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, pBook->sName/*book_inf->title*/);
 
         font.setBold(false);
         font.setPixelSize(img.height()/17);
         painter->setFont(font);
-        PaintText(painter,QRect(delta,delta+r_heigth-r_heigthTopBottom+delta2,r_width,r_heigthTopBottom-delta2),Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,book_inf->seria+(book_inf->num_in_seria>0?"\n"+QString::number(book_inf->num_in_seria):""));
+        PaintText(painter,QRect(delta,delta+r_heigth-r_heigthTopBottom+delta2,r_width,r_heigthTopBottom-delta2),Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
+                  mLibs[idCurrentLib].mSerials[pBook->idSerial].sName + (pBook->numInSerial>0?"\n"+QString::number(pBook->numInSerial):""));
+                  //book_inf->seria+(book_inf->num_in_seria>0?"\n"+QString::number(book_inf->num_in_seria):""));
     }
     img.save(tmp_dir+"/OEBPS/"+book_cover);
     delete painter;
@@ -1548,9 +1550,8 @@ QString fb2mobi::convert(qlonglong id)
     fi_book=GetBookFile(outbuff,infobuff,id);
     if(fi_book.suffix().toLower()!="fb2")
         return "";
-    book_info book_inf_tmp;
-    GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",true,id);
-    book_inf=&book_inf_tmp;
+    SBook book_tmp = mLibs[idCurrentLib].mBooks[id];
+    pBook = &book_tmp;
 
     QFile file;
     QString out_file=tmp_dir+QString("/book.fb2");
@@ -1670,11 +1671,12 @@ struct fontfamily
     }
 };
 
-QString fb2mobi::convert(QStringList files, bool remove, QString format, book_info &bi)
+QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &book)
 {
     QSettings *settings=GetSettings();
 
-    book_inf=&bi;
+    //book_inf=&book;
+    pBook = &book;
     outputFormat=format;
     if(files.count()==1)
     {
@@ -1912,14 +1914,14 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, book_in
     if(settings->value("addCoverLabel",false).toBool() || settings->value("createCover",false).toBool())
     {
         QString abbr = "";
-        foreach(QString str,book_inf->seria.split(" "))
+        foreach(QString str,/*book_inf->seria*/mLibs[idCurrentLib].mSerials[pBook->idSerial].sName.split(" "))
             abbr+=str.left(1);
         //qDebug()<<book_inf->seria;
         QString title = settings->value("coverLabel").toString();
         if(title.isEmpty())
             title=default_cover_label;
-        title=fillParams(title,*book_inf);
-        if(book_inf->num_in_seria==0 || !settings->value("addCoverLabel",false).toBool())
+        title=fillParams(title,*pBook);
+        if(pBook->numInSerial==0 || !settings->value("addCoverLabel",false).toBool())
             title="";
         InsertSeriaNumberToCover(title,
                                  (settings->value("createCaverAlways",false).toBool()?cc_always:(settings->value("createCover",false).toBool()?cc_if_not_exists:cc_no)));

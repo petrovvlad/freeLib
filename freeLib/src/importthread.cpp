@@ -242,6 +242,7 @@ void GetBookInfo(book_info &bi,const QByteArray &data,QString type,bool info_onl
         bi.language="ru";
 }
 
+
 ImportThread::ImportThread(QObject *parent) :
     QObject(parent)
 {

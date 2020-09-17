@@ -15,6 +15,9 @@
 #include "quazip/quazip/quazipfile.h"
 #include "library.h"
 
+QString fillParams(QString str, SBook& book);
+QString fillParams(QString str, SBook& book, QFileInfo book_file);
+
 QString Transliteration(QString str)
 {
     str=str.trimmed();
@@ -92,7 +95,7 @@ void ExportThread::start(qlonglong id_lib,QString path)
     export_dir=path;
 }
 
-void ExportThread::start(QString _export_dir, const QList<book_info> &list_books, SendType send, qlonglong id_author)
+void ExportThread::start(QString _export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author)
 {
     ID_lib=-1;
     loop_enable=true;
@@ -103,108 +106,12 @@ void ExportThread::start(QString _export_dir, const QList<book_info> &list_books
    // QThread::start();
 }
 
-void ExportThread::start(QString _export_dir, const QStringList &list_books,SendType send)
-{
-    ID_lib=-1;
-    loop_enable=true;
-    book_list_str=list_books;
-    send_type=send;
-    IDauthor=0;
-    export_dir=RelativeToAbsolutePath(_export_dir);
-  //  QThread::start();
-}
-
 QString BuildFileName(QString filename)
 {
     return filename.replace("/",".").replace("\\",".").replace("*",".").replace("|",".").replace(":",".").replace("?",".").replace("<",".").replace(">",".").replace("\"","'");
 }
 
-void ExportThread::FB2export()
-{
-    QSettings *settings=GetSettings();
-    QDir dir=export_dir;
-    QString FileName;
-    long count=0;
-    foreach(QString i,book_list_str)
-    {
-        app->processEvents();
-        count++;
-        emit Progress(count*100/book_list_str.count(),count);
-        if(!loop_enable)
-            break;
-        FileName=i;
-        QFile file(FileName);
-        if(!file.open(QIODevice::ReadOnly))
-        {
-            return;
-        }
-        QByteArray ba=file.readAll();
-        file.close();
-        QFileInfo fi(file);
-        book_info bi;
-        if(fi.suffix().toLower()=="fb2")
-        {
-            GetBookInfo(bi,ba,"fb2",true);
-        }
-        else if(fi.suffix().toLower()=="epub")
-        {
-            GetBookInfo(bi,ba,"epub",true);
-        }
-        else if(fi.suffix().toLower()=="zip")
-        {
-            QuaZip zip(fi.absoluteFilePath());
-            zip.open(QuaZip::mdUnzip);
-            QStringList files=zip.getFileNameList();
-            QuaZipFile zip_file(&zip);
-            bool find=false;
-            foreach (QString str, files)
-            {
-                QFileInfo arh_file(str);
-                if(arh_file.suffix().toLower()=="fb2" || arh_file.suffix().toLower()=="epub")
-                {
-                    QBuffer buf;
-                    if(SetCurrentZipFileName(&zip,str))
-                    {
-                        zip_file.open(QIODevice::ReadOnly);
-                        buf.setData(zip_file.readAll());
-                        FileName=fi.absolutePath()+"/"+fi.completeBaseName()+"/"+str;
-                        ba=buf.data();
-                        GetBookInfo(bi,ba,arh_file.suffix().toLower(),true);
-                        fi.setFile(str);
-                        find=true;
-                    }
-                    else
-                    {
-                        qDebug()<<str;
-                    }
-                }
-            }
-            if(!find)
-                continue;
-        }
-        else
-            continue;
-        QString file_name;
-        if(settings->value("originalFileName",false).toBool())
-        {
-            file_name=QFileInfo(FileName).fileName();
-        }
-        else
-        {
-            file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
-            if(file_name.isEmpty())
-                file_name=default_exp_file_name;
-            file_name=fillParams(file_name,bi,fi)+"."+fi.suffix();;
-            if(settings->value("transliteration",false).toBool())
-                file_name=Transliteration(file_name);
-        }
-        file_name=fillParams(dir.path(),bi,fi)+"/"+file_name;
-        QBuffer buf(&ba);
-        convert((QList<QBuffer*>())<<&buf, file_name,count,false,bi);
-
-    }
-}
-bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count, bool remove_old, book_info &bi)
+bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count, bool remove_old, SBook &book)
 {
     QSettings *settings=GetSettings();
     QString tool=settings->value("current_tool").toString();
@@ -255,7 +162,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
             (fi.suffix().toLower()=="fb2" || fi.suffix().toLower()=="epub"))
     {
         fb2mobi conv;
-        current_out_file=conv.convert(out_file,remove_old,settings->value("OutputFormat").toString(),bi);
+        current_out_file=conv.convert(out_file,remove_old,settings->value("OutputFormat").toString(),book);
     }
 
     QString book_file_name=/*fi.absolutePath()*/fi.path()+"/"+fi.completeBaseName()+"."+QFileInfo(current_out_file).suffix();
@@ -338,11 +245,12 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
             QString arg=tool_arg;
             if(!tool_ext.isEmpty())
             {
-                book_file_name=tool_ext;
-                book_file_name=fillParams(book_file_name,bi,fi_tmp);
+                //book_file_name=tool_ext;
+                //book_file_name=fillParams(book_file_name,bi,fi_tmp);
+                //book_file_name = fillParams(book_file_name,book);
             }
-            QString ex=fillParams(tool_path,bi,fi_tmp);
-            arg=fillParams(arg,bi,fi_tmp);
+            QString ex=fillParams(tool_path,book,fi_tmp);
+            arg=fillParams(arg,book,fi_tmp);
             qDebug()<<ex<<arg;
             proc.execute((ex+" "+arg).trimmed());
         }
@@ -358,11 +266,12 @@ void ExportThread::export_books()
 
     if(settings->value("originalFileName",false).toBool() && send_type!=ST_Mail && settings->value("OutputFormat").toString()=="-")
     {
-        foreach(book_info i,book_list)
+        //foreach(book_info i,book_list)
+        QString LibPath=mLibs[idCurrentLib].path;
+        foreach(uint idBook,book_list)
         {
             QString archive,file;
-            QString LibPath=mLibs[idCurrentLib].path;
-            SBook &book = mLibs[idCurrentLib].mBooks[i.id];
+            SBook &book = mLibs[idCurrentLib].mBooks[idBook];
             if(!book.sArchive.isEmpty())
             {
                 archive=book.sArchive.replace(".inp",".zip");
@@ -389,7 +298,7 @@ void ExportThread::export_books()
                 QString out_dir=dir.absolutePath()+"/"+archive.left(archive.length()-4);
                 QDir().mkpath(out_dir);
                 QBuffer buff,infobuff;
-                GetBookFile(buff,infobuff,i.id);
+                GetBookFile(buff,infobuff,book);
 
                 QFile::remove(out_dir+"/"+file);
                 QFile outfile;
@@ -403,37 +312,37 @@ void ExportThread::export_books()
                 QDir().mkpath(QFileInfo(dir.absolutePath()+"/"+archive).absolutePath());
                 QFile().copy(LibPath+"/"+archive,dir.absolutePath()+"/"+archive);
             }
-            successful_export_books<<i.id;
+            successful_export_books<<idBook;
         }
         return;
     }
 
     long count=0;
-    QList<QList<book_info> > books_group;
-    qlonglong current_seria_id=-1;
+    QList<QList<uint> > books_group;
+    uint current_seria_id=01;
     bool need_group_series=
             (settings->value("OutputFormat").toString()=="EPUB" || settings->value("OutputFormat").toString()=="MOBI" ||
              settings->value("OutputFormat").toString()=="AZW3" || settings->value("OutputFormat").toString()=="MOBI7") &&
             settings->value("join_series").toBool();
-    foreach(book_info i,book_list)
+    foreach(uint idBook,book_list)
     {
-        GetBookInfo(i,QByteArray(),"",true,i.id);
-        if(current_seria_id!=i.id_seria || !need_group_series || i.id_seria==-1)
-        {
-            books_group<<QList<book_info>();
+        SBook &book = mLibs[idCurrentLib].mBooks[idBook];
+
+        if(current_seria_id!=book.idSerial || !need_group_series || book.idSerial==0){
+            books_group << QList<uint>();
         }
-        current_seria_id=i.id_seria;
-        books_group.last()<<i;
+        current_seria_id = book.idSerial;
+        books_group.last()<<idBook;
     }
     count=0;
 
-    foreach(QList<book_info> bi,books_group)
+    foreach(QList<uint> listBooks,books_group)
     {
         if(!loop_enable)
             break;
         QList<QBuffer*> buffers;
         QString file_name;
-        foreach(book_info i,bi)
+        foreach(uint idBook,listBooks)
         {
             app->processEvents();
             count++;
@@ -441,8 +350,8 @@ void ExportThread::export_books()
                 break;
             buffers<<new QBuffer(this);
             QBuffer infobuff;
-            fi=GetBookFile(*buffers.last(),infobuff,i.id);
-            SBook &book = mLibs[idCurrentLib].mBooks[i.id];
+            SBook &book = mLibs[idCurrentLib].mBooks[idBook];
+            fi=GetBookFile(*buffers.last(),infobuff,book);
             if(fi.fileName().isEmpty())
             {
                 emit Progress(count*100/book_list.count(),count);
@@ -469,17 +378,18 @@ void ExportThread::export_books()
                     book_name=seria_name;
                     seria_name="";
                 }
-                file_name=fillParams(file_name,QFileInfo(),seria_name,book_name,author,ser_num)+"."+book.sFormat;
+                //file_name=fillParams(file_name,QFileInfo(),seria_name,book_name,author,ser_num)+"."+book.sFormat;
+                file_name = fillParams(file_name,book) + "." + book.sFormat;
                 if(settings->value("transliteration",false).toBool())
                     file_name=Transliteration(file_name);
             }
             file_name=dir.path()+"/"+file_name;
         }
 
-        if(convert(buffers, file_name,count,true,bi[0]))
+        if(convert(buffers, file_name,count,true,mLibs[idCurrentLib].mBooks[listBooks[0]]))
         {
-            foreach(book_info i,bi)
-                successful_export_books<<i.id;
+            foreach(uint idBook,listBooks)
+                successful_export_books<<idBook;
         }
         emit Progress(count*100/book_list.count(),count);
         foreach (QBuffer* buf, buffers)
@@ -492,8 +402,6 @@ void ExportThread::process()
 
     if(book_list.count()>0)
         export_books();
-    if(book_list_str.count()>0)
-        FB2export();
     if(ID_lib>0)
         export_lib();
 

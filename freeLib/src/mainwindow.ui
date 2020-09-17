@@ -1022,7 +1022,7 @@
                    </property>
                   </column>
                  </widget>
-                 <widget class="QWebEngineView" name="Review" native="true">
+                 <widget class="QWebEngineView" name="Review">
                   <property name="minimumSize">
                    <size>
                     <width>0</width>
@@ -1038,7 +1038,7 @@
                   <property name="acceptDrops">
                    <bool>false</bool>
                   </property>
-                  <property name="url" stdset="0">
+                  <property name="url">
                    <url>
                     <string>about:blank</string>
                    </url>
@@ -1179,7 +1179,7 @@
      <x>0</x>
      <y>0</y>
      <width>1297</width>
-     <height>23</height>
+     <height>30</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">
@@ -1285,6 +1285,9 @@
    </property>
   </action>
   <action name="actionSwitch_to_convert_mode">
+   <property name="enabled">
+    <bool>false</bool>
+   </property>
    <property name="text">
     <string>Switch to convert mode</string>
    </property>
@@ -1308,7 +1311,7 @@
   <customwidget>
    <class>QWebEngineView</class>
    <extends>QWidget</extends>
-   <header>qwebengineview.h</header>
+   <header location="global">QtWebEngineWidgets/QWebEngineView</header>
   </customwidget>
  </customwidgets>
  <resources>

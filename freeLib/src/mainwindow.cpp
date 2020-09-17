@@ -122,6 +122,92 @@ QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool c
     return fi;
 }
 
+QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, SBook book, bool caption, QDateTime *file_data)
+{
+    QString file,archive;
+    QFileInfo fi;
+    //SBook &book = mLibs[idCurrentLib].mBooks[id_book];
+    QString LibPath=mLibs[idCurrentLib].path;
+    LibPath=RelativeToAbsolutePath(LibPath);
+    if(book.sArchive.isEmpty()){
+        file = QString("%1/%2.%3").arg(LibPath).arg(book.sFile).arg(book.sFormat);
+    }else{
+        file = QString("%1.%2").arg(book.sFile).arg(book.sFormat);
+        archive = QString("%1/%2").arg(LibPath).arg(book.sArchive.replace(".inp",".zip"));
+    }
+
+    archive=archive.replace("\\","/");
+    if(archive.isEmpty())
+    {
+        QFile book_file(file);
+        if(!book_file.open(QFile::ReadOnly))
+        {
+            qDebug()<<("Error open file!")<<" "<<file;
+            return fi;
+        }
+        buffer.setData(book_file.readAll());
+        fi.setFile(book_file);
+        if(file_data)
+        {
+            *file_data=fi.birthTime();
+        }
+        fi.setFile(file);
+        QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
+        QFile info_file(fbd);
+        if(info_file.exists())
+        {
+            info_file.open(QFile::ReadOnly);
+            buffer_info.setData(info_file.readAll());
+        }
+    }
+    else
+    {
+        QuaZip uz(archive);
+        if (!uz.open(QuaZip::mdUnzip))
+        {
+            qDebug()<<("Error open archive!")<<" "<<archive;
+            return fi;
+        }
+
+        if(file_data)
+        {
+            SetCurrentZipFileName(&uz,file);
+            QuaZipFileInfo64 zip_fi;
+            if(uz.getCurrentFileInfo(&zip_fi))
+            {
+                *file_data=zip_fi.dateTime;
+            }
+        }
+        QuaZipFile zip_file(&uz);
+        SetCurrentZipFileName(&uz,file);
+        if(!zip_file.open(QIODevice::ReadOnly))
+        {
+            qDebug()<<"Error open file: "<<file;
+        }
+        if(caption)
+        {
+            buffer.setData(zip_file.read(16*1024));
+        }
+        else
+        {
+            buffer.setData(zip_file.readAll());
+        }
+        zip_file.close();
+        fi.setFile(file);
+        QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
+
+        if(SetCurrentZipFileName(&uz,fbd))
+        {
+            zip_file.open(QIODevice::ReadOnly);
+            buffer.setData(zip_file.readAll());
+            zip_file.close();
+        }
+
+        fi.setFile(archive+"/"+file);
+    }
+    return fi;
+}
+
 QPixmap GetTag(QColor color,int size)
 {
     QPixmap pixmap(size,size-4);
@@ -348,13 +434,6 @@ MainWindow::MainWindow(QWidget *parent) :
     FillLibrariesMenu();
     UpdateExportMenu();
 
-    setMouseTracking(true);
-    centralWidget()->setMouseTracking(true);
-    ui->label_drop->setMouseTracking(true);
-    ui->frame_drop->setMouseTracking(true);
-    ui->pageConvert->setMouseTracking(true);
-    ui->stackedWidget->setMouseTracking(true);
-
     ChangingTrayIcon();
 
 #ifdef Q_OS_OSX
@@ -561,8 +640,8 @@ void MainWindow::update_list_pix(qlonglong id, int list,int tag_id)
             }
         }
     }
-
 }
+
 void MainWindow::ChangingLanguage(bool change_language)
 {
     QSettings settings;
@@ -840,6 +919,31 @@ void MainWindow::FillCheckedBookList(QList<book_info> &list,QTreeWidgetItem* ite
     }
 }
 
+void MainWindow::FillCheckedBookList(QList<uint> &list,QTreeWidgetItem* item,bool send_all,bool checked_only)
+{
+    FillCheckedItemsBookList(list,item,send_all);
+    if(list.count()==0 && !checked_only)
+    {
+        if(ui->Books->selectedItems().count()>0)
+        {
+            if(ui->Books->selectedItems()[0]->childCount()>0)
+                FillCheckedItemsBookList(list,ui->Books->selectedItems()[0],true);
+            else
+            {
+                if(ui->Books->selectedItems()[0]->parent())
+                {
+                    qlonglong id_book=ui->Books->selectedItems()[0]->data(0,Qt::UserRole).toLongLong();
+                    book_info bi;
+//                    if(!count_only)
+//                        bi.id=id_book;
+                    list<<id_book;
+                }
+            }
+        }
+    }
+}
+
+
 void MainWindow::FillCheckedItemsBookList(QList<book_info> &list,QTreeWidgetItem* item,bool send_all,bool count_only)
 {
     QTreeWidgetItem* current;
@@ -861,6 +965,33 @@ void MainWindow::FillCheckedItemsBookList(QList<book_info> &list,QTreeWidgetItem
                     if(!count_only)
                         bi.id=id_book;
                     list<<bi;
+                }
+            }
+        }
+    }
+}
+
+void MainWindow::FillCheckedItemsBookList(QList<uint> &list,QTreeWidgetItem* item,bool send_all)
+{
+    QTreeWidgetItem* current;
+    for(int i=0;i<(item?item->childCount():ui->Books->topLevelItemCount());i++)
+    {
+        current=item?item->child(i):ui->Books->topLevelItem(i);
+        if(current->childCount()>0)
+        {
+            FillCheckedItemsBookList(list,current,send_all);
+        }
+        else
+        {
+            if(current->checkState(0)==Qt::Checked || send_all)
+            {
+                if(current->parent())
+                {
+                    qlonglong id_book=current->data(0,Qt::UserRole).toLongLong();
+                    book_info bi;
+//                    if(!count_only)
+//                        bi.id=id_book;
+                    list<<id_book;
                 }
             }
         }
@@ -909,7 +1040,8 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
 
 void MainWindow::SendToDevice()
 {
-    QList<book_info> book_list;
+//    QList<book_info> book_list;
+    QList<uint> book_list;
     FillCheckedBookList(book_list);
     if(book_list.count()==0)
         return;
@@ -920,7 +1052,8 @@ void MainWindow::SendToDevice()
 
 void MainWindow::SendMail()
 {
-    QList<book_info> book_list;
+    //QList<book_info> book_list;
+    QList<uint> book_list;
     FillCheckedBookList(book_list);
     if(book_list.count()==0)
         return;
@@ -1223,6 +1356,8 @@ void MainWindow::SelectBook()
         QDateTime book_date;
         QFileInfo fi=GetBookFile(outbuff,infobuff,idBook,false,&book_date);
         book_info bi;
+        if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
+            mLibs[idCurrentLib].loadAnnotation(idBook);
         if(fi.fileName().isEmpty())
         {
             GetBookInfo(bi,QByteArray(),"",true,idBook);
@@ -1960,30 +2095,6 @@ bool MainWindow::IsBookInList(const SBook &book)
              ||(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].nTag == current_tag));
 }
 
-void MainWindow::dropEvent(QDropEvent *ev)
-{
-    if(mode==MODE_LIBRARY)
-        pDropForm->hide();
-    QList<QUrl> urls = ev->mimeData()->urls();
-    QStringList book_list;
-    foreach(QUrl url, urls)
-    {
-        proc_path(url.path(),&book_list);
-    }
-    if(book_list.count())
-    {
-        ExportDlg dlg(this);
-        int id=pDropForm->get_command(ev->pos());
-        if(id<0)
-        {
-            pDropForm->get_command(QPoint(-1,-1));
-            return;
-        }
-        dlg.exec(book_list,SetCurrentExportSettings(id));
-    }
-    pDropForm->get_command(QPoint(-1,-1));
-}
-
 void MainWindow::DeleteDropForm()
 {
     if(pDropForm!=nullptr)
@@ -2267,36 +2378,6 @@ void MainWindow::leaveEvent(QEvent */*ev*/)
     if(pDropForm!=nullptr)
     {
         pDropForm->switch_command(QPoint(-1,-1));
-    }
-}
-
-void MainWindow::mouseReleaseEvent(QMouseEvent *ev)
-{
-    if(mode==MODE_CONVERTER)
-    {
-        if(pDropForm==nullptr)
-        {
-            ShowDropForm();
-        }
-        int id=pDropForm->get_command(ev->pos());
-        if(id<0)
-            return;
-        QFileDialog dialog(this);
-        dialog.setFileMode(QFileDialog::ExistingFiles);
-        dialog.setNameFilter(tr("Books")+" (*.fb2 *.epub *.zip)");
-        dialog.setWindowTitle(tr("Book`s files"));
-        if (dialog.exec())
-        {
-            if(dialog.selectedFiles().isEmpty())
-                return;
-            QStringList book_list;
-            foreach (QString file, dialog.selectedFiles())
-            {
-                proc_path(file,&book_list);
-            }
-            ExportDlg dlg(this);
-            dlg.exec(book_list,SetCurrentExportSettings(id));
-        }
     }
 }
 
