@@ -1438,7 +1438,7 @@ void MainWindow::SelectBook()
                 replace("#file_name#",fi.fileName()).
                 replace("#image#",bi.img).
                 replace("#file_info#",settings->value("show_fileinfo",true).toBool()?"block":"none");
-        ui->Review->page()->setHtml(content,/*QUrl("file:")*/QUrl("file:/"+QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+        ui->Review->page()->setHtml(content,QUrl("file://"+QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
     }
 }
 
