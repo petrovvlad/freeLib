@@ -40,7 +40,7 @@ bool SetCurrentZipFileName(QuaZip *zip,QString name)
 
 QString RelativeToAbsolutePath(QString path)
 {
-    if(QDir(path).isRelative() && path.indexOf("%")<0)
+    if(QDir(path).isRelative() && path.indexOf("%")<0 && !path.startsWith("mtp:/"))
     {
         return app->applicationDirPath()+"/"+path;
     }
@@ -228,6 +228,70 @@ QString fillParams(QString str, QFileInfo book_file,QString seria_name,QString b
 {
     QStringList result=fillParams(QStringList()<<str, book_file, seria_name, book_name, author, ser_num);
     return result[0];
+}
+
+QString fillParams(QString str, SBook& book)
+{
+    QString result=str;
+    QString abbr = "";
+    foreach(QString str,mLibs[idCurrentLib].mSerials[book.idSerial].sName.split(" "))
+    {
+        abbr+=str.left(1);
+    }
+    result.replace("%abbrs", abbr.toLower());
+
+    result
+    //        .replace("%fn",book_file.completeBaseName()).
+    //        replace("%d",book_file.absoluteDir().path()).
+            .replace("%app_dir",QApplication::applicationDirPath()+"/");
+    //result.removeOne("%no_point");
+    SAuthor& sFirstAuthor = mLibs[idCurrentLib].mAuthors[book.idFirstAuthor];
+
+    qDebug()<<sFirstAuthor.getName();
+    qDebug()<<str;
+    result.replace("%fi",sFirstAuthor.sFirstName.left(1)+".").
+            replace("%mi",sFirstAuthor.sMiddleName.left(1)+".").
+            replace("%li",sFirstAuthor.sLastName.left(1)+".").
+            replace("%nf",sFirstAuthor.sFirstName.trimmed()).
+            replace("%nm",sFirstAuthor.sMiddleName.trimmed()).
+            replace("%nl",sFirstAuthor.sLastName.trimmed());
+
+    //result.replace("%f",book_file.absoluteFilePath());
+
+    result = result.replace("%s",mLibs[idCurrentLib].mSerials[book.idSerial].sName)
+            .replace("%b",book.sName)
+            .replace("%a",sFirstAuthor.getName())
+            .replace(","," ").trimmed();
+    QString num_in_seria=QString::number(book.numInSerial);
+//    for(int i=0;i<result.count();i++)
+//    {
+        if(result.contains("%n"))
+        {
+            int len=result.mid(result.indexOf("%n")+2,1).toInt();
+            QString zerro;
+            if(book.numInSerial==0)
+                result.replace("%n"+QString::number(len),"");
+            else
+                result.replace("%n"+(len>0?QString::number(len):""),(len>0?zerro.fill('0',len-num_in_seria.length()):"")+num_in_seria+" ");
+        }
+//        result[i]=result[i].trimmed();
+    //}
+    result.replace("/ ","/");
+    result.replace("/.","/");
+    result.replace("////","/");
+    result.replace("///","/");
+    result.replace("//","/");
+    return result;
+}
+
+QString fillParams(QString str, SBook& book, QFileInfo book_file)
+{
+    QString result=str;
+    result
+            .replace("%fn",book_file.completeBaseName()).
+            replace("%d",book_file.absoluteDir().path());
+    result = fillParams(result,book);
+    return result;
 }
 
 SendType SetCurrentExportSettings(int index)
@@ -475,7 +539,6 @@ int main(int argc, char *argv[])
         //QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
     }
 #endif
-
 
     QApplication a(argc, argv);
     a.setStyleSheet("QComboBox { combobox-popup: 0; }");

@@ -9,8 +9,6 @@ ExportDlg::ExportDlg(QWidget *parent) :
     connect(ui->AbortButton,SIGNAL(clicked()),this,SLOT(BreakExport()));
     itsOkToClose=false;
     worker=0;
-    //thread.pdf=ui->webView;
-//    ui->webView->setUrl(QUrl::fromLocalFile("/home/user/freeLib/Temp/OEBPS/index.html"));
 }
 
 ExportDlg::~ExportDlg()
@@ -32,7 +30,7 @@ void ExportDlg::reject()
     }
 }
 
-void ExportDlg::exec(const QList<book_info> &list_books, SendType send, qlonglong id_author)
+void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_author)
 {
     ui->Exporting->setText("0");
     QSettings* settings=GetSettings();
@@ -65,40 +63,7 @@ void ExportDlg::exec(const QList<book_info> &list_books, SendType send, qlonglon
     settings->setValue("CloseExpDlg",ui->CloseAfter->checkState()==Qt::Checked);
     settings->sync();
 }
-void ExportDlg::exec(const QStringList &list_books, SendType send)
-{
-    ui->Exporting->setText("0");
-    QSettings *settings=GetSettings();
-    ui->CloseAfter->setChecked(settings->value("CloseExpDlg").toBool());
-    ui->progressBar->setValue(0);
-    ui->progressBar->setRange(0,100);
-    QString dir;
-    if(send!=ST_Mail)
-    {
-        dir=SelectDir();
-        if(dir.isEmpty())
-        {
-            return;
-        }
-    }
-    //qDebug()<<"ok";
-    thread = new QThread;
-    worker=new ExportThread;
-    worker->start(dir,list_books,send);
-    worker->moveToThread(thread);
-    connect(worker, SIGNAL(Progress(int,int)), this, SLOT(Process(int,int)));
-    connect(thread, SIGNAL(started()), worker, SLOT(process()));
-    connect(worker, SIGNAL(End()), thread, SLOT(quit()));
-    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
-    connect(worker, SIGNAL(End()), this, SLOT(EndExport()));
-    connect(this, SIGNAL(break_exp()), worker, SLOT(break_exp()));
-    thread->start();
 
-    QDialog::exec();
-    settings->setValue("CloseExpDlg",ui->CloseAfter->checkState()==Qt::Checked);
-    settings->sync();
-    //delete settings;
-}
 void ExportDlg::exec(qlonglong id_lib, QString path)
 {
     ui->Exporting->setText("0");

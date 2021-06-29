@@ -12,6 +12,7 @@
 #define SAVE_INDEX  4
 //#define MAX_BOOKS_PER_PAGE  15
 #define MAX_COLUMN_COUNT    3
+QString fillParams(QString str, SBook& book);
 
 opds_server::opds_server(QObject *parent) :
     QObject(parent)
@@ -2441,9 +2442,11 @@ void opds_server::convert(QString id, QString format, QString file_name, bool op
                 }
                 SetCurrentExportSettings(http_settings);
             }
-            QString out_file=conv.convert(QStringList()<<fi.absoluteFilePath(),false,format.toUpper(),bi);
+
+            // Не удалять
+            //QString out_file=conv.convert(QStringList()<<fi.absoluteFilePath(),false,format.toUpper(),bi);
             //qDebug()<<out_file;
-            file.setFileName(out_file);
+            //file.setFileName(out_file);
             file.open(QFile::ReadOnly);
             outbuff.close();
             outbuff.setData(file.readAll());

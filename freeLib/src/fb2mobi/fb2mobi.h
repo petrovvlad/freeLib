@@ -1,12 +1,13 @@
 #ifndef FB2MOBI_H
 #define FB2MOBI_H
 
-#include "../common.h"
 #include <QTextStream>
 #include <QXmlStreamReader>
 #include <QDomDocument>
+
+#include "../common.h"
+#include "../library.h"
 #include "hyphenations.h"
-//#include <QWebView>
 
 struct STOC
 {
@@ -45,7 +46,7 @@ class fb2mobi:public QObject
 public:
     fb2mobi();
     //QString convert(QString files, bool remove, QString format, QString language);
-    QString convert(QStringList files, bool remove,QString format,book_info &bi);
+    QString convert(QStringList files, bool remove,QString format,SBook& book);
     QString convert(qlonglong id);
     void generate_html(QFile *file);
     //QWebView *pdf;
@@ -111,21 +112,14 @@ private:
     int current_section_level;
     bool cut_html;
     QString body_name;
-    book_info *book_inf;
-    //QString book_series;
-    //QString book_title;
+    SBook *pBook;
     QString book_cover;
-    //QString book_lang;
     QString bookseriestitle;
     QString authorstring;
     QString isbn;
-    //QString book_series_num;
     QString annotation_title;
     QString notes_title;
-    //QString book_genre;
     QString book_anntotation;
-    //QString language_from_library;
-   // QString book_anntotation_for_opf;
 
     bool need_page_break;
     bool hide_annotation;

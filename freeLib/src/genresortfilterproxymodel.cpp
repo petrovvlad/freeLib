@@ -13,6 +13,9 @@ bool GenreSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIn
 
     if(sourceModel()->data(right).toString()=="*")
         return false;
+    if(sourceModel()->data(left).toString()=="*")
+        return true;
+
     if(mGenre[idLeft].idParrentGenre==0 && mGenre[idRight].idParrentGenre==0)
         return idLeft<idRight;
 
