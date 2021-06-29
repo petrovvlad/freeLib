@@ -2,5 +2,5 @@
 	path = freeLib/src/quazip
 	url = https://github.com/stachenov/quazip.git
 [submodule "SmtpClient-for-Qt"]
-	path = SmtpClient-for-Qt
+	path = freeLib/src/SmtpClient
 	url = https://github.com/bluetiger9/SmtpClient-for-Qt
