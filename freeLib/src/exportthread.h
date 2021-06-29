@@ -4,7 +4,7 @@
 #include <QThread>
 
 #include "common.h"
-#include "SmtpClient/smtpclient.h"
+#include "SmtpClient/src/smtpclient.h"
 #include "library.h"
 
 class ExportThread : public QObject

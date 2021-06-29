@@ -5,9 +5,9 @@
 
 #include "exportthread.h"
 #include "common.h"
-#include "SmtpClient/smtpclient.h"
-#include "SmtpClient/mimeattachment.h"
-#include "SmtpClient/mimetext.h"
+#include "SmtpClient/src/smtpclient.h"
+#include "SmtpClient/src/mimeattachment.h"
+#include "SmtpClient/src/mimetext.h"
 #include "QProcess"
 #include "QFileInfo"
 #include "fb2mobi/fb2mobi.h"
@@ -52,6 +52,7 @@ QString Transliteration(QString str)
     if (fn.isEmpty() ) fn = "file";
     return fn;
 }
+
 QString ValidateFileName(QString str)
 {
     bool windows=false;
@@ -69,8 +70,8 @@ QString ValidateFileName(QString str)
 
         str=str.replace("\"","'");
         str=str.replace(QRegExp("^([a-zA-Z]\\:|\\\\\\\\[^\\/\\\\:*?\"<>|]+\\\\[^\\/\\\\:*?\"<>|]+)(\\\\[^\\/\\\\:*?\"<>|]+)+(\\.[^\\/\\\\:*?\"<>|]+)$"),"_");
-        //мешает экспорту на mtp, проверить для чего было нужно
-        //str=str.left(2)+str.mid(2).replace(":","_");
+        bool bMtp = str.startsWith("mtp:");
+        str=str.left(bMtp ?4 :2)+str.mid(bMtp ?4 :2).replace(":","_");
     }
     else
     {
@@ -205,7 +206,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
        QString onlyFileName=QFileInfo(book_file_name).fileName();
        text.setText(onlyFileName);
        msg.addPart(&text);
-       msg.addPart(new MimeAttachment(&outbuff,onlyFileName));
+       msg.addPart(new MimeAttachment(outbuff.data(),onlyFileName));
        smtp.connectToHost();
        smtp.login();
        if(!smtp.sendMail(msg))
@@ -219,19 +220,19 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     }
     else
     {
+        QStringList listArg;
         book_file_name=ValidateFileName(book_file_name);
         if(!settings->value("PostprocessingCopy",false).toBool())
         {
             //book_dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
             if(book_file_name.startsWith("mtp:/")){
                 QString sArg = QString("move \"%1\" \"%2\"").arg(current_out_file,book_file_name);
-                QStringList sArgList;
-                sArgList << sArg;
-                QProcess::execute("kioclient5",sArgList);
+                listArg << sArg;
+                QProcess::execute("kioclient5",listArg);
 
-            }else{
-                QDir dir(fi.path());
-                dir.mkpath(fi.path());
+            }else{              
+                QDir dir(book_file_name);
+                dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
                 QFile::remove(book_file_name);
                 QFile::rename(current_out_file,book_file_name);
             }
@@ -243,16 +244,17 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
         {
             QFileInfo fi_tmp(book_file_name);
             QString arg=tool_arg;
-            if(!tool_ext.isEmpty())
-            {
-                //book_file_name=tool_ext;
-                //book_file_name=fillParams(book_file_name,bi,fi_tmp);
-                //book_file_name = fillParams(book_file_name,book);
-            }
             QString ex=fillParams(tool_path,book,fi_tmp);
             arg=fillParams(arg,book,fi_tmp);
-            qDebug()<<ex<<arg;
-            proc.execute((ex+" "+arg).trimmed());
+            listArg << arg;
+            if(!tool_ext.isEmpty())
+            {
+                book_file_name=tool_ext;
+                book_file_name=fillParams(book_file_name,book,fi_tmp);
+                listArg << book_file_name;
+            }
+            qDebug()<<ex<<listArg;
+            QProcess::execute(ex,listArg);
         }
         return QFileInfo(book_file_name).exists();
     }

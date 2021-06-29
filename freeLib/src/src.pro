@@ -70,22 +70,22 @@ win32{
 }
 
 SOURCES += main.cpp\
+    SmtpClient/src/emailaddress.cpp \
+    SmtpClient/src/mimeattachment.cpp \
+    SmtpClient/src/mimecontentformatter.cpp \
+    SmtpClient/src/mimefile.cpp \
+    SmtpClient/src/mimehtml.cpp \
+    SmtpClient/src/mimeinlinefile.cpp \
+    SmtpClient/src/mimemessage.cpp \
+    SmtpClient/src/mimemultipart.cpp \
+    SmtpClient/src/mimepart.cpp \
+    SmtpClient/src/mimetext.cpp \
+    SmtpClient/src/quotedprintable.cpp \
+    SmtpClient/src/smtpclient.cpp \
 	library.cpp \
         mainwindow.cpp \
     addlibrary.cpp \
     importthread.cpp \
-    SmtpClient/smtpclient.cpp \
-    SmtpClient/quotedprintable.cpp \
-    SmtpClient/mimetext.cpp \
-    SmtpClient/mimepart.cpp \
-    SmtpClient/mimemultipart.cpp \
-    SmtpClient/mimemessage.cpp \
-    SmtpClient/mimeinlinefile.cpp \
-    SmtpClient/mimehtml.cpp \
-    SmtpClient/mimefile.cpp \
-    SmtpClient/mimecontentformatter.cpp \
-    SmtpClient/mimeattachment.cpp \
-    SmtpClient/emailaddress.cpp \
     quazip/quazip/quachecksum32.cpp \
     settingsdlg.cpp \
     exportthread.cpp \
@@ -120,21 +120,23 @@ SOURCES += main.cpp\
     genresortfilterproxymodel.cpp
 
 HEADERS  += mainwindow.h \
+    SmtpClient/src/SmtpMime \
+    SmtpClient/src/emailaddress.h \
+    SmtpClient/src/mimeattachment.h \
+    SmtpClient/src/mimecontentformatter.h \
+    SmtpClient/src/mimefile.h \
+    SmtpClient/src/mimehtml.h \
+    SmtpClient/src/mimeinlinefile.h \
+    SmtpClient/src/mimemessage.h \
+    SmtpClient/src/mimemultipart.h \
+    SmtpClient/src/mimepart.h \
+    SmtpClient/src/mimetext.h \
+    SmtpClient/src/quotedprintable.h \
+    SmtpClient/src/smtpclient.h \
+    SmtpClient/src/smtpexports.h \
     common.h \
     addlibrary.h \
     importthread.h \
-    SmtpClient/smtpclient.h \
-    SmtpClient/quotedprintable.h \
-    SmtpClient/mimetext.h \
-    SmtpClient/mimepart.h \
-    SmtpClient/mimemultipart.h \
-    SmtpClient/mimemessage.h \
-    SmtpClient/mimeinlinefile.h \
-    SmtpClient/mimehtml.h \
-    SmtpClient/mimefile.h \
-    SmtpClient/mimecontentformatter.h \
-    SmtpClient/mimeattachment.h \
-    SmtpClient/emailaddress.h \
     library.h \
     settingsdlg.h \
     exportthread.h \
