@@ -374,7 +374,7 @@ bool openDB(bool create, bool replace)
     }
     else
     {
-        sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
+        sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
         db_file=sAppDir+"/freeLib.sqlite";
         settings.setValue("database_path",db_file);
     }
@@ -517,7 +517,7 @@ int main(int argc, char *argv[])
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QDir::setCurrent(HomeDir);
-    QString sDirTmp = QString("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first());
+    QString sDirTmp = QString("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
     QDir dirTmp(sDirTmp);
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
