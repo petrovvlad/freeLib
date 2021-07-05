@@ -239,6 +239,7 @@ QString fillParams(QString str, SBook& book)
         abbr+=str.left(1);
     }
     result.replace("%abbrs", abbr.toLower());
+    result.replace("%app_dir",QApplication::applicationDirPath()+"/");
 
     result
     //        .replace("%fn",book_file.completeBaseName()).
@@ -249,9 +250,9 @@ QString fillParams(QString str, SBook& book)
 
     qDebug()<<sFirstAuthor.getName();
     qDebug()<<str;
-    result.replace("%fi",sFirstAuthor.sFirstName.left(1)+".").
-            replace("%mi",sFirstAuthor.sMiddleName.left(1)+".").
-            replace("%li",sFirstAuthor.sLastName.left(1)+".").
+    result.replace("%fi",sFirstAuthor.sFirstName.left(1)+(sFirstAuthor.sFirstName.isEmpty() ?"" :".")).
+            replace("%mi",sFirstAuthor.sMiddleName.left(1)+(sFirstAuthor.sMiddleName.isEmpty() ?"" :".")).
+            replace("%li",sFirstAuthor.sLastName.left(1)+(sFirstAuthor.sLastName.isEmpty() ?"" :".")).
             replace("%nf",sFirstAuthor.sFirstName.trimmed()).
             replace("%nm",sFirstAuthor.sMiddleName.trimmed()).
             replace("%nl",sFirstAuthor.sLastName.trimmed());
@@ -289,6 +290,7 @@ QString fillParams(QString str, SBook& book, QFileInfo book_file)
     QString result=str;
     result
             .replace("%fn",book_file.completeBaseName()).
+            replace("%f",book_file.absoluteFilePath()).
             replace("%d",book_file.absoluteDir().path());
     result = fillParams(result,book);
     return result;
@@ -525,7 +527,6 @@ void UpdateLibs()
         }
     }
 }
-
 
 int main(int argc, char *argv[])
 {
