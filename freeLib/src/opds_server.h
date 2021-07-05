@@ -40,7 +40,7 @@ private:
     QList<uint> book_list(SLib& lib, uint idAuthor, uint idSeria, uint idGenre,  QString sSearch, bool sequenceless);
     QString FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, QString lib_url, QString current_url, QTextStream& ts, bool opds, uint nPage, QString session, bool bShowAuthor);
     QDomElement doc_header(QString session, bool html=false, QString lib_name=QString(), QString lib_url=QString());
-    void convert(QString id,QString format,QString file_name,bool opds, QTextStream &ts);
+    void convert(SLib &lib,uint idBook, QString format, QString file_name, bool opds, QTextStream &ts);
     QMap<QString,QDateTime> sessions;
 };
 
