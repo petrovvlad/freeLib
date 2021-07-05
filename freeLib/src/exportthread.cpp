@@ -370,17 +370,6 @@ void ExportThread::export_books()
                 file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
                 if(file_name.isEmpty())
                     file_name=default_exp_file_name;
-                QString author=BuildFileName(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].getName());
-                QString seria_name=BuildFileName(mLibs[idCurrentLib].mSerials[book.idSerial].sName);
-                QString book_name=BuildFileName(book.sName);
-                QString ser_num = QString::number(book.numInSerial);
-                if(buffers.count()>1)
-                {
-                    ser_num="0";
-                    book_name=seria_name;
-                    seria_name="";
-                }
-                //file_name=fillParams(file_name,QFileInfo(),seria_name,book_name,author,ser_num)+"."+book.sFormat;
                 file_name = fillParams(file_name,book) + "." + book.sFormat;
                 if(settings->value("transliteration",false).toBool())
                     file_name=Transliteration(file_name);
