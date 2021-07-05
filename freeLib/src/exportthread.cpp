@@ -256,7 +256,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
             qDebug()<<ex<<listArg;
             QProcess::execute(ex,listArg);
         }
-        return QFileInfo(book_file_name).exists();
+        return QFileInfo::exists(book_file_name);
     }
 }
 
