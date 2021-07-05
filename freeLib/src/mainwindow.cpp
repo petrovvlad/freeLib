@@ -2058,12 +2058,8 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
             if(book.bDeleted)
             {
                 QBrush brush(QColor::fromRgb(96,96,96));
-                item_book->setForeground(0,brush);
-                item_book->setForeground(1,brush);
-                item_book->setForeground(2,brush);
-                item_book->setForeground(3,brush);
-                item_book->setForeground(4,brush);
-                item_book->setForeground(5,brush);
+                for (int i = 0; i != 7; ++i)
+                     item_book->setForeground(i, brush);
             }
 
             if(idBook==idCurrentBook_)
