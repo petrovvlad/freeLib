@@ -363,7 +363,7 @@ void ExportThread::export_books()
             {
                 QString arh=book.sArchive;
                 arh=arh.left(arh.length()-4);
-                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh).arg(book.sFile).arg(book.sFormat);
+                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh,book.sFile,book.sFormat);
             }
             else
             {
