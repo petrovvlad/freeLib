@@ -2008,8 +2008,9 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     else if(url.startsWith("/book/",Qt::CaseInsensitive) && strings.count()>=4)
     {
         QString id=strings[2];
+        uint idBook = id.toUInt();
         QString format=strings[3];
-        convert(id,format,"",opds,ts);
+        convert(lib,idBook,format,"",opds,ts);
     }
     else if(url.startsWith("/directory",Qt::CaseInsensitive) && browseDir)
     {
@@ -2171,7 +2172,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         if(canonical_path.left(Path.length())==Path.toLower())
         {
             //qDebug()<<format<<Path+additionalPath;
-            convert("",format,Path+additionalPath,opds,ts);
+            convert(lib,0,format,Path+additionalPath,opds,ts);
         }
     }
     // return result;
@@ -2345,47 +2346,31 @@ void opds_server::new_connection()
     }
 }
 
-void opds_server::convert(QString id, QString format, QString file_name, bool opds, QTextStream &ts)
+void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_name, bool opds, QTextStream &ts)
 {
     QBuffer outbuff;
     QBuffer infobuff;
     QFileInfo fi_book;
-    if(id.isEmpty())
+    if(idBook==0)
     {
         fi_book.setFile(file_name);
         QFile file(file_name);
         file.open(QFile::ReadOnly);
         outbuff.setData(file.readAll());
-        id="-1";
     }
     else
     {
-        fi_book=GetBookFile(outbuff,infobuff,id.toLongLong());
+        fi_book=GetBookFile(outbuff,infobuff,idBook);
     }
 
     if(outbuff.size()!=0)
     {
-        book_info bi;
-        //qDebug()<<id.toLongLong();
-        GetBookInfo(bi,outbuff.data(),fi_book.suffix().toLower(),false,id.toLongLong());
-
         QSettings *settings=GetSettings();
         QString book_file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
-        //qDebug()<<book_file_name;
         if(book_file_name.isEmpty())
             book_file_name=default_exp_file_name;
-        //qDebug()<<bi.authors.count();
-//        book_file_name=book_file_name.replace("%s",BuildFileName(bi.seria)).replace("%b",BuildFileName(bi.title)).replace("%a",QString(bi.authors.at(0).author).replace(","," ").trimmed())+"."+format;
-//        if(book_file_name.contains("%n"))
-//        {
-//            int len=book_file_name.mid(book_file_name.indexOf("%n")+2,1).toInt();
-//            QString zerro;
-//            if(bi.num_in_seria==0)
-//                book_file_name.replace("%n"+QString::number(len),"");
-//            else
-//                book_file_name.replace("%n"+(len>0?QString::number(len):""),(len>0?zerro.fill('0',len-QString::number(bi.num_in_seria).length()):"")+QString::number(bi.num_in_seria));
-//        }
-        book_file_name=fillParams(book_file_name,bi)+"."+(format=="download"?fi_book.suffix().toLower():format);
+        SBook& book = lib.mBooks[idBook];
+        book_file_name=fillParams(book_file_name,book)+"."+(format=="download"?fi_book.suffix().toLower():format);
         if(settings->value("transliteration",false).toBool())
             book_file_name=Transliteration(book_file_name);
         book_file_name.replace(" ","_");
@@ -2405,43 +2390,29 @@ void opds_server::convert(QString id, QString format, QString file_name, bool op
             QString tmp_dir;
             if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
                 tmp_dir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-            //qDebug()<<1;
             QDir().mkpath(tmp_dir+"/freeLib");
             file.setFileName(tmp_dir+"/freeLib/book0."+fi_book.suffix());
             file.open(QFile::WriteOnly);
             file.write(outbuff.data());
             file.close();
-            //qDebug()<<2;
-            QFileInfo fi(file);
             fb2mobi conv;
-            QSqlQuery query(QSqlDatabase::database("libdb"));
-            QString language=bi.language;
-            if(id!="-1")
+            QSettings* settings=GetSettings();
+            int http_settings=settings->value("httpExport",0).toInt()-1;
+            if(http_settings==-1)
             {
-                query.exec("SELECT language from book WHERE id="+id);
-                if(query.next())
-                    language=query.value(0).toString();
-            }
-
-            {
-                QSettings* settings=GetSettings();
-                int http_settings=settings->value("httpExport",0).toInt()-1;
-                if(http_settings==-1)
+                int count=settings->beginReadArray("export");
+                for(int i=0;i<count;i++)
                 {
-                    int count=settings->beginReadArray("export");
-                    for(int i=0;i<count;i++)
+                    settings->setArrayIndex(i);
+                    if(settings->value("Default").toBool())
                     {
-                        settings->setArrayIndex(i);
-                        if(settings->value("Default").toBool())
-                        {
-                            http_settings=i;
-                            break;
-                        }
+                        http_settings=i;
+                        break;
                     }
-                    settings->endArray();
                 }
-                SetCurrentExportSettings(http_settings);
+                settings->endArray();
             }
+            SetCurrentExportSettings(http_settings);
 
             // Не удалять
             //QString out_file=conv.convert(QStringList()<<fi.absoluteFilePath(),false,format.toUpper(),bi);
@@ -2450,7 +2421,6 @@ void opds_server::convert(QString id, QString format, QString file_name, bool op
             file.open(QFile::ReadOnly);
             outbuff.close();
             outbuff.setData(file.readAll());
-            //qDebug()<<3;
             if(opds)
             {
                 if(format=="epub")

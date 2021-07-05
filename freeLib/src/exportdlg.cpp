@@ -38,7 +38,7 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0,100);
     QString dir;
-    if(send!=ST_Mail)
+    if(send!=ST_Mail && !settings->value("PostprocessingCopy",false).toBool())
     {
         dir=SelectDir();
         if(dir.isEmpty())

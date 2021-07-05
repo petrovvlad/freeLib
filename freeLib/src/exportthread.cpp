@@ -256,7 +256,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
             qDebug()<<ex<<listArg;
             QProcess::execute(ex,listArg);
         }
-        return QFileInfo(book_file_name).exists();
+        return QFileInfo::exists(book_file_name);
     }
 }
 
@@ -363,24 +363,13 @@ void ExportThread::export_books()
             {
                 QString arh=book.sArchive;
                 arh=arh.left(arh.length()-4);
-                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh).arg(book.sFile).arg(book.sFormat);
+                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh,book.sFile,book.sFormat);
             }
             else
             {
                 file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
                 if(file_name.isEmpty())
                     file_name=default_exp_file_name;
-                QString author=BuildFileName(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].getName());
-                QString seria_name=BuildFileName(mLibs[idCurrentLib].mSerials[book.idSerial].sName);
-                QString book_name=BuildFileName(book.sName);
-                QString ser_num = QString::number(book.numInSerial);
-                if(buffers.count()>1)
-                {
-                    ser_num="0";
-                    book_name=seria_name;
-                    seria_name="";
-                }
-                //file_name=fillParams(file_name,QFileInfo(),seria_name,book_name,author,ser_num)+"."+book.sFormat;
                 file_name = fillParams(file_name,book) + "." + book.sFormat;
                 if(settings->value("transliteration",false).toBool())
                     file_name=Transliteration(file_name);
