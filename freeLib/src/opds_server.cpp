@@ -617,8 +617,8 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
 {
     QList<uint> listBooks;
     if(idAuthor!=0 && idSeria>0){
-        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
-        while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
+        while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
             if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == idSeria)
                 listBooks<<i.value();
             ++i;
