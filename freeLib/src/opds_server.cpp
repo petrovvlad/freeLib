@@ -654,13 +654,14 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
     if(idGenre!=0){
         auto iBook = lib.mBooks.constBegin();
         while(iBook != lib.mBooks.constEnd()){
-            if(!iBook->bDeleted)
+            if(!iBook->bDeleted){
                 foreach(auto iGenre,iBook->listIdGenres){
                     if(iGenre == idGenre){
                         listBooks << iBook.key();
                         break;
                     }
                 }
+            }
             ++iBook;
         }
         std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
