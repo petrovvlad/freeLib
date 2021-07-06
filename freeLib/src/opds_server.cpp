@@ -626,15 +626,15 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
         std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
     }
     if(idAuthor != 0 && idSeria==0){
-        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
         if(sequenceless){
-            while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+            while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
                 if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == 0)
                     listBooks<<i.value();
                 ++i;
             }
         }else{
-            while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+            while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
                 if(!lib.mBooks[i.value()].bDeleted)
                     listBooks<<i.value();
                 ++i;
@@ -1796,8 +1796,8 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             foreach(auto iIndex,listAuthorId)
             {
                 uint nBooksCount=0;
-                QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(iIndex);
-                while(i!=lib.mAuthorBooksLink.end() && i.key()==iIndex){
+                QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(iIndex);
+                while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==iIndex){
                     nBooksCount++;
                     ++i;
                 }
@@ -1869,9 +1869,9 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
              div.setAttribute("class","caption");
         }
 
-        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
         QMap<uint,uint> mapCountBooks;
-        while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+        while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
             SBook& book = lib.mBooks[i.value()];
             if(book.idSerial>0){
                 if(mapCountBooks.contains(book.idSerial))
