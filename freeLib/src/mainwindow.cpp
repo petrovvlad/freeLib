@@ -1343,7 +1343,7 @@ void MainWindow::SelectBook()
     idCurrentBook_ = idBook;
     SBook &book = mLibs[idCurrentLib].mBooks[idBook];
     ui->btnOpenBook->setEnabled(true);
-    if(ui->splitter->sizes()[1]>0)
+    if(ui->splitter->sizes().at(1)>0)
     {
         QBuffer outbuff;
         QBuffer infobuff;
