@@ -2200,7 +2200,7 @@ void MainWindow::UpdateExportMenu()
     }
     if(!ui->btnExport->defaultAction())
     {
-        ui->btnExport->setDefaultAction(menu->actions()[0]);
+        ui->btnExport->setDefaultAction(menu->actions().constFirst());
     }
     foreach (QAction *action, menu->actions())
     {
