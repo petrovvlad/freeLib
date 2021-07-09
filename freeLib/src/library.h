@@ -9,7 +9,6 @@
 class SAuthor
 {
 public:
-    //SAuthor(QString sAuthor);
     QString getName() const;
     int nTag;
     QString sFirstName;
@@ -59,6 +58,7 @@ public:
     uint findAuthor(SAuthor& author);
     uint findSerial(QString sSerial);
     void loadAnnotation(uint idBook);
+    QFileInfo getBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool caption=false, QDateTime *file_data=nullptr);
     QString name;
     QString path;
     QString sInpx;
@@ -74,8 +74,6 @@ public:
 
 void loadLibrary(uint idLibrary);
 void loadGenres();
-
-QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, SBook book, bool caption=false, QDateTime *file_data=nullptr);
 
 extern bool db_is_open;
 

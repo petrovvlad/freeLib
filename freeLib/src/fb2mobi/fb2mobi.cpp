@@ -1547,7 +1547,7 @@ QString fb2mobi::convert(qlonglong id)
     QBuffer infobuff;
     QFileInfo fi_book;
     outputFormat="EPUB";
-    fi_book=GetBookFile(outbuff,infobuff,id);
+    fi_book=mLibs[idCurrentLib].getBookFile(outbuff,infobuff,id);
     if(fi_book.suffix().toLower()!="fb2")
         return "";
     SBook book_tmp = mLibs[idCurrentLib].mBooks[id];

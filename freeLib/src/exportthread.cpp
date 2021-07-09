@@ -300,7 +300,7 @@ void ExportThread::export_books()
                 QString out_dir=dir.absolutePath()+"/"+archive.left(archive.length()-4);
                 QDir().mkpath(out_dir);
                 QBuffer buff,infobuff;
-                GetBookFile(buff,infobuff,book);
+                mLibs[idCurrentLib].getBookFile(buff,infobuff,idBook);
 
                 QFile::remove(out_dir+"/"+file);
                 QFile outfile;
@@ -353,7 +353,7 @@ void ExportThread::export_books()
             buffers<<new QBuffer(this);
             QBuffer infobuff;
             SBook &book = mLibs[idCurrentLib].mBooks[idBook];
-            fi=GetBookFile(*buffers.last(),infobuff,book);
+            fi=mLibs[idCurrentLib].getBookFile(*buffers.last(),infobuff,idBook);
             if(fi.fileName().isEmpty())
             {
                 emit Progress(count*100/book_list.count(),count);

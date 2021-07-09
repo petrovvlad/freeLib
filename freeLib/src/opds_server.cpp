@@ -802,7 +802,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     QBuffer outbuff;
                     QBuffer infobuff;
                     QFileInfo fi_book;
-                    fi_book=GetBookFile(outbuff,infobuff,idBook);
+                    fi_book=lib.getBookFile(outbuff,infobuff,idBook);
                     if(fi_book.suffix().toLower()=="fb2")
                     {
                         if(book.sAnnotation.isEmpty()){
@@ -927,7 +927,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     QBuffer outbuff;
                     QBuffer infobuff;
                     QFileInfo fi_book;
-                    fi_book=GetBookFile(outbuff,infobuff,idBook);
+                    fi_book=lib.getBookFile(outbuff,infobuff,idBook);
                     if(fi_book.suffix().toLower()=="fb2")
                     {
                         if(book.sAnnotation.isEmpty()){
@@ -2357,7 +2357,7 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
     }
     else
     {
-        fi_book=GetBookFile(outbuff,infobuff,idBook);
+        fi_book=lib.getBookFile(outbuff,infobuff,idBook);
     }
 
     if(outbuff.size()!=0)

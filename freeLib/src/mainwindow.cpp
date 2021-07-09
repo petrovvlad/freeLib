@@ -36,178 +36,6 @@ extern QSplashScreen *splash;
 
 bool db_is_open;
 
-QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool caption, QDateTime *file_data)
-{
-    QString file,archive;
-    QFileInfo fi;
-    SBook &book = mLibs[idCurrentLib].mBooks[id_book];
-    QString LibPath=mLibs[idCurrentLib].path;
-    LibPath=RelativeToAbsolutePath(LibPath);
-    if(book.sArchive.isEmpty()){
-        file = QString("%1/%2.%3").arg(LibPath).arg(book.sFile).arg(book.sFormat);
-    }else{
-        file = QString("%1.%2").arg(book.sFile).arg(book.sFormat);
-        archive = QString("%1/%2").arg(LibPath).arg(book.sArchive.replace(".inp",".zip"));
-    }
-
-    archive=archive.replace("\\","/");
-    if(archive.isEmpty())
-    {
-        QFile book_file(file);
-        if(!book_file.open(QFile::ReadOnly))
-        {
-            qDebug()<<("Error open file!")<<" "<<file;
-            return fi;
-        }
-        buffer.setData(book_file.readAll());
-        fi.setFile(book_file);
-        if(file_data)
-        {
-            *file_data=fi.birthTime();
-        }
-        fi.setFile(file);
-        QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
-        QFile info_file(fbd);
-        if(info_file.exists())
-        {
-            info_file.open(QFile::ReadOnly);
-            buffer_info.setData(info_file.readAll());
-        }
-    }
-    else
-    {
-        QuaZip uz(archive);
-        if (!uz.open(QuaZip::mdUnzip))
-        {
-            qDebug()<<("Error open archive!")<<" "<<archive;
-            return fi;
-        }
-
-        if(file_data)
-        {
-            SetCurrentZipFileName(&uz,file);
-            QuaZipFileInfo64 zip_fi;
-            if(uz.getCurrentFileInfo(&zip_fi))
-            {
-                *file_data=zip_fi.dateTime;
-            }
-        }
-        QuaZipFile zip_file(&uz);
-        SetCurrentZipFileName(&uz,file);
-        if(!zip_file.open(QIODevice::ReadOnly))
-        {
-            qDebug()<<"Error open file: "<<file;
-        }
-        if(caption)
-        {
-            buffer.setData(zip_file.read(16*1024));
-        }
-        else
-        {
-            buffer.setData(zip_file.readAll());
-        }
-        zip_file.close();
-        fi.setFile(file);
-        QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
-
-        if(SetCurrentZipFileName(&uz,fbd))
-        {
-            zip_file.open(QIODevice::ReadOnly);
-            buffer.setData(zip_file.readAll());
-            zip_file.close();
-        }
-
-        fi.setFile(archive+"/"+file);
-    }
-    return fi;
-}
-
-QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, SBook book, bool caption, QDateTime *file_data)
-{
-    QString file,archive;
-    QFileInfo fi;
-    //SBook &book = mLibs[idCurrentLib].mBooks[id_book];
-    QString LibPath=mLibs[idCurrentLib].path;
-    LibPath=RelativeToAbsolutePath(LibPath);
-    if(book.sArchive.isEmpty()){
-        file = QString("%1/%2.%3").arg(LibPath,book.sFile,book.sFormat);
-    }else{
-        file = QString("%1.%2").arg(book.sFile,book.sFormat);
-        archive = QString("%1/%2").arg(LibPath,book.sArchive.replace(".inp",".zip"));
-    }
-
-    archive=archive.replace("\\","/");
-    if(archive.isEmpty())
-    {
-        QFile book_file(file);
-        if(!book_file.open(QFile::ReadOnly))
-        {
-            qDebug()<<("Error open file!")<<" "<<file;
-            return fi;
-        }
-        buffer.setData(book_file.readAll());
-        fi.setFile(book_file);
-        if(file_data)
-        {
-            *file_data=fi.birthTime();
-        }
-        fi.setFile(file);
-        QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
-        QFile info_file(fbd);
-        if(info_file.exists())
-        {
-            info_file.open(QFile::ReadOnly);
-            buffer_info.setData(info_file.readAll());
-        }
-    }
-    else
-    {
-        QuaZip uz(archive);
-        if (!uz.open(QuaZip::mdUnzip))
-        {
-            qDebug()<<("Error open archive!")<<" "<<archive;
-            return fi;
-        }
-
-        if(file_data)
-        {
-            SetCurrentZipFileName(&uz,file);
-            QuaZipFileInfo64 zip_fi;
-            if(uz.getCurrentFileInfo(&zip_fi))
-            {
-                *file_data=zip_fi.dateTime;
-            }
-        }
-        QuaZipFile zip_file(&uz);
-        SetCurrentZipFileName(&uz,file);
-        if(!zip_file.open(QIODevice::ReadOnly))
-        {
-            qDebug()<<"Error open file: "<<file;
-        }
-        if(caption)
-        {
-            buffer.setData(zip_file.read(16*1024));
-        }
-        else
-        {
-            buffer.setData(zip_file.readAll());
-        }
-        zip_file.close();
-        fi.setFile(file);
-        QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
-
-        if(SetCurrentZipFileName(&uz,fbd))
-        {
-            zip_file.open(QIODevice::ReadOnly);
-            buffer.setData(zip_file.readAll());
-            zip_file.close();
-        }
-
-        fi.setFile(archive+"/"+file);
-    }
-    return fi;
-}
-
 QPixmap GetTag(QColor color,int size)
 {
     QPixmap pixmap(size,size-4);
@@ -1064,7 +892,7 @@ void MainWindow::BookDblClick()
     QTreeWidgetItem* item=ui->Books->selectedItems()[0];
     QBuffer outbuff;
     QBuffer infobuff;
-    QFileInfo fi=GetBookFile(outbuff,infobuff,item->data(0,Qt::UserRole).toUInt());
+    QFileInfo fi=mLibs[idCurrentLib].getBookFile(outbuff,infobuff,item->data(0,Qt::UserRole).toUInt());
     if(fi.fileName().isEmpty())
         return;
     QString TempDir="";
@@ -1348,7 +1176,7 @@ void MainWindow::SelectBook()
         QBuffer outbuff;
         QBuffer infobuff;
         QDateTime book_date;
-        QFileInfo fi=GetBookFile(outbuff,infobuff,idBook,false,&book_date);
+        QFileInfo fi=mLibs[idCurrentLib].getBookFile(outbuff,infobuff,idBook,false,&book_date);
         book_info bi;
         if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
             mLibs[idCurrentLib].loadAnnotation(idBook);

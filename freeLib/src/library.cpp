@@ -344,7 +344,7 @@ void SLib::loadAnnotation(uint idBook)
         doc.setContent(buffer.data());
         QDomElement title_info=doc.elementsByTagName("title-info").at(0).toElement();
             QString cover=QString::fromStdString( title_info.elementsByTagName("coverpage").at(0).toElement().elementsByTagName("image").at(0).attributes().namedItem("l:href").toAttr().value().toStdString());
-            if(cover.at(0)=="#")
+            if(!cover.isEmpty() && cover.at(0)=="#")
             {
                 QDomNodeList binarys=doc.elementsByTagName("binary");
                 for(int i=0;i<binarys.count();i++)
@@ -374,5 +374,91 @@ void SLib::loadAnnotation(uint idBook)
             book.sAnnotation.replace("<annotation>","",Qt::CaseInsensitive);
             book.sAnnotation.replace("</annotation>","",Qt::CaseInsensitive);
     }
+}
+
+QFileInfo SLib::getBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book, bool caption, QDateTime *file_data)
+{
+    QString file,archive;
+    QFileInfo fi;
+    SBook &book = mBooks[id_book];
+    //QString LibPath=mLibs[idCurrentLib].path;
+    QString LibPath=RelativeToAbsolutePath(path);
+    if(book.sArchive.isEmpty()){
+        file = QString("%1/%2.%3").arg(LibPath,book.sFile,book.sFormat);
+    }else{
+        file = QString("%1.%2").arg(book.sFile,book.sFormat);
+        archive = QString("%1/%2").arg(LibPath,book.sArchive.replace(".inp",".zip"));
+    }
+
+    archive=archive.replace("\\","/");
+    if(archive.isEmpty())
+    {
+        QFile book_file(file);
+        if(!book_file.open(QFile::ReadOnly))
+        {
+            qDebug()<<("Error open file!")<<" "<<file;
+            return fi;
+        }
+        buffer.setData(book_file.readAll());
+        fi.setFile(book_file);
+        if(file_data)
+        {
+            *file_data=fi.birthTime();
+        }
+        fi.setFile(file);
+        QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
+        QFile info_file(fbd);
+        if(info_file.exists())
+        {
+            info_file.open(QFile::ReadOnly);
+            buffer_info.setData(info_file.readAll());
+        }
+    }
+    else
+    {
+        QuaZip uz(archive);
+        if (!uz.open(QuaZip::mdUnzip))
+        {
+            qDebug()<<("Error open archive!")<<" "<<archive;
+            return fi;
+        }
+
+        if(file_data)
+        {
+            SetCurrentZipFileName(&uz,file);
+            QuaZipFileInfo64 zip_fi;
+            if(uz.getCurrentFileInfo(&zip_fi))
+            {
+                *file_data=zip_fi.dateTime;
+            }
+        }
+        QuaZipFile zip_file(&uz);
+        SetCurrentZipFileName(&uz,file);
+        if(!zip_file.open(QIODevice::ReadOnly))
+        {
+            qDebug()<<"Error open file: "<<file;
+        }
+        if(caption)
+        {
+            buffer.setData(zip_file.read(16*1024));
+        }
+        else
+        {
+            buffer.setData(zip_file.readAll());
+        }
+        zip_file.close();
+        fi.setFile(file);
+        QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
+
+        if(SetCurrentZipFileName(&uz,fbd))
+        {
+            zip_file.open(QIODevice::ReadOnly);
+            buffer.setData(zip_file.readAll());
+            zip_file.close();
+        }
+
+        fi.setFile(archive+"/"+file);
+    }
+    return fi;
 }
 
