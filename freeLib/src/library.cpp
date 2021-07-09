@@ -5,7 +5,6 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 
-//SLib current_lib;
 QMap<int,SLib> mLibs;
 QMap <uint,SGenre> mGenre;
 
@@ -135,7 +134,6 @@ void loadGenres()
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database("libdb"));
 
-    t_start = QDateTime::currentMSecsSinceEpoch();
     mGenre.clear();
     query.prepare("SELECT id, name, id_parent, sort_index FROM janre;");
     //                    0   1     2          3
@@ -210,7 +208,7 @@ void SLib::loadAnnotation(uint idBook)
         {
             qDebug()<<("Error open file!")<<" "<<sFile;
             book.sAnnotation = "<font color=\"red\">" + QCoreApplication::translate("MainWindow","Can't find file: %1").arg(sFile) + "</font>";
-            return /*fi*/;
+            return;
         }
         buffer.setData(book_file.readAll());
         fi.setFile(book_file);
@@ -230,7 +228,7 @@ void SLib::loadAnnotation(uint idBook)
         {
             qDebug()<<("Error open archive!")<<" "<<sArchive;
             book.sAnnotation = "<font color=\"red\">" + QCoreApplication::translate("MainWindow","Can't find file: %1").arg(sFile) + "</font>";
-            return /*fi*/;
+            return;
         }
 
         QuaZipFile zip_file(&uz);
@@ -268,7 +266,6 @@ void SLib::loadAnnotation(uint idBook)
         QDomNode root=doc.documentElement();
         bool need_loop=true;
         QString rel_path;
-        //bi.num_in_seria=0;
         for(int i=0;i<root.childNodes().count() && need_loop;i++)
         {
             if(root.childNodes().at(i).nodeName().toLower()=="rootfiles")
@@ -328,8 +325,6 @@ void SLib::loadAnnotation(uint idBook)
                                             image.loadFromData(img.data());
                                             image.save(sImgFile);
 
-                                            //bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+manifest.childNodes().at(man).attributes().namedItem("media-type").toAttr().value()+
-                                            //        ";base64,"+img.data().toBase64()+"\"></center></td>");
                                             book.sImg=QString("<td valign=top style=\"width:1px\"><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
                                             break;
                                         }
