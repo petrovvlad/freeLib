@@ -298,17 +298,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
 
-    tbClear=new QToolButton(this);
-    tbClear->setFocusPolicy(Qt::NoFocus);
-    tbClear->setIcon(QIcon(":/icons/img/icons/clear.png"));
-    tbClear->setStyleSheet("border: none;");
-    tbClear->setCursor(Qt::ArrowCursor);
-    tbClear->setVisible(false);
-    QHBoxLayout* layout=new QHBoxLayout(ui->searchString);
-    layout->addWidget(tbClear,0,Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setMargin(0);
-
     idCurrentLanguage_ = -1;
     bUseTag_=settings.value("use_tag",true).toBool();
     bShowDeleted_ =settings.value("ShowDeleted").toBool();
@@ -321,7 +310,9 @@ MainWindow::MainWindow(QWidget *parent) :
         idCurrentBook_ = settings.value("current_book_id",0).toUInt();
         idCurrentGenre_ = settings.value("current_genre_id",0).toUInt();
         nCurrentTab = settings.value("current_tab",0).toInt();
-        ui->searchString->setText(settings.value("filter_set").toString());
+        QString sFilter = settings.value("filter_set").toString();
+        ui->searchString->setText(sFilter);
+        ui->searchString->setClearButtonEnabled(sFilter.length()>1);
     }
     else
     {
@@ -342,7 +333,6 @@ MainWindow::MainWindow(QWidget *parent) :
     FillGenres();
 
     connect(ui->searchString,SIGNAL(/*textEdited*/textChanged(QString)),this,SLOT(searchCanged(QString)));
-    connect(tbClear,SIGNAL(clicked()),this,SLOT(searchClear()));
     connect(ui->actionAddLibrary,SIGNAL(triggered()),this,SLOT(ManageLibrary()));
     connect(ui->btnLibrary,SIGNAL(clicked()),this,SLOT(ManageLibrary()));
     connect(ui->btnOpenBook,SIGNAL(clicked()),this,SLOT(BookDblClick()));
@@ -381,6 +371,10 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(About()));
     connect(ui->actionNew_labrary_wizard,SIGNAL(triggered()),this,SLOT(newLibWizard()));
     connect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
+    QList<QAction*> actionList = ui->searchString->findChildren<QAction*>();
+    if (!actionList.isEmpty()) {
+        connect(actionList.first(), SIGNAL(triggered()), this, SLOT(searchClear()));
+    }
 
 
     ChangingLanguage(false);
@@ -1575,7 +1569,7 @@ void MainWindow::searchCanged(QString str)
         FillSerials();
         FillAuthors();
     }
-    tbClear->setVisible(ui->searchString->text().length()>1);
+    ui->searchString->setClearButtonEnabled(ui->searchString->text().length()>1);
 }
 
 void MainWindow::searchClear()

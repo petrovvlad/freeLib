@@ -40,7 +40,6 @@ public:
 private:
     Ui::MainWindow *ui;
     QSystemTrayIcon *trIcon;
-    QToolButton *tbClear;
     void UpdateBooks();
     void UpdateTags();
     DropForm *pDropForm;
