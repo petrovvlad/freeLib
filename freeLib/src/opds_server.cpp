@@ -806,9 +806,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     if(fi_book.suffix().toLower()=="fb2")
                     {
                         if(book.sAnnotation.isEmpty()){
-                            book_info book_inf_tmp;
-                            GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",false,idBook);
-                            book.sAnnotation = book_inf_tmp.annotation;
+                            lib.loadAnnotation(idBook);
                         }
                         el=AddTextNode("content",book.sAnnotation,entry);
                         el.setAttribute("type","text/html");
@@ -933,9 +931,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     if(fi_book.suffix().toLower()=="fb2")
                     {
                         if(book.sAnnotation.isEmpty()){
-                            book_info book_inf_tmp;
-                            GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",false,idBook);
-                            book.sAnnotation = book_inf_tmp.annotation;
+                            lib.loadAnnotation(idBook);
                         }
                         QDomDocument an;
                         an.setContent(QString("<dev>%1</dev>").arg(book.sAnnotation));
