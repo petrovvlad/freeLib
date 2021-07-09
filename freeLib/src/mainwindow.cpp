@@ -1996,7 +1996,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
                 item_author = mAuthors[idAuthor];
 
             if(idSerial>0){
-                auto iSerial = mSerias.find(idSerial);
+                auto iSerial = mSerias.constFind(idSerial);
                 while(iSerial != mSerias.constEnd()){
                     item_seria = iSerial.value();
                     if(item_seria->parent()->data(0,Qt::UserRole)==idAuthor)
