@@ -130,10 +130,10 @@ QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, SBook book, bool cap
     QString LibPath=mLibs[idCurrentLib].path;
     LibPath=RelativeToAbsolutePath(LibPath);
     if(book.sArchive.isEmpty()){
-        file = QString("%1/%2.%3").arg(LibPath).arg(book.sFile).arg(book.sFormat);
+        file = QString("%1/%2.%3").arg(LibPath,book.sFile,book.sFormat);
     }else{
-        file = QString("%1.%2").arg(book.sFile).arg(book.sFormat);
-        archive = QString("%1/%2").arg(LibPath).arg(book.sArchive.replace(".inp",".zip"));
+        file = QString("%1.%2").arg(book.sFile,book.sFormat);
+        archive = QString("%1/%2").arg(LibPath,book.sArchive.replace(".inp",".zip"));
     }
 
     archive=archive.replace("\\","/");
@@ -1359,7 +1359,7 @@ void MainWindow::SelectBook()
             QString LibPath=mLibs[idCurrentLib].path;
             if(book.sArchive.trimmed().isEmpty() )
             {
-                file=QString("%1/%2.%3").arg(LibPath).arg(book.sFile).arg(book.sFormat);
+                file=QString("%1/%2.%3").arg(LibPath,book.sFile,book.sFormat);
             }
             else
             {
