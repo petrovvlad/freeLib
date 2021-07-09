@@ -322,7 +322,7 @@ void SLib::loadAnnotation(uint idBook)
 
                                             //проверить как работает
                                             QString sImgFile = QString("%1/freeLib/%2")
-                                                    .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first())
+                                                    .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                                     .arg(idBook);
                                             QPixmap image;
                                             image.loadFromData(img.data());
@@ -357,7 +357,7 @@ void SLib::loadAnnotation(uint idBook)
                     if(binarys.at(i).attributes().namedItem("id").toAttr().value()==cover.right(cover.length()-1))
                     {
                         QString sImgFile = QString("%1/freeLib/%2")
-                                .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first())
+                                .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                 .arg(idBook);
                         QPixmap image;
                         QByteArray ba;
