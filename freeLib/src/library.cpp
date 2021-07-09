@@ -361,7 +361,7 @@ void SLib::loadAnnotation(uint idBook)
                                 .arg(idBook);
                         QPixmap image;
                         QByteArray ba;
-                        ba.append(binarys.at(i).toElement().text());
+                        ba.append(binarys.at(i).toElement().text().toLatin1());
                         QByteArray ba64 = QByteArray::fromBase64(ba);
                         image.loadFromData(ba64);
                         image.save(sImgFile);
