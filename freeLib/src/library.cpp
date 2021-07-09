@@ -349,7 +349,7 @@ void SLib::loadAnnotation(uint idBook)
         doc.setContent(buffer.data());
         QDomElement title_info=doc.elementsByTagName("title-info").at(0).toElement();
             QString cover=QString::fromStdString( title_info.elementsByTagName("coverpage").at(0).toElement().elementsByTagName("image").at(0).attributes().namedItem("l:href").toAttr().value().toStdString());
-            if(cover.left(1)=="#")
+            if(cover.at(0)=="#")
             {
                 QDomNodeList binarys=doc.elementsByTagName("binary");
                 for(int i=0;i<binarys.count();i++)
