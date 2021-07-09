@@ -196,10 +196,10 @@ void SLib::loadAnnotation(uint idBook)
 
     SBook& book = mBooks[idBook];
     if(book.sArchive.isEmpty()){
-        sFile = QString("%1/%2.%3").arg(path).arg(book.sFile).arg(book.sFormat);
+        sFile = QString("%1/%2.%3").arg(path,book.sFile,book.sFormat);
     }else{
-        sFile = QString("%1.%2").arg(book.sFile).arg(book.sFormat);
-        sArchive = QString("%1/%2").arg(path).arg(book.sArchive.replace(".inp",".zip"));
+        sFile = QString("%1.%2").arg(book.sFile,book.sFormat);
+        sArchive = QString("%1/%2").arg(path,book.sArchive.replace(".inp",".zip"));
     }
 
     sArchive=sArchive.replace("\\","/");
