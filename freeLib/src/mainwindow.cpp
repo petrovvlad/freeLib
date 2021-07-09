@@ -63,7 +63,7 @@ QFileInfo GetBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool c
         fi.setFile(book_file);
         if(file_data)
         {
-            *file_data=fi.created();
+            *file_data=fi.birthTime();
         }
         fi.setFile(file);
         QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
