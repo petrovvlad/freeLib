@@ -164,7 +164,8 @@ QString fillParams(QString str, SBook& book)
     QString abbr = "";
     foreach(QString str,mLibs[idCurrentLib].mSerials[book.idSerial].sName.split(" "))
     {
-        abbr+=str.left(1);
+        if(!str.isEmpty())
+                abbr += str.at(0);
     }
     result.replace("%abbrs", abbr.toLower());
     result.replace("%app_dir",QApplication::applicationDirPath()+"/");
