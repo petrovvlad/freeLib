@@ -717,30 +717,6 @@ void MainWindow::Settings()
     resizeEvent(nullptr);
 }
 
-void MainWindow::FillCheckedBookList(QList<book_info> &list,QTreeWidgetItem* item,bool send_all,bool count_only,bool checked_only)
-{
-    FillCheckedItemsBookList(list,item,send_all,count_only);
-    if(list.count()==0 && !checked_only)
-    {
-        if(ui->Books->selectedItems().count()>0)
-        {
-            if(ui->Books->selectedItems()[0]->childCount()>0)
-                FillCheckedItemsBookList(list,ui->Books->selectedItems()[0],true,count_only);
-            else
-            {
-                if(ui->Books->selectedItems()[0]->parent())
-                {
-                    qlonglong id_book=ui->Books->selectedItems()[0]->data(0,Qt::UserRole).toLongLong();
-                    book_info bi;
-                    if(!count_only)
-                        bi.id=id_book;
-                    list<<bi;
-                }
-            }
-        }
-    }
-}
-
 void MainWindow::FillCheckedBookList(QList<uint> &list,QTreeWidgetItem* item,bool send_all,bool checked_only)
 {
     FillCheckedItemsBookList(list,item,send_all);
@@ -755,38 +731,7 @@ void MainWindow::FillCheckedBookList(QList<uint> &list,QTreeWidgetItem* item,boo
                 if(ui->Books->selectedItems()[0]->parent())
                 {
                     qlonglong id_book=ui->Books->selectedItems()[0]->data(0,Qt::UserRole).toLongLong();
-                    book_info bi;
-//                    if(!count_only)
-//                        bi.id=id_book;
                     list<<id_book;
-                }
-            }
-        }
-    }
-}
-
-
-void MainWindow::FillCheckedItemsBookList(QList<book_info> &list,QTreeWidgetItem* item,bool send_all,bool count_only)
-{
-    QTreeWidgetItem* current;
-    for(int i=0;i<(item?item->childCount():ui->Books->topLevelItemCount());i++)
-    {
-        current=item?item->child(i):ui->Books->topLevelItem(i);
-        if(current->childCount()>0)
-        {
-            FillCheckedItemsBookList(list,current,send_all,count_only);
-        }
-        else
-        {
-            if(current->checkState(0)==Qt::Checked || send_all)
-            {
-                if(current->parent())
-                {
-                    qlonglong id_book=current->data(0,Qt::UserRole).toLongLong();
-                    book_info bi;
-                    if(!count_only)
-                        bi.id=id_book;
-                    list<<bi;
                 }
             }
         }
@@ -810,9 +755,6 @@ void MainWindow::FillCheckedItemsBookList(QList<uint> &list,QTreeWidgetItem* ite
                 if(current->parent())
                 {
                     qlonglong id_book=current->data(0,Qt::UserRole).toLongLong();
-                    book_info bi;
-//                    if(!count_only)
-//                        bi.id=id_book;
                     list<<id_book;
                 }
             }
@@ -933,8 +875,8 @@ void MainWindow::BookDblClick()
 
 void MainWindow::CheckBooks()
 {
-    QList<book_info> book_list;
-    FillCheckedBookList(book_list,nullptr,false,true,true);
+    QList<uint> book_list;
+    FillCheckedBookList(book_list,nullptr,false,true);
 
     const QSignalBlocker blocker( ui->Books);
     Qt::CheckState cs=book_list.count()>0?Qt::Unchecked:Qt::Checked;
@@ -994,8 +936,8 @@ void MainWindow::itemChanged(QTreeWidgetItem *item, int)
     QTreeWidgetItem* parent=item->parent();
     if(parent)
         CheckParent(parent);
-    QList<book_info> book_list;
-    FillCheckedBookList(book_list,nullptr,false,true);
+    QList<uint> book_list;
+    FillCheckedBookList(book_list,nullptr,false);
     ExportBookListBtn(book_list.count()!=0);
 
     ui->Books->blockSignals(wasBlocked);
@@ -1177,12 +1119,10 @@ void MainWindow::SelectBook()
         QBuffer infobuff;
         QDateTime book_date;
         QFileInfo fi=mLibs[idCurrentLib].getBookFile(outbuff,infobuff,idBook,false,&book_date);
-        book_info bi;
         if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
             mLibs[idCurrentLib].loadAnnotation(idBook);
         if(fi.fileName().isEmpty())
         {
-            GetBookInfo(bi,QByteArray(),"",true,idBook);
             QString file;
             QString LibPath=mLibs[idCurrentLib].path;
             if(book.sArchive.trimmed().isEmpty() )
@@ -1194,22 +1134,6 @@ void MainWindow::SelectBook()
                 file=LibPath+"/"+book.sArchive.trimmed().replace(".inp",".zip");
             }
             file=file.replace("\\","/");
-            bi.annotation="<font color=\"red\">"+tr("Can't find file: %1").arg(file)+"</font>";
-        }
-        else
-        {
-            if(fi.fileName().right(3).toLower()=="fb2" || infobuff.size()>0)
-            {
-                GetBookInfo(bi,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",false,item->data(0,Qt::UserRole).toLongLong());
-            }
-            else if(fi.fileName().right(4).toLower()=="epub")
-            {
-                GetBookInfo(bi,outbuff.data(),"epub",false,item->data(0,Qt::UserRole).toLongLong());
-            }
-            else
-            {
-                GetBookInfo(bi,outbuff.data(),fi.suffix(),false,item->data(0,Qt::UserRole).toLongLong());
-            }
         }
 
         QString seria;
@@ -1248,9 +1172,9 @@ void MainWindow::SelectBook()
             size=arh.size();
         }
         QString img_width="220";
-        content.replace("#annotation#",bi.annotation).
+        content.replace("#annotation#",book.sAnnotation).
                 replace("#title#",book.sName).
-                replace("#width#",(bi.img.isEmpty()?"0":img_width)).
+                replace("#width#",(book.sImg.isEmpty()?"0":img_width)).
                 replace("#author#",sAuthors).
                 replace("#genre#",sGenres).
                 replace("#series#",seria).
@@ -1258,7 +1182,7 @@ void MainWindow::SelectBook()
                 replace("#file_size#",sizeToString(size)/*QString::number(size)+(mem_i>0?"."+QString::number((rest*10+5)/1024):"")+" "+mem[mem_i]*/).
                 replace("#file_data#",book_date.toString("dd.MM.yyyy hh:mm:ss")).
                 replace("#file_name#",fi.fileName()).
-                replace("#image#",bi.img).
+                replace("#image#",book.sImg).
                 replace("#file_info#",settings->value("show_fileinfo",true).toBool()?"block":"none");
         ui->Review->page()->setHtml(content,QUrl("file://"+QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
     }
