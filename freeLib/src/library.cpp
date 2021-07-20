@@ -170,7 +170,7 @@ SAuthor::SAuthor(QString sName)
 QString SAuthor::getName() const
 {
     QString sAuthorName = QString("%1 %2 %3").arg(sLastName,sFirstName,sMiddleName).trimmed();
-    if(sAuthorName.isEmpty())
+    if(sAuthorName.trimmed().isEmpty())
         sAuthorName = QCoreApplication::translate("MainWindow","unknown author");
     return sAuthorName;
 }

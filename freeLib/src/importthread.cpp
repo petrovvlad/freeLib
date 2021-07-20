@@ -127,9 +127,9 @@ qlonglong ImportThread::addAuthor(SAuthor author, uint libID, uint idBook, bool 
 
     QString sQuery = QString("SELECT id,favorite FROM author WHERE id_lib=%1 and %2 and %3 and %4").arg(
                 QString::number(libID),
-                (author.sLastName.isEmpty() ?"name1 is null" :"name1=\""+author.sLastName+"\""),
-                (author.sFirstName.isEmpty() ?"name2 is null" :"name2=\""+author.sFirstName+"\""),
-                (author.sMiddleName.isEmpty() ?"name3 is null" :"name3=\""+author.sMiddleName+"\""));
+                (author.sLastName.isEmpty() ?"name1 is null or name1=\"\"" :"name1=\""+author.sLastName+"\""),
+                (author.sFirstName.isEmpty() ?"name2 is null or name2=\"\"" :"name2=\""+author.sFirstName+"\""),
+                (author.sMiddleName.isEmpty() ?"name3 is null or name3=\"\"" :"name3=\""+author.sMiddleName+"\""));
     query->prepare(sQuery);
     query->exec();
     qlonglong id=0;
