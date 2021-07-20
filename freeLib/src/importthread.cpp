@@ -205,7 +205,7 @@ qlonglong ImportThread::AddGenre(qlonglong id_book,QString janre,qlonglong id_li
 void ImportThread::start(QString fileName, QString name, QString path, long ID, int update_type, bool save_only, bool firstAuthor, bool bWoDeleted)
 {
     _fileName=RelativeToAbsolutePath(fileName);
-    if(!QFileInfo(_fileName).exists() || !QFileInfo(_fileName).isFile())
+    if(!QFileInfo::exists(_fileName) || !QFileInfo(_fileName).isFile())
     {
         _fileName=fileName;
     }
