@@ -122,9 +122,6 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
 
 qlonglong ImportThread::addAuthor(SAuthor author, uint libID, uint idBook, bool first_author, QString language, int tag)
 {
-    if(author.getName().isEmpty())
-        return -1;
-
     QString sQuery = QString("SELECT id,favorite FROM author WHERE id_lib=%1 and %2 and %3 and %4").arg(
                 QString::number(libID),
                 (author.sLastName.isEmpty() ?"name1 is null or name1=\"\"" :"name1=\""+author.sLastName+"\""),
