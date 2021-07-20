@@ -150,6 +150,23 @@ void loadGenres()
     qDebug()<< "loadGenre " << t_end-t_start << "msec";
 }
 
+SAuthor::SAuthor()
+{
+
+}
+
+SAuthor::SAuthor(QString sName)
+{
+    QStringList listNames=sName.split(",");
+    if(listNames.count()>0)
+        sLastName=listNames[0].trimmed();
+    if(listNames.count()>1)
+        sFirstName=listNames[1].trimmed();
+    if(listNames.count()>2)
+        sMiddleName=listNames[1].trimmed();
+
+}
+
 QString SAuthor::getName() const
 {
     QString sAuthorName = QString("%1 %2 %3").arg(sLastName,sFirstName,sMiddleName).trimmed();

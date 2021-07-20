@@ -9,6 +9,8 @@
 class SAuthor
 {
 public:
+    SAuthor();
+    SAuthor(QString sName);
     QString getName() const;
     int nTag;
     QString sFirstName;

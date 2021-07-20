@@ -43,58 +43,6 @@ SendType SetCurrentExportSettings(int index);
 
 enum APP_MODE{MODE_LIBRARY,MODE_CONVERTER,MODE_SHELF};
 
-struct genre_info
-{
-    genre_info(QString genre,qlonglong id):genre(genre),id(id)
-    {
-    }
-    QString genre;
-    qlonglong id;
-};
-struct author_info
-{
-    author_info(QString author,qlonglong id):author(author),id(id)
-    {
-        QStringList sl=author.split(",");
-        if(sl.count()>0)
-            lastname=sl[0].trimmed();
-        if(sl.count()>1)
-            firstname=sl[0].trimmed();
-        if(sl.count()>2)
-            middlename=sl[0].trimmed();
-    }
-    QString author;
-    qlonglong id;
-    QString firstname;
-    QString middlename;
-    QString lastname;
-};
-
-struct book_info
-{
-    qlonglong id;
-    QString title;
-    QString annotation;
-    QList<author_info> authors;
-    QList<genre_info> genres;
-    QString language;
-    QString seria;
-    QString isbn;
-    qlonglong id_seria;
-    int num_in_seria;
-    QString img;
-    int star;
-    book_info()
-    {
-        star=0;
-        num_in_seria=0;
-  //      num_in_seria=-1;
-    }
-//    book_info(qlonglong id,qlonglong id_seria):id(id),id_seria(id_seria)
-//    {
-//        num_in_seria=0;
-//    }
-};
 struct tag
 {
     QString name;
@@ -107,7 +55,6 @@ struct tag
 };
 extern QList<tag> tag_list;
 
-void GetBookInfo(book_info &bi, const QByteArray &data, QString type, bool info_only=false, uint id_book=0);
 QPixmap GetTag(QColor color,int size);
 void SetLocale();
 QString FindLocaleFile(QString locale,QString name,QString suffics);
