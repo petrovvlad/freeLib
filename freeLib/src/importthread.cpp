@@ -153,7 +153,8 @@ qlonglong ImportThread::addAuthor(SAuthor author, uint libID, uint idBook, bool 
     }
     if(first_author)
         query->exec("UPDATE book SET first_author_id=" +QString::number(id)+" WHERE id="+QString::number(idBook));
-    query->exec("INSERT INTO book_author(id_book,id_author,id_lib,language) values("+QString::number(idBook)+","+QString::number(id)+","+QString::number(libID)+",'"+language+"')");
+    if(!query->exec("INSERT INTO book_author(id_book,id_author,id_lib,language) values("+QString::number(idBook)+","+QString::number(id)+","+QString::number(libID)+",'"+language+"')"))
+        qDebug() << query->lastError().text();
     return id;
 }
 
