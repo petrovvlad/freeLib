@@ -446,10 +446,7 @@ void ImportThread::importFB2_main(QString path)
     int count=0;
     importFB2(path, count);
     if(count>0)
-    {
         query->exec("COMMIT;");
-        count=0;
-    }
 }
 
 void ImportThread::importFB2(QString path, int &count)
