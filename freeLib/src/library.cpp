@@ -152,7 +152,7 @@ void loadGenres()
 
 SAuthor::SAuthor()
 {
-
+    nTag = 0;
 }
 
 SAuthor::SAuthor(QString sName)
