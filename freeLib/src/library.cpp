@@ -163,7 +163,7 @@ SAuthor::SAuthor(QString sName)
     if(listNames.count()>1)
         sFirstName=listNames[1].trimmed();
     if(listNames.count()>2)
-        sMiddleName=listNames[1].trimmed();
+        sMiddleName=listNames[2].trimmed();
 
 }
 
