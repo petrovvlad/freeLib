@@ -315,34 +315,33 @@ void SLib::loadAnnotation(uint idBook)
                                 meta.childNodes().at(m).save(ts,0,QDomNode::EncodingFromTextStream);
                                 book.sAnnotation=QString::fromUtf8(buff.data().data());
                             }
-                            else if(meta.childNodes().at(m).nodeName().right(4)=="meta" /*&& !info_only*/)
+                            else if(meta.childNodes().at(m).nodeName().right(4)=="meta")
                             {
                                 if(meta.childNodes().at(m).attributes().namedItem("name").toAttr().value()=="cover")
                                 {
-
                                     QString cover=meta.childNodes().at(m).attributes().namedItem("content").toAttr().value();
                                     QDomNode manifest=opf.documentElement().namedItem("manifest");
                                     for(int man=0;man<manifest.childNodes().count();man++)
                                     {
                                         if(manifest.childNodes().at(man).attributes().namedItem("id").toAttr().value()==cover)
                                         {
-                                            QBuffer img;
-                                            cover=rel_path+"/"+manifest.childNodes().at(man).attributes().namedItem("href").toAttr().value();
+                                            cover=manifest.childNodes().at(man).attributes().namedItem("href").toAttr().value();
 
                                             SetCurrentZipFileName(&zip,cover);
                                             zip_file.open(QIODevice::ReadOnly);
-                                            img.setData(zip_file.readAll());
+                                            QByteArray ba = zip_file.readAll();
                                             zip_file.close();
 
-                                            //проверить как работает
-                                            QString sImgFile = QString("%1/freeLib/%2")
+                                            QString sImgFile = QString("%1/freeLib/%2.jpg")
                                                     .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                                     .arg(idBook);
-                                            QPixmap image;
-                                            image.loadFromData(img.data());
-                                            image.save(sImgFile);
+                                            QFile file(sImgFile);
+                                            if(file.open(QFile::WriteOnly)){
+                                                file.write(ba);
+                                                file.close();
+                                            }
 
-                                            book.sImg=QString("<td valign=top style=\"width:1px\"><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
+                                            book.sImg=QString("<td valign=top><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
                                             break;
                                         }
                                     }
