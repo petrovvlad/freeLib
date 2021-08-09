@@ -1171,6 +1171,7 @@ void MainWindow::SelectBook()
             }
             size=arh.size();
         }
+
         QString img_width="220";
         content.replace("#annotation#",book.sAnnotation).
                 replace("#title#",book.sName).
@@ -1184,10 +1185,9 @@ void MainWindow::SelectBook()
                 replace("#file_name#",fi.fileName()).
                 replace("#image#",book.sImg).
                 replace("#file_info#",settings->value("show_fileinfo",true).toBool()?"block":"none");
-        ui->Review->page()->setHtml(content,QUrl("file://"+QStandardPaths::writableLocation(QStandardPaths::TempLocation)));
+        dynamic_cast<WebPage*>(ui->Review->page())->setHtml(content);
     }
 }
-
 
 void MainWindow::UpdateBooks()
 {
