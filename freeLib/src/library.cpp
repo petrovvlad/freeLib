@@ -341,7 +341,7 @@ void SLib::loadAnnotation(uint idBook)
                                                 file.close();
                                             }
 
-                                            book.sImg=QString("<td valign=top><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
+                                            book.sImg=QString("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
                                             break;
                                         }
                                     }
@@ -376,7 +376,7 @@ void SLib::loadAnnotation(uint idBook)
                         QByteArray ba64 = QByteArray::fromBase64(ba);
                         image.loadFromData(ba64);
                         image.save(sImgFile);
-                        book.sImg = QString("<td valign=top><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
+                        book.sImg = QString("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
                         break;
                     }
                 }
