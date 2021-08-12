@@ -20,7 +20,7 @@ TagDialog::TagDialog(QWidget *parent) :
         item->setData(Qt::UserRole,query.value(2).toString());
         con++;
     }
-    connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(ok_btn()));
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &TagDialog::ok_btn);
 }
 
 TagDialog::~TagDialog()

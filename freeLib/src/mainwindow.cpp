@@ -122,7 +122,7 @@ MainWindow::MainWindow(QWidget *parent) :
     MyProxySortModel->setDynamicSortFilter(false);
 
     ui->Review->setPage(new WebPage());
-    connect(ui->Review->page(),SIGNAL(linkClicked(QUrl)),this,SLOT(ReviewLink(QUrl)));
+    connect(static_cast<WebPage*>(ui->Review->page()), &WebPage::linkClicked, this, &MainWindow::ReviewLink);
 
     setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
 
@@ -160,16 +160,16 @@ MainWindow::MainWindow(QWidget *parent) :
     FillSerials();
     FillGenres();
 
-    connect(ui->searchString,SIGNAL(/*textEdited*/textChanged(QString)),this,SLOT(searchCanged(QString)));
-    connect(ui->actionAddLibrary,SIGNAL(triggered()),this,SLOT(ManageLibrary()));
-    connect(ui->btnLibrary,SIGNAL(clicked()),this,SLOT(ManageLibrary()));
-    connect(ui->btnOpenBook,SIGNAL(clicked()),this,SLOT(BookDblClick()));
-    connect(ui->btnOption,SIGNAL(clicked()),this,SLOT(Settings()));
-    connect(ui->actionPreference,SIGNAL(triggered()),this,SLOT(Settings()));
-    connect(ui->actionCheck_uncheck,SIGNAL(triggered()),this,SLOT(CheckBooks()));
-    connect(ui->btnCheck,SIGNAL(clicked()),this,SLOT(CheckBooks()));
-    connect(ui->btnEdit,SIGNAL(clicked()),this,SLOT(EditBooks()));
-    connect(ui->actionExit,SIGNAL(triggered()),this,SLOT(close()));
+    connect(ui->searchString, &QLineEdit::textChanged, this, &MainWindow::searchCanged);
+    connect(ui->actionAddLibrary, &QAction::triggered, this, &MainWindow::ManageLibrary);
+    connect(ui->btnLibrary, &QAbstractButton::clicked, this, &MainWindow::ManageLibrary);
+    connect(ui->btnOpenBook, &QAbstractButton::clicked, this, &MainWindow::BookDblClick);
+    connect(ui->btnOption, &QAbstractButton::clicked, this, &MainWindow::Settings);
+    connect(ui->actionPreference, &QAction::triggered, this, &MainWindow::Settings);
+    connect(ui->actionCheck_uncheck, &QAction::triggered, this, &MainWindow::CheckBooks);
+    connect(ui->btnCheck, &QAbstractButton::clicked, this, &MainWindow::CheckBooks);
+    connect(ui->btnEdit, &QAbstractButton::clicked, this, &MainWindow::EditBooks);
+    connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
     #endif
@@ -183,25 +183,25 @@ MainWindow::MainWindow(QWidget *parent) :
     #ifdef Q_OS_WIN32
         ui->actionExit->setShortcut(QKeySequence(Qt::ALT|Qt::Key_F4));
     #endif
-    connect(ui->AuthorList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectAuthor()));
-    connect(ui->Books,SIGNAL(itemSelectionChanged()),this,SLOT(SelectBook()));
-    connect(ui->Books,SIGNAL(itemDoubleClicked(QTreeWidgetItem*,int)),this,SLOT(BookDblClick()));
-    connect(ui->GenreList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectGenre()));
-    connect(ui->SeriaList,SIGNAL(itemSelectionChanged()),this,SLOT(SelectSeria()));
-    connect(ui->btnAuthor,SIGNAL(clicked()),this,SLOT(btnAuthor()));
-    connect(ui->btnGenre,SIGNAL(clicked()),this,SLOT(btnGenres()));
-    connect(ui->btnSeries,SIGNAL(clicked()),this,SLOT(btnSeries()));
-    connect(ui->btnSearch,SIGNAL(clicked()),this,SLOT(btnPageSearch()));
-    connect(ui->do_search,SIGNAL(clicked()),this,SLOT(StartSearch()));
-    connect(ui->s_author,SIGNAL(returnPressed()),this,SLOT(StartSearch()));
-    connect(ui->s_seria,SIGNAL(returnPressed()),this,SLOT(StartSearch()));
-    connect(ui->s_name,SIGNAL(returnPressed()),this,SLOT(StartSearch()));
-    connect(ui->actionAbout,SIGNAL(triggered()),this,SLOT(About()));
-    connect(ui->actionNew_labrary_wizard,SIGNAL(triggered()),this,SLOT(newLibWizard()));
-    connect(ui->Books,SIGNAL(itemChanged(QTreeWidgetItem*,int)),this,SLOT(itemChanged(QTreeWidgetItem*,int)));
+    connect(ui->AuthorList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectAuthor);
+    connect(ui->Books, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectBook);
+    connect(ui->Books, &QTreeWidget::itemDoubleClicked, this, &MainWindow::BookDblClick);
+    connect(ui->GenreList, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectGenre);
+    connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectSeria);
+    connect(ui->btnAuthor, &QAbstractButton::clicked, this, &MainWindow::btnAuthor);
+    connect(ui->btnGenre, &QAbstractButton::clicked, this, &MainWindow::btnGenres);
+    connect(ui->btnSeries, &QAbstractButton::clicked, this, &MainWindow::btnSeries);
+    connect(ui->btnSearch, &QAbstractButton::clicked, this, &MainWindow::btnPageSearch);
+    connect(ui->do_search, &QAbstractButton::clicked, this, &MainWindow::StartSearch);
+    connect(ui->s_author, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
+    connect(ui->s_seria, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
+    connect(ui->s_name, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
+    connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::About);
+    connect(ui->actionNew_labrary_wizard, &QAction::triggered, this, &MainWindow::newLibWizard);
+    connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
     QList<QAction*> actionList = ui->searchString->findChildren<QAction*>();
     if (!actionList.isEmpty()) {
-        connect(actionList.first(), SIGNAL(triggered()), this, SLOT(searchClear()));
+        connect(actionList.first(), &QAction::triggered, this, &MainWindow::searchClear);
     }
 
 
@@ -219,7 +219,7 @@ MainWindow::MainWindow(QWidget *parent) :
         //on_actionSwitch_to_shelf_mode_triggered();
         break;
     default:
-        connect(this, SIGNAL(window_loaded()), this, SLOT(on_actionSwitch_to_convert_mode_triggered()));
+        connect(this, &MainWindow::window_loaded, this, &MainWindow::on_actionSwitch_to_convert_mode_triggered);
         on_actionSwitch_to_convert_mode_triggered();
         break;
     }
@@ -247,16 +247,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->date_to->setDate(QDate::currentDate());
 
     pHelpDlg=nullptr;
-    connect(ui->actionHelp,SIGNAL(triggered()),this,SLOT(HelpDlg()));
+    connect(ui->actionHelp,&QAction::triggered,this,&MainWindow::HelpDlg);
     ui->Books->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->Books,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ContextMenu(QPoint)));
+    connect(ui->Books, &QWidget::customContextMenuRequested, this, &MainWindow::ContextMenu);
     ui->AuthorList->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->AuthorList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ContextMenu(QPoint)));
+    connect(ui->AuthorList, &QWidget::customContextMenuRequested, this, &MainWindow::ContextMenu);
     ui->SeriaList->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->SeriaList,SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(ContextMenu(QPoint)));
-    connect(ui->TagFilter,SIGNAL(currentIndexChanged(int)),this,SLOT(tag_select(int)));
+    connect(ui->SeriaList, &QWidget::customContextMenuRequested, this, &MainWindow::ContextMenu);
+    connect(ui->TagFilter, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::tag_select);
     ui->Books->header()->setContextMenuPolicy(Qt::CustomContextMenu);
-    connect(ui->Books->header(),SIGNAL(customContextMenuRequested(QPoint)),this,SLOT(HeaderContextMenu(QPoint)));
+    connect(ui->Books->header(),&QWidget::customContextMenuRequested,this,&MainWindow::HeaderContextMenu);
 
     opds.server_run();
     FillLibrariesMenu();
@@ -267,7 +267,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef Q_OS_OSX
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
-    connect(ui->actionMinimize_window,SIGNAL(triggered(bool)),SLOT(MinimizeWindow()));
+    connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
 
     settings.beginGroup("Columns");
     ui->Books->setColumnHidden(0,!settings.value("ShowName",true).toBool());
@@ -322,7 +322,7 @@ void MainWindow::UpdateTags()
     TagMenu.clear();
     QAction *ac=new QAction(tr("no tag"),&TagMenu);
     ac->setData(0);
-    connect(ac,SIGNAL(triggered()),this,SLOT(set_tag()));
+    connect(ac, &QAction::triggered, this, &MainWindow::set_tag);
     TagMenu.addAction(ac);
     tags_pic.clear();
     QPixmap pix=::GetTag(QColor(0,0,0,0),size);
@@ -344,7 +344,7 @@ void MainWindow::UpdateTags()
         con++;
         QAction *ac=new QAction(pix,query.value(1).toString().trimmed(),&TagMenu);
         ac->setData(query.value(2).toString());
-        connect(ac,SIGNAL(triggered()),this,SLOT(set_tag()));
+        connect(ac, &QAction::triggered, this, &MainWindow::set_tag);
         TagMenu.addAction(ac);
     }
 
@@ -511,7 +511,7 @@ void MainWindow::ChangingLanguage(bool change_language)
             btn->setAutoExclusive(true);
             btn->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
             layout_abc->addWidget(btn);
-            connect(btn,SIGNAL(clicked()),this,SLOT(btnSearch()));
+            connect(btn, &QAbstractButton::clicked, this, &MainWindow::btnSearch);
             if(!FirstButton)
                 FirstButton=btn;
         }
@@ -533,7 +533,7 @@ void MainWindow::ChangingLanguage(bool change_language)
                 btn->setAutoExclusive(true);
                 btn->setSizePolicy(QSizePolicy::Fixed,QSizePolicy::Fixed);
                 layout_abc->addWidget(btn);
-                connect(btn,SIGNAL(clicked()),this,SLOT(btnSearch()));
+                connect(btn, &QAbstractButton::clicked, this, &MainWindow::btnSearch);
                 if(!FirstButton && abc.at(i)=='A')
                     FirstButton=btn;
                 if(abc.at(i)=='#')
@@ -697,9 +697,9 @@ void MainWindow::Settings()
         settings.setValue("DefaultExport",ui->btnExport->defaultAction()->data().toInt());
     }
     SettingsDlg dlg(this);
-    connect(&dlg,SIGNAL(ChangingPort(int)),this,SLOT(ChangingPort(int)));
-    connect(&dlg,SIGNAL(ChangingLanguage()),this,SLOT(ChangingLanguage()));
-    connect(&dlg,SIGNAL(ChangingTrayIcon(int,int)),this,SLOT(ChangingTrayIcon(int,int)));
+    connect(&dlg, &SettingsDlg::ChangingPort, this, &MainWindow::ChangingPort);
+    connect(&dlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
+    connect(&dlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
     dlg.exec();
     settings.setValue("LibID",idCurrentLib);
     if(bShowDeleted_!=settings.value("ShowDeleted").toBool() || bUseTag_!=settings.value("use_tag").toBool())
@@ -1355,7 +1355,7 @@ void MainWindow::ContextMenu(QPoint point)
         {
             QAction *action=new QAction(i->text(), this);
             action->setData(i->data().toInt());
-            connect(action,SIGNAL(triggered()),this,SLOT(ExportAction()));
+            connect(action, &QAction::triggered, this, &MainWindow::ExportAction);
             save->addAction(action);
         }
     }
@@ -1375,43 +1375,43 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     action=new QAction(tr("Name"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(0));
-    connect(action,&QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(0,!action->isChecked());});
+    connect(action, &QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(0,!action->isChecked());});
     menu.addAction(action);
 
     action=new QAction(tr("No."), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(1));
-    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(1,"ShowName",!action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(1,"ShowName",!action->isChecked());});
     menu.addAction(action);
 
     action=new QAction(tr("Size"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(2));
-    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(2,"ShowSize",!action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(2,"ShowSize",!action->isChecked());});
     menu.addAction(action);
 
     action=new QAction(tr("Mark"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(3));
-    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(3,"ShowMark",!action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(3,"ShowMark",!action->isChecked());});
     menu.addAction(action);
 
     action=new QAction(tr("Import date"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(4));
-    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(4,"ShowImportDate",!action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(4,"ShowImportDate",!action->isChecked());});
     menu.addAction(action);
 
     action=new QAction(tr("Genre"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(5));
-    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(5,"ShowGenre",!action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(5,"ShowGenre",!action->isChecked());});
     menu.addAction(action);
 
     action=new QAction(tr("Language"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(6));
-    connect(action,&QAction::triggered,this, [action, this]{ShowHeaderCoulmn(6,"ShowLanguage",!action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(6,"ShowLanguage",!action->isChecked());});
     menu.addAction(action);
 
     menu.exec(QCursor::pos());
@@ -1516,7 +1516,7 @@ void MainWindow::FillLibrariesMenu()
         action->setData(i.key());
         action->setCheckable(true);
         lib_menu->insertAction(nullptr,action);
-        connect(action,SIGNAL(triggered()),this,SLOT(SelectLibrary()));
+        connect(action, &QAction::triggered, this, &MainWindow::SelectLibrary);
         action->setChecked(i.key()==idCurrentLib);
         ++i;
     }
@@ -1956,7 +1956,7 @@ void MainWindow::UpdateExportMenu()
     }
     foreach (QAction *action, menu->actions())
     {
-        connect(action,SIGNAL(triggered()),this,SLOT(ExportAction()));
+        connect(action, &QAction::triggered, this, &MainWindow::ExportAction);
     }
     QFont font(ui->btnExport->defaultAction()->font());
     font.setBold(true);
@@ -2151,7 +2151,7 @@ void MainWindow::ChangingTrayIcon(int index,int color)
         if(!trIcon)
         {
             trIcon = new QSystemTrayIcon(this);  //инициализируем объект
-            connect(trIcon,SIGNAL(activated(QSystemTrayIcon::ActivationReason)),this,SLOT(TrayMenuAction(QSystemTrayIcon::ActivationReason)));
+            connect(trIcon, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
         }
         QIcon icon(QString(":/img/tray%1.png").arg(QString::number(color)));
         trIcon->setIcon(icon);//.arg(app->devicePixelRatio()>=2?"@2x":"")));  //устанавливаем иконку

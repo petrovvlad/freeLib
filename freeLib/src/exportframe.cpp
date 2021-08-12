@@ -46,7 +46,7 @@ ExportFrame::ExportFrame(QWidget *parent) :
     ui->toolBox->setCurrentIndex(0);
     on_OutputFormat_currentIndexChanged("");
     on_ConnectionType_currentIndexChanged("");
-    connect(ui->AddFont,SIGNAL(clicked()),this,SLOT(AddFont()));
+    connect(ui->AddFont, &QPushButton::clicked, this, [=](){this->AddFont();});
 
     QToolButton* btnPath=new QToolButton(this);
     btnPath->setFocusPolicy(Qt::NoFocus);
@@ -56,8 +56,8 @@ ExportFrame::ExportFrame(QWidget *parent) :
     layout->addWidget(btnPath,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
-    connect(btnPath,SIGNAL(clicked()),this,SLOT(btnPath()));
-    connect(ui->toolBox,SIGNAL(currentChanged(int)),this,SLOT(on_tabWidget_currentChanged(int)));
+    connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
+    connect(ui->toolBox, &QToolBox::currentChanged, this, &ExportFrame::on_tabWidget_currentChanged);
 }
 
 ExportFrame::~ExportFrame()
@@ -93,7 +93,7 @@ void ExportFrame::on_ConnectionType_currentIndexChanged(const QString &arg1)
 
 void ExportFrame::Load(QSettings *_settings)
 {
-    disconnect(ui->ConnectionType,SIGNAL(currentIndexChanged(QString)),this,SLOT(on_ConnectionType_currentIndexChanged(QString)));
+    disconnect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::on_ConnectionType_currentIndexChanged);
     QSettings *settings=_settings;
     if(_settings==0)
         settings=new QSettings();
@@ -189,7 +189,7 @@ void ExportFrame::Load(QSettings *_settings)
     on_PostprocessingCopy_clicked();
     on_ml_toc_clicked();
     set_userCSS_clicked();
-    connect(ui->ConnectionType,SIGNAL(currentIndexChanged(QString)),this,SLOT(on_ConnectionType_currentIndexChanged(QString)));
+    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::on_ConnectionType_currentIndexChanged);
     if(_settings==0)
         delete settings;
 }
@@ -306,8 +306,8 @@ FontFrame* ExportFrame::AddFont(bool use, int tag, QString font,QString font_b,Q
 {
     FontFrame* frame=new FontFrame(use,tag,font,font_b,font_i,font_bi,fontSize,this);
     ui->fontLayout->insertWidget(ui->fontLayout->count()-2,frame);
-    connect(frame,SIGNAL(remove_font(QWidget*)),this,SLOT(RemoveFont(QWidget*)));
-    connect(frame,SIGNAL(move_font(QWidget*,int)),this,SLOT(FontMove(QWidget*,int)));
+    connect(frame, &FontFrame::remove_font, this, &ExportFrame::RemoveFont);
+    connect(frame, &FontFrame::move_font, this, &ExportFrame::FontMove);
     return frame;
 }
 

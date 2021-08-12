@@ -37,8 +37,8 @@ public:
         //layout->setStretch(1,0);
         layout->setSpacing(0);
         layout->setMargin(0);
-        connect(editor,SIGNAL(editingFinished()),this,SLOT(editingFinished()));
-        connect(button,SIGNAL(clicked()),this,SLOT(SelectFile()));
+        connect(editor,&QLineEdit::editingFinished, this, &FileItemDelegate::editingFinished);
+        connect(button, &QAbstractButton::clicked, this, &FileItemDelegate::SelectFile);
 
         return frame;
     }

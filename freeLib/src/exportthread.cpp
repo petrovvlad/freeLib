@@ -172,7 +172,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     {
        if(count>1)
        {
-           QEventLoop loop; QTimer::singleShot(settings->value("PauseMail",5).toInt()*1000, &loop, SLOT(quit())); loop.exec();
+           QEventLoop loop; QTimer::singleShot(settings->value("PauseMail",5).toInt()*1000, &loop, &QEventLoop::quit); loop.exec();
        }
        SmtpClient smtp(settings->value("EmailServer").toString(),settings->value("EmailPort").toInt());
        smtp.setConnectionType((SmtpClient::ConnectionType)settings->value("ConnectionType").toInt());

@@ -6,7 +6,7 @@ ExportDlg::ExportDlg(QWidget *parent) :
     ui(new Ui::ExportDlg)
 {
     ui->setupUi(this);
-    connect(ui->AbortButton,SIGNAL(clicked()),this,SLOT(BreakExport()));
+    connect(ui->AbortButton, &QAbstractButton::clicked, this, &ExportDlg::BreakExport);
     itsOkToClose=false;
     worker=0;
 }
@@ -51,12 +51,12 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
     worker=new ExportThread;
     worker->start(dir,list_books,send,id_author);
     worker->moveToThread(thread);
-    connect(worker, SIGNAL(Progress(int,int)), this, SLOT(Process(int,int)));
-    connect(thread, SIGNAL(started()), worker, SLOT(process()));
-    connect(worker, SIGNAL(End()), thread, SLOT(quit()));
-    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
-    connect(worker, SIGNAL(End()), this, SLOT(EndExport()));
-    connect(this, SIGNAL(break_exp()), worker, SLOT(break_exp()));
+    connect(worker, &ExportThread::Progress, this, &ExportDlg::Process);
+    connect(thread, &QThread::started, worker, &ExportThread::process);
+    connect(worker, &ExportThread::End, thread, &QThread::quit);
+    connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+    connect(worker, &ExportThread::End, this, &ExportDlg::EndExport);
+    connect(this, &ExportDlg::break_exp, worker, &ExportThread::break_exp);
     thread->start();
 
     QDialog::exec();
@@ -76,12 +76,12 @@ void ExportDlg::exec(qlonglong id_lib, QString path)
     worker=new ExportThread;
     worker->start(id_lib,path);
     worker->moveToThread(thread);
-    connect(worker, SIGNAL(Progress(int,int)), this, SLOT(Process(int,int)));
-    connect(thread, SIGNAL(started()), worker, SLOT(process()));
-    connect(worker, SIGNAL(End()), thread, SLOT(quit()));
-    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
-    connect(worker, SIGNAL(End()), this, SLOT(EndExport()));
-    connect(this, SIGNAL(break_exp()), worker, SLOT(break_exp()));
+    connect(worker, &ExportThread::Progress, this, &ExportDlg::Process);
+    connect(thread, &QThread::started, worker, &ExportThread::process);
+    connect(worker, &ExportThread::End, thread, &QThread::quit);
+    connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+    connect(worker, &ExportThread::End, this, &ExportDlg::EndExport);
+    connect(this, &ExportDlg::break_exp, worker, &ExportThread::break_exp);
     thread->start();
 
     QDialog::exec();

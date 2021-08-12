@@ -22,6 +22,7 @@ signals:
     void ChangeTabIndex(int tab_id,int page_id);
 public slots:
     void SetTabIndex(int tab_id,int page_id);
+    void UpdateToolComboBox(QSettings *settings=0);
 private slots:
     void on_radioDevice_toggled(bool checked);
 
@@ -36,7 +37,6 @@ private slots:
     FontFrame *AddFont(bool use=true, int tag=0, QString font="", QString font_b="", QString font_i="", QString font_bi="", int fontSize=100);
     void btnPath();
     void on_tabWidget_currentChanged(int);
-    void UpdateToolComboBox(QSettings *settings=0);
 
     void on_addCoverLabel_clicked();
 

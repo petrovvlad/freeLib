@@ -17,7 +17,7 @@ QString fillParams(QString str, SBook& book);
 opds_server::opds_server(QObject *parent) :
     QObject(parent)
 {
-    connect(&OPDS_server, SIGNAL(newConnection()), this, SLOT(new_connection()));
+    connect(&OPDS_server, &QTcpServer::newConnection, this, &opds_server::new_connection);
     OPDS_server_status=0;
     port=0;
 }
@@ -2339,7 +2339,7 @@ void opds_server::new_connection()
         QTcpSocket* clientSocket=OPDS_server.nextPendingConnection();
         int idusersocs=clientSocket->socketDescriptor();
         OPDS_clients[idusersocs]=clientSocket;
-        connect(OPDS_clients[idusersocs],SIGNAL(readyRead()),this, SLOT(slotRead()));
+        connect(OPDS_clients[idusersocs], &QIODevice::readyRead, this, &opds_server::slotRead);
     }
 }
 

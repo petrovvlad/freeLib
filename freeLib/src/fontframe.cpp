@@ -159,14 +159,14 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
         ui->tag->addItem(tag_list[i].name);
     }
 
-    connect(ui->Use,SIGNAL(toggled(bool)),this,SLOT(UseChange(bool)));
-    connect(ui->del,SIGNAL(clicked()),this,SLOT(DelPress()));
-    connect(ui->Up,SIGNAL(clicked()),this,SLOT(UpPress()));
-    connect(ui->Down,SIGNAL(clicked()),this,SLOT(DownPress()));
-    connect(ui->font,SIGNAL(currentTextChanged(QString)),this,SLOT(FontSelected(QString)));
-    connect(ui->font_b,SIGNAL(currentTextChanged(QString)),this,SLOT(FontSelected(QString)));
-    connect(ui->font_i,SIGNAL(currentTextChanged(QString)),this,SLOT(FontSelected(QString)));
-    connect(ui->font_bi,SIGNAL(currentTextChanged(QString)),this,SLOT(FontSelected(QString)));
+    connect(ui->Use, &QAbstractButton::toggled, this, &FontFrame::UseChange);
+    connect(ui->del, &QAbstractButton::clicked, this, &FontFrame::DelPress);
+    connect(ui->Up, &QAbstractButton::clicked, this, &FontFrame::UpPress);
+    connect(ui->Down, &QAbstractButton::clicked, this, &FontFrame::DownPress);
+    connect(ui->font, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
+    connect(ui->font_b, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
+    connect(ui->font_i, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
+    connect(ui->font_bi, &QComboBox::currentTextChanged, this ,&FontFrame::FontSelected);
 
 
     ui->font->addItem("");
@@ -263,7 +263,7 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
 void FontFrame::FontSelected(QString str)
 {
     QComboBox *font_box=(QComboBox*)sender();
-    disconnect(font_box,SIGNAL(currentTextChanged(QString)),this,SLOT(FontSelected(QString)));
+    disconnect(font_box, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
     if(str=="...")
     {
         QString fileName = QFileDialog::getOpenFileName(this, tr("Select font"),"",tr("Fonts")+" (*.ttf)");
@@ -291,7 +291,7 @@ void FontFrame::FontSelected(QString str)
             font_box->setCurrentIndex(current_font);
     }
     current_font=font_box->currentIndex();
-    connect(font_box,SIGNAL(currentTextChanged(QString)),this,SLOT(FontSelected(QString)));
+    connect(font_box, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
 }
 
 FontFrame::~FontFrame()

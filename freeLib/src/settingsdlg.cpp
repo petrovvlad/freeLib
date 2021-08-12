@@ -16,14 +16,13 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->setupUi(this);
     ui->tabWidget->setCurrentIndex(0);
 
-    connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(btnOK()));
-
-    connect(ui->DelExp,SIGNAL(clicked()),this,SLOT(DelExt()));
-    connect(ui->AddExp,SIGNAL(clicked()),this,SLOT(AddExt()));
-    connect(ui->DelApp,SIGNAL(clicked()),this,SLOT(DelApp()));
-    connect(ui->AddApp,SIGNAL(clicked()),this,SLOT(AddApp()));
-    connect(ui->OPDS_port,SIGNAL(valueChanged(int)),this,SLOT(ChangePort(int)));
-    connect(ui->OPDS_enable,SIGNAL(stateChanged(int)),this,SLOT(ChangePort()));
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDlg::btnOK);
+    connect(ui->DelExp, &QAbstractButton::clicked, this, &SettingsDlg::DelExt);
+    connect(ui->AddExp, &QAbstractButton::clicked, this, &SettingsDlg::AddExt);
+    connect(ui->DelApp, &QAbstractButton::clicked, this, &SettingsDlg::DelApp);
+    connect(ui->AddApp, &QAbstractButton::clicked, this, &SettingsDlg::AddApp);
+    connect(ui->OPDS_port, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SettingsDlg::ChangePort);
+    connect(ui->OPDS_enable, &QCheckBox::stateChanged, this, &SettingsDlg::ChangePort);
 
     QToolButton* btnDBPath=new QToolButton(this);
     btnDBPath->setFocusPolicy(Qt::NoFocus);
@@ -33,7 +32,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout->addWidget(btnDBPath,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
-    connect(btnDBPath,SIGNAL(clicked()),this,SLOT(btnDBPath()));
+    connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
 
     QToolButton* btnDirPath=new QToolButton(this);
     btnDirPath->setFocusPolicy(Qt::NoFocus);
@@ -43,7 +42,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout->addWidget(btnDirPath,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
-    connect(btnDirPath,SIGNAL(clicked()),this,SLOT(btnDirPath()));
+    connect(btnDirPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDirPath);
 
     LoadSettings();
 
@@ -145,9 +144,9 @@ void SettingsDlg::LoadSettings()
         ui->stackedWidget->addWidget(frame);
         frame->Load(&settings);
         ui->ExportName->addItem(settings.value("ExportName").toString(),settings.value("Default").toBool());
-        connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-        connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
-        connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
+        connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::on_ChangeExportFrameTab);
+        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+        connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
     }
 
     settings.endArray();
@@ -157,14 +156,15 @@ void SettingsDlg::LoadSettings()
         ui->stackedWidget->addWidget(frame);
         frame->Load(&settings);
         ui->ExportName->addItem(tr("Send to ..."),false);
-        connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-        connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
-        connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
+        connect(frame,&ExportFrame::ChangeTabIndex,this,&SettingsDlg::on_ChangeExportFrameTab);
+        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+        connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
+
     }
     ui->DelExport->setEnabled(ui->ExportName->count()>1);
 
-    disconnect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    disconnect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
+    disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
+    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
     QStringList dirContent = QDir(QApplication::applicationDirPath()+"/language").entryList(QStringList()<< "language_*.qm", QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     QString locale=settings.value("localeUI",QLocale::system().name()).toString();
     ui->Language->clear();
@@ -208,9 +208,9 @@ void SettingsDlg::LoadSettings()
         }
     }
 
-    connect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    connect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    connect(ui->ExportName->lineEdit(),SIGNAL(editingFinished()),this,SLOT(ExportNameChanged()));
+    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
+    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
+    connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
     UpdateWebExportList();
     on_proxy_type_currentIndexChanged(ui->proxy_type->currentIndex());
     on_HTTP_need_pasword_clicked();
@@ -284,8 +284,8 @@ void SettingsDlg::ChangePort(int i)
 }
 void SettingsDlg::ChangeLanguage()
 {
-    disconnect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    disconnect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
+    disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
+    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
     settings.setValue("localeUI",ui->Language->currentData().toString());
     settings.setValue("localeABC",ui->ABC->currentData().toString());
     settings.sync();
@@ -437,8 +437,8 @@ void SettingsDlg::on_AddExport_clicked()
 
     frame->Load(nullptr);
 
-    connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-    connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
+    connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::on_ChangeExportFrameTab);
+    connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
     UpdateWebExportList();
 }
 
@@ -657,9 +657,10 @@ void SettingsDlg::on_btnOpenExport_clicked()
         ui->stackedWidget->addWidget(frame);
         frame->Load(&in_settings);
         ui->ExportName->addItem(QFileInfo(file_name).completeBaseName(),false);
-        connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-        connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
-        connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
+        connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::on_ChangeExportFrameTab);
+        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+        connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
+
         ui->ExportName->setCurrentIndex(ui->ExportName->count()-1);
     }
     else
