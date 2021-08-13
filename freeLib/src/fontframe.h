@@ -35,7 +35,7 @@ private slots:
     void UpPress();
     void DownPress();
     void FontSelected(QString str);
-    void on_tag_currentIndexChanged(int index);
+    void onTagCurrentIndexChanged(int index);
 
 signals:
     void remove_font(QWidget* widget);

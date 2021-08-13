@@ -199,6 +199,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::About);
     connect(ui->actionNew_labrary_wizard, &QAction::triggered, this, &MainWindow::newLibWizard);
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
+    connect(ui->language, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageCurrentIndexChanged);
     QList<QAction*> actionList = ui->searchString->findChildren<QAction*>();
     if (!actionList.isEmpty()) {
         connect(actionList.first(), &QAction::triggered, this, &MainWindow::searchClear);
@@ -2068,7 +2069,7 @@ void MainWindow::on_actionSwitch_to_library_mode_triggered()
     settings.setValue("ApplicationMode", mode);
 }
 
-void MainWindow::on_language_currentIndexChanged(const QString &arg1)
+void MainWindow::onLanguageCurrentIndexChanged(const QString &arg1)
 {
     QSettings settings;
     settings.setValue("BookLanguage",arg1);

@@ -167,6 +167,7 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
     connect(ui->font_b, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
     connect(ui->font_i, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
     connect(ui->font_bi, &QComboBox::currentTextChanged, this ,&FontFrame::FontSelected);
+    connect(ui->tag, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &FontFrame::onTagCurrentIndexChanged);
 
 
     ui->font->addItem("");
@@ -178,7 +179,7 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
     ui->tag->setCurrentIndex(tag);
     ui->fontSize->setValue(fontSize);
     if(font.isEmpty())
-        on_tag_currentIndexChanged(tag);
+        onTagCurrentIndexChanged(tag);
 
 
     QDir dir(QApplication::applicationDirPath()+"/xsl/fonts");
@@ -356,7 +357,7 @@ int FontFrame::fontSize()
     return ui->fontSize->value();
 }
 
-void FontFrame::on_tag_currentIndexChanged(int index)
+void FontFrame::onTagCurrentIndexChanged(int index)
 {
     ui->fontSize->setValue(tag_list[index].font_size);
 }

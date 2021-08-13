@@ -143,7 +143,7 @@ private slots:
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void dockClicked();
     void MinimizeWindow();
-    void on_language_currentIndexChanged(const QString &arg1);
+    void onLanguageCurrentIndexChanged(const QString &arg1);
 
 public slots:
     void newLibWizard(bool AddLibOnly=true);

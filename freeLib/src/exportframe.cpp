@@ -44,9 +44,22 @@ ExportFrame::ExportFrame(QWidget *parent) :
     ui->stackedWidget->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
     ui->toolBox->setCurrentIndex(0);
-    on_OutputFormat_currentIndexChanged("");
-    on_ConnectionType_currentIndexChanged("");
+    onOutputFormatChanged("");
+    onConnectionTypeChanged("");
     connect(ui->AddFont, &QPushButton::clicked, this, [=](){this->AddFont();});
+    connect(ui->radioDevice, &QRadioButton::toggled, this, &ExportFrame::onRadioDeviceToggled);
+    connect(ui->radioEmail, &QRadioButton::toggled, this, &ExportFrame::onRadioEmailToggled);
+    connect(ui->OutputFormat, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onOutputFormatChanged);
+    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &ExportFrame::onTabWidgetCurrentChanged);
+    connect(ui->addCoverLabel, &QCheckBox::clicked, this, &ExportFrame::onAddCoverLabelClicked);
+    connect(ui->createCaverAlways, &QCheckBox::clicked, this, &ExportFrame::onCreateCaverAlwaysClicked);
+    connect(ui->createCover, &QCheckBox::clicked, this, &ExportFrame::onCreateCoverClicked);
+    connect(ui->originalFileName, &QCheckBox::clicked, this, &ExportFrame::onOriginalFileNameClicked);
+    connect(ui->ml_toc, &QCheckBox::clicked, this, &ExportFrame::onMlTocClicked);
+    connect(ui->PostprocessingCopy, &QCheckBox::clicked, this, &ExportFrame::onPostprocessingCopyClicked);
+    connect(ui->userCSS, &QCheckBox::clicked, this, &ExportFrame::onUserCSSclicked);
+    connect(ui->btnDefaultCSS, &QToolButton::clicked, this, &ExportFrame::onBtnDefaultCSSclicked);
 
     QToolButton* btnPath=new QToolButton(this);
     btnPath->setFocusPolicy(Qt::NoFocus);
@@ -57,7 +70,7 @@ ExportFrame::ExportFrame(QWidget *parent) :
     layout->setSpacing(0);
     layout->setMargin(0);
     connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
-    connect(ui->toolBox, &QToolBox::currentChanged, this, &ExportFrame::on_tabWidget_currentChanged);
+    connect(ui->toolBox, &QToolBox::currentChanged, this, &ExportFrame::onTabWidgetCurrentChanged);
 }
 
 ExportFrame::~ExportFrame()
@@ -66,24 +79,24 @@ ExportFrame::~ExportFrame()
 }
 
 
-void ExportFrame::on_radioDevice_toggled(bool checked)
+void ExportFrame::onRadioDeviceToggled(bool checked)
 {
     if(checked)
         ui->stackedWidget->setCurrentIndex(0);
 }
 
-void ExportFrame::on_radioEmail_toggled(bool checked)
+void ExportFrame::onRadioEmailToggled(bool checked)
 {
     if(checked)
         ui->stackedWidget->setCurrentIndex(1);
 }
 
-void ExportFrame::on_OutputFormat_currentIndexChanged(const QString &arg1)
+void ExportFrame::onOutputFormatChanged(const QString &arg1)
 {
     ui->tabFormat->setDisabled(ui->OutputFormat->currentText()=="-");
 }
 
-void ExportFrame::on_ConnectionType_currentIndexChanged(const QString &arg1)
+void ExportFrame::onConnectionTypeChanged(const QString &arg1)
 {
     if(ui->ConnectionType->currentText().toLower()=="tcp")
         ui->Port->setText("25");
@@ -93,7 +106,7 @@ void ExportFrame::on_ConnectionType_currentIndexChanged(const QString &arg1)
 
 void ExportFrame::Load(QSettings *_settings)
 {
-    disconnect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::on_ConnectionType_currentIndexChanged);
+    disconnect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
     QSettings *settings=_settings;
     if(_settings==0)
         settings=new QSettings();
@@ -185,11 +198,11 @@ void ExportFrame::Load(QSettings *_settings)
         settings->endArray();
     }
 
-    on_originalFileName_clicked();
-    on_PostprocessingCopy_clicked();
-    on_ml_toc_clicked();
+    onOriginalFileNameClicked();
+    onPostprocessingCopyClicked();
+    onMlTocClicked();
     set_userCSS_clicked();
-    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::on_ConnectionType_currentIndexChanged);
+    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
     if(_settings==0)
         delete settings;
 }
@@ -340,43 +353,43 @@ void ExportFrame::SetTabIndex(int tab_id, int page_id)
 }
 
 
-void ExportFrame::on_tabWidget_currentChanged(int )
+void ExportFrame::onTabWidgetCurrentChanged(int )
 {
     emit ChangeTabIndex(ui->tabWidget->currentIndex(),ui->toolBox->currentIndex());
 }
 
-void ExportFrame::on_addCoverLabel_clicked()
+void ExportFrame::onAddCoverLabelClicked()
 {
     ui->coverLabel->setEnabled(ui->addCoverLabel->isChecked()&&!ui->createCaverAlways->isChecked());
     ui->label_tmplate->setEnabled(ui->addCoverLabel->isChecked()&&!ui->createCaverAlways->isChecked());
 }
 
-void ExportFrame::on_createCaverAlways_clicked()
+void ExportFrame::onCreateCaverAlwaysClicked()
 {
-    on_addCoverLabel_clicked();
+    onAddCoverLabelClicked();
     ui->addCoverLabel->setEnabled(!ui->createCaverAlways->isChecked());
 }
 
-void ExportFrame::on_createCover_clicked()
+void ExportFrame::onCreateCoverClicked()
 {
     ui->createCaverAlways->setEnabled(ui->createCover->isChecked());
-    on_createCaverAlways_clicked();
+    onCreateCaverAlwaysClicked();
 }
 
-void ExportFrame::on_originalFileName_clicked()
+void ExportFrame::onOriginalFileNameClicked()
 {
     ui->ExportFileName->setEnabled(!ui->originalFileName->isChecked());
     ui->transliteration->setEnabled(!ui->originalFileName->isChecked());
     ui->label_exportname->setEnabled(!ui->originalFileName->isChecked());
 }
 
-void ExportFrame::on_ml_toc_clicked()
+void ExportFrame::onMlTocClicked()
 {
     ui->MAXcaptionLevel->setEnabled(ui->ml_toc->isChecked());
     ui->label_lavel->setEnabled(ui->ml_toc->isChecked());
 }
 
-void ExportFrame::on_PostprocessingCopy_clicked()
+void ExportFrame::onPostprocessingCopyClicked()
 {
     ui->askPath->setEnabled(!ui->PostprocessingCopy->isChecked());
     ui->Path->setEnabled(!ui->PostprocessingCopy->isChecked());
@@ -386,11 +399,11 @@ void ExportFrame::on_PostprocessingCopy_clicked()
     ui->originalFileName->setEnabled(!ui->PostprocessingCopy->isChecked());
 }
 
-void ExportFrame::on_userCSS_clicked()
+void ExportFrame::onUserCSSclicked()
 {
     set_userCSS_clicked();
     if(ui->UserCSStext->toPlainText().isEmpty())
-        on_btnDefaultCSS_clicked();
+        onBtnDefaultCSSclicked();
 }
 
 void ExportFrame::set_userCSS_clicked()
@@ -399,7 +412,7 @@ void ExportFrame::set_userCSS_clicked()
     ui->UserCSStext->setEnabled(ui->userCSS->isChecked());
 }
 
-void ExportFrame::on_btnDefaultCSS_clicked()
+void ExportFrame::onBtnDefaultCSSclicked()
 {
     if(!ui->UserCSStext->toPlainText().isEmpty())
     {
