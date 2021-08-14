@@ -172,7 +172,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     {
        if(count>1)
        {
-           QEventLoop loop; QTimer::singleShot(settings->value("PauseMail",5).toInt()*1000, &loop, SLOT(quit())); loop.exec();
+           QEventLoop loop; QTimer::singleShot(settings->value("PauseMail",5).toInt()*1000, &loop, &QEventLoop::quit); loop.exec();
        }
        SmtpClient smtp(settings->value("EmailServer").toString(),settings->value("EmailPort").toInt());
        smtp.setConnectionType((SmtpClient::ConnectionType)settings->value("ConnectionType").toInt());
@@ -300,7 +300,7 @@ void ExportThread::export_books()
                 QString out_dir=dir.absolutePath()+"/"+archive.left(archive.length()-4);
                 QDir().mkpath(out_dir);
                 QBuffer buff,infobuff;
-                GetBookFile(buff,infobuff,book);
+                mLibs[idCurrentLib].getBookFile(buff,infobuff,idBook);
 
                 QFile::remove(out_dir+"/"+file);
                 QFile outfile;
@@ -353,7 +353,7 @@ void ExportThread::export_books()
             buffers<<new QBuffer(this);
             QBuffer infobuff;
             SBook &book = mLibs[idCurrentLib].mBooks[idBook];
-            fi=GetBookFile(*buffers.last(),infobuff,book);
+            fi=mLibs[idCurrentLib].getBookFile(*buffers.last(),infobuff,idBook);
             if(fi.fileName().isEmpty())
             {
                 emit Progress(count*100/book_list.count(),count);

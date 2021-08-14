@@ -5,7 +5,6 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 
-//SLib current_lib;
 QMap<int,SLib> mLibs;
 QMap <uint,SGenre> mGenre;
 
@@ -135,7 +134,6 @@ void loadGenres()
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database("libdb"));
 
-    t_start = QDateTime::currentMSecsSinceEpoch();
     mGenre.clear();
     query.prepare("SELECT id, name, id_parent, sort_index FROM janre;");
     //                    0   1     2          3
@@ -152,10 +150,27 @@ void loadGenres()
     qDebug()<< "loadGenre " << t_end-t_start << "msec";
 }
 
+SAuthor::SAuthor()
+{
+    nTag = 0;
+}
+
+SAuthor::SAuthor(QString sName)
+{
+    QStringList listNames=sName.split(",");
+    if(listNames.count()>0)
+        sLastName=listNames[0].trimmed();
+    if(listNames.count()>1)
+        sFirstName=listNames[1].trimmed();
+    if(listNames.count()>2)
+        sMiddleName=listNames[2].trimmed();
+
+}
+
 QString SAuthor::getName() const
 {
     QString sAuthorName = QString("%1 %2 %3").arg(sLastName,sFirstName,sMiddleName).trimmed();
-    if(sAuthorName.isEmpty())
+    if(sAuthorName.trimmed().isEmpty())
         sAuthorName = QCoreApplication::translate("MainWindow","unknown author");
     return sAuthorName;
 }
@@ -196,10 +211,10 @@ void SLib::loadAnnotation(uint idBook)
 
     SBook& book = mBooks[idBook];
     if(book.sArchive.isEmpty()){
-        sFile = QString("%1/%2.%3").arg(path).arg(book.sFile).arg(book.sFormat);
+        sFile = QString("%1/%2.%3").arg(path,book.sFile,book.sFormat);
     }else{
-        sFile = QString("%1.%2").arg(book.sFile).arg(book.sFormat);
-        sArchive = QString("%1/%2").arg(path).arg(book.sArchive.replace(".inp",".zip"));
+        sFile = QString("%1.%2").arg(book.sFile,book.sFormat);
+        sArchive = QString("%1/%2").arg(path,book.sArchive.replace(".inp",".zip"));
     }
 
     sArchive=sArchive.replace("\\","/");
@@ -210,7 +225,7 @@ void SLib::loadAnnotation(uint idBook)
         {
             qDebug()<<("Error open file!")<<" "<<sFile;
             book.sAnnotation = "<font color=\"red\">" + QCoreApplication::translate("MainWindow","Can't find file: %1").arg(sFile) + "</font>";
-            return /*fi*/;
+            return;
         }
         buffer.setData(book_file.readAll());
         fi.setFile(book_file);
@@ -230,7 +245,7 @@ void SLib::loadAnnotation(uint idBook)
         {
             qDebug()<<("Error open archive!")<<" "<<sArchive;
             book.sAnnotation = "<font color=\"red\">" + QCoreApplication::translate("MainWindow","Can't find file: %1").arg(sFile) + "</font>";
-            return /*fi*/;
+            return;
         }
 
         QuaZipFile zip_file(&uz);
@@ -268,7 +283,6 @@ void SLib::loadAnnotation(uint idBook)
         QDomNode root=doc.documentElement();
         bool need_loop=true;
         QString rel_path;
-        //bi.num_in_seria=0;
         for(int i=0;i<root.childNodes().count() && need_loop;i++)
         {
             if(root.childNodes().at(i).nodeName().toLower()=="rootfiles")
@@ -301,36 +315,33 @@ void SLib::loadAnnotation(uint idBook)
                                 meta.childNodes().at(m).save(ts,0,QDomNode::EncodingFromTextStream);
                                 book.sAnnotation=QString::fromUtf8(buff.data().data());
                             }
-                            else if(meta.childNodes().at(m).nodeName().right(4)=="meta" /*&& !info_only*/)
+                            else if(meta.childNodes().at(m).nodeName().right(4)=="meta")
                             {
                                 if(meta.childNodes().at(m).attributes().namedItem("name").toAttr().value()=="cover")
                                 {
-
                                     QString cover=meta.childNodes().at(m).attributes().namedItem("content").toAttr().value();
                                     QDomNode manifest=opf.documentElement().namedItem("manifest");
                                     for(int man=0;man<manifest.childNodes().count();man++)
                                     {
                                         if(manifest.childNodes().at(man).attributes().namedItem("id").toAttr().value()==cover)
                                         {
-                                            QBuffer img;
-                                            cover=rel_path+"/"+manifest.childNodes().at(man).attributes().namedItem("href").toAttr().value();
+                                            cover=manifest.childNodes().at(man).attributes().namedItem("href").toAttr().value();
 
                                             SetCurrentZipFileName(&zip,cover);
                                             zip_file.open(QIODevice::ReadOnly);
-                                            img.setData(zip_file.readAll());
+                                            QByteArray ba = zip_file.readAll();
                                             zip_file.close();
 
-                                            //проверить как работает
-                                            QString sImgFile = QString("%1/freeLib/%2")
-                                                    .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first())
+                                            QString sImgFile = QString("%1/freeLib/%2.jpg")
+                                                    .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                                     .arg(idBook);
-                                            QPixmap image;
-                                            image.loadFromData(img.data());
-                                            image.save(sImgFile);
+                                            QFile file(sImgFile);
+                                            if(file.open(QFile::WriteOnly)){
+                                                file.write(ba);
+                                                file.close();
+                                            }
 
-                                            //bi.img=("<td valign=top style=\"width:%1px\"><center><img src=\"data:"+manifest.childNodes().at(man).attributes().namedItem("media-type").toAttr().value()+
-                                            //        ";base64,"+img.data().toBase64()+"\"></center></td>");
-                                            book.sImg=QString("<td valign=top style=\"width:1px\"><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
+                                            book.sImg=QString("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
                                             break;
                                         }
                                     }
@@ -349,23 +360,23 @@ void SLib::loadAnnotation(uint idBook)
         doc.setContent(buffer.data());
         QDomElement title_info=doc.elementsByTagName("title-info").at(0).toElement();
             QString cover=QString::fromStdString( title_info.elementsByTagName("coverpage").at(0).toElement().elementsByTagName("image").at(0).attributes().namedItem("l:href").toAttr().value().toStdString());
-            if(cover.left(1)=="#")
+            if(!cover.isEmpty() && cover.at(0)=="#")
             {
                 QDomNodeList binarys=doc.elementsByTagName("binary");
                 for(int i=0;i<binarys.count();i++)
                 {
                     if(binarys.at(i).attributes().namedItem("id").toAttr().value()==cover.right(cover.length()-1))
                     {
-                        QString sImgFile = QString("%1/freeLib/%2")
-                                .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).first())
+                        QString sImgFile = QString("%1/freeLib/%2.jpg")
+                                .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                 .arg(idBook);
                         QPixmap image;
                         QByteArray ba;
-                        ba.append(binarys.at(i).toElement().text());
+                        ba.append(binarys.at(i).toElement().text().toLatin1());
                         QByteArray ba64 = QByteArray::fromBase64(ba);
                         image.loadFromData(ba64);
                         image.save(sImgFile);
-                        book.sImg = QString("<td valign=top><center><img src=\"file:%1\"></center></td>").arg(sImgFile);
+                        book.sImg = QString("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
                         break;
                     }
                 }
@@ -379,5 +390,91 @@ void SLib::loadAnnotation(uint idBook)
             book.sAnnotation.replace("<annotation>","",Qt::CaseInsensitive);
             book.sAnnotation.replace("</annotation>","",Qt::CaseInsensitive);
     }
+}
+
+QFileInfo SLib::getBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book, bool caption, QDateTime *file_data)
+{
+    QString file,archive;
+    QFileInfo fi;
+    SBook &book = mBooks[id_book];
+    //QString LibPath=mLibs[idCurrentLib].path;
+    QString LibPath=RelativeToAbsolutePath(path);
+    if(book.sArchive.isEmpty()){
+        file = QString("%1/%2.%3").arg(LibPath,book.sFile,book.sFormat);
+    }else{
+        file = QString("%1.%2").arg(book.sFile,book.sFormat);
+        archive = QString("%1/%2").arg(LibPath,book.sArchive.replace(".inp",".zip"));
+    }
+
+    archive=archive.replace("\\","/");
+    if(archive.isEmpty())
+    {
+        QFile book_file(file);
+        if(!book_file.open(QFile::ReadOnly))
+        {
+            qDebug()<<("Error open file!")<<" "<<file;
+            return fi;
+        }
+        buffer.setData(book_file.readAll());
+        fi.setFile(book_file);
+        if(file_data)
+        {
+            *file_data=fi.birthTime();
+        }
+        fi.setFile(file);
+        QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
+        QFile info_file(fbd);
+        if(info_file.exists())
+        {
+            info_file.open(QFile::ReadOnly);
+            buffer_info.setData(info_file.readAll());
+        }
+    }
+    else
+    {
+        QuaZip uz(archive);
+        if (!uz.open(QuaZip::mdUnzip))
+        {
+            qDebug()<<("Error open archive!")<<" "<<archive;
+            return fi;
+        }
+
+        if(file_data)
+        {
+            SetCurrentZipFileName(&uz,file);
+            QuaZipFileInfo64 zip_fi;
+            if(uz.getCurrentFileInfo(&zip_fi))
+            {
+                *file_data=zip_fi.dateTime;
+            }
+        }
+        QuaZipFile zip_file(&uz);
+        SetCurrentZipFileName(&uz,file);
+        if(!zip_file.open(QIODevice::ReadOnly))
+        {
+            qDebug()<<"Error open file: "<<file;
+        }
+        if(caption)
+        {
+            buffer.setData(zip_file.read(16*1024));
+        }
+        else
+        {
+            buffer.setData(zip_file.readAll());
+        }
+        zip_file.close();
+        fi.setFile(file);
+        QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
+
+        if(SetCurrentZipFileName(&uz,fbd))
+        {
+            zip_file.open(QIODevice::ReadOnly);
+            buffer.setData(zip_file.readAll());
+            zip_file.close();
+        }
+
+        fi.setFile(archive+"/"+file);
+    }
+    return fi;
 }
 

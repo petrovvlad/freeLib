@@ -10,7 +10,7 @@
 #define UT_DEL_AND_NEW 11
 #define UT_NEW 12
 
-
+#include "library.h"
 
 void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only);
 
@@ -48,6 +48,7 @@ private:
     QSqlQuery *query;
     qlonglong AddSeria(QString str,qlonglong libID,int tag);
     qlonglong AddAuthor(QString str,qlonglong libID,qlonglong id_book,bool first_author,QString language,int tag);
+    qlonglong addAuthor(SAuthor author,uint libID,uint idBook,bool first_author,QString language,int tag);
     qlonglong AddBook(qlonglong star, QString name, qlonglong id_seria, int num_in_seria, QString file,
                  int size, int IDinLib, bool deleted, QString format, QDate date, QString language, QString keys, qlonglong id_lib, QString archive, int tag);
 

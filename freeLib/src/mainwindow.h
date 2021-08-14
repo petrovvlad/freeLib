@@ -40,7 +40,6 @@ public:
 private:
     Ui::MainWindow *ui;
     QSystemTrayIcon *trIcon;
-    QToolButton *tbClear;
     void UpdateBooks();
     void UpdateTags();
     DropForm *pDropForm;
@@ -84,9 +83,7 @@ protected:
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
-    void FillCheckedBookList(QList<book_info> &list, QTreeWidgetItem* item=nullptr, bool send_all=false, bool count_only=false, bool checked_only=false);
     void FillCheckedBookList(QList<uint> &list, QTreeWidgetItem* item=nullptr, bool send_all=false, bool checked_only=false);
-    void FillCheckedItemsBookList(QList<book_info> &list, QTreeWidgetItem* item, bool send_all,bool count_only);
     void FillCheckedItemsBookList(QList<uint> &list, QTreeWidgetItem* item, bool send_all);
 
     void ExportBookListBtn(bool Enable);
@@ -146,7 +143,7 @@ private slots:
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void dockClicked();
     void MinimizeWindow();
-    void on_language_currentIndexChanged(const QString &arg1);
+    void onLanguageCurrentIndexChanged(const QString &arg1);
 
 public slots:
     void newLibWizard(bool AddLibOnly=true);

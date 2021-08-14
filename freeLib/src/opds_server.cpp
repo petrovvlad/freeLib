@@ -17,7 +17,7 @@ QString fillParams(QString str, SBook& book);
 opds_server::opds_server(QObject *parent) :
     QObject(parent)
 {
-    connect(&OPDS_server, SIGNAL(newConnection()), this, SLOT(new_connection()));
+    connect(&OPDS_server, &QTcpServer::newConnection, this, &opds_server::new_connection);
     OPDS_server_status=0;
     port=0;
 }
@@ -617,8 +617,8 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
 {
     QList<uint> listBooks;
     if(idAuthor!=0 && idSeria>0){
-        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
-        while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
+        while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
             if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == idSeria)
                 listBooks<<i.value();
             ++i;
@@ -626,15 +626,15 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
         std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
     }
     if(idAuthor != 0 && idSeria==0){
-        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
         if(sequenceless){
-            while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+            while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
                 if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == 0)
                     listBooks<<i.value();
                 ++i;
             }
         }else{
-            while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+            while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
                 if(!lib.mBooks[i.value()].bDeleted)
                     listBooks<<i.value();
                 ++i;
@@ -654,13 +654,14 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
     if(idGenre!=0){
         auto iBook = lib.mBooks.constBegin();
         while(iBook != lib.mBooks.constEnd()){
-            if(!iBook->bDeleted)
+            if(!iBook->bDeleted){
                 foreach(auto iGenre,iBook->listIdGenres){
                     if(iGenre == idGenre){
                         listBooks << iBook.key();
                         break;
                     }
                 }
+            }
             ++iBook;
         }
         std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
@@ -801,13 +802,11 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     QBuffer outbuff;
                     QBuffer infobuff;
                     QFileInfo fi_book;
-                    fi_book=GetBookFile(outbuff,infobuff,idBook);
+                    fi_book=lib.getBookFile(outbuff,infobuff,idBook);
                     if(fi_book.suffix().toLower()=="fb2")
                     {
                         if(book.sAnnotation.isEmpty()){
-                            book_info book_inf_tmp;
-                            GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",false,idBook);
-                            book.sAnnotation = book_inf_tmp.annotation;
+                            lib.loadAnnotation(idBook);
                         }
                         el=AddTextNode("content",book.sAnnotation,entry);
                         el.setAttribute("type","text/html");
@@ -928,13 +927,11 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     QBuffer outbuff;
                     QBuffer infobuff;
                     QFileInfo fi_book;
-                    fi_book=GetBookFile(outbuff,infobuff,idBook);
+                    fi_book=lib.getBookFile(outbuff,infobuff,idBook);
                     if(fi_book.suffix().toLower()=="fb2")
                     {
                         if(book.sAnnotation.isEmpty()){
-                            book_info book_inf_tmp;
-                            GetBookInfo(book_inf_tmp,infobuff.size()==0?outbuff.data():infobuff.data(),"fb2",false,idBook);
-                            book.sAnnotation = book_inf_tmp.annotation;
+                            lib.loadAnnotation(idBook);
                         }
                         QDomDocument an;
                         an.setContent(QString("<dev>%1</dev>").arg(book.sAnnotation));
@@ -1040,7 +1037,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         loadLibrary(id_lib);
 
     uint nPage = 0;
-    if(!QFileInfo(url).exists())
+    if(!QFileInfo::exists(url))
     {
         if(strings.count()>0)
         {
@@ -1099,7 +1096,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             ts.device()->write(file.readAll());
         }
     }
-    else if((url.endsWith("cover.jpg/",Qt::CaseInsensitive) || url.endsWith("cover.jpg",Qt::CaseInsensitive)) && !QFileInfo(url).exists())
+    else if((url.endsWith("cover.jpg/",Qt::CaseInsensitive) || url.endsWith("cover.jpg",Qt::CaseInsensitive)) && !QFileInfo::exists(url))
     {
         QString id=strings[2];
         fb2mobi fb;
@@ -1796,8 +1793,8 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             foreach(auto iIndex,listAuthorId)
             {
                 uint nBooksCount=0;
-                QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(iIndex);
-                while(i!=lib.mAuthorBooksLink.end() && i.key()==iIndex){
+                QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(iIndex);
+                while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==iIndex){
                     nBooksCount++;
                     ++i;
                 }
@@ -1869,9 +1866,9 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
              div.setAttribute("class","caption");
         }
 
-        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.find(idAuthor);
+        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
         QMap<uint,uint> mapCountBooks;
-        while(i!=lib.mAuthorBooksLink.end() && i.key()==idAuthor){
+        while(i!=lib.mAuthorBooksLink.constEnd() && i.key()==idAuthor){
             SBook& book = lib.mBooks[i.value()];
             if(book.idSerial>0){
                 if(mapCountBooks.contains(book.idSerial))
@@ -2342,7 +2339,7 @@ void opds_server::new_connection()
         QTcpSocket* clientSocket=OPDS_server.nextPendingConnection();
         int idusersocs=clientSocket->socketDescriptor();
         OPDS_clients[idusersocs]=clientSocket;
-        connect(OPDS_clients[idusersocs],SIGNAL(readyRead()),this, SLOT(slotRead()));
+        connect(OPDS_clients[idusersocs], &QIODevice::readyRead, this, &opds_server::slotRead);
     }
 }
 
@@ -2360,7 +2357,7 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
     }
     else
     {
-        fi_book=GetBookFile(outbuff,infobuff,idBook);
+        fi_book=lib.getBookFile(outbuff,infobuff,idBook);
     }
 
     if(outbuff.size()!=0)

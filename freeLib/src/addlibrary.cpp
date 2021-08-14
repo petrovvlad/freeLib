@@ -36,14 +36,14 @@ AddLibrary::AddLibrary(QWidget *parent) :
     idCurrentLib_ = idCurrentLib;
     UpdateLibList();
 
-    connect(tbInpx,SIGNAL(clicked()),this,SLOT(InputINPX()));
-    connect(tbBooksDir,SIGNAL(clicked()),this,SLOT(SelectBooksDir()));
-    connect(ui->btnUpdate,SIGNAL(clicked()),this,SLOT(StartImport()));
-    connect(ui->btnExport,SIGNAL(clicked()),this,SLOT(ExportLib()));
-    connect(ui->ExistingLibs,SIGNAL(currentIndexChanged(int)),this,SLOT(SelectLibrary()));
-    connect(ui->Del,SIGNAL(clicked()),this,SLOT(DeleteLibrary()));
-    connect(ui->Add,SIGNAL(clicked()),this,SLOT(Add_Library()));
-    connect(ui->ExistingLibs->lineEdit(),SIGNAL(editingFinished()),this,SLOT(ExistingLibsChanged()));
+    connect(tbInpx, &QAbstractButton::clicked, this, &AddLibrary::InputINPX);
+    connect(tbBooksDir, &QAbstractButton::clicked, this, &AddLibrary::SelectBooksDir);
+    connect(ui->btnUpdate, &QPushButton::clicked, this, [=](){this->StartImport();});
+    connect(ui->btnExport, &QAbstractButton::clicked, this, &AddLibrary::ExportLib);
+    connect(ui->ExistingLibs, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [=](int idLib){this->SelectLibrary(idLib);});
+    connect(ui->Del, &QAbstractButton::clicked, this, &AddLibrary::DeleteLibrary);
+    connect(ui->Add, &QAbstractButton::clicked, this, &AddLibrary::Add_Library);
+    connect(ui->ExistingLibs->lineEdit(), &QLineEdit::editingFinished, this, &AddLibrary::ExistingLibsChanged);
     ui->add_new->setChecked(true);
 
     SelectLibrary(idCurrentLib_);
@@ -160,12 +160,12 @@ void AddLibrary::StartImport(SLib &Lib)
     imp_tr->start(Lib.sInpx,Lib.name,Lib.path,idCurrentLib_,update_type,false,
                   Lib.bFirstAuthor&&Lib.sInpx.isEmpty(),Lib.bWoDeleted);
     imp_tr->moveToThread(thread);
-    connect(imp_tr, SIGNAL(Message(QString)), this, SLOT(LogMessage(QString)));
-    connect(thread, SIGNAL(started()), imp_tr, SLOT(process()));
-    connect(imp_tr, SIGNAL(End()), thread, SLOT(quit()));
-    connect(thread, SIGNAL(finished()), thread, SLOT(deleteLater()));
-    connect(imp_tr, SIGNAL(End()), this, SLOT(EndUpdate()));
-    connect(this, SIGNAL(break_import()), imp_tr, SLOT(break_import()));
+    connect(imp_tr, &ImportThread::Message, this, &AddLibrary::LogMessage);
+    connect(thread, &QThread::started, imp_tr, &ImportThread::process);
+    connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
+    connect(thread, &QThread::finished, thread, &QObject::deleteLater);
+    connect(imp_tr, &ImportThread::End, this, &AddLibrary::EndUpdate);
+    connect(this, &AddLibrary::break_import, imp_tr, &ImportThread::break_import);
 
     thread->start();
 }

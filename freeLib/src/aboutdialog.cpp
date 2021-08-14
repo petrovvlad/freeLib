@@ -13,8 +13,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
     //setFixedSize(400,200);
     ui->version->setText(PROG_VERSION);
 
-    connect(ui->toolButton,SIGNAL(clicked()),this,SLOT(CloseBtn()));
- //   connect(ui->donate,SIGNAL(clicked()),this,SLOT());
+    connect(ui->toolButton, &QAbstractButton::clicked, this, &AboutDialog::CloseBtn);
     QPixmap pix(QString(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
     pix.setDevicePixelRatio(app->devicePixelRatio());
     ui->label->setPixmap(pix);

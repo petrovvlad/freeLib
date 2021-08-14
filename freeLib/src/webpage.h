@@ -8,6 +8,8 @@ class WebPage : public QWebEnginePage
 public:
     WebPage(QObject* parent = 0);
 
+    void setHtml(const QString &html);
+
     bool acceptNavigationRequest(const QUrl & url, QWebEnginePage::NavigationType type, bool)
     {
         switch(type)

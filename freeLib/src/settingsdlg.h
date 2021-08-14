@@ -37,8 +37,8 @@ public:
         //layout->setStretch(1,0);
         layout->setSpacing(0);
         layout->setMargin(0);
-        connect(editor,SIGNAL(editingFinished()),this,SLOT(editingFinished()));
-        connect(button,SIGNAL(clicked()),this,SLOT(SelectFile()));
+        connect(editor,&QLineEdit::editingFinished, this, &FileItemDelegate::editingFinished);
+        connect(button, &QAbstractButton::clicked, this, &FileItemDelegate::SelectFile);
 
         return frame;
     }
@@ -106,32 +106,24 @@ private slots:
     void DelApp();
     void ChangePort(int i=-1);
     void ChangeLanguage();
-    void on_AddExport_clicked();
     void ExportNameChanged();
-    void on_DelExport_clicked();
-    void on_ExportName_currentIndexChanged(int index);
-    void on_ChangeExportFrameTab(int tab_id,int page_id);
-
-    void on_DefaultExport_clicked();
+    void onAddExportClicked();
+    void onDelExportClicked();
+    void onExportNameCurrentIndexChanged(int index);
+    void onChangeExportFrameTab(int tab_id,int page_id);
+    void onDefaultExportClicked();
+    void onBtnDefaultSettingsClicked();
+    void onTabWidgetCurrentChanged(int index);
+    void onProxyTypeCurrentIndexChanged(int index);
+    void onBrowseDirStateChanged(int checked);
+    void onTrayIconCurrentIndexChanged(int index);
+    void onTrayColorCurrentIndexChanged(int index);
+    void onHTTPneedPaswordClicked();
+    void onBtnSaveExportClicked();
+    void onBtnOpenExportClicked();
     void btnDBPath();
     void btnDirPath();
-    void on_btnDefaultSettings_clicked();
-    void on_tabWidget_currentChanged(int index);
     void UpdateWebExportList();
-
-    void on_proxy_type_currentIndexChanged(int index);
-
-    void on_browseDir_stateChanged(int checked);
-
-    void on_trayIcon_currentIndexChanged(int index);
-
-    void on_tray_color_currentIndexChanged(int index);
-
-    void on_HTTP_need_pasword_clicked();
-
-    void on_btnSaveExport_clicked();
-
-    void on_btnOpenExport_clicked();
 
 signals:
     void ChangingPort(int i);

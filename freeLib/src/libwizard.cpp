@@ -16,7 +16,7 @@ LibWizard::LibWizard(QWidget *parent) :
     ui(new Ui::LibWizard)
 {
     ui->setupUi(this);
-    connect(this,SIGNAL(currentIdChanged(int)),this,SLOT(SetDir(int)));
+    connect(this, &QWizard::currentIdChanged, this, &LibWizard::SetDir);
     QToolButton* tbInpx=new QToolButton(this);
     tbInpx->setFocusPolicy(Qt::NoFocus);
     tbInpx->setCursor(Qt::ArrowCursor);
@@ -33,8 +33,8 @@ LibWizard::LibWizard(QWidget *parent) :
     layout->addWidget(tbBooksDir,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
-    connect(tbInpx,SIGNAL(clicked()),this,SLOT(InputINPX()));
-    connect(tbBooksDir,SIGNAL(clicked()),this,SLOT(SelectBooksDir()));
+    connect(tbInpx, &QAbstractButton::clicked, this, &LibWizard::InputINPX);
+    connect(tbBooksDir, &QAbstractButton::clicked, this, &LibWizard::SelectBooksDir);
     mode=-1;
 }
 

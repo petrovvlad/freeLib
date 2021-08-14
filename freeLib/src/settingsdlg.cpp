@@ -16,14 +16,26 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->setupUi(this);
     ui->tabWidget->setCurrentIndex(0);
 
-    connect(ui->buttonBox,SIGNAL(accepted()),this,SLOT(btnOK()));
-
-    connect(ui->DelExp,SIGNAL(clicked()),this,SLOT(DelExt()));
-    connect(ui->AddExp,SIGNAL(clicked()),this,SLOT(AddExt()));
-    connect(ui->DelApp,SIGNAL(clicked()),this,SLOT(DelApp()));
-    connect(ui->AddApp,SIGNAL(clicked()),this,SLOT(AddApp()));
-    connect(ui->OPDS_port,SIGNAL(valueChanged(int)),this,SLOT(ChangePort(int)));
-    connect(ui->OPDS_enable,SIGNAL(stateChanged(int)),this,SLOT(ChangePort()));
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDlg::btnOK);
+    connect(ui->DelExp, &QAbstractButton::clicked, this, &SettingsDlg::DelExt);
+    connect(ui->AddExp, &QAbstractButton::clicked, this, &SettingsDlg::AddExt);
+    connect(ui->DelApp, &QAbstractButton::clicked, this, &SettingsDlg::DelApp);
+    connect(ui->AddApp, &QAbstractButton::clicked, this, &SettingsDlg::AddApp);
+    connect(ui->OPDS_port, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SettingsDlg::ChangePort);
+    connect(ui->OPDS_enable, &QCheckBox::stateChanged, this, &SettingsDlg::ChangePort);
+    connect(ui->AddExport, &QToolButton::clicked, this, &SettingsDlg::onAddExportClicked);
+    connect(ui->DelExp, &QPushButton::clicked, this, &SettingsDlg::onDelExportClicked);
+    connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->DefaultExport, &QCheckBox::clicked, this, &SettingsDlg::onDefaultExportClicked);
+    connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &SettingsDlg::onTabWidgetCurrentChanged);
+    connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
+    connect(ui->browseDir, &QCheckBox::stateChanged, this, &SettingsDlg::onBrowseDirStateChanged);
+    connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
+    connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
+    connect(ui->HTTP_need_pasword, &QCheckBox::clicked, this, &SettingsDlg::onHTTPneedPaswordClicked);
+    connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
+    connect(ui->btnOpenExport, &QToolButton::clicked, this, &SettingsDlg::onBtnOpenExportClicked);
 
     QToolButton* btnDBPath=new QToolButton(this);
     btnDBPath->setFocusPolicy(Qt::NoFocus);
@@ -33,7 +45,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout->addWidget(btnDBPath,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
-    connect(btnDBPath,SIGNAL(clicked()),this,SLOT(btnDBPath()));
+    connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
 
     QToolButton* btnDirPath=new QToolButton(this);
     btnDirPath->setFocusPolicy(Qt::NoFocus);
@@ -43,7 +55,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout->addWidget(btnDirPath,0,Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
-    connect(btnDirPath,SIGNAL(clicked()),this,SLOT(btnDirPath()));
+    connect(btnDirPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDirPath);
 
     LoadSettings();
 
@@ -84,7 +96,7 @@ void SettingsDlg::LoadSettings()
     }
     ui->browseDir->setChecked(settings.value("browseDir",false).toBool());
     ui->dirForBrowsing->setText(settings.value("dirForBrowsing").toString());
-    on_browseDir_stateChanged(ui->browseDir->isChecked());
+    onBrowseDirStateChanged(ui->browseDir->isChecked());
     ui->CloseExpDlg->setChecked(settings.value("CloseExpDlg").toBool());
     ui->ShowDeleted->setChecked(settings.value("ShowDeleted").toBool());
     ui->use_tag->setChecked(settings.value("use_tag",true).toBool());
@@ -145,9 +157,9 @@ void SettingsDlg::LoadSettings()
         ui->stackedWidget->addWidget(frame);
         frame->Load(&settings);
         ui->ExportName->addItem(settings.value("ExportName").toString(),settings.value("Default").toBool());
-        connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-        connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
-        connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
+        connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
+        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+        connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
     }
 
     settings.endArray();
@@ -157,14 +169,15 @@ void SettingsDlg::LoadSettings()
         ui->stackedWidget->addWidget(frame);
         frame->Load(&settings);
         ui->ExportName->addItem(tr("Send to ..."),false);
-        connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-        connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
-        connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
+        connect(frame,&ExportFrame::ChangeTabIndex,this,&SettingsDlg::onChangeExportFrameTab);
+        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+        connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
+
     }
     ui->DelExport->setEnabled(ui->ExportName->count()>1);
 
-    disconnect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    disconnect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
+    disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
+    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
     QStringList dirContent = QDir(QApplication::applicationDirPath()+"/language").entryList(QStringList()<< "language_*.qm", QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     QString locale=settings.value("localeUI",QLocale::system().name()).toString();
     ui->Language->clear();
@@ -208,12 +221,12 @@ void SettingsDlg::LoadSettings()
         }
     }
 
-    connect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    connect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    connect(ui->ExportName->lineEdit(),SIGNAL(editingFinished()),this,SLOT(ExportNameChanged()));
+    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
+    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
+    connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
     UpdateWebExportList();
-    on_proxy_type_currentIndexChanged(ui->proxy_type->currentIndex());
-    on_HTTP_need_pasword_clicked();
+    onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
+    onHTTPneedPaswordClicked();
 }
 
 void SettingsDlg::UpdateWebExportList()
@@ -284,8 +297,8 @@ void SettingsDlg::ChangePort(int i)
 }
 void SettingsDlg::ChangeLanguage()
 {
-    disconnect(ui->Language,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
-    disconnect(ui->ABC,SIGNAL(currentIndexChanged(int)),this,SLOT(ChangeLanguage()));
+    disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
+    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
     settings.setValue("localeUI",ui->Language->currentData().toString());
     settings.setValue("localeABC",ui->ABC->currentData().toString());
     settings.sync();
@@ -427,7 +440,7 @@ void SettingsDlg::DelApp()
 }
 
 
-void SettingsDlg::on_AddExport_clicked()
+void SettingsDlg::onAddExportClicked()
 {
     ExportFrame* frame=new ExportFrame(this);
     ui->stackedWidget->addWidget(frame);
@@ -437,8 +450,8 @@ void SettingsDlg::on_AddExport_clicked()
 
     frame->Load(nullptr);
 
-    connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-    connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
+    connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
+    connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
     UpdateWebExportList();
 }
 
@@ -448,7 +461,7 @@ void SettingsDlg::ExportNameChanged()
     UpdateWebExportList();
 }
 
-void SettingsDlg::on_DelExport_clicked()
+void SettingsDlg::onDelExportClicked()
 {
     if(ui->ExportName->count()<=1)
         return;
@@ -461,18 +474,18 @@ void SettingsDlg::on_DelExport_clicked()
     UpdateWebExportList();
 }
 
-void SettingsDlg::on_ExportName_currentIndexChanged(int index)
+void SettingsDlg::onExportNameCurrentIndexChanged(int index)
 {
     ui->stackedWidget->setCurrentIndex(index);
     ui->DefaultExport->setChecked(ui->ExportName->currentData().toBool());
 }
 
-void SettingsDlg::on_ChangeExportFrameTab(int tab_id,int page_id)
+void SettingsDlg::onChangeExportFrameTab(int tab_id,int page_id)
 {
     emit ChangingExportFrameTab(tab_id,page_id);
 }
 
-void SettingsDlg::on_DefaultExport_clicked()
+void SettingsDlg::onDefaultExportClicked()
 {
     for(int i=0;i<ui->ExportName->count();i++)
         ui->ExportName->setItemData(i,false);
@@ -480,7 +493,7 @@ void SettingsDlg::on_DefaultExport_clicked()
 }
 
 
-void SettingsDlg::on_btnDefaultSettings_clicked()
+void SettingsDlg::onBtnDefaultSettingsClicked()
 {
     if(QMessageBox::question(this,tr("Load default"),tr("Are you sure you want to load the default settings?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::Yes)
     {
@@ -490,7 +503,7 @@ void SettingsDlg::on_btnDefaultSettings_clicked()
 }
 
 
-void SettingsDlg::on_tabWidget_currentChanged(int index)
+void SettingsDlg::onTabWidgetCurrentChanged(int /*index*/)
 {
     if(ui->tabWidget->currentWidget()==ui->tab_export)
     {
@@ -499,7 +512,7 @@ void SettingsDlg::on_tabWidget_currentChanged(int index)
     }
 }
 
-void SettingsDlg::on_proxy_type_currentIndexChanged(int index)
+void SettingsDlg::onProxyTypeCurrentIndexChanged(int index)
 {
     ui->pl_1->setEnabled(index>0);
     ui->pl_3->setEnabled(index>0);
@@ -511,12 +524,12 @@ void SettingsDlg::on_proxy_type_currentIndexChanged(int index)
     ui->proxy_user->setEnabled(index>0);
 }
 
-void SettingsDlg::on_browseDir_stateChanged(int checked)
+void SettingsDlg::onBrowseDirStateChanged(int checked)
 {
     ui->dirForBrowsing->setEnabled(checked);
 }
 
-void SettingsDlg::on_trayIcon_currentIndexChanged(int index)
+void SettingsDlg::onTrayIconCurrentIndexChanged(int index)
 {
     index=ui->trayIcon->currentIndex();
     int color=ui->tray_color->currentIndex();
@@ -524,12 +537,12 @@ void SettingsDlg::on_trayIcon_currentIndexChanged(int index)
     ui->tray_color->setEnabled(index>0);
 }
 
-void SettingsDlg::on_tray_color_currentIndexChanged(int)
+void SettingsDlg::onTrayColorCurrentIndexChanged(int)
 {
-    on_trayIcon_currentIndexChanged(ui->trayIcon->currentIndex());
+    onTrayIconCurrentIndexChanged(ui->trayIcon->currentIndex());
 }
 
-void SettingsDlg::on_HTTP_need_pasword_clicked()
+void SettingsDlg::onHTTPneedPaswordClicked()
 {
     ui->p_password->setEnabled(ui->HTTP_need_pasword->isChecked());
     ui->p_user->setEnabled(ui->HTTP_need_pasword->isChecked());
@@ -537,7 +550,7 @@ void SettingsDlg::on_HTTP_need_pasword_clicked()
     ui->HTTP_user->setEnabled(ui->HTTP_need_pasword->isChecked());
 }
 
-void SettingsDlg::on_btnSaveExport_clicked()
+void SettingsDlg::onBtnSaveExportClicked()
 {
     QString file_name=QFileDialog::getSaveFileName(this,tr("Save profile"),
         (ui->ExportName->currentText()),"freeLib export (*.fle)");
@@ -593,7 +606,7 @@ void SettingsDlg::on_btnSaveExport_clicked()
     zip.close();
 }
 
-void SettingsDlg::on_btnOpenExport_clicked()
+void SettingsDlg::onBtnOpenExportClicked()
 {
     QString file_name=QFileDialog::getOpenFileName(this,tr("Open profile"),QString(),"freeLib export (*.fle)");
     if(file_name.isEmpty())
@@ -657,9 +670,10 @@ void SettingsDlg::on_btnOpenExport_clicked()
         ui->stackedWidget->addWidget(frame);
         frame->Load(&in_settings);
         ui->ExportName->addItem(QFileInfo(file_name).completeBaseName(),false);
-        connect(frame,SIGNAL(ChangeTabIndex(int,int)),this,SLOT(on_ChangeExportFrameTab(int,int)));
-        connect(this,SIGNAL(ChangingExportFrameTab(int,int)),frame,SLOT(SetTabIndex(int,int)));
-        connect(this,SIGNAL(NeedUpdateTools()),frame,SLOT(UpdateToolComboBox()));
+        connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
+        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+        connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
+
         ui->ExportName->setCurrentIndex(ui->ExportName->count()-1);
     }
     else
