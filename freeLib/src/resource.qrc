@@ -11,6 +11,28 @@
         <file>img/tray1.png</file>
         <file>img/tray2.png</file>
         <file>img/tray0.png</file>
+        <file>img/icons/dark/checkbox.svg</file>
+        <file>img/icons/dark/book.svg</file>
+        <file>img/icons/dark/library.svg</file>
+        <file>img/icons/dark/pen.svg</file>
+        <file>img/icons/dark/settings.svg</file>
+        <file>img/icons/dark/streamline.svg</file>
+        <file>img/icons/light/book.svg</file>
+        <file>img/icons/light/checkbox.svg</file>
+        <file>img/icons/light/library.svg</file>
+        <file>img/icons/light/pen.svg</file>
+        <file>img/icons/light/settings.svg</file>
+        <file>img/icons/light/streamline.svg</file>
+        <file>img/icons/dark/plus.svg</file>
+        <file>img/icons/dark/minus.svg</file>
+        <file>img/icons/light/minus.svg</file>
+        <file>img/icons/light/plus.svg</file>
+        <file>img/icons/dark/up.svg</file>
+        <file>img/icons/dark/down.svg</file>
+        <file>img/icons/light/up.svg</file>
+        <file>img/icons/light/down.svg</file>
+        <file>img/icons/dark/close.svg</file>
+        <file>img/icons/light/close.svg</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>
@@ -52,7 +74,6 @@
         <file>img/icons/plus.png</file>
         <file>img/icons/plus@2x.png</file>
         <file>img/icons/checkbox@2x.png</file>
-        <file>img/icons/checkbox.png</file>
         <file>img/icons/open.png</file>
         <file>img/icons/open@2x.png</file>
         <file>img/icons/save.png</file>
