@@ -16,6 +16,14 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->setupUi(this);
     ui->tabWidget->setCurrentIndex(0);
 
+    QPalette palette = QApplication::style()->standardPalette();
+    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->AddExport->setIcon(QIcon::fromTheme(QStringLiteral("list-add"),QIcon(sIconsPath + QStringLiteral("plus.svg"))));
+    ui->DelExport->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"),QIcon(sIconsPath + QStringLiteral("minus.svg"))));
+    ui->btnOpenExport->setIcon(QIcon::fromTheme(QStringLiteral("document-open")));
+    ui->btnSaveExport->setIcon(QIcon::fromTheme(QStringLiteral("document-save")));
+
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDlg::btnOK);
     connect(ui->DelExp, &QAbstractButton::clicked, this, &SettingsDlg::DelExt);
     connect(ui->AddExp, &QAbstractButton::clicked, this, &SettingsDlg::AddExt);

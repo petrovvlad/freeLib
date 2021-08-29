@@ -103,6 +103,7 @@ MainWindow::MainWindow(QWidget *parent) :
         }
     }
 
+
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
     ui->searchString->setFocus();
@@ -114,6 +115,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnWidth(4,120);
     ui->Books->setColumnWidth(5,250);
     ui->Books->setColumnWidth(6,50);
+
+    QPalette palette = QApplication::style()->standardPalette();
+    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"),QIcon(sIconsPath + QStringLiteral("streamline.svg"))));
+    ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
+    ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QStringLiteral("pen.svg"))));
+    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"),QIcon(sIconsPath + QStringLiteral("checkbox.svg"))));
+    ui->btnLibrary->setIcon(QIcon(sIconsPath + QStringLiteral("library.svg")));
+    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"),QIcon(sIconsPath + QStringLiteral("settings.svg"))));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
@@ -1962,7 +1973,10 @@ void MainWindow::UpdateExportMenu()
     QFont font(ui->btnExport->defaultAction()->font());
     font.setBold(true);
     ui->btnExport->defaultAction()->setFont(font);
-    ui->btnExport->setIcon(QIcon(":/icons/img/icons/Streamline.png"));
+    QPalette palette = QApplication::style()->standardPalette();
+    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?"dark/" :"light/");
+    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"),QIcon(sIconsPath + QStringLiteral("streamline.svg"))));
     ui->btnExport->setEnabled(ui->Books->selectedItems().count()>0);
 }
 
@@ -1984,7 +1998,10 @@ void MainWindow::ExportAction()
                 font.setBold(action==ui->btnExport->defaultAction());
                 action->setFont(font);
             }
-            ui->btnExport->setIcon(QIcon(":/icons/img/icons/Streamline.png"));
+            QPalette palette = QApplication::style()->standardPalette();
+            bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+            QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+            ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"),QIcon(sIconsPath + QStringLiteral("streamline.svg"))));
         }
     }
     settings.endArray();

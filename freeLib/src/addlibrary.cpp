@@ -33,6 +33,13 @@ AddLibrary::AddLibrary(QWidget *parent) :
     layout->setSpacing(0);
     layout->setMargin(0);
 
+    QPalette palette = QApplication::style()->standardPalette();
+    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->Add->setIcon(QIcon::fromTheme(QStringLiteral("list-add"),QIcon(sIconsPath + QStringLiteral("plus.svg"))));
+    ui->Del->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"),QIcon(sIconsPath + QStringLiteral("minus.svg"))));
+
+
     idCurrentLib_ = idCurrentLib;
     UpdateLibList();
 

@@ -284,6 +284,9 @@
                  <property name="maxLength">
                   <number>20</number>
                  </property>
+                 <property name="clearButtonEnabled">
+                  <bool>false</bool>
+                 </property>
                 </widget>
                </item>
               </layout>
@@ -701,8 +704,7 @@
                   <string notr="true">...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resource.qrc">
-                   <normaloff>:/icons/img/icons/Streamline.png</normaloff>:/icons/img/icons/Streamline.png</iconset>
+                  <iconset theme="tablet"/>
                  </property>
                  <property name="popupMode">
                   <enum>QToolButton::MenuButtonPopup</enum>
@@ -720,10 +722,6 @@
                  <property name="text">
                   <string notr="true">...</string>
                  </property>
-                 <property name="icon">
-                  <iconset resource="resource.qrc">
-                   <normaloff>:/icons/img/icons/book.png</normaloff>:/icons/img/icons/book.png</iconset>
-                 </property>
                 </widget>
                </item>
                <item>
@@ -732,8 +730,7 @@
                   <string>Edit matadata</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resource.qrc">
-                   <normaloff>:/icons/img/icons/pen_alt_fill@2x.png</normaloff>:/icons/img/icons/pen_alt_fill@2x.png</iconset>
+                  <iconset theme="document-edit"/>
                  </property>
                 </widget>
                </item>
@@ -746,8 +743,7 @@
                   <string notr="true">...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resource.qrc">
-                   <normaloff>:/icons/img/icons/checkbox.png</normaloff>:/icons/img/icons/checkbox.png</iconset>
+                  <iconset theme="checkbox"/>
                  </property>
                 </widget>
                </item>
@@ -758,10 +754,6 @@
                  </property>
                  <property name="text">
                   <string notr="true">...</string>
-                 </property>
-                 <property name="icon">
-                  <iconset resource="resource.qrc">
-                   <normaloff>:/icons/img/icons/library.png</normaloff>:/icons/img/icons/library.png</iconset>
                  </property>
                 </widget>
                </item>
@@ -774,8 +766,7 @@
                   <string notr="true">...</string>
                  </property>
                  <property name="icon">
-                  <iconset resource="resource.qrc">
-                   <normaloff>:/icons/img/icons/settings.png</normaloff>:/icons/img/icons/settings.png</iconset>
+                  <iconset theme="settings-configure"/>
                  </property>
                 </widget>
                </item>
@@ -1179,7 +1170,7 @@
      <x>0</x>
      <y>0</y>
      <width>1297</width>
-     <height>30</height>
+     <height>23</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">
@@ -1314,8 +1305,6 @@
    <header location="global">QtWebEngineWidgets/QWebEngineView</header>
   </customwidget>
  </customwidgets>
- <resources>
-  <include location="resource.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>
