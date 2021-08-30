@@ -134,6 +134,7 @@ private slots:
     void on_btnSwitchToLib_clicked();
     void on_btnPreference_clicked();
     void onTabWidgetChanged(int index);
+    void onLanguageCurrentIndexChanged(int index);
 
 
     //void on_splitter_splitterMoved(int pos, int index);
@@ -142,7 +143,6 @@ private slots:
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void dockClicked();
     void MinimizeWindow();
-    void onLanguageCurrentIndexChanged(const QString &arg1);
 
 public slots:
     void newLibWizard(bool AddLibOnly=true);

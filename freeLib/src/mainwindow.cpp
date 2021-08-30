@@ -207,7 +207,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::About);
     connect(ui->actionNew_labrary_wizard, &QAction::triggered, this, &MainWindow::newLibWizard);
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
-    connect(ui->language, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageCurrentIndexChanged);
+    connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageCurrentIndexChanged);
     QList<QAction*> actionList = ui->searchString->findChildren<QAction*>();
     if (!actionList.isEmpty()) {
         connect(actionList.first(), &QAction::triggered, this, &MainWindow::searchClear);
@@ -2032,11 +2032,12 @@ void MainWindow::on_actionSwitch_to_library_mode_triggered()
     settings.setValue("ApplicationMode", mode);
 }
 
-void MainWindow::onLanguageCurrentIndexChanged(const QString &arg1)
+void MainWindow::onLanguageCurrentIndexChanged(int index)
 {
+    QString sLanguage = ui->language->itemText(index);
     QSettings settings;
-    settings.setValue("BookLanguage",arg1);
-    idCurrentLanguage_ = ui->language->currentData().toInt();
+    settings.setValue(QStringLiteral("BookLanguage"),sLanguage);
+    idCurrentLanguage_ = ui->language->itemData(index).toInt();
 
     FillSerials();
     FillAuthors();
