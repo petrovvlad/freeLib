@@ -26,8 +26,8 @@ public slots:
 private slots:
     void onRadioDeviceToggled(bool checked);
     void onRadioEmailToggled(bool checked);
-    void onOutputFormatChanged(const QString &arg1);
-    void onConnectionTypeChanged(const QString &arg1);
+    void onOutputFormatChanged(int index);
+    void onConnectionTypeChanged(int index);
     void onTabWidgetCurrentChanged(int);
     void onAddCoverLabelClicked();
     void onCreateCaverAlwaysClicked();

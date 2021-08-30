@@ -45,13 +45,13 @@ ExportFrame::ExportFrame(QWidget *parent) :
     ui->stackedWidget->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
     ui->toolBox->setCurrentIndex(0);
-    onOutputFormatChanged("");
-    onConnectionTypeChanged("");
+    onOutputFormatChanged(0);
+    onConnectionTypeChanged(0);
     connect(ui->AddFont, &QPushButton::clicked, this, [=](){this->AddFont();});
     connect(ui->radioDevice, &QRadioButton::toggled, this, &ExportFrame::onRadioDeviceToggled);
     connect(ui->radioEmail, &QRadioButton::toggled, this, &ExportFrame::onRadioEmailToggled);
-    connect(ui->OutputFormat, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onOutputFormatChanged);
-    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString&)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    connect(ui->OutputFormat, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onOutputFormatChanged);
+    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &ExportFrame::onTabWidgetCurrentChanged);
     connect(ui->addCoverLabel, &QCheckBox::clicked, this, &ExportFrame::onAddCoverLabelClicked);
     connect(ui->createCaverAlways, &QCheckBox::clicked, this, &ExportFrame::onCreateCaverAlwaysClicked);
@@ -92,22 +92,22 @@ void ExportFrame::onRadioEmailToggled(bool checked)
         ui->stackedWidget->setCurrentIndex(1);
 }
 
-void ExportFrame::onOutputFormatChanged(const QString &arg1)
+void ExportFrame::onOutputFormatChanged(int /*index*/)
 {
-    ui->tabFormat->setDisabled(ui->OutputFormat->currentText()=="-");
+    ui->tabFormat->setDisabled(ui->OutputFormat->currentText()==QStringLiteral("-"));
 }
 
-void ExportFrame::onConnectionTypeChanged(const QString &arg1)
+void ExportFrame::onConnectionTypeChanged(int /*index*/)
 {
-    if(ui->ConnectionType->currentText().toLower()=="tcp")
-        ui->Port->setText("25");
+    if(ui->ConnectionType->currentText().toLower()==QStringLiteral("tcp"))
+        ui->Port->setText(QStringLiteral("25"));
     else
-        ui->Port->setText("465");
+        ui->Port->setText(QStringLiteral("465"));
 }
 
 void ExportFrame::Load(QSettings *_settings)
 {
-    disconnect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    disconnect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
     QSettings *settings=_settings;
     if(_settings==0)
         settings=new QSettings();
@@ -203,7 +203,7 @@ void ExportFrame::Load(QSettings *_settings)
     onPostprocessingCopyClicked();
     onMlTocClicked();
     set_userCSS_clicked();
-    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(const QString &)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
     if(_settings==0)
         delete settings;
 }
