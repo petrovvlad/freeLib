@@ -60,177 +60,6 @@
              <number>0</number>
             </property>
             <item>
-             <widget class="QFrame" name="frame">
-              <property name="minimumSize">
-               <size>
-                <width>0</width>
-                <height>30</height>
-               </size>
-              </property>
-              <property name="frameShape">
-               <enum>QFrame::NoFrame</enum>
-              </property>
-              <property name="frameShadow">
-               <enum>QFrame::Raised</enum>
-              </property>
-              <layout class="QHBoxLayout" name="horizontalLayout">
-               <property name="spacing">
-                <number>3</number>
-               </property>
-               <property name="leftMargin">
-                <number>0</number>
-               </property>
-               <property name="topMargin">
-                <number>0</number>
-               </property>
-               <property name="rightMargin">
-                <number>0</number>
-               </property>
-               <property name="bottomMargin">
-                <number>0</number>
-               </property>
-               <item>
-                <spacer name="horizontalSpacer">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-               <item>
-                <widget class="QToolButton" name="btnAuthor">
-                 <property name="sizePolicy">
-                  <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-                   <horstretch>0</horstretch>
-                   <verstretch>0</verstretch>
-                  </sizepolicy>
-                 </property>
-                 <property name="minimumSize">
-                  <size>
-                   <width>70</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>70</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Authors</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <property name="checked">
-                  <bool>true</bool>
-                 </property>
-                 <property name="autoExclusive">
-                  <bool>true</bool>
-                 </property>
-                 <property name="autoRaise">
-                  <bool>false</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QToolButton" name="btnSeries">
-                 <property name="minimumSize">
-                  <size>
-                   <width>70</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>70</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Series</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <property name="autoExclusive">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QToolButton" name="btnGenre">
-                 <property name="minimumSize">
-                  <size>
-                   <width>70</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>70</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Genres</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <property name="autoExclusive">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <widget class="QToolButton" name="btnSearch">
-                 <property name="minimumSize">
-                  <size>
-                   <width>70</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="maximumSize">
-                  <size>
-                   <width>16777215</width>
-                   <height>26</height>
-                  </size>
-                 </property>
-                 <property name="text">
-                  <string>Search</string>
-                 </property>
-                 <property name="checkable">
-                  <bool>true</bool>
-                 </property>
-                 <property name="autoExclusive">
-                  <bool>true</bool>
-                 </property>
-                </widget>
-               </item>
-               <item>
-                <spacer name="horizontalSpacer_2">
-                 <property name="orientation">
-                  <enum>Qt::Horizontal</enum>
-                 </property>
-                 <property name="sizeHint" stdset="0">
-                  <size>
-                   <width>40</width>
-                   <height>20</height>
-                  </size>
-                 </property>
-                </spacer>
-               </item>
-              </layout>
-             </widget>
-            </item>
-            <item>
              <widget class="QFrame" name="SearchFrame">
               <property name="frameShape">
                <enum>QFrame::NoFrame</enum>
@@ -293,7 +122,7 @@
              </widget>
             </item>
             <item>
-             <widget class="QStackedWidget" name="tabWidget">
+             <widget class="QTabWidget" name="tabWidget">
               <property name="minimumSize">
                <size>
                 <width>350</width>
@@ -309,7 +138,10 @@
               <property name="currentIndex">
                <number>3</number>
               </property>
-              <widget class="QWidget" name="pageAuthor">
+              <widget class="QWidget" name="tabWidgetPage1">
+               <attribute name="title">
+                <string>Authors</string>
+               </attribute>
                <layout class="QVBoxLayout" name="verticalLayout">
                 <property name="spacing">
                  <number>4</number>
@@ -341,7 +173,10 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="pageSeria">
+              <widget class="QWidget" name="tabWidgetPage2">
+               <attribute name="title">
+                <string>Series</string>
+               </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_6">
                 <property name="leftMargin">
                  <number>0</number>
@@ -370,7 +205,10 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="pageGenre">
+              <widget class="QWidget" name="tabWidgetPage3">
+               <attribute name="title">
+                <string>Genres</string>
+               </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_7">
                 <property name="leftMargin">
                  <number>0</number>
@@ -410,7 +248,10 @@
                 </item>
                </layout>
               </widget>
-              <widget class="QWidget" name="page">
+              <widget class="QWidget" name="tabWidgetPage4">
+               <attribute name="title">
+                <string>Search</string>
+               </attribute>
                <layout class="QVBoxLayout" name="verticalLayout_8">
                 <property name="spacing">
                  <number>0</number>
@@ -704,7 +545,8 @@
                   <string notr="true">...</string>
                  </property>
                  <property name="icon">
-                  <iconset theme="tablet"/>
+                  <iconset theme="tablet">
+                   <normaloff>.</normaloff>.</iconset>
                  </property>
                  <property name="popupMode">
                   <enum>QToolButton::MenuButtonPopup</enum>
@@ -730,7 +572,8 @@
                   <string>Edit matadata</string>
                  </property>
                  <property name="icon">
-                  <iconset theme="document-edit"/>
+                  <iconset theme="document-edit">
+                   <normaloff>.</normaloff>.</iconset>
                  </property>
                 </widget>
                </item>
@@ -743,7 +586,8 @@
                   <string notr="true">...</string>
                  </property>
                  <property name="icon">
-                  <iconset theme="checkbox"/>
+                  <iconset theme="checkbox">
+                   <normaloff>.</normaloff>.</iconset>
                  </property>
                 </widget>
                </item>
@@ -766,7 +610,8 @@
                   <string notr="true">...</string>
                  </property>
                  <property name="icon">
-                  <iconset theme="settings-configure"/>
+                  <iconset theme="settings-configure">
+                   <normaloff>.</normaloff>.</iconset>
                  </property>
                 </widget>
                </item>

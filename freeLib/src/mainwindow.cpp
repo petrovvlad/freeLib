@@ -159,7 +159,7 @@ MainWindow::MainWindow(QWidget *parent) :
         idCurrentSerial_ = 0;
         idCurrentBook_ = 0;
         idCurrentGenre_ = 0;
-        nCurrentTab = 0;
+        nCurrentTab = TabAuthors;
     }
 
     UpdateTags();
@@ -199,10 +199,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->Books, &QTreeWidget::itemDoubleClicked, this, &MainWindow::BookDblClick);
     connect(ui->GenreList, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectGenre);
     connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectSeria);
-    connect(ui->btnAuthor, &QAbstractButton::clicked, this, &MainWindow::btnAuthor);
-    connect(ui->btnGenre, &QAbstractButton::clicked, this, &MainWindow::btnGenres);
-    connect(ui->btnSeries, &QAbstractButton::clicked, this, &MainWindow::btnSeries);
-    connect(ui->btnSearch, &QAbstractButton::clicked, this, &MainWindow::btnPageSearch);
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabWidgetChanged);
     connect(ui->do_search, &QAbstractButton::clicked, this, &MainWindow::StartSearch);
     connect(ui->s_author, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
     connect(ui->s_seria, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
@@ -236,22 +233,9 @@ MainWindow::MainWindow(QWidget *parent) :
         break;
     }
 
-
-    switch(nCurrentTab)
-    {
-    case 0:
-        FillListBooks();
-        break;
-    case 1:
-        ui->btnSeries->click();
-        break;
-    case 2:
-        ui->btnGenre->click();
-        break;
-    case 3:
-        ui->btnSearch->click();
-        break;
-    }
+    ui->tabWidget->setCurrentIndex(nCurrentTab);
+    if(nCurrentTab == TabAuthors)
+        SelectAuthor();
 
     if(ui->searchString->text().trimmed().isEmpty())
         FirstButton->click();
@@ -822,7 +806,7 @@ void MainWindow::SendToDevice()
     if(book_list.count()==0)
         return;
     ExportDlg dlg(this);
-    dlg.exec(book_list,ST_Device,(ui->btnAuthor->isChecked()?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0));
+    dlg.exec(book_list,ST_Device,(ui->tabWidget->currentIndex()==TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0));
     uncheck_books(dlg.succesfull_export_books);
 }
 
@@ -834,7 +818,7 @@ void MainWindow::SendMail()
     if(book_list.count()==0)
         return;
     ExportDlg dlg(this);
-    dlg.exec(book_list,ST_Mail,(ui->btnAuthor->isChecked()?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0));
+    dlg.exec(book_list,ST_Mail,(ui->tabWidget->currentIndex()==TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0));
     uncheck_books(dlg.succesfull_export_books);
 }
 
@@ -1249,41 +1233,6 @@ void MainWindow::ManageLibrary()
         FillLibrariesMenu();
     }
 }
-void MainWindow::btnAuthor()
-{
-    ui->tabWidget->setCurrentIndex(0);
-    ui->SearchFrame->setEnabled(true);
-    ui->frame_3->setEnabled(true);
-    ui->language->setEnabled(true);
-    SelectAuthor();
-}
-void MainWindow::btnSeries()
-{
-    ui->tabWidget->setCurrentIndex(1);
-    ui->SearchFrame->setEnabled(true);
-    ui->frame_3->setEnabled(true);
-    ui->language->setEnabled(true);
-    SelectSeria();
-}
-void MainWindow::btnGenres()
-{
-    ui->tabWidget->setCurrentIndex(2);
-    ui->SearchFrame->setEnabled(false);
-    ui->frame_3->setEnabled(false);
-    ui->language->setEnabled(true);
-    SelectGenre();
-}
-
-void MainWindow::btnPageSearch()
-{
-    ui->tabWidget->setCurrentIndex(3);
-    ui->SearchFrame->setEnabled(false);
-    ui->frame_3->setEnabled(false);
-    ui->language->setEnabled(false);
-    ui->Books->clear();
-    ui->find_books->setText("0");
-    ExportBookListBtn(false);
-}
 
 void MainWindow::btnSearch()
 {
@@ -1440,8 +1389,7 @@ void MainWindow::ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide)
 void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
 {
     ui->searchString->setText(FirstLetter);
-    ui->btnSeries->setChecked(true);
-    btnSeries();
+    ui->tabWidget->setCurrentIndex(TabSeries);
     ui->SeriaList->clearSelection();
     for (int i=0;i<ui->SeriaList->count();i++)
     {
@@ -1457,8 +1405,7 @@ void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
 
 void MainWindow::MoveToGenre(qlonglong id)
 {
-    ui->btnGenre->setChecked(true);
-    btnGenres();
+    ui->tabWidget->setCurrentIndex(TabGenres);
     ui->GenreList->clearSelection();
     for (int i=0;i<ui->GenreList->topLevelItemCount();i++)
     {
@@ -1478,9 +1425,8 @@ void MainWindow::MoveToGenre(qlonglong id)
 void MainWindow::MoveToAuthor(qlonglong id, QString FirstLetter)
 {
     ui->searchString->setText(/*id<0?Item->text(0).left(1).toUpper():*/FirstLetter);
-    ui->btnAuthor->setChecked(true);
+    ui->tabWidget->setCurrentIndex(TabAuthors);
     searchCanged(FirstLetter);
-    btnAuthor();
     ui->AuthorList->clearSelection();
     for (int i=0;i<ui->AuthorList->count();i++)
     {
@@ -2106,6 +2052,38 @@ void MainWindow::on_btnSwitchToLib_clicked()
 void MainWindow::on_btnPreference_clicked()
 {
     Settings();
+}
+
+void MainWindow::onTabWidgetChanged(int index)
+{
+    switch(index){
+    case TabAuthors: //Авторы
+        ui->SearchFrame->setEnabled(true);
+        ui->frame_3->setEnabled(true);
+        ui->language->setEnabled(true);
+        SelectAuthor();
+        break;
+    case TabSeries: //Серии
+        ui->SearchFrame->setEnabled(true);
+        ui->frame_3->setEnabled(true);
+        ui->language->setEnabled(true);
+        SelectSeria();
+        break;
+    case TabGenres: //Жанры
+        ui->SearchFrame->setEnabled(false);
+        ui->frame_3->setEnabled(false);
+        ui->language->setEnabled(true);
+        SelectGenre();
+        break;
+    case TabSearch: //Поиск
+        ui->SearchFrame->setEnabled(false);
+        ui->frame_3->setEnabled(false);
+        ui->language->setEnabled(false);
+        ui->Books->clear();
+        ui->find_books->setText(QStringLiteral("0"));
+        ExportBookListBtn(false);
+        break;
+    }
 }
 
 void MainWindow::resizeEvent(QResizeEvent */*e*/)

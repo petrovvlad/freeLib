@@ -71,6 +71,7 @@ private:
     uint idCurrentBook_;
     bool bUseTag_;
     bool bShowDeleted_;
+    enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
 
 protected:
     void showEvent(QShowEvent *ev);
@@ -106,11 +107,7 @@ private slots:
     void searchCanged(QString str);
     void searchClear();
     void btnSearch();
-    void btnAuthor();
-    void btnSeries();
-    void btnPageSearch();
     void DoSearch();
-    void btnGenres();
     void SelectAuthor();
     void SelectBook();
     void SelectGenre();
@@ -136,6 +133,8 @@ private slots:
     void on_actionSwitch_to_library_mode_triggered();
     void on_btnSwitchToLib_clicked();
     void on_btnPreference_clicked();
+    void onTabWidgetChanged(int index);
+
 
     //void on_splitter_splitterMoved(int pos, int index);
 
