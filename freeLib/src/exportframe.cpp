@@ -41,6 +41,7 @@ ExportFrame::ExportFrame(QWidget *parent) :
     ui(new Ui::ExportFrame)
 {
     ui->setupUi(this);
+    ui->btnDefaultCSS->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
     ui->stackedWidget->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
     ui->toolBox->setCurrentIndex(0);

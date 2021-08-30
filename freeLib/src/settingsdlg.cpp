@@ -21,8 +21,8 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
     ui->AddExport->setIcon(QIcon::fromTheme(QStringLiteral("list-add"),QIcon(sIconsPath + QStringLiteral("plus.svg"))));
     ui->DelExport->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"),QIcon(sIconsPath + QStringLiteral("minus.svg"))));
-    ui->btnOpenExport->setIcon(QIcon::fromTheme(QStringLiteral("document-open")));
-    ui->btnSaveExport->setIcon(QIcon::fromTheme(QStringLiteral("document-save")));
+    ui->btnOpenExport->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
+    ui->btnSaveExport->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDlg::btnOK);
     connect(ui->DelExp, &QAbstractButton::clicked, this, &SettingsDlg::DelExt);

@@ -159,12 +159,12 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
         ui->tag->addItem(tag_list[i].name);
     }
 
-    QPalette palette = QApplication::style()->standardPalette();
-    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
-    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->Up->setIcon(QIcon::fromTheme(QStringLiteral("go-up"),QIcon(sIconsPath + QStringLiteral("up.svg"))));
-    ui->Down->setIcon(QIcon::fromTheme(QStringLiteral("go-down"),QIcon(sIconsPath + QStringLiteral("down.svg"))));
-    ui->del->setIcon(QIcon::fromTheme(QStringLiteral("edit-delete"),QIcon(sIconsPath + QStringLiteral("close.svg"))));
+//    QPalette palette = QApplication::style()->standardPalette();
+//    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+//    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->Up->setIcon(style()->standardIcon(QStyle::SP_ArrowUp)/*QIcon::fromTheme(QStringLiteral("go-up"),QIcon(sIconsPath + QStringLiteral("up.svg")))*/);
+    ui->Down->setIcon(style()->standardIcon(QStyle::SP_ArrowDown)/*QIcon::fromTheme(QStringLiteral("go-down"),QIcon(sIconsPath + QStringLiteral("down.svg")))*/);
+    ui->del->setIcon(style()->standardIcon(QStyle::SP_DialogDiscardButton)/*QIcon::fromTheme(QStringLiteral("edit-delete"),QIcon(sIconsPath + QStringLiteral("close.svg")))*/);
 
     connect(ui->Use, &QAbstractButton::toggled, this, &FontFrame::UseChange);
     connect(ui->del, &QAbstractButton::clicked, this, &FontFrame::DelPress);
