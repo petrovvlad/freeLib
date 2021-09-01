@@ -106,7 +106,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
-    ui->searchString->setFocus();
     ui->tabWidget->setCurrentIndex(0);
     ui->Books->setColumnWidth(0,400);
     ui->Books->setColumnWidth(1,50);
@@ -142,6 +141,7 @@ MainWindow::MainWindow(QWidget *parent) :
     bShowDeleted_ =settings.value("ShowDeleted").toBool();
     int nCurrentTab;
 
+    QString sFilter;
     if(settings.value("store_position",true).toBool())
     {
         idCurrentAuthor_= settings.value("current_author_id",0).toUInt();
@@ -149,9 +149,7 @@ MainWindow::MainWindow(QWidget *parent) :
         idCurrentBook_ = settings.value("current_book_id",0).toUInt();
         idCurrentGenre_ = settings.value("current_genre_id",0).toUInt();
         nCurrentTab = settings.value("current_tab",0).toInt();
-        QString sFilter = settings.value("filter_set").toString();
-        ui->searchString->setText(sFilter);
-        ui->searchString->setClearButtonEnabled(sFilter.length()>1);
+        sFilter = settings.value("filter_set").toString();
     }
     else
     {
@@ -171,7 +169,8 @@ MainWindow::MainWindow(QWidget *parent) :
     FillSerials();
     FillGenres();
 
-    connect(ui->searchString, &QLineEdit::textChanged, this, &MainWindow::searchCanged);
+    connect(ui->searchAuthor, &QLineEdit::textChanged, this, &MainWindow::onSerachAuthorsChanded);
+    connect(ui->searchSeries, &QLineEdit::textChanged, this, &MainWindow::onSerachSeriesChanded);
     connect(ui->actionAddLibrary, &QAction::triggered, this, &MainWindow::ManageLibrary);
     connect(ui->btnLibrary, &QAbstractButton::clicked, this, &MainWindow::ManageLibrary);
     connect(ui->btnOpenBook, &QAbstractButton::clicked, this, &MainWindow::BookDblClick);
@@ -208,15 +207,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionNew_labrary_wizard, &QAction::triggered, this, &MainWindow::newLibWizard);
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
     connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageCurrentIndexChanged);
-    QList<QAction*> actionList = ui->searchString->findChildren<QAction*>();
-    if (!actionList.isEmpty()) {
-        connect(actionList.first(), &QAction::triggered, this, &MainWindow::searchClear);
-    }
-
 
     ChangingLanguage(false);
     ExportBookListBtn(false);
-
 
     mode=static_cast<APP_MODE>(settings.value("ApplicationMode",0).toInt());
     switch(mode)
@@ -234,11 +227,20 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
     ui->tabWidget->setCurrentIndex(nCurrentTab);
-    if(nCurrentTab == TabAuthors)
+    switch (nCurrentTab) {
+    case TabAuthors:
+        ui->searchAuthor->setText(sFilter);
+        ui->searchAuthor->setFocus();
+        if(sFilter.trimmed().isEmpty())
+            FirstButton->click();
         SelectAuthor();
+        break;
+    case TabSeries:
+        ui->searchSeries->setText(sFilter);
+        ui->searchSeries->setFocus();
 
-    if(ui->searchString->text().trimmed().isEmpty())
-        FirstButton->click();
+        break;
+    }
 
     ui->date_to->setDate(QDate::currentDate());
 
@@ -353,6 +355,8 @@ void MainWindow::UpdateTags()
 MainWindow::~MainWindow()
 {
     QSettings settings;
+    if(settings.value(QStringLiteral("store_position"),true).toBool())
+        SaveLibPosition();
     settings.beginGroup("Columns");
     QByteArray baHeaders = ui->Books->header()->saveState();
     settings.setValue("headers",baHeaders);
@@ -389,7 +393,6 @@ void MainWindow::newLibWizard(bool AddLibOnly)
         FillAuthors();
         FillSerials();
         FillGenres();
-        searchCanged(ui->searchString->text());
         setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
         FillLibrariesMenu();
     }
@@ -646,7 +649,14 @@ void MainWindow::tag_select(int index)
 void MainWindow::SaveLibPosition()
 {
     QSettings settings;
-    settings.setValue("filter_set",ui->searchString->text());
+    switch (ui->tabWidget->currentIndex()) {
+    case TabAuthors:
+        settings.setValue(QStringLiteral("filter_set"),ui->searchAuthor->text());
+        break;
+    case TabSeries:
+        settings.setValue(QStringLiteral("filter_set"),ui->searchSeries->text());
+        break;
+    }
     settings.setValue("current_tab",ui->tabWidget->currentIndex());
     settings.setValue("current_book_id",idCurrentBook_);
 }
@@ -1011,7 +1021,15 @@ void MainWindow::SelectLibrary()
     FillAuthors();
     FillSerials();
     FillGenres();
-    searchCanged(ui->searchString->text());
+    switch(ui->tabWidget->currentIndex()){
+    case TabAuthors:
+        onSerachAuthorsChanded(ui->searchAuthor->text());
+        break;
+    case TabSeries:
+        onSerachSeriesChanded(ui->searchSeries->text());
+        break;
+    }
+
     setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
     FillLibrariesMenu();
 }
@@ -1228,7 +1246,15 @@ void MainWindow::ManageLibrary()
         loadLibrary(idCurrentLib);
         UpdateTags();
         UpdateBooks();
-        searchCanged(ui->searchString->text());
+        switch(ui->tabWidget->currentIndex()){
+        case TabAuthors:
+            onSerachAuthorsChanded(ui->searchAuthor->text());
+            break;
+        case TabSeries:
+            onSerachSeriesChanded(ui->searchSeries->text());
+            break;
+        }
+
         setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?"":" - "+mLibs[idCurrentLib].name));
         FillLibrariesMenu();
     }
@@ -1237,8 +1263,14 @@ void MainWindow::ManageLibrary()
 void MainWindow::btnSearch()
 {
     QToolButton *button = qobject_cast<QToolButton*>(sender());
-    ui->searchString->setText(button->text());
-    searchCanged(ui->searchString->text());
+    switch(ui->tabWidget->currentIndex()){
+    case TabAuthors:
+        ui->searchAuthor->setText(button->text());
+        break;
+    case TabSeries:
+        ui->searchSeries->setText(button->text());
+        break;
+    }
 }
 
 void MainWindow::About()
@@ -1253,44 +1285,75 @@ void MainWindow::DoSearch()
 
 }
 
-void MainWindow::searchCanged(QString str)
+void MainWindow::checkLetter(const QChar cLetter)
+{
+    QList<QToolButton*> allButtons = findChildren<QToolButton *>();
+    bool find=false;
+    foreach(QToolButton *tb,allButtons)
+    {
+        QString sButtonLetter = tb->text();
+        if(!sButtonLetter.isEmpty() && sButtonLetter.at(0)==cLetter)
+        {
+            find=true;
+            tb->setChecked(true);
+            break;
+        }
+    }
+    if(!find)
+        btn_Hash->setChecked(true);
+}
+
+void MainWindow::onSerachAuthorsChanded(const QString &str)
 {
     if(str.length()==0)
     {
-        ui->searchString->setText(last_search_symbol);
-        ui->searchString->selectAll();
+        ui->searchAuthor->setText(last_search_symbol);
+        ui->searchAuthor->selectAll();
     }
     else
     {
-        last_search_symbol=ui->searchString->text().left(1);
-        if((ui->searchString->text().left(1)=="*" || ui->searchString->text().left(1)=="#" ) && ui->searchString->text().length()>1)
+        last_search_symbol=str.left(1);
+        if((last_search_symbol==QLatin1String("*") || last_search_symbol==QLatin1String("#") ) && str>1)
         {
-            ui->searchString->setText(ui->searchString->text().right(ui->searchString->text().length()-1));
+            ui->searchAuthor->setText(str.right(str.length()-1));
         }
-        QList<QToolButton *> allButtons = findChildren<QToolButton *>();
-        bool find=false;
-        foreach(QToolButton *tb,allButtons)
-        {
-            if(tb->text()==ui->searchString->text().left(1).toUpper())
-            {
-                find=true;
-                tb->setChecked(true);
-            }
-        }
-        if(!find)
-            btn_Hash->setChecked(true);
-        FillSerials();
+        checkLetter(last_search_symbol.at(0).toUpper());
         FillAuthors();
     }
-    ui->searchString->setClearButtonEnabled(ui->searchString->text().length()>1);
+    if(ui->AuthorList->count()>0){
+        if(ui->AuthorList->selectedItems().count()==0)
+            ui->AuthorList->setCurrentRow(0);
+        auto item = ui->AuthorList->selectedItems()[0];
+        ui->AuthorList->scrollToItem(item, QAbstractItemView::EnsureVisible);
+    }
+    ui->searchAuthor->setClearButtonEnabled(ui->searchAuthor->text().length()>1);
 }
 
-void MainWindow::searchClear()
+void MainWindow::onSerachSeriesChanded(const QString &str)
 {
-    ui->searchString->setText(ui->searchString->text().left(1));
-    searchCanged(ui->searchString->text());
+    if(str.length()==0)
+    {
+        ui->searchSeries->setText(last_search_symbol);
+        ui->searchSeries->selectAll();
+    }
+    else
+    {
+        last_search_symbol=str.left(1);
+        if((last_search_symbol==QLatin1String("*") || last_search_symbol==QLatin1String("#") ) && str>1)
+        {
+            ui->searchSeries->setText(str.right(str.length()-1));
+        }
+        checkLetter(last_search_symbol.at(0).toUpper());
+        FillSerials();
+    }
+    if(ui->SeriaList->count()>0){
+        if(ui->SeriaList->selectedItems().count()==0)
+            ui->SeriaList->setCurrentRow(0);
+        auto item = ui->SeriaList->selectedItems()[0];
+        ui->SeriaList->scrollToItem(item, QAbstractItemView::EnsureVisible);
+    }
+    ui->searchSeries->setClearButtonEnabled(ui->searchSeries->text().length()>1);
 }
-
 
 void MainWindow::HelpDlg()
 {
@@ -1388,7 +1451,7 @@ void MainWindow::ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide)
 
 void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
 {
-    ui->searchString->setText(FirstLetter);
+    ui->searchSeries->setText(FirstLetter);
     ui->tabWidget->setCurrentIndex(TabSeries);
     ui->SeriaList->clearSelection();
     for (int i=0;i<ui->SeriaList->count();i++)
@@ -1424,9 +1487,8 @@ void MainWindow::MoveToGenre(qlonglong id)
 
 void MainWindow::MoveToAuthor(qlonglong id, QString FirstLetter)
 {
-    ui->searchString->setText(/*id<0?Item->text(0).left(1).toUpper():*/FirstLetter);
+    ui->searchAuthor->setText(FirstLetter);
     ui->tabWidget->setCurrentIndex(TabAuthors);
-    searchCanged(FirstLetter);
     ui->AuthorList->clearSelection();
     for (int i=0;i<ui->AuthorList->count();i++)
     {
@@ -1494,7 +1556,7 @@ void MainWindow::FillAuthors()
     ui->AuthorList->clear();
     SLib &currentLib = mLibs[idCurrentLib];
     QListWidgetItem *selectedItem = nullptr;
-    QString sSearch = ui->searchString->text();
+    QString sSearch = ui->searchAuthor->text();
     auto i = currentLib.mAuthors.constBegin();
 
     while(i!=currentLib.mAuthors.constEnd()){
@@ -1537,7 +1599,7 @@ void MainWindow::FillSerials()
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     const bool wasBlocked = ui->SeriaList->blockSignals(true);
     ui->SeriaList->clear();
-    QString sSearch = ui->searchString->text();
+    QString sSearch = ui->searchSeries->text();
 
     QMap<uint,uint> mCounts;
     auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
@@ -2059,25 +2121,37 @@ void MainWindow::onTabWidgetChanged(int index)
 {
     switch(index){
     case TabAuthors: //Авторы
-        ui->SearchFrame->setEnabled(true);
+    {
+        QString sFilter = ui->searchAuthor->text();
+        if(sFilter.isEmpty()){
+            ui->searchAuthor->setText(FirstButton->text());
+        }else {
+            checkLetter(sFilter.at(0).toUpper());
+        }
         ui->frame_3->setEnabled(true);
         ui->language->setEnabled(true);
         SelectAuthor();
+    }
         break;
     case TabSeries: //Серии
-        ui->SearchFrame->setEnabled(true);
+    {
+        QString sFilter = ui->searchSeries->text();
+        if(sFilter.isEmpty()){
+            ui->searchSeries->setText(FirstButton->text());
+        }else {
+            checkLetter(sFilter.at(0).toUpper());
+        }
         ui->frame_3->setEnabled(true);
         ui->language->setEnabled(true);
         SelectSeria();
+    }
         break;
     case TabGenres: //Жанры
-        ui->SearchFrame->setEnabled(false);
         ui->frame_3->setEnabled(false);
         ui->language->setEnabled(true);
         SelectGenre();
         break;
     case TabSearch: //Поиск
-        ui->SearchFrame->setEnabled(false);
         ui->frame_3->setEnabled(false);
         ui->language->setEnabled(false);
         ui->Books->clear();

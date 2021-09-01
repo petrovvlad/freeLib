@@ -63,6 +63,7 @@ private:
     void FillListBooks();
     void FillListBooks(QList<uint> listBook, uint idCurrentAuthor);
     bool IsBookInList(const SBook &book);
+    void checkLetter(const QChar cLetter);
 
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
@@ -104,8 +105,8 @@ private slots:
     void CheckBooks();
     void EditBooks();
     void Settings();
-    void searchCanged(QString str);
-    void searchClear();
+    void onSerachAuthorsChanded(const QString& str);
+    void onSerachSeriesChanded(const QString& str);
     void btnSearch();
     void DoSearch();
     void SelectAuthor();
