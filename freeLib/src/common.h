@@ -20,8 +20,8 @@
 #include <QMultiMap>
 #include <QList>
 
-#define AppName  QString("freeLib")
-#define OrgName  QString("freeLibOrg")
+#define AppName  QStringLiteral("freeLib")
+#define OrgName  QStringLiteral("freeLibOrg")
 #define default_exp_file_name "%a/%s/%n3%b"
 #define default_book_title "(%abbrs %n2) %b"
 #define default_author_name "%nf %nm %nl"
