@@ -145,8 +145,8 @@ private slots:
     void dockClicked();
     void MinimizeWindow();
 
-public slots:
-    void newLibWizard(bool AddLibOnly=true);
+//public slots:
+//    void newLibWizard(bool AddLibOnly=true);
 signals:
     void window_loaded();
 };

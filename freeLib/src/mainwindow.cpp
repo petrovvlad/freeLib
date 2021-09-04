@@ -25,7 +25,6 @@
 #include "exportthread.h"
 #include "aboutdialog.h"
 #include "tagdialog.h"
-#include "libwizard.h"
 #include "bookeditdlg.h"
 #include "webpage.h"
 #include "treebookitem.h"
@@ -204,7 +203,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->s_seria, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
     connect(ui->s_name, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::About);
-    connect(ui->actionNew_labrary_wizard, &QAction::triggered, this, &MainWindow::newLibWizard);
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
     connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageCurrentIndexChanged);
 
@@ -368,34 +366,6 @@ void MainWindow::EditBooks()
 {
     BookEditDlg dlg(this);
     dlg.exec();
-}
-
-void MainWindow::newLibWizard(bool AddLibOnly)
-{
-    LibWizard wiz(this);
-    if((AddLibOnly?wiz.AddLibMode():wiz.exec())==QDialog::Accepted || wiz.mode==MODE_CONVERTER)
-    {
-        if(wiz.mode==MODE_CONVERTER)
-        {
-            on_actionSwitch_to_convert_mode_triggered();
-            return;
-        }
-        AddLibrary al(this);
-        SLib lib;
-        lib.name = wiz.name;
-        lib.path = wiz.dir;
-        lib.sInpx = wiz.inpx;
-        lib.bWoDeleted = false;
-        lib.bFirstAuthor = false;
-        al.AddNewLibrary(lib);
-        loadLibrary(idCurrentLib);
-        UpdateBooks();
-        FillAuthors();
-        FillSerials();
-        FillGenres();
-        setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?QLatin1String(""):QStringLiteral(" - ")+mLibs[idCurrentLib].name));
-        FillLibrariesMenu();
-    }
 }
 
 void MainWindow::ReviewLink(QUrl url)

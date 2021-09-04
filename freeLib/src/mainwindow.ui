@@ -1001,7 +1001,6 @@
      <string>Library</string>
     </property>
     <addaction name="actionLibraries"/>
-    <addaction name="actionNew_labrary_wizard"/>
     <addaction name="actionAddLibrary"/>
     <addaction name="actionCheck_uncheck"/>
     <addaction name="separator"/>
