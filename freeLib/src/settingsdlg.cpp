@@ -186,7 +186,7 @@ void SettingsDlg::LoadSettings()
 
     disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
     disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
-    QStringList dirContent = QDir(QApplication::applicationDirPath()+"/language").entryList(QStringList()<< "language_*.qm", QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    QStringList dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     QString locale=settings.value("localeUI",QLocale::system().name()).toString();
     ui->Language->clear();
     ui->Language->addItem("english");
@@ -202,7 +202,7 @@ void SettingsDlg::LoadSettings()
             ui->Language->setCurrentIndex(ui->Language->count()-1);
         }
     }
-    dirContent = QDir(QApplication::applicationDirPath()+"/language").entryList(QStringList()<< "abc_*.txt", QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("abc_*.txt"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     QString locale_abc=settings.value("localeABC",QLocale::system().name()).toString();
     ui->ABC->clear();
     ui->ABC->addItem("english");

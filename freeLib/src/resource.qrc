@@ -33,6 +33,8 @@
         <file>img/icons/light/down.svg</file>
         <file>img/icons/dark/close.svg</file>
         <file>img/icons/light/close.svg</file>
+        <file alias="language/abc_ru.txt">ABC/abc_ru.txt</file>
+        <file alias="language/abc_uk.txt">ABC/abc_uk.txt</file>        
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>

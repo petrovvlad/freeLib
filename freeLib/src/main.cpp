@@ -256,7 +256,7 @@ SendType SetCurrentExportSettings(int index)
 
 QString FindLocaleFile(QString locale,QString name,QString suffics)
 {
-    QString FileName=QApplication::applicationDirPath()+"/language/"+name+"_";
+    QString FileName=QStringLiteral(":/language/%1_").arg(name);
     int name_len=FileName.length();
     FileName+=locale+".qm";
     bool qm=true;
@@ -309,7 +309,7 @@ void SetLocale()
     }
 
     translator_qt=new QTranslator(app);
-    if(translator_qt->load(FindLocaleFile(locale,"qtbase","qm")))
+    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(locale),QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
     {
         app->installTranslator(translator_qt);
     }
@@ -566,8 +566,6 @@ int main(int argc, char *argv[])
     }
     splash->finish(&w);
     //current_lib.UpdateLib();
-    if(idCurrentLib<0 && settings.value("ApplicationMode",0).toInt()==0)
-        w.newLibWizard(false);
     int result=a.exec();
     if(global_settings)
     {
