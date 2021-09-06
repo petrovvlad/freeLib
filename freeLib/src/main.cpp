@@ -297,8 +297,9 @@ void SetLocale()
         app->removeTranslator(translator_qt);
     }
 
-    translator=new QTranslator(app);
-    if(translator->load(FindLocaleFile(locale,"language","qm")))
+    if(translator==nullptr)
+        translator=new QTranslator(app);
+    if(translator->load(QStringLiteral(":/language/language_%1.qm").arg(locale)))
     {
         app->installTranslator(translator);
     }
@@ -308,7 +309,8 @@ void SetLocale()
         translator=nullptr;
     }
 
-    translator_qt=new QTranslator(app);
+    if(translator_qt==nullptr)
+        translator_qt=new QTranslator(app);
     if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(locale),QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
     {
         app->installTranslator(translator_qt);
