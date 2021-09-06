@@ -257,9 +257,9 @@ SendType SetCurrentExportSettings(int index)
 void SetLocale()
 {
     QSettings* settings=GetSettings();
-    QString locale=settings->value("localeUI",QLocale::system().name()).toString();
-    setlocale(LC_ALL, "rus");
-    QLocale::setDefault(QLocale(QLocale::Russian,QLocale::RussianFederation));
+    QString sLocale=settings->value(QStringLiteral("localeUI"),QLocale::system().name()).toString();
+    setlocale(LC_ALL, sLocale.toLatin1().data());
+    QLocale::setDefault(QLocale(sLocale));
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 
@@ -274,7 +274,7 @@ void SetLocale()
 
     if(translator==nullptr)
         translator=new QTranslator(app);
-    if(translator->load(QStringLiteral(":/language/language_%1.qm").arg(locale)))
+    if(translator->load(QStringLiteral(":/language/language_%1.qm").arg(sLocale)))
     {
         app->installTranslator(translator);
     }
@@ -286,7 +286,7 @@ void SetLocale()
 
     if(translator_qt==nullptr)
         translator_qt=new QTranslator(app);
-    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(locale),QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
+    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale),QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
     {
         app->installTranslator(translator_qt);
     }
@@ -295,7 +295,7 @@ void SetLocale()
         delete translator_qt;
         translator_qt=nullptr;
     }
-    settings->setValue("localeUI",locale);
+    settings->setValue("localeUI",sLocale);
     settings->sync();
 
     tag_list.clear();
