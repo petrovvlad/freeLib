@@ -47,28 +47,6 @@ QPixmap GetTag(QColor color,int size)
     return pixmap;
 }
 
-QString sizeToString(uint size)
-{
-    QStringList mem;
-    mem <<QCoreApplication::translate("MainWindow","B")<<QCoreApplication::translate("MainWindow","kB")<<QCoreApplication::translate("MainWindow","MB")<<QCoreApplication::translate("MainWindow","GB")<<QCoreApplication::translate("MainWindow","TB")<<QCoreApplication::translate("MainWindow","PB");
-    uint rest=0;
-    int mem_i=0;
-
-    while(size>1024)
-    {
-        mem_i++;
-        if(mem_i==mem.count())
-        {
-            mem_i--;
-            break;
-        }
-        rest=size%1024;
-        size=size/1024;
-     }
-    double size_d = (float)size + (float)rest / 1024.0;
-    return QStringLiteral("%L1 %2").arg(size_d,0,'f',mem_i>0?1:0).arg(mem[mem_i]);
-}
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -1100,6 +1078,7 @@ void MainWindow::SelectBook()
     ui->btnOpenBook->setEnabled(true);
     if(ui->splitter->sizes().at(1)>0)
     {
+        QLocale locale;
         QBuffer outbuff;
         QBuffer infobuff;
         QDateTime book_date;
@@ -1165,7 +1144,7 @@ void MainWindow::SelectBook()
                 replace(QLatin1String("#genre#"),sGenres).
                 replace(QLatin1String("#series#"),seria).
                 replace(QLatin1String("#file_path#"),arh.filePath()).
-                replace(QLatin1String("#file_size#"),sizeToString(size)/*QString::number(size)+(mem_i>0?"."+QString::number((rest*10+5)/1024):"")+" "+mem[mem_i]*/).
+                replace(QLatin1String("#file_size#"),locale.formattedDataSize(size,1,QLocale::DataSizeTraditionalFormat)).
                 replace(QLatin1String("#file_data#"),book_date.toString(QStringLiteral("dd.MM.yyyy hh:mm:ss"))).
                 replace(QLatin1String("#file_name#"),fi.fileName()).
                 replace(QLatin1String("#image#"),book.sImg).
@@ -1703,6 +1682,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
     QFont bold_font(ui->Books->font());
     bold_font.setBold(true);
     TreeBookItem* ScrollItem=nullptr;
+    QLocale locale;
 
     TreeBookItem* item_seria=nullptr;
     TreeBookItem* item_book;
@@ -1776,7 +1756,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
             }
 
             if(book.nSize>0)
-                item_book->setText(2,sizeToString(book.nSize));
+                item_book->setText(2,locale.formattedDataSize(book.nSize,1,QLocale::DataSizeTraditionalFormat));
             item_book->setTextAlignment(2, Qt::AlignRight);
 
             QPixmap pix(QStringLiteral(":/icons/img/icons/stars/")+QString::number(book.nStars).trimmed()+QStringLiteral("star%1.png").arg(app->devicePixelRatio()>=2?QStringLiteral("@2x"):QLatin1String("")));
