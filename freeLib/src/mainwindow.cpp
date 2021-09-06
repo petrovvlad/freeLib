@@ -436,7 +436,8 @@ void MainWindow::update_list_pix(qlonglong id, int list,int tag_id)
 void MainWindow::ChangingLanguage(bool change_language)
 {
     QSettings settings;
-    QFile file(FindLocaleFile(settings.value(QStringLiteral("localeABC"),QLocale::system().name()).toString(),QStringLiteral("abc"),QStringLiteral("txt")));
+    QString sABCname = settings.value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
+    QFile file(QStringLiteral(":/language/abc_%1.txt").arg(sABCname));
     QString abc_local=QStringLiteral("ABC");
     if(!file.fileName().isEmpty() && file.open(QFile::ReadOnly))
     {

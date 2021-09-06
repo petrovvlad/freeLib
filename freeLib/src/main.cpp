@@ -254,31 +254,6 @@ SendType SetCurrentExportSettings(int index)
     return ST_Device;
 }
 
-QString FindLocaleFile(QString locale,QString name,QString suffics)
-{
-    QString FileName=QStringLiteral(":/language/%1_").arg(name);
-    int name_len=FileName.length();
-    FileName+=locale+".qm";
-    bool qm=true;
-    while(!QFile(FileName).exists())
-    {
-        if(qm)
-        {
-            FileName=FileName.left(FileName.length()-(suffics.length()+1));
-            qm=false;
-        }
-        else
-        {
-            int pos=FileName.indexOf("_",name_len);
-            if(pos<0)
-                return "";
-            FileName=FileName.left(pos)+"."+suffics;
-            qm=true;
-        }
-    }
-    return FileName;
-}
-
 void SetLocale()
 {
     QSettings* settings=GetSettings();

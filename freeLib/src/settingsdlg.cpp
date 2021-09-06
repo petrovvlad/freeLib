@@ -212,8 +212,8 @@ void SettingsDlg::LoadSettings()
         QString lang=str.right(str.length()-4);
         lang=lang.left(lang.length()-4);
         QLocale loc(lang);
-        ui->ABC->addItem(loc.nativeLanguageName(),loc.name());
-        if(loc.name()==locale_abc)
+        ui->ABC->addItem(loc.nativeLanguageName(),lang);
+        if(lang==locale_abc)
         {
             ui->ABC->setCurrentIndex(ui->ABC->count()-1);
         }
@@ -305,8 +305,6 @@ void SettingsDlg::ChangePort(int i)
 }
 void SettingsDlg::ChangeLanguage()
 {
-    disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
-    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
     settings.setValue("localeUI",ui->Language->currentData().toString());
     settings.setValue("localeABC",ui->ABC->currentData().toString());
     settings.sync();
