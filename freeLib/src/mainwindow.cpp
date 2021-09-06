@@ -1752,12 +1752,12 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
             item_book->setText(0,book.sName);
             if(book.numInSerial>0){
                 item_book->setText(1,QString::number(book.numInSerial));
-                item_book->setTextAlignment(1, Qt::AlignRight);
+                item_book->setTextAlignment(1, Qt::AlignRight|Qt::AlignVCenter);
             }
 
             if(book.nSize>0)
                 item_book->setText(2,locale.formattedDataSize(book.nSize,1,QLocale::DataSizeTraditionalFormat));
-            item_book->setTextAlignment(2, Qt::AlignRight);
+            item_book->setTextAlignment(2, Qt::AlignRight|Qt::AlignVCenter);
 
             QPixmap pix(QStringLiteral(":/icons/img/icons/stars/")+QString::number(book.nStars).trimmed()+QStringLiteral("star%1.png").arg(app->devicePixelRatio()>=2?QStringLiteral("@2x"):QLatin1String("")));
             pix.setDevicePixelRatio(app->devicePixelRatio());
@@ -1767,7 +1767,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
             item_book->setTextAlignment(4, Qt::AlignCenter);
 
             item_book->setText(5,mGenre[book.listIdGenres.first()].sName);
-            item_book->setTextAlignment(5, Qt::AlignLeft);
+            item_book->setTextAlignment(5, Qt::AlignLeft|Qt::AlignVCenter);
 
             item_book->setText(6,mLibs[idCurrentLib].vLaguages[book.idLanguage]);
             item_book->setTextAlignment(6, Qt::AlignCenter);
