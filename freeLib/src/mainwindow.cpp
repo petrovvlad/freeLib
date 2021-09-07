@@ -184,7 +184,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->s_name, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::About);
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
-    connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageCurrentIndexChanged);
+    connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageFilterChanged);
 
     FillAlphabet(sAlphbetName_);
     ExportBookListBtn(false);
@@ -2032,7 +2032,7 @@ void MainWindow::on_actionSwitch_to_library_mode_triggered()
     settings.setValue(QStringLiteral("ApplicationMode"), mode);
 }
 
-void MainWindow::onLanguageCurrentIndexChanged(int index)
+void MainWindow::onLanguageFilterChanged(int index)
 {
     QString sLanguage = ui->language->itemText(index);
     QSettings settings;

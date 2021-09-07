@@ -137,7 +137,7 @@ private slots:
     void on_btnSwitchToLib_clicked();
     void on_btnPreference_clicked();
     void onTabWidgetChanged(int index);
-    void onLanguageCurrentIndexChanged(int index);
+    void onLanguageFilterChanged(int index);
     void onChangeAlpabet(const QString &sAlphabetName);
 
 
