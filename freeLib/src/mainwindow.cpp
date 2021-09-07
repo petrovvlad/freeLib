@@ -116,6 +116,8 @@ MainWindow::MainWindow(QWidget *parent) :
     idCurrentLanguage_ = -1;
     bUseTag_=settings.value(QStringLiteral("use_tag"),true).toBool();
     bShowDeleted_ =settings.value(QStringLiteral("ShowDeleted")).toBool();
+    sAlphbetName_ = settings.value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
+
     int nCurrentTab;
 
     QString sFilter;
@@ -184,7 +186,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
     connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageCurrentIndexChanged);
 
-    ChangingLanguage(false);
+    FillAlphabet(sAlphbetName_);
     ExportBookListBtn(false);
 
     mode=static_cast<APP_MODE>(settings.value(QStringLiteral("ApplicationMode"),0).toInt());
@@ -411,48 +413,29 @@ void MainWindow::update_list_pix(qlonglong id, int list,int tag_id)
     }
 }
 
-void MainWindow::ChangingLanguage(bool change_language)
+void MainWindow::ChangingLanguage()
 {
-    QSettings settings;
-    QString sABCname = settings.value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
-    QFile file(QStringLiteral(":/language/abc_%1.txt").arg(sABCname));
-    QString abc_local=QStringLiteral("ABC");
+    ui->retranslateUi(this);
+}
+
+void MainWindow::FillAlphabet(const QString &sAlphabetName)
+{
+    QFile file(QStringLiteral(":/language/abc_%1.txt").arg(sAlphabetName));
+    QString sAlphabet;
     if(!file.fileName().isEmpty() && file.open(QFile::ReadOnly))
     {
-        abc_local=QString::fromUtf8(file.readLine()).toUpper();
+        sAlphabet=QString::fromUtf8(file.readLine()).toUpper();
     }
     QVBoxLayout *layout_abc_all=new QVBoxLayout();
 
-    if(ui->abc->layout())
-    {
-
-        while(!(qobject_cast<QBoxLayout*>(ui->abc->layout())->itemAt(0))->isEmpty())
-        {
-            delete dynamic_cast<QBoxLayout*>(ui->abc->layout()->itemAt(0))->itemAt(0)->widget();
-        }
-        if(!qobject_cast<QBoxLayout*>(ui->abc->layout())->isEmpty())
-        {
-            while(!(dynamic_cast<QBoxLayout*>(ui->abc->layout()->itemAt(1)))->isEmpty())
-            {
-                delete dynamic_cast<QBoxLayout*>(ui->abc->layout()->itemAt(1))->itemAt(0)->widget();
-            }
-        }
-
-        while(!ui->abc->layout()->isEmpty())
-        {
-            delete ui->abc->layout()->itemAt(0);
-        }
-        delete ui->abc->layout();
-    }
-
     FirstButton=nullptr;
-    if(abc_local!=QLatin1String("ABC"))
+    if(!sAlphabet.isEmpty())
     {
         QHBoxLayout *layout_abc=new QHBoxLayout();
-        for(int i=0;i<abc_local.length();i++)
+        for(int i=0;i<sAlphabet.length();i++)
         {
             QToolButton *btn=new QToolButton(this);
-            btn->setText(abc_local.at(i));
+            btn->setText(sAlphabet.at(i));
             btn->setMaximumSize(QSize(22,22));
             btn->setMinimumSize(QSize(22,22));
             btn->setCheckable(true);
@@ -491,9 +474,9 @@ void MainWindow::ChangingLanguage(bool change_language)
             layout_abc->setSpacing(1);
             layout_abc->setMargin(0);
 #ifdef Q_OS_WIN
-            layout_abc->setContentsMargins(0,abc_local!="ABC"?4:0,0,0);
+            layout_abc->setContentsMargins(0,!sAlphabet.isEmpty()?4:0,0,0);
 #else
-            layout_abc->setContentsMargins(0,abc_local!=QLatin1String("ABC")?5:0,0,5);
+            layout_abc->setContentsMargins(0,!sAlphabet.isEmpty()?5:0,0,5);
 #endif
             layout_abc_all->addItem(layout_abc);
         }
@@ -504,9 +487,6 @@ void MainWindow::ChangingLanguage(bool change_language)
 #ifdef Q_OS_WIN
     ui->abc->layout()->setContentsMargins(0,4,0,5);
 #endif
-    ui->retranslateUi(this);
-    if(change_language)
-        FirstButton->click();
 }
 
 void MainWindow::set_tag()
@@ -654,8 +634,15 @@ void MainWindow::Settings()
     SettingsDlg dlg(this);
     connect(&dlg, &SettingsDlg::ChangingPort, this, &MainWindow::ChangingPort);
     connect(&dlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
+    connect(&dlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(&dlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
-    dlg.exec();
+    if(dlg.exec()==QDialog::Accepted){
+        sAlphbetName_ = dlg.sAlphabetName_;
+        settings.setValue(QStringLiteral("localeABC"),sAlphbetName_);
+    }else{
+        if(sAlphbetName_ != dlg.sAlphabetName_)
+            onChangeAlpabet(sAlphbetName_);
+    }
     settings.setValue(QStringLiteral("LibID"),idCurrentLib);
     if(bShowDeleted_!=settings.value(QStringLiteral("ShowDeleted")).toBool() || bUseTag_!=settings.value(QStringLiteral("use_tag")).toBool())
     {
@@ -2056,6 +2043,31 @@ void MainWindow::onLanguageCurrentIndexChanged(int index)
     FillAuthors();
     FillGenres();
     FillListBooks();
+}
+
+void MainWindow::onChangeAlpabet(const QString &sAlphabetName)
+{
+    if(ui->abc->layout())
+    {
+        while(!(qobject_cast<QBoxLayout*>(ui->abc->layout())->itemAt(0))->isEmpty())
+        {
+            delete dynamic_cast<QBoxLayout*>(ui->abc->layout()->itemAt(0))->itemAt(0)->widget();
+        }
+        if(!qobject_cast<QBoxLayout*>(ui->abc->layout())->isEmpty())
+        {
+            while(!(dynamic_cast<QBoxLayout*>(ui->abc->layout()->itemAt(1)))->isEmpty())
+            {
+                delete dynamic_cast<QBoxLayout*>(ui->abc->layout()->itemAt(1))->itemAt(0)->widget();
+            }
+        }
+        while(!ui->abc->layout()->isEmpty())
+        {
+            delete ui->abc->layout()->itemAt(0);
+        }
+        delete ui->abc->layout();
+    }
+    FillAlphabet(sAlphabetName);
+    FirstButton->click();
 }
 
 void MainWindow::on_btnSwitchToLib_clicked()

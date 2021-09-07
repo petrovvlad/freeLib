@@ -92,6 +92,8 @@ class SettingsDlg : public QDialog
 public:
     explicit SettingsDlg(QWidget *parent = nullptr);
     ~SettingsDlg();
+
+    QString sAlphabetName_;
     
 private:
     Ui::SettingsDlg *ui;
@@ -121,6 +123,7 @@ private slots:
     void onHTTPneedPaswordClicked();
     void onBtnSaveExportClicked();
     void onBtnOpenExportClicked();
+    void onChangeAlphabetCombobox(int index);
     void btnDBPath();
     void btnDirPath();
     void UpdateWebExportList();
@@ -128,6 +131,7 @@ private slots:
 signals:
     void ChangingPort(int i);
     void ChangingLanguage();
+    void ChangeAlphabet(const QString &str);
     void ChangingExportFrameTab(int tab_id,int page_id);
     void NeedUpdateTools();
     void ChangingTrayIcon(int index,int color);

@@ -45,6 +45,7 @@ private:
     DropForm *pDropForm;
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
+    QString sAlphbetName_;
     QMenu TagMenu;
     QObject* current_list_for_tag;
     void SaveLibPosition();
@@ -62,6 +63,7 @@ private:
     void FillGenres();
     void FillListBooks();
     void FillListBooks(QList<uint> listBook, uint idCurrentAuthor);
+    void FillAlphabet(const QString &sAlphabetName);
     bool IsBookInList(const SBook &book);
     void checkLetter(const QChar cLetter);
 
@@ -127,7 +129,7 @@ private slots:
     void tag_select(int index);
     void set_tag();
     void ChangingPort(int i);
-    void ChangingLanguage(bool change_language=true);
+    void ChangingLanguage();
     void ReviewLink(QUrl url);
     void SelectLibrary();
     void on_actionSwitch_to_convert_mode_triggered();
@@ -136,6 +138,7 @@ private slots:
     void on_btnPreference_clicked();
     void onTabWidgetChanged(int index);
     void onLanguageCurrentIndexChanged(int index);
+    void onChangeAlpabet(const QString &sAlphabetName);
 
 
     //void on_splitter_splitterMoved(int pos, int index);

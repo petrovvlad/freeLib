@@ -185,7 +185,7 @@ void SettingsDlg::LoadSettings()
     ui->DelExport->setEnabled(ui->ExportName->count()>1);
 
     disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
-    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
+    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::onChangeAlphabetCombobox/*ChangeLanguage*/);
     QStringList dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     QString locale=settings.value("localeUI",QLocale::system().name()).toString();
     ui->Language->clear();
@@ -203,9 +203,9 @@ void SettingsDlg::LoadSettings()
         }
     }
     dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("abc_*.txt"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-    QString locale_abc=settings.value("localeABC",QLocale::system().name()).toString();
+    sAlphabetName_ = settings.value(QStringLiteral("localeABC"),QLocale::system().name().left(2)).toString();
     ui->ABC->clear();
-    ui->ABC->addItem("english");
+    ui->ABC->addItem(QStringLiteral("english"));
     ui->ABC->setCurrentIndex(0);
     foreach(QString str,dirContent)
     {
@@ -213,7 +213,7 @@ void SettingsDlg::LoadSettings()
         lang=lang.left(lang.length()-4);
         QLocale loc(lang);
         ui->ABC->addItem(loc.nativeLanguageName(),lang);
-        if(lang==locale_abc)
+        if(lang==sAlphabetName_)
         {
             ui->ABC->setCurrentIndex(ui->ABC->count()-1);
         }
@@ -230,7 +230,7 @@ void SettingsDlg::LoadSettings()
     }
 
     connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
-    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
+    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox/*ChangeLanguage*/);
     connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
     UpdateWebExportList();
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
@@ -306,7 +306,6 @@ void SettingsDlg::ChangePort(int i)
 void SettingsDlg::ChangeLanguage()
 {
     settings.setValue("localeUI",ui->Language->currentData().toString());
-    settings.setValue("localeABC",ui->ABC->currentData().toString());
     settings.sync();
     SetLocale();
     ui->retranslateUi(this);
@@ -689,4 +688,10 @@ void SettingsDlg::onBtnOpenExportClicked()
 
 
     zip_file.close();
+}
+
+void SettingsDlg::onChangeAlphabetCombobox(int /*index*/)
+{
+    sAlphabetName_ = ui->ABC->currentData().toString();
+    emit ChangeAlphabet(sAlphabetName_);
 }
