@@ -57,7 +57,7 @@ extern QList<tag> tag_list;
 
 QPixmap GetTag(QColor color,int size);
 void SetLocale();
-QString FindLocaleFile(QString locale,QString name,QString suffics);
+//QString FindLocaleFile(QString locale,QString name,QString suffics);
 void DoDonate();
 QString Transliteration(QString str);
 QString BuildFileName(QString filename);
