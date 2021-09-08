@@ -32,7 +32,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 
     QStringList dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     ui->Language->clear();
-    ui->Language->addItem(QStringLiteral("english"),"en");
+    ui->Language->addItem(QStringLiteral("english"),"en_US");
     ui->Language->setCurrentIndex(0);
     foreach(QString str,dirContent)
     {

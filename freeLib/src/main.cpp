@@ -257,7 +257,7 @@ SendType SetCurrentExportSettings(int index)
 
 void SetLocale(QString sLocale)
 {
-    setlocale(LC_ALL, sLocale.toLatin1().data());
+    setlocale(LC_ALL, (sLocale+".UTF-8").toLatin1().data());
     QLocale::setDefault(QLocale(sLocale));
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
