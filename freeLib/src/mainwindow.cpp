@@ -115,8 +115,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     idCurrentLanguage_ = -1;
     bUseTag_=settings.value(QStringLiteral("use_tag"),true).toBool();
-    bShowDeleted_ =settings.value(QStringLiteral("ShowDeleted")).toBool();
-    sAlphbetName_ = settings.value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
 
     int nCurrentTab;
 
@@ -186,7 +184,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::itemChanged);
     connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageFilterChanged);
 
-    FillAlphabet(sAlphbetName_);
+    FillAlphabet(options.sAlphabetName);
     ExportBookListBtn(false);
 
     mode=static_cast<APP_MODE>(settings.value(QStringLiteral("ApplicationMode"),0).toInt());
@@ -637,26 +635,31 @@ void MainWindow::Settings()
     connect(&dlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(&dlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
     if(dlg.exec()==QDialog::Accepted){
-        sAlphbetName_ = dlg.sAlphabetName_;
-        settings.setValue(QStringLiteral("localeABC"),sAlphbetName_);
+        settings.setValue(QStringLiteral("LibID"),idCurrentLib);
+        if(options.bShowDeleted != dlg.options_.bShowDeleted/*settings.value(QStringLiteral("ShowDeleted")).toBool()*/ || bUseTag_!=settings.value(QStringLiteral("use_tag")).toBool())
+        {
+            bUseTag_ = settings.value(QStringLiteral("use_tag")).toBool();
+            //bShowDeleted_ = settings.value(QStringLiteral("ShowDeleted")).toBool();
+            UpdateTags();
+            SaveLibPosition();
+            FillAuthors();
+            FillGenres();
+            FillListBooks();
+        }
+        opds.server_run();
+        UpdateExportMenu();
+        resizeEvent(nullptr);
     }else{
-        if(sAlphbetName_ != dlg.sAlphabetName_)
-            onChangeAlpabet(sAlphbetName_);
+        // Возврат к исхдному языку интерфеса.
+        if(dlg.options_.sUiLanguageName != options.sUiLanguageName){
+            SetLocale(options.sUiLanguageName);
+            ui->retranslateUi(this);
+        }
+        // Возврат к исхдному алфавиту.
+        if(dlg.options_.sAlphabetName != options.sAlphabetName)
+            onChangeAlpabet(options.sAlphabetName);
+
     }
-    settings.setValue(QStringLiteral("LibID"),idCurrentLib);
-    if(bShowDeleted_!=settings.value(QStringLiteral("ShowDeleted")).toBool() || bUseTag_!=settings.value(QStringLiteral("use_tag")).toBool())
-    {
-        bUseTag_ = settings.value(QStringLiteral("use_tag")).toBool();
-        bShowDeleted_ = settings.value(QStringLiteral("ShowDeleted")).toBool();
-        UpdateTags();
-        SaveLibPosition();
-        FillAuthors();
-        FillGenres();
-        FillListBooks();
-    }
-    opds.server_run();
-    UpdateExportMenu();
-    resizeEvent(nullptr);
 }
 
 void MainWindow::FillCheckedBookList(QList<uint> &list,QTreeWidgetItem* item,bool send_all,bool checked_only)
@@ -912,7 +915,7 @@ void MainWindow::StartSearch()
     int nCount = 0;
     auto iBook = mLibs[idCurrentLib].mBooks.constBegin();
     while(iBook != mLibs[idCurrentLib].mBooks.constEnd()){
-        if((bShowDeleted_ || !iBook->bDeleted)&&
+        if((options.bShowDeleted || !iBook->bDeleted)&&
                 iBook->date>= dateFrom && iBook->date <= dateTo &&
                 (sAuthor.isEmpty() || mLibs[idCurrentLib].mAuthors[iBook->idFirstAuthor].getName().contains(sAuthor,Qt::CaseInsensitive)) &&
                 (sName.isEmpty() || iBook->sName.contains(sName,Qt::CaseInsensitive)) &&
@@ -1790,7 +1793,7 @@ bool MainWindow::IsBookInList(const SBook &book)
     uint idSerial=book.idSerial;
 
     return (idCurrentLanguage_==-1 || idCurrentLanguage_ == book.idLanguage)
-            &&(bShowDeleted_ || !book.bDeleted)&&
+            &&(options.bShowDeleted || !book.bDeleted)&&
             (!bUseTag_ || current_tag==0 || current_tag==book.nTag
              ||(idSerial>0 && mLibs[idCurrentLib].mSerials[idSerial].nTag == current_tag)
              ||(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].nTag == current_tag));

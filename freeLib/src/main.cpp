@@ -26,6 +26,7 @@ QSettings *global_settings=nullptr;
 QCommandLineParser CMDparser;
 QSplashScreen *splash;
 QApplication *app;
+Options options;
 
 bool SetCurrentZipFileName(QuaZip *zip,QString name)
 {
@@ -254,10 +255,8 @@ SendType SetCurrentExportSettings(int index)
     return ST_Device;
 }
 
-void SetLocale()
+void SetLocale(QString sLocale)
 {
-    QSettings* settings=GetSettings();
-    QString sLocale=settings->value(QStringLiteral("localeUI"),QLocale::system().name()).toString();
     setlocale(LC_ALL, sLocale.toLatin1().data());
     QLocale::setDefault(QLocale(sLocale));
 
@@ -295,8 +294,6 @@ void SetLocale()
         delete translator_qt;
         translator_qt=nullptr;
     }
-    settings->setValue("localeUI",sLocale);
-    settings->sync();
 
     tag_list.clear();
     tag_list<<
@@ -489,7 +486,12 @@ int main(int argc, char *argv[])
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
     QSqlDatabase::addDatabase("QSQLITE","libdb");
 
-    SetLocale();
+    QSettings* settings=GetSettings();
+    options.bShowDeleted =settings->value(QStringLiteral("ShowDeleted")).toBool();
+    options.sAlphabetName = settings->value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
+    options.sUiLanguageName = settings->value(QStringLiteral("localeUI"),QLocale::system().name()).toString();
+
+    SetLocale(options.sUiLanguageName);
 
     QString HomeDir="";
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
@@ -516,13 +518,12 @@ int main(int argc, char *argv[])
 #ifdef Q_OS_LINUX
     splash->setWindowIcon(QIcon(":/library_128x128.png"));
 #endif
-    QSettings settings;
-    if(!settings.contains("ApplicationMode"))
+    if(!settings->contains("ApplicationMode"))
     {
         ResetToDefaultSettings();
     }
 
-    if(!settings.value("no_splash",false).toBool())
+    if(!settings->value("no_splash",false).toBool())
         splash->show();
     a.processEvents();
     setProxy();
@@ -535,7 +536,7 @@ int main(int argc, char *argv[])
 
     if(!w.error_quit)
     {
-        if(!CMDparser.isSet("tray") && settings.value("tray_icon",0).toInt()!=2)
+        if(!CMDparser.isSet("tray") && settings->value("tray_icon",0).toInt()!=2)
             w.show();
     }
     else{

@@ -45,11 +45,11 @@ private:
     DropForm *pDropForm;
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
-    QString sAlphbetName_;
     QMenu TagMenu;
     QObject* current_list_for_tag;
     void SaveLibPosition();
     QList<Stag> tags_pic;
+
     QPixmap GetTag(int id);
     void update_list_pix(qlonglong id,int list,int tag_id);
     void uncheck_books(QList<qlonglong> list);

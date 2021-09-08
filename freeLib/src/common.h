@@ -56,7 +56,7 @@ struct tag
 extern QList<tag> tag_list;
 
 QPixmap GetTag(QColor color,int size);
-void SetLocale();
+void SetLocale(QString sLocale);
 void DoDonate();
 QString Transliteration(QString str);
 QString BuildFileName(QString filename);
@@ -69,5 +69,14 @@ QString RelativeToAbsolutePath(QString path);
 QString sizeToString(uint size);
 
 extern int idCurrentLib;
+
+struct Options
+{
+    QString sAlphabetName;
+    QString sUiLanguageName;
+    bool bShowDeleted;
+};
+
+extern Options options;
 
 #endif // COMMON_H

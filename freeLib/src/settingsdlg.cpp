@@ -2,7 +2,6 @@
 #include <QToolButton>
 #include "settingsdlg.h"
 #include "ui_settingsdlg.h"
-#include "common.h"
 #include "fontframe.h"
 #include "exportframe.h"
 #include "./quazip/quazip/quazip.h"
@@ -14,6 +13,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui(new Ui::SettingsDlg)
 {
     ui->setupUi(this);
+    options_ = options;
     ui->tabWidget->setCurrentIndex(0);
 
     QPalette palette = QApplication::style()->standardPalette();
@@ -23,6 +23,43 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->DelExport->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"),QIcon(sIconsPath + QStringLiteral("minus.svg"))));
     ui->btnOpenExport->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
     ui->btnSaveExport->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
+
+    ui->ApplicationList->setColumnWidth(0,100);
+    ui->ApplicationList->setColumnWidth(1,400);
+    ui->ExportList->setColumnWidth(0,100);
+    ui->ExportList->setColumnWidth(1,250);
+    ui->ExportList->setColumnWidth(2,150);
+
+    QStringList dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    ui->Language->clear();
+    ui->Language->addItem(QStringLiteral("english"),"en");
+    ui->Language->setCurrentIndex(0);
+    foreach(QString str,dirContent)
+    {
+        QString lang=str.right(str.length()-9);
+        lang=lang.left(lang.length()-3);
+        QLocale loc(lang);
+        ui->Language->addItem(loc.nativeLanguageName(),loc.name());
+        if(loc.name() == options_.sUiLanguageName)
+        {
+            ui->Language->setCurrentIndex(ui->Language->count()-1);
+        }
+    }
+    dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("abc_*.txt"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    ui->ABC->clear();
+    ui->ABC->addItem(QStringLiteral("english"));
+    ui->ABC->setCurrentIndex(0);
+    foreach(QString str,dirContent)
+    {
+        QString lang=str.right(str.length()-4);
+        lang=lang.left(lang.length()-4);
+        QLocale loc(lang);
+        ui->ABC->addItem(loc.nativeLanguageName(),lang);
+        if(lang == options_.sAlphabetName)
+        {
+            ui->ABC->setCurrentIndex(ui->ABC->count()-1);
+        }
+    }
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDlg::btnOK);
     connect(ui->DelExp, &QAbstractButton::clicked, this, &SettingsDlg::DelExt);
@@ -44,6 +81,8 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->HTTP_need_pasword, &QCheckBox::clicked, this, &SettingsDlg::onHTTPneedPaswordClicked);
     connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
     connect(ui->btnOpenExport, &QToolButton::clicked, this, &SettingsDlg::onBtnOpenExportClicked);
+    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
+    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
 
     QToolButton* btnDBPath=new QToolButton(this);
     btnDBPath->setFocusPolicy(Qt::NoFocus);
@@ -84,11 +123,6 @@ void SettingsDlg::LoadSettings()
     ui->settings_to_file->setChecked(QFileInfo::exists(app->applicationDirPath()+"/freeLib.cfg"));
 #endif
 
-    ui->ApplicationList->setColumnWidth(0,100);
-    ui->ApplicationList->setColumnWidth(1,400);
-    ui->ExportList->setColumnWidth(0,100);
-    ui->ExportList->setColumnWidth(1,250);
-    ui->ExportList->setColumnWidth(2,150);
 
     if(settings.contains("SettingsWnd/geometry"))
         restoreGeometry(settings.value("SettingsWnd/geometry").toByteArray());
@@ -184,40 +218,6 @@ void SettingsDlg::LoadSettings()
     }
     ui->DelExport->setEnabled(ui->ExportName->count()>1);
 
-    disconnect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::ChangeLanguage);
-    disconnect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged),this, &SettingsDlg::onChangeAlphabetCombobox/*ChangeLanguage*/);
-    QStringList dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-    QString locale=settings.value("localeUI",QLocale::system().name()).toString();
-    ui->Language->clear();
-    ui->Language->addItem("english");
-    ui->Language->setCurrentIndex(0);
-    foreach(QString str,dirContent)
-    {
-        QString lang=str.right(str.length()-9);
-        lang=lang.left(lang.length()-3);
-        QLocale loc(lang);
-        ui->Language->addItem(loc.nativeLanguageName(),loc.name());
-        if(loc.name()==locale)
-        {
-            ui->Language->setCurrentIndex(ui->Language->count()-1);
-        }
-    }
-    dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("abc_*.txt"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
-    sAlphabetName_ = settings.value(QStringLiteral("localeABC"),QLocale::system().name().left(2)).toString();
-    ui->ABC->clear();
-    ui->ABC->addItem(QStringLiteral("english"));
-    ui->ABC->setCurrentIndex(0);
-    foreach(QString str,dirContent)
-    {
-        QString lang=str.right(str.length()-4);
-        lang=lang.left(lang.length()-4);
-        QLocale loc(lang);
-        ui->ABC->addItem(loc.nativeLanguageName(),lang);
-        if(lang==sAlphabetName_)
-        {
-            ui->ABC->setCurrentIndex(ui->ABC->count()-1);
-        }
-    }
     QString sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).first();
     ui->database_path->setText(settings.value("database_path",sAppDir+"/freeLib.sqlite").toString());
 
@@ -229,8 +229,6 @@ void SettingsDlg::LoadSettings()
         }
     }
 
-    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
-    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox/*ChangeLanguage*/);
     connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
     UpdateWebExportList();
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
@@ -305,11 +303,9 @@ void SettingsDlg::ChangePort(int i)
 }
 void SettingsDlg::ChangeLanguage()
 {
-    settings.setValue("localeUI",ui->Language->currentData().toString());
-    settings.sync();
-    SetLocale();
+    options_.sUiLanguageName = ui->Language->currentData().toString();
+    SetLocale(options_.sUiLanguageName);
     ui->retranslateUi(this);
-    LoadSettings();
     emit ChangingLanguage();
 }
 
@@ -343,13 +339,19 @@ void SettingsDlg::btnOK()
 #endif
     }
 
+    options_.sAlphabetName = options_.sAlphabetName;
+    options_.sUiLanguageName = options_.sUiLanguageName;
+    options_.bShowDeleted = ui->ShowDeleted->checkState()==Qt::Checked;
+    settings.setValue(QStringLiteral("localeABC"),options_.sAlphabetName);
+    settings.setValue(QStringLiteral("localeUI"),options_.sUiLanguageName);
+    settings.setValue(QStringLiteral("ShowDeleted"),options_.bShowDeleted);
+
     settings.setValue("SettingsWnd/geometry",saveGeometry());
     settings.setValue("SettingsWndExportList/geometry",ui->ExportList->saveGeometry());
     settings.setValue("SettingsWndExportList_headers/geometry",ui->ExportList->horizontalHeader()->saveState());
     settings.setValue("SettingsWndApplicationList/geometry",ui->ApplicationList->saveGeometry());
     settings.setValue("SettingsWndApplicationList_headers/geometry",ui->ApplicationList->horizontalHeader()->saveState());
     settings.setValue("CloseExpDlg",ui->CloseExpDlg->checkState()==Qt::Checked);
-    settings.setValue("ShowDeleted",ui->ShowDeleted->checkState()==Qt::Checked);
     settings.setValue("use_tag",ui->use_tag->checkState()==Qt::Checked);
     settings.setValue("uncheck_export",ui->uncheck_export->checkState()==Qt::Checked);
     settings.setValue("store_position",ui->store_pos->isChecked());
@@ -692,6 +694,6 @@ void SettingsDlg::onBtnOpenExportClicked()
 
 void SettingsDlg::onChangeAlphabetCombobox(int /*index*/)
 {
-    sAlphabetName_ = ui->ABC->currentData().toString();
-    emit ChangeAlphabet(sAlphabetName_);
+    options_.sAlphabetName = ui->ABC->currentData().toString();
+    emit ChangeAlphabet(options_.sAlphabetName);
 }

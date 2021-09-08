@@ -12,6 +12,8 @@
 #include <QFileDialog>
 #include <QSettings>
 #include "fontframe.h"
+#include "common.h"
+
 
 class FileItemDelegate : public QItemDelegate
 {
@@ -90,11 +92,10 @@ class SettingsDlg : public QDialog
     Q_OBJECT
     
 public:
-    explicit SettingsDlg(QWidget *parent = nullptr);
+    explicit SettingsDlg(QWidget *parent);
     ~SettingsDlg();
 
-    QString sAlphabetName_;
-    
+    Options options_;
 private:
     Ui::SettingsDlg *ui;
     QSettings settings;
