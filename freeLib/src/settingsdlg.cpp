@@ -339,9 +339,9 @@ void SettingsDlg::btnOK()
 #endif
     }
 
-    options_.sAlphabetName = options_.sAlphabetName;
-    options_.sUiLanguageName = options_.sUiLanguageName;
-    options_.bShowDeleted = ui->ShowDeleted->checkState()==Qt::Checked;
+    options.sAlphabetName = options_.sAlphabetName;
+    options.sUiLanguageName = options_.sUiLanguageName;
+    options.bShowDeleted = ui->ShowDeleted->checkState()==Qt::Checked;
     settings.setValue(QStringLiteral("localeABC"),options_.sAlphabetName);
     settings.setValue(QStringLiteral("localeUI"),options_.sUiLanguageName);
     settings.setValue(QStringLiteral("ShowDeleted"),options_.bShowDeleted);
