@@ -414,6 +414,7 @@ void MainWindow::update_list_pix(qlonglong id, int list,int tag_id)
 void MainWindow::ChangingLanguage()
 {
     ui->retranslateUi(this);
+    FillListBooks();
 }
 
 void MainWindow::FillAlphabet(const QString &sAlphabetName)
