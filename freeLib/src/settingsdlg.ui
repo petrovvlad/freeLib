@@ -47,7 +47,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_common">
       <attribute name="title">
@@ -318,7 +318,8 @@
              <string>Open</string>
             </property>
             <property name="icon">
-             <iconset theme="document-open"/>
+             <iconset theme="document-open">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -337,7 +338,8 @@
              <string>Save</string>
             </property>
             <property name="icon">
-             <iconset theme="document-save"/>
+             <iconset theme="document-save">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -423,7 +425,7 @@
              <number>1</number>
             </property>
             <property name="maximum">
-             <number>99999</number>
+             <number>65535</number>
             </property>
             <property name="value">
              <number>3000</number>
@@ -554,7 +556,11 @@
            </widget>
           </item>
           <item row="11" column="1">
-           <widget class="QSpinBox" name="books_per_page"/>
+           <widget class="QSpinBox" name="books_per_page">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
