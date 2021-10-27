@@ -947,7 +947,7 @@ void fb2mobi::generate_ncx()
                 levelsList<<maxKey;
             }
         }
-        qSort(levelsList.begin(),levelsList.end());
+        std::sort(levelsList.begin(),levelsList.end());
         for(int i=levelsList.count()-1;i>=0;i--)
         {
             for(int j=0;j<tmp_toc.count();j++)
