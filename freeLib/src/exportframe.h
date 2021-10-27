@@ -3,7 +3,9 @@
 
 #include <QFrame>
 #include <QSettings>
+
 #include "fontframe.h"
+#include "options.h"
 
 namespace Ui {
 class ExportFrame;
@@ -16,13 +18,13 @@ class ExportFrame : public QFrame
 public:
     explicit ExportFrame(QWidget *parent = 0);
     ~ExportFrame();
-    QStringList Save(QSettings *settings,bool save_passwords=true);
-    void Load(QSettings *settings);
+    QStringList Save(ExportOptions *pExportOptions);
+    void Load(const ExportOptions *pExportOptions);
 signals:
     void ChangeTabIndex(int tab_id,int page_id);
 public slots:
     void SetTabIndex(int tab_id,int page_id);
-    void UpdateToolComboBox(QSettings *settings=0);
+    void UpdateToolComboBox(const QString &sCurrentTool="");
 private slots:
     void onRadioDeviceToggled(bool checked);
     void onRadioEmailToggled(bool checked);
@@ -45,7 +47,6 @@ private slots:
 
 private:
     Ui::ExportFrame *ui;
-    void LoadDefault();
     void set_userCSS_clicked();
 };
 

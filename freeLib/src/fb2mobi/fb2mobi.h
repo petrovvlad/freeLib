@@ -8,6 +8,7 @@
 #include "../common.h"
 #include "../library.h"
 #include "hyphenations.h"
+#include "options.h"
 
 struct STOC
 {
@@ -44,9 +45,9 @@ class fb2mobi:public QObject
 {
     Q_OBJECT
 public:
-    fb2mobi();
+    fb2mobi(const ExportOptions *pExportOptions);
     //QString convert(QString files, bool remove, QString format, QString language);
-    QString convert(QStringList files, bool remove,QString format,SBook& book);
+    QString convert(QStringList files, SBook& book);
     QString convert(qlonglong id);
     void generate_html(QFile *file);
     //QWebView *pdf;
@@ -106,11 +107,9 @@ private:
     bool header;
     bool inline_image_mode;
     bool subheader;
-    bool dropcaps;
     QString nodropcaps;
     int current_header_level;
     int current_section_level;
-    bool cut_html;
     QString body_name;
     SBook *pBook;
     QString book_cover;
@@ -131,7 +130,6 @@ private:
     QString toctitle;
     int toc_max_level;
     bool dodropcaps;
-    int notes_mode;
     bool parsing_note;
     QStringList notes_bodies;
     QList<QStringList> current_notes;
@@ -150,9 +148,6 @@ private:
     QString tmp_dir;
 
     hyphenations hyphenator;
-    int hyphenate;
-    int vignette;
-    bool break_after_cupture;
 
     bool join_seria;
     int current_book;
@@ -160,6 +155,7 @@ private:
 
     void InsertSeriaNumberToCover(QString number, CreateCover create_cover);
     bool need_end_chapter_vignette;
+    const ExportOptions *pExportOptions_;
     //bool page_load;
 //private slots:
 //    void OnLoad(bool ok);

@@ -6,8 +6,8 @@
 #include <QDomDocument>
 #include <QDateTime>
 
-#include "common.h"
 #include "library.h"
+#include "options.h"
 
 class opds_server : public QObject
 {
@@ -42,6 +42,7 @@ private:
     QDomElement doc_header(QString session, bool html=false, QString lib_name=QString(), QString lib_url=QString());
     void convert(SLib &lib,uint idBook, QString format, QString file_name, bool opds, QTextStream &ts);
     QMap<QString,QDateTime> sessions;
+    ExportOptions *pExportOptions_;
 };
 
 #endif // OPDS_SERVER_H

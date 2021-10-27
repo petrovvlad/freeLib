@@ -11,8 +11,10 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QSettings>
+
 #include "fontframe.h"
 #include "common.h"
+#include "options.h"
 
 
 class FileItemDelegate : public QItemDelegate
@@ -96,9 +98,10 @@ public:
     ~SettingsDlg();
 
     Options options_;
+
 private:
     Ui::SettingsDlg *ui;
-    QSettings settings;
+
     void LoadSettings();
 private slots:
     void btnOK();
@@ -107,7 +110,7 @@ private slots:
     void DelExt();
     void AddApp();
     void DelApp();
-    void ChangePort(int i=-1);
+    void ChangePort(int i);
     void ChangeLanguage();
     void ExportNameChanged();
     void onAddExportClicked();
@@ -125,9 +128,11 @@ private slots:
     void onBtnSaveExportClicked();
     void onBtnOpenExportClicked();
     void onChangeAlphabetCombobox(int index);
+    void onOpdsEnable(int state);
     void btnDBPath();
     void btnDirPath();
     void UpdateWebExportList();
+    virtual void reject();
 
 signals:
     void ChangingPort(int i);

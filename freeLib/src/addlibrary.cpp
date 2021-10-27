@@ -200,9 +200,10 @@ void AddLibrary::SelectLibrary(int idLib)
                 ui->inpx->setText(mLibs[idCurrentLib_].sInpx);
                 ui->firstAuthorOnly->setChecked(mLibs[idCurrentLib_].bFirstAuthor);
                 ui->checkwoDeleted->setChecked(mLibs[idCurrentLib_].bWoDeleted);
-                QSettings* settings=GetSettings();
-                ui->OPDS->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
-                ui->HTTP->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
+                ui->OPDS->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>")
+                                                  .arg(idCurrentLib_).arg(options.nOpdsPort));
+                ui->HTTP->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>")
+                                                  .arg(idCurrentLib_).arg(options.nOpdsPort));
                 break;
             }
         }
@@ -240,8 +241,8 @@ void AddLibrary::SelectLibrary()
     ui->BookDir->setDisabled(idCurrentLib_<0);
     ui->btnUpdate->setDisabled(idCurrentLib_<0);
     QSettings* settings=GetSettings();
-    ui->OPDS->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
-    ui->HTTP->setText(idCurrentLib_<0?"":QString("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(settings->value("OPDS_port",default_OPDS_port).toString()));
+    ui->OPDS->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+    ui->HTTP->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
 
     settings->setValue("LibID",idCurrentLib_);
     //idCurrentLib = idCurrentLib_;

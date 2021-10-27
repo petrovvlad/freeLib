@@ -48,36 +48,33 @@ QString RelativeToAbsolutePath(QString path)
     return path;
 }
 
-QSettings* GetSettings(bool need_copy,bool reopen)
+QSettings* GetSettings(bool reopen)
 {
     if(reopen && global_settings)
     {
         global_settings->sync();
         delete global_settings;
-        global_settings=nullptr;
+        global_settings = nullptr;
     }
-    if(global_settings && !need_copy)
-    {
-        global_settings->sync();
-        return global_settings;
+    if(global_settings==nullptr){
+        QString sFile = app->applicationDirPath() + QStringLiteral("/freeLib.cfg");
+        if(QFile::exists(sFile))
+            global_settings = new QSettings(sFile, QSettings::IniFormat);
+        else
+            global_settings = new QSettings();
+        global_settings->setIniCodec("UTF-8");
     }
-    QSettings* current_settings;
-            current_settings=new QSettings();
-    if(need_copy)
-        return current_settings;
-    global_settings=current_settings;
     return global_settings;
 }
 
 QNetworkProxy proxy;
 void setProxy()
 {
-    QSettings* settings=GetSettings();
-    proxy.setPort(static_cast<ushort>(settings->value("proxy_port",default_proxy_port).toInt()));
-    proxy.setHostName(settings->value("proxy_host").toString());
-    proxy.setPassword(settings->value("proxy_password").toString());
-    proxy.setUser(settings->value("proxy_user").toString());
-    switch(settings->value("proxy_type",0).toInt())
+    proxy.setPort(options.nProxyPort);
+    proxy.setHostName(options.sProxyHost);
+    proxy.setPassword(options.sProxyPassword);
+    proxy.setUser(options.sProxyUser);
+    switch(options.nProxyType)
     {
     case 0:
         proxy.setType(QNetworkProxy::NoProxy);
@@ -90,73 +87,6 @@ void setProxy()
         break;
     }
     QNetworkProxy::setApplicationProxy(proxy);
-}
-
-void ResetToDefaultSettings()
-{
-    int size=100;
-    int id_tag=0;
-
-    foreach(tag i,tag_list)
-    {
-        if(i.font_name=="dropcaps_font")
-        {
-            size=i.font_size;
-            break;
-        }
-        id_tag++;
-    }
-
-    QSettings* settings=GetSettings();
-    settings->clear();
-    settings->sync();
-    settings->beginWriteArray("export");
-
-    settings->setArrayIndex(0);
-    settings->setValue("ExportName",QApplication::tr("Save as")+" ...");
-    settings->setValue("OutputFormat","-");
-    settings->beginWriteArray("fonts");
-    settings->setArrayIndex(0);
-    settings->setValue("use",true);
-    settings->setValue("tag",id_tag);
-    settings->setValue("font",default_dropcaps_font);
-    settings->setValue("fontSize",size);
-    settings->endArray();
-
-    settings->setArrayIndex(1);
-    settings->setValue("ExportName",QApplication::tr("Save as")+" MOBI");
-    settings->setValue("OutputFormat","MOBI");
-    settings->beginWriteArray("fonts");
-    settings->setArrayIndex(0);
-    settings->setValue("use",true);
-    settings->setValue("tag",id_tag);
-    settings->setValue("font",default_dropcaps_font);
-    settings->setValue("fontSize",size);
-    settings->endArray();
-
-    settings->setArrayIndex(2);
-    settings->setValue("ExportName",QApplication::tr("Save as")+" EPUB");
-    settings->setValue("OutputFormat","EPUB");
-    settings->beginWriteArray("fonts");
-    settings->setArrayIndex(0);
-    settings->setValue("use",true);
-    settings->setValue("tag",id_tag);
-    settings->setValue("font",default_dropcaps_font);
-    settings->setValue("fontSize",size);
-    settings->endArray();
-
-    settings->setArrayIndex(3);
-    settings->setValue("ExportName",QApplication::tr("Save as")+" AZW3");
-    settings->setValue("OutputFormat","AZW3");
-    settings->beginWriteArray("fonts");
-    settings->setArrayIndex(0);
-    settings->setValue("use",true);
-    settings->setValue("tag",id_tag);
-    settings->setValue("font",default_dropcaps_font);
-    settings->setValue("fontSize",size);
-    settings->endArray();
-
-    settings->endArray();
 }
 
 QString fillParams(QString str, SBook& book)
@@ -224,35 +154,6 @@ QString fillParams(QString str, SBook& book, QFileInfo book_file)
             replace("%d",book_file.absoluteDir().path());
     result = fillParams(result,book);
     return result;
-}
-
-SendType SetCurrentExportSettings(int index)
-{
-    QSettings *settings=GetSettings(true);
-    int count=settings->beginReadArray("export");
-    QMap<QString,QVariant> map;
-    QStringList keys;
-    if(index>=0 && index<count)
-    {
-        settings->setArrayIndex(index);
-        keys=settings->allKeys();
-        foreach (QString key, keys)
-        {
-            map.insert(key,settings->value(key));
-        }
-    }
-    settings->endArray();
-    foreach (QString key, keys)
-    {
-        settings->setValue(key,map.value(key,settings->value(key)));
-    }
-    settings->sync();
-    delete settings;
-    if(map.contains("sendTo"))
-    {
-        return (map.value("sendTo").toString()=="device"?ST_Device:ST_Mail);
-    }
-    return ST_Device;
 }
 
 void SetLocale(QString sLocale)
@@ -339,10 +240,9 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
 bool openDB(bool create, bool replace)
 {
     QString sAppDir,db_file;
-    //QSettings *settings=GetSettings();
     QSettings settings;
 
-    QFileInfo fi(RelativeToAbsolutePath(settings.value("database_path").toString()));
+    QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
     if(fi.exists() && fi.isFile())
     {
         db_file=fi.canonicalFilePath();
@@ -351,7 +251,8 @@ bool openDB(bool create, bool replace)
     {
         sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
         db_file=sAppDir+"/freeLib.sqlite";
-        settings.setValue("database_path",db_file);
+        options.sDatabasePath = db_file;
+        settings.setValue(QStringLiteral("database_path"),db_file);
     }
     QFile file(db_file);
     if(!file.exists() || replace)
@@ -454,6 +355,17 @@ int main(int argc, char *argv[])
     CMDparser.addOption(trayOption);
     CMDparser.process(a);
 
+    QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
+    pixmap.setDevicePixelRatio(app->devicePixelRatio());
+    QPainter painter(&pixmap);
+    painter.setFont(QFont(painter.font().family(),VERSION_FONT,QFont::Bold));
+    painter.setPen(Qt::white);
+    painter.drawText(QRect(30,140,360,111),Qt::AlignLeft|Qt::AlignVCenter,PROG_VERSION);
+
+    QString HomeDir="";
+    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
+        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+
     QPalette darkPalette;
     darkPalette.setColor(QPalette::Window, QColor("#E0E0E0")); //основной цвет интер
     darkPalette.setColor(QPalette::WindowText, Qt::black);
@@ -487,44 +399,24 @@ int main(int argc, char *argv[])
     QSqlDatabase::addDatabase("QSQLITE","libdb");
 
     QSettings* settings=GetSettings();
-    options.bShowDeleted =settings->value(QStringLiteral("ShowDeleted")).toBool();
-    options.sAlphabetName = settings->value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
-    options.sUiLanguageName = settings->value(QStringLiteral("localeUI"),QLocale::system().name()).toString();
+    options.Load(settings);
 
     SetLocale(options.sUiLanguageName);
 
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QDir::setCurrent(HomeDir);
     QString sDirTmp = QString("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
     QDir dirTmp(sDirTmp);
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
 
-
-    QPixmap pixmap(QString(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
-    pixmap.setDevicePixelRatio(app->devicePixelRatio());
-    QPainter painter(&pixmap);
-    painter.setFont(QFont(painter.font().family(),VERSION_FONT,QFont::Bold));
-    painter.setPen(Qt::white);
-    painter.drawText(QRect(30,140,360,111),Qt::AlignLeft|Qt::AlignVCenter,PROG_VERSION);
-    splash=new QSplashScreen(pixmap);
-    splash->resize(640,400);
-//    QRect screenRect=QDesktopWidget().screenGeometry();
-//    splash->move(
-//                (screenRect.width()-splash->width())/2,
-//                (screenRect.height()-splash->height())/2);
+    if(options.bShowSplash){
+        splash=new QSplashScreen(pixmap);
+        splash->resize(640,400);
 #ifdef Q_OS_LINUX
-    splash->setWindowIcon(QIcon(":/library_128x128.png"));
+        splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
 #endif
-    if(!settings->contains("ApplicationMode"))
-    {
-        ResetToDefaultSettings();
-    }
-
-    if(!settings->value("no_splash",false).toBool())
         splash->show();
+    }
     a.processEvents();
     setProxy();
     //idCurrentLib=settings->value("LibID",-1).toInt();
@@ -536,13 +428,14 @@ int main(int argc, char *argv[])
 
     if(!w.error_quit)
     {
-        if(!CMDparser.isSet("tray") && settings->value("tray_icon",0).toInt()!=2)
+        if(!CMDparser.isSet("tray") && options.nIconTray != 2)
             w.show();
     }
     else{
         return 1;
     }
-    splash->finish(&w);
+    if(options.bShowSplash)
+        splash->finish(&w);
     //current_lib.UpdateLib();
     int result=a.exec();
     if(global_settings)

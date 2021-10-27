@@ -697,12 +697,9 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
 
 QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, QString lib_url, QString current_url, QTextStream &ts, bool opds, uint nPage, QString session, bool bShowAuthor)
 {
-    QSettings *settings=GetSettings();
-    long MAX_BOOKS_PER_PAGE=settings->value("books_per_page",15).toInt();
+    long MAX_BOOKS_PER_PAGE=options.nOpdsBooksPerPage;
     if(MAX_BOOKS_PER_PAGE==0)
         MAX_BOOKS_PER_PAGE=1000000;
-    bool show_covers=settings->value("srv_covers",true).toBool();
-    bool show_annotation=settings->value("srv_annotation",true).toBool();
     QDomElement feed;
     if(opds)
     {
@@ -775,7 +772,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                 el.setAttribute("type","application/"+book.sFormat);
                 el.setAttribute("title",tr("Download"));
 
-                if(show_covers)
+                if(options.bOpdsShowCover)
                 {
                     el=AddTextNode("link","",entry);
                     el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
@@ -797,7 +794,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                 AddTextNode("dc:language",lib.vLaguages[book.idLanguage],entry);
                 AddTextNode("dc:format",book.sFormat,entry);
 
-                if(show_annotation)
+                if(options.bOpdsShowAnotation)
                 {
                     QBuffer outbuff;
                     QBuffer infobuff;
@@ -867,7 +864,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                 entry=doc.createElement("td");
                 tr.appendChild(entry);
 
-                if(show_covers)
+                if(options.bOpdsShowCover)
                 {
                     QDomElement el=doc.createElement("img");
                     entry.appendChild(el);
@@ -922,7 +919,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     el.setAttribute("class","author");
                 }
 
-                if(show_annotation)
+                if(options.bOpdsShowAnotation)
                 {
                     QBuffer outbuff;
                     QBuffer infobuff;
@@ -963,14 +960,24 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
         doc.namedItem("HTML").save(t,SAVE_INDEX);
         return str;
     }
-    //return "";
 }
 
 void opds_server::process(QString url, QTextStream &ts, QString session)
 {
-    QSettings *settings=GetSettings();
-    bool browseDir=settings->value("browseDir",false).toBool();
-    //QString result;
+    int http_settings = options.nHttpExport - 1;
+    if(http_settings==-1)
+    {
+        int count = options.vExportOptions.count();
+        for(int i=0;i<count;i++)
+        {
+            if(options.vExportOptions[i].bDefault)
+            {
+                http_settings=i;
+                break;
+            }
+        }
+    }
+    pExportOptions_ = &options.vExportOptions[http_settings];
     url=QUrl::fromPercentEncoding(url.toLatin1());
     int posQuestion=url.indexOf("?");
     QStringList strings;
@@ -1080,16 +1087,14 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         ts.flush();
     }
     //qDebug()<<fi.fileName();
-    if(url.startsWith("/download/",Qt::CaseInsensitive) && browseDir)
+    if(url.startsWith(QStringLiteral("/download/"), Qt::CaseInsensitive) && options.bBrowseDir)
     {
-        QSettings *settings=GetSettings();
-        QString Path=settings->value("dirForBrowsing").toString();
-        QString additionalPath=url.mid(QString("/download").length());
-        QDir dir(Path+additionalPath);
+        QString additionalPath=url.mid(QStringLiteral("/download").length());
+        QDir dir(options.sDirForBrowsing + additionalPath);
         QString canonical_path=dir.canonicalPath().toLower();
-        if(canonical_path.left(Path.length())==Path.toLower())
+        if(canonical_path.left(options.sDirForBrowsing.length()) == options.sDirForBrowsing.toLower())
         {
-            QFile file(Path+additionalPath);
+            QFile file(options.sDirForBrowsing + additionalPath);
             file.open(QFile::ReadOnly);
             ts<<WriteSuccess(OPDS_MIME_TYPE(QFileInfo(file).suffix()));
             ts.flush();
@@ -1099,7 +1104,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     else if((url.endsWith("cover.jpg/",Qt::CaseInsensitive) || url.endsWith("cover.jpg",Qt::CaseInsensitive)) && !QFileInfo::exists(url))
     {
         QString id=strings[2];
-        fb2mobi fb;
+        fb2mobi fb(pExportOptions_);
         QString file=fb.convert(id.toLongLong());
         process(file,ts,session);
     }
@@ -1192,7 +1197,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 el.setAttribute("href",lib_url+"/genres"+(session.isEmpty()?"":"?session="+session));
                 el.setAttribute("type","application/atom+xml;profile=opds-catalog");
             }
-            if(browseDir)
+            if(options.bBrowseDir)
             {
                 entry=doc.createElement("entry");
                 feed.appendChild(entry);
@@ -1229,7 +1234,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 el=AddTextNode("A",tr("Finding books by genre"),div);
                 el.setAttribute("href",lib_url+"/genres"+(session.isEmpty()?"":"?session="+session));
             }
-            if(browseDir)
+            if(options.bBrowseDir)
             {
                 div=doc.createElement("DIV");
                 feed.appendChild(div);
@@ -2009,7 +2014,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         QString format=strings[3];
         convert(lib,idBook,format,"",opds,ts);
     }
-    else if(url.startsWith("/directory",Qt::CaseInsensitive) && browseDir)
+    else if(url.startsWith("/directory",Qt::CaseInsensitive) && options.bBrowseDir)
     {
         QSettings *settings=GetSettings();
         QString Path=settings->value("dirForBrowsing").toString();
@@ -2157,7 +2162,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             doc.namedItem("HTML").save(ts,SAVE_INDEX);
         }
     }
-    else if(url.startsWith("/convert/",Qt::CaseInsensitive) && browseDir)
+    else if(url.startsWith("/convert/",Qt::CaseInsensitive) && options.bBrowseDir)
     {
         QSettings *settings=GetSettings();
         QString Path=settings->value("dirForBrowsing").toString();
@@ -2207,19 +2212,15 @@ void opds_server::stop_server()
 
 void opds_server::server_run(int _port)
 {
-    QSettings *settings=GetSettings();
-    int new_port=settings->value("OPDS_port",default_OPDS_port).toInt();
-    if(_port!=-1)
-        new_port=_port;
-    if(new_port!=port && OPDS_server_status==1)
+    if(options.nOpdsPort != port && OPDS_server_status==1)
     {
         stop_server();
     }
     QNetworkProxy OPDSproxy;
     OPDSproxy.setType(QNetworkProxy::NoProxy);
     OPDS_server.setProxy(OPDSproxy);
-    port=new_port;
-    if(settings->value("OPDS_enable",false).toBool())
+    port = options.nOpdsPort;
+    if(options.bOpdsEnable)
     {
         if(OPDS_server_status==0)
         {
@@ -2233,7 +2234,6 @@ void opds_server::server_run(int _port)
     {
         stop_server();
     }
-    //delete settings;
 }
 #define session_number_len  16
 
@@ -2266,12 +2266,11 @@ void opds_server::slotRead()
     }
     if (TCPtokens.count()>0)
     {
-        QSettings *settings=GetSettings();
         QTextStream os(clientSocket);
         os.setAutoDetectUnicode(true);
         bool auth=true;
         QString session;
-        if(settings->value("HTTP_need_pasword",false).toBool())
+        if(options.bOpdsNeedPassword)
         {
             auth=false;
             if(AUTHtokens.count()>2)
@@ -2281,7 +2280,7 @@ void opds_server::slotRead()
                 QStringList auth_str=QString(QByteArray::fromBase64(ba)).split(":");
                 if(auth_str.count()==2)
                 {
-                    auth=(settings->value("HTTP_user").toString()==auth_str[0] && settings->value("HTTP_password").toString()==auth_str[1]);
+                    auth=(options.sOpdsUser==auth_str[0] && options.sOpdsPassword==auth_str[1]);
                 }
             }
             if(TCPtokens[1].contains("session=") && !auth)
@@ -2362,13 +2361,12 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
 
     if(outbuff.size()!=0)
     {
-        QSettings *settings=GetSettings();
-        QString book_file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
+        QString book_file_name = pExportOptions_->sExportFileName;
         if(book_file_name.isEmpty())
-            book_file_name=default_exp_file_name;
+            book_file_name = default_exp_file_name;
         SBook& book = lib.mBooks[idBook];
-        book_file_name=fillParams(book_file_name,book)+"."+(format=="download"?fi_book.suffix().toLower():format);
-        if(settings->value("transliteration",false).toBool())
+        book_file_name = fillParams(book_file_name,book) + QStringLiteral(".") + (format==QStringLiteral("download") ? fi_book.suffix().toLower() :format);
+        if(pExportOptions_->bTransliteration)
             book_file_name=Transliteration(book_file_name);
         book_file_name.replace(" ","_");
         book_file_name.replace("\"","_");
@@ -2379,9 +2377,9 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
         //book_file_name.replace("/","_");
         QFileInfo book_file(book_file_name);
         book_file_name=book_file.fileName();
-        if(settings->value("originalFileName",false).toBool())
+        if(pExportOptions_->bOriginalFileName)
             book_file_name=fi_book.completeBaseName()+"."+format;;
-        if(format=="epub" || format=="mobi" || format=="azw3")
+        if(format==QStringLiteral("epub") || format==QStringLiteral("mobi") || format==QStringLiteral("azw3"))
         {
             QFile file;
             QString tmp_dir;
@@ -2392,29 +2390,13 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
             file.open(QFile::WriteOnly);
             file.write(outbuff.data());
             file.close();
-            fb2mobi conv;
-            QSettings* settings=GetSettings();
-            int http_settings=settings->value("httpExport",0).toInt()-1;
-            if(http_settings==-1)
-            {
-                int count=settings->beginReadArray("export");
-                for(int i=0;i<count;i++)
-                {
-                    settings->setArrayIndex(i);
-                    if(settings->value("Default").toBool())
-                    {
-                        http_settings=i;
-                        break;
-                    }
-                }
-                settings->endArray();
-            }
-            SetCurrentExportSettings(http_settings);
+            QFileInfo fi(file);
 
-            // Не удалять
-            //QString out_file=conv.convert(QStringList()<<fi.absoluteFilePath(),false,format.toUpper(),bi);
+
+            fb2mobi conv(pExportOptions_);
+            QString out_file=conv.convert(QStringList()<<fi.absoluteFilePath(),book);
             //qDebug()<<out_file;
-            //file.setFileName(out_file);
+            file.setFileName(out_file);
             file.open(QFile::ReadOnly);
             outbuff.close();
             outbuff.setData(file.readAll());

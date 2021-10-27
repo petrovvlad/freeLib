@@ -54,7 +54,7 @@ MainWindow::MainWindow(QWidget *parent) :
     trIcon=nullptr;
     pDropForm=nullptr;
     error_quit=false;
-    QSettings settings;
+    QSettings *settings = GetSettings();
 
     if(db_is_open)
     {
@@ -114,19 +114,18 @@ MainWindow::MainWindow(QWidget *parent) :
     setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?QLatin1String(""):QStringLiteral(" - ")+mLibs[idCurrentLib].name));
 
     idCurrentLanguage_ = -1;
-    bUseTag_=settings.value(QStringLiteral("use_tag"),true).toBool();
 
     int nCurrentTab;
 
     QString sFilter;
-    if(settings.value(QStringLiteral("store_position"),true).toBool())
+    if(options.bStorePosition)
     {
-        idCurrentAuthor_= settings.value(QStringLiteral("current_author_id"),0).toUInt();
-        idCurrentSerial_ = settings.value(QStringLiteral("current_serial_id"),0).toUInt();
-        idCurrentBook_ = settings.value(QStringLiteral("current_book_id"),0).toUInt();
-        idCurrentGenre_ = settings.value(QStringLiteral("current_genre_id"),0).toUInt();
-        nCurrentTab = settings.value(QStringLiteral("current_tab"),0).toInt();
-        sFilter = settings.value(QStringLiteral("filter_set")).toString();
+        idCurrentAuthor_= settings->value(QStringLiteral("current_author_id"),0).toUInt();
+        idCurrentSerial_ = settings->value(QStringLiteral("current_serial_id"),0).toUInt();
+        idCurrentBook_ = settings->value(QStringLiteral("current_book_id"),0).toUInt();
+        idCurrentGenre_ = settings->value(QStringLiteral("current_genre_id"),0).toUInt();
+        nCurrentTab = settings->value(QStringLiteral("current_tab"),0).toInt();
+        sFilter = settings->value(QStringLiteral("filter_set")).toString();
     }
     else
     {
@@ -187,7 +186,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FillAlphabet(options.sAlphabetName);
     ExportBookListBtn(false);
 
-    mode=static_cast<APP_MODE>(settings.value(QStringLiteral("ApplicationMode"),0).toInt());
+    mode=static_cast<APP_MODE>(settings->value(QStringLiteral("ApplicationMode"),0).toInt());
     switch(mode)
     {
     case MODE_LIBRARY:
@@ -236,27 +235,27 @@ MainWindow::MainWindow(QWidget *parent) :
     FillLibrariesMenu();
     UpdateExportMenu();
 
-    ChangingTrayIcon();
+    ChangingTrayIcon(options.nIconTray, options.nTrayColor);
 
 #ifdef Q_OS_OSX
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
     connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
 
-    settings.beginGroup(QStringLiteral("Columns"));
-    ui->Books->setColumnHidden(0,!settings.value(QStringLiteral("ShowName"),true).toBool());
-    ui->Books->setColumnHidden(1,!settings.value(QStringLiteral("ShowNumber"),true).toBool());
-    ui->Books->setColumnHidden(2,!settings.value(QStringLiteral("ShowSize"),true).toBool());
-    ui->Books->setColumnHidden(3,!settings.value(QStringLiteral("ShowMark"),true).toBool());
-    ui->Books->setColumnHidden(4,!settings.value(QStringLiteral("ShowImportDate"),true).toBool());
-    ui->Books->setColumnHidden(5,!settings.value(QStringLiteral("ShowGenre"),true).toBool());
-    ui->Books->setColumnHidden(6,!settings.value(QStringLiteral("ShowLanguage"),false).toBool());
-    QVariant varHeaders = settings.value(QStringLiteral("headers"));
+    settings->beginGroup(QStringLiteral("Columns"));
+    ui->Books->setColumnHidden(0,!settings->value(QStringLiteral("ShowName"),true).toBool());
+    ui->Books->setColumnHidden(1,!settings->value(QStringLiteral("ShowNumber"),true).toBool());
+    ui->Books->setColumnHidden(2,!settings->value(QStringLiteral("ShowSize"),true).toBool());
+    ui->Books->setColumnHidden(3,!settings->value(QStringLiteral("ShowMark"),true).toBool());
+    ui->Books->setColumnHidden(4,!settings->value(QStringLiteral("ShowImportDate"),true).toBool());
+    ui->Books->setColumnHidden(5,!settings->value(QStringLiteral("ShowGenre"),true).toBool());
+    ui->Books->setColumnHidden(6,!settings->value(QStringLiteral("ShowLanguage"),false).toBool());
+    QVariant varHeaders = settings->value(QStringLiteral("headers"));
     if(varHeaders.type() == QVariant::ByteArray){
         ui->Books->header()->restoreState(varHeaders.toByteArray());
     }
 
-    settings.endGroup();
+    settings->endGroup();
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
@@ -281,7 +280,7 @@ void MainWindow::UpdateTags()
     if(!db_is_open)
         return;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    QSettings settings;
+    QSettings *settings = GetSettings();
 
     QButtonGroup *group=new QButtonGroup(this);
     group->setExclusive(true);
@@ -303,13 +302,13 @@ void MainWindow::UpdateTags()
     pix.setDevicePixelRatio(app->devicePixelRatio());
     Stag new_tag={pix,0};
     tags_pic<<new_tag;
-    ui->TagFilter->setVisible(bUseTag_);
-    ui->tag_label->setVisible(bUseTag_);
+    ui->TagFilter->setVisible(options.bUseTag);
+    ui->tag_label->setVisible(options.bUseTag);
 
     while(query.next())
     {
         ui->TagFilter->addItem(query.value(1).toString().trimmed(),query.value(2).toInt());
-        if(settings.value(QStringLiteral("current_tag")).toInt()==ui->TagFilter->count()-1 && bUseTag_)
+        if(settings->value(QStringLiteral("current_tag")).toInt()==ui->TagFilter->count()-1 && options.bUseTag)
             ui->TagFilter->setCurrentIndex(ui->TagFilter->count()-1);
         pix=::GetTag(QColor(query.value(0).toString().trimmed()),size);
         Stag new_tag={pix,query.value(2).toInt()};
@@ -330,12 +329,6 @@ void MainWindow::UpdateTags()
 
 MainWindow::~MainWindow()
 {
-    QSettings settings;
-    if(settings.value(QStringLiteral("store_position"),true).toBool())
-        SaveLibPosition();
-    settings.beginGroup(QStringLiteral("Columns"));
-    QByteArray baHeaders = ui->Books->header()->saveState();
-    settings.setValue(QStringLiteral("headers"),baHeaders);
     delete ui->Review->page();
     delete ui;
 }
@@ -363,8 +356,8 @@ void MainWindow::ReviewLink(QUrl url)
     }
     else if(sPath.startsWith(QLatin1String("/show_fileinfo")))
     {
-        QSettings settings;
-        settings.setValue(QStringLiteral("show_fileinfo"),!settings.value(QStringLiteral("show_fileinfo"),false).toBool());
+        QSettings *settings = GetSettings();
+        settings->setValue(QStringLiteral("show_fileinfo"),!settings->value(QStringLiteral("show_fileinfo"),false).toBool());
         SelectBook();
     }
 }
@@ -554,11 +547,11 @@ void MainWindow::set_tag()
 
 void MainWindow::tag_select(int index)
 {
-    QSettings settings;
+    QSettings *settings = GetSettings();
     if(ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt()==-1)
     {
         const bool wasBlocked = ui->TagFilter->blockSignals(true);
-        ui->TagFilter->setCurrentIndex(settings.value(QStringLiteral("current_tag"),0).toInt());
+        ui->TagFilter->setCurrentIndex(settings->value(QStringLiteral("current_tag"),0).toInt());
         ui->TagFilter->blockSignals(wasBlocked);
         TagDialog td(this);
         if(td.exec())
@@ -566,7 +559,7 @@ void MainWindow::tag_select(int index)
     }
     else if(index>=0)
     {
-        settings.setValue(QStringLiteral("current_tag"),index);
+        settings->setValue(QStringLiteral("current_tag"),index);
         FillListBooks();
         FillAuthors();
         FillSerials();
@@ -576,17 +569,17 @@ void MainWindow::tag_select(int index)
 
 void MainWindow::SaveLibPosition()
 {
-    QSettings settings;
+    QSettings *settings = GetSettings();
     switch (ui->tabWidget->currentIndex()) {
     case TabAuthors:
-        settings.setValue(QStringLiteral("filter_set"),ui->searchAuthor->text());
+        settings->setValue(QStringLiteral("filter_set"),ui->searchAuthor->text());
         break;
     case TabSeries:
-        settings.setValue(QStringLiteral("filter_set"),ui->searchSeries->text());
+        settings->setValue(QStringLiteral("filter_set"),ui->searchSeries->text());
         break;
     }
-    settings.setValue(QStringLiteral("current_tab"),ui->tabWidget->currentIndex());
-    settings.setValue(QStringLiteral("current_book_id"),idCurrentBook_);
+    settings->setValue(QStringLiteral("current_tab"),ui->tabWidget->currentIndex());
+    settings->setValue(QStringLiteral("current_book_id"),idCurrentBook_);
 }
 
 void MainWindow::closeEvent(QCloseEvent *event)
@@ -594,23 +587,27 @@ void MainWindow::closeEvent(QCloseEvent *event)
     if(pHelpDlg!=nullptr)
         delete pHelpDlg;
     SaveLibPosition();
-    QSettings settings;
-    settings.setValue(QStringLiteral("ApplicationMode"), mode);
+    QSettings *settings = GetSettings();
+    settings->setValue(QStringLiteral("ApplicationMode"), mode);
     if(mode==MODE_LIBRARY)
     {
-        settings.setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
-        settings.setValue(QStringLiteral("MainWnd/windowState"), saveState());
-        settings.setValue(QStringLiteral("MainWnd/tab/geometry"),ui->tabWidget->saveGeometry());
-        settings.setValue(QStringLiteral("MainWnd/tab/geometry"),ui->splitter->saveState());
-        settings.setValue(QStringLiteral("MainWnd/books/geometry"),ui->splitter_2->saveState());
-        settings.setValue(QStringLiteral("MainWnd/books_head/geometry"),ui->Books->header()->saveState());
+        if(options.bStorePosition)
+            SaveLibPosition();
+        settings->beginGroup(QStringLiteral("Columns"));
+        QByteArray baHeaders = ui->Books->header()->saveState();
+        settings->setValue(QStringLiteral("headers"),baHeaders);
+
+        settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
+        settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
+        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->tabWidget->saveGeometry());
+        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->splitter->saveState());
+        settings->setValue(QStringLiteral("MainWnd/books/geometry"),ui->splitter_2->saveState());
+        settings->setValue(QStringLiteral("MainWnd/books_head/geometry"),ui->Books->header()->saveState());
     }
     else
     {
-        settings.setValue(QStringLiteral("MainWndConvertMode/geometry"), saveGeometry());
+        settings->setValue(QStringLiteral("MainWndConvertMode/geometry"), saveGeometry());
     }
-    if(ui->btnExport->defaultAction())
-        settings.setValue(QStringLiteral("DefaultExport"),ui->btnExport->defaultAction()->data().toInt());
     QString TempDir=QLatin1String("");
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
         TempDir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
@@ -625,42 +622,30 @@ void MainWindow::ChangingPort(int i)
 
 void MainWindow::Settings()
 {
-    QSettings settings;
-    if(ui->btnExport->defaultAction())
-    {
-        settings.setValue(QStringLiteral("DefaultExport"),ui->btnExport->defaultAction()->data().toInt());
-    }
-    SettingsDlg dlg(this);
-    connect(&dlg, &SettingsDlg::ChangingPort, this, &MainWindow::ChangingPort);
-    connect(&dlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
-    connect(&dlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
-    connect(&dlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
-    if(dlg.exec()==QDialog::Accepted){
-        settings.setValue(QStringLiteral("LibID"),idCurrentLib);
-        if(options.bShowDeleted != dlg.options_.bShowDeleted/*settings.value(QStringLiteral("ShowDeleted")).toBool()*/ || bUseTag_!=settings.value(QStringLiteral("use_tag")).toBool())
+    SettingsDlg *pDlg = new SettingsDlg(this);
+    connect(pDlg, &SettingsDlg::ChangingPort, this, &MainWindow::ChangingPort);
+    connect(pDlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
+    connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
+    connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
+    if(pDlg->exec()==QDialog::Accepted){
+        if(options.bShowDeleted != pDlg->options_.bShowDeleted || options.bUseTag != pDlg->options_.bUseTag)
         {
-            bUseTag_ = settings.value(QStringLiteral("use_tag")).toBool();
-            //bShowDeleted_ = settings.value(QStringLiteral("ShowDeleted")).toBool();
             UpdateTags();
             SaveLibPosition();
             FillAuthors();
             FillGenres();
             FillListBooks();
         }
-        opds.server_run();
+        if(options.bOpdsEnable != pDlg->options_.bOpdsEnable || options.nOpdsPort != pDlg->options_.nOpdsPort ||
+           options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || options.sOpdsUser != pDlg->options_.sOpdsUser ||
+           options.sOpdsPassword != pDlg->options_.sOpdsPassword)
+        {
+            opds.server_run();
+        }
         UpdateExportMenu();
         resizeEvent(nullptr);
-    }else{
-        // Возврат к исхдному языку интерфеса.
-        if(dlg.options_.sUiLanguageName != options.sUiLanguageName){
-            SetLocale(options.sUiLanguageName);
-            ui->retranslateUi(this);
-        }
-        // Возврат к исхдному алфавиту.
-        if(dlg.options_.sAlphabetName != options.sAlphabetName)
-            onChangeAlpabet(options.sAlphabetName);
-
     }
+    pDlg->deleteLater();
 }
 
 void MainWindow::FillCheckedBookList(QList<uint> &list,QTreeWidgetItem* item,bool send_all,bool checked_only)
@@ -710,8 +695,7 @@ void MainWindow::FillCheckedItemsBookList(QList<uint> &list,QTreeWidgetItem* ite
 
 void MainWindow::uncheck_books(QList<qlonglong> list)
 {
-    QSettings settings;
-    if(!settings.value(QStringLiteral("uncheck_export"),true).toBool())
+    if(!options.bUncheckAfterExport)
     {
         return;
     }
@@ -748,27 +732,25 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
     }
 }
 
-void MainWindow::SendToDevice()
+void MainWindow::SendToDevice(const ExportOptions &exportOptions)
 {
-//    QList<book_info> book_list;
     QList<uint> book_list;
     FillCheckedBookList(book_list);
     if(book_list.count()==0)
         return;
     ExportDlg dlg(this);
-    dlg.exec(book_list,ST_Device,(ui->tabWidget->currentIndex()==TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0));
+    dlg.exec(book_list,ST_Device,(ui->tabWidget->currentIndex()==TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0), exportOptions);
     uncheck_books(dlg.succesfull_export_books);
 }
 
-void MainWindow::SendMail()
+void MainWindow::SendMail(const ExportOptions &exportOptions)
 {
-    //QList<book_info> book_list;
     QList<uint> book_list;
     FillCheckedBookList(book_list);
     if(book_list.count()==0)
         return;
     ExportDlg dlg(this);
-    dlg.exec(book_list,ST_Mail,(ui->tabWidget->currentIndex()==TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0));
+    dlg.exec(book_list,ST_Mail,(ui->tabWidget->currentIndex()==TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong():0), exportOptions);
     uncheck_books(dlg.succesfull_export_books);
 }
 
@@ -793,30 +775,19 @@ void MainWindow::BookDblClick()
     file.write(outbuff.data());
     file.close();
 
-    QSettings settings;
-    int count=settings.beginReadArray(QStringLiteral("application"));
-    // проверит цикл
-    for(int i=0;i<count;i++)
-    {
-        settings.setArrayIndex(i);
-        if((settings.value(QStringLiteral("ext")).toString()+";").toLower().contains(fi.suffix().toLower()+";"))
-        {
-            if(
+    QString sExt = fi.suffix().toLower();
+    if(options.applications.contains(sExt)){
+        if(
 #ifdef Q_OS_MACX
-            QProcess::startDetached("open",QStringList()<<settings.value("app").toString()<<"--args"<<file.fileName())&&
-                    QFileInfo(settings.value("app").toString()).exists()
+        QProcess::startDetached("open",QStringList()<<options.applications.value(fi.suffix().toLower())<<"--args"<<file.fileName())&&
+                QFileInfo(options.applications.value(sExt)).exists()
 #else
-            QProcess::startDetached(settings.value(QStringLiteral("app")).toString(),QStringList()<<file.fileName())
+        QProcess::startDetached(options.applications.value(sExt),QStringList()<<file.fileName())
 #endif
-            )
-                settings.endArray();
-                return;
-        }
+        )
+            return;
     }
-    settings.endArray();
-
     QDesktopServices::openUrl(QUrl::fromLocalFile(file.fileName()));
-    settings.sync();
 }
 
 void MainWindow::CheckBooks()
@@ -952,8 +923,8 @@ void MainWindow::SelectLibrary()
     QAction* action=qobject_cast<QAction*>(sender());
 
     SaveLibPosition();
-    QSettings settings;
-    settings.setValue(QStringLiteral("LibID"),action->data().toLongLong());
+    QSettings *settings = GetSettings();
+    settings->setValue(QStringLiteral("LibID"),action->data().toLongLong());
     idCurrentLib=action->data().toInt();
 
     loadLibrary(idCurrentLib);
@@ -997,9 +968,9 @@ void MainWindow::SelectGenre()
     }
     idCurrentGenre_ = idGenre;
     FillListBooks(listBooks,0);
-    QSettings settings;
-    if(settings.value(QStringLiteral("store_position"),true).toBool()){
-        settings.setValue(QStringLiteral("current_genre_id"),idCurrentGenre_);
+    QSettings *settings = GetSettings();
+    if(options.bStorePosition){
+        settings->setValue(QStringLiteral("current_genre_id"),idCurrentGenre_);
     }
 }
 
@@ -1021,10 +992,10 @@ void MainWindow::SelectSeria()
     }
     FillListBooks(listBooks,0);
 
-    QSettings settings;
+    QSettings *settings = GetSettings();
     idCurrentSerial_= idSerial;
-    if(settings.value(QStringLiteral("store_position"),true).toBool()){
-        settings.setValue(QStringLiteral("current_serial_id"),idSerial);
+    if(options.bStorePosition){
+        settings->setValue(QStringLiteral("current_serial_id"),idSerial);
     }
 }
 
@@ -1035,14 +1006,14 @@ void MainWindow::SelectAuthor()
         return;
     QListWidgetItem* cur_item=ui->AuthorList->selectedItems()[0];
 
-    QSettings settings;
+    QSettings *settings = GetSettings();
 
     idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
 
     QList<uint> booksId = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
     FillListBooks(booksId,idCurrentAuthor_);
-    if(settings.value(QStringLiteral("store_position"),true).toBool()){
-        settings.setValue(QStringLiteral("current_author_id"),idCurrentAuthor_);
+    if(options.bStorePosition){
+        settings->setValue(QStringLiteral("current_author_id"),idCurrentAuthor_);
     }
 }
 
@@ -1054,7 +1025,7 @@ void MainWindow::SelectBook()
         ui->Review->setHtml(QLatin1String(""));
         return;
     }
-    QSettings *settings=GetSettings();
+    QSettings *settings = GetSettings();
     ExportBookListBtn(true);
     QTreeWidgetItem* item=ui->Books->selectedItems()[0];
     if(item->type() != ITEM_TYPE_BOOK)
@@ -1158,8 +1129,8 @@ void MainWindow::UpdateBooks()
     ui->findLanguage->addItem(QStringLiteral("*"),-1);
     ui->findLanguage->setCurrentIndex(0);
 
-    QSettings settings;
-    QString sCurrentLanguage=settings.value(QStringLiteral("BookLanguage"),"*").toString();
+    QSettings *settings = GetSettings();
+    QString sCurrentLanguage=settings->value(QStringLiteral("BookLanguage"),"*").toString();
     for(int iLang=0;iLang<currentLib.vLaguages.size();iLang++){
         QString sLanguage = currentLib.vLaguages[iLang].toUpper();
         if(!sLanguage.isEmpty()){
@@ -1172,7 +1143,7 @@ void MainWindow::UpdateBooks()
         }
     }
     ui->language->model()->sort(0);
-    settings.setValue(QStringLiteral("BookLanguage"),ui->language->currentText());
+    settings->setValue(QStringLiteral("BookLanguage"),ui->language->currentText());
     ui->language->blockSignals(false);
     ui->findLanguage->blockSignals(false);
     QApplication::restoreOverrideCursor();
@@ -1326,7 +1297,7 @@ void MainWindow::ContextMenu(QPoint point)
     }
     if(menu.actions().count()>0)
         menu.addSeparator();
-    if(bUseTag_)
+    if(options.bUseTag)
         menu.addActions(TagMenu.actions());
     if(menu.actions().count()>0)
         menu.exec(QCursor::pos());
@@ -1385,9 +1356,10 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
 void MainWindow::ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide)
 {
     ui->Books->setColumnHidden(nColumn,bHide);
-    QSettings settings;
-    settings.beginGroup(QStringLiteral("Columns"));
-    settings.setValue(sSetting,!bHide);
+    QSettings *settings = GetSettings();
+    settings->beginGroup(QStringLiteral("Columns"));
+    settings->setValue(sSetting,!bHide);
+    settings->endGroup();
 }
 
 void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
@@ -1514,7 +1486,7 @@ void MainWindow::FillAuthors()
             if(count>0){
                 item=new QListWidgetItem(QStringLiteral("%1 (%2)").arg(i->getName()).arg(count));
                 item->setData(Qt::UserRole,i.key());
-                if(bUseTag_)
+                if(options.bUseTag)
                     item->setIcon(GetTag(i->nTag));
                 ui->AuthorList->addItem(item);
                 if(idCurrentAuthor_ == i.key()){
@@ -1562,7 +1534,7 @@ void MainWindow::FillSerials()
     while(iSerial!=mCounts.constEnd()){
         item=new QListWidgetItem(QStringLiteral("%1 (%2)").arg(mLibs[idCurrentLib].mSerials[iSerial.key()].sName).arg(iSerial.value()));
         item->setData(Qt::UserRole,iSerial.key());
-        if(bUseTag_)
+        if(options.bUseTag)
             item->setIcon(GetTag(mLibs[idCurrentLib].mSerials[iSerial.key()].nTag));
         ui->SeriaList->addItem(item);
         if(iSerial.key()==idCurrentSerial_)
@@ -1703,7 +1675,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
                 item_author->setFont(0,bold_font);
                 item_author->setCheckState(0,Qt::Unchecked);
                 item_author->setData(0,Qt::UserRole,idAuthor);
-                if(bUseTag_)
+                if(options.bUseTag)
                     item_author->setIcon(0,GetTag(mLibs[idCurrentLib].mAuthors[idAuthor].nTag));
                 mAuthors[idAuthor] = item_author;
             }else
@@ -1725,7 +1697,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
                     item_seria->setFont(0,bold_font);
                     item_seria->setCheckState(0,Qt::Unchecked);
                     item_seria->setData(0,Qt::UserRole,idSerial);
-                    if(bUseTag_)
+                    if(options.bUseTag)
                         item_seria->setIcon(0,GetTag(mLibs[idCurrentLib].mSerials[idSerial].nTag));
 
                     mSerias.insert(idSerial,item_seria);
@@ -1737,7 +1709,7 @@ void MainWindow::FillListBooks(QList<uint> listBook,uint idCurrentAuthor)
 
             item_book->setCheckState(0,Qt::Unchecked);
             item_book->setData(0,Qt::UserRole,idBook);
-            if(bUseTag_)
+            if(options.bUseTag)
                 item_book->setIcon(0,GetTag(book.nTag));
 
             item_book->setText(0,book.sName);
@@ -1795,7 +1767,7 @@ bool MainWindow::IsBookInList(const SBook &book)
 
     return (idCurrentLanguage_==-1 || idCurrentLanguage_ == book.idLanguage)
             &&(options.bShowDeleted || !book.bDeleted)&&
-            (!bUseTag_ || current_tag==0 || current_tag==book.nTag
+            (!options.bUseTag || current_tag==0 || current_tag==book.nTag
              ||(idSerial>0 && mLibs[idCurrentLib].mSerials[idSerial].nTag == current_tag)
              ||(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].nTag == current_tag));
 }
@@ -1871,12 +1843,6 @@ void MainWindow::dragLeaveEvent(QDragLeaveEvent *)
 
 void MainWindow::UpdateExportMenu()
 {
-    QSettings settings;
-    int defaultID=-1;
-    if(ui->btnExport->defaultAction())
-        defaultID=ui->btnExport->defaultAction()->data().toInt();
-    else
-        defaultID=settings.value(QStringLiteral("DefaultExport"),-1).toInt();
     QMenu* menu=ui->btnExport->menu();
     if(menu)
     {
@@ -1888,19 +1854,18 @@ void MainWindow::UpdateExportMenu()
         ui->btnExport->setMenu(menu);
     }
     ui->btnExport->setDefaultAction(nullptr);
-    int count=settings.beginReadArray(QStringLiteral("export"));
+    int count = options.vExportOptions.size();
     for(int i=0;i<count;i++)
     {
-        settings.setArrayIndex(i);
-        QAction *action=new QAction(settings.value(QStringLiteral("ExportName")).toString(),this);
+        const ExportOptions &exportOptions = options.vExportOptions.at(i);
+        QAction *action=new QAction(exportOptions.sName,this);
         action->setData(i);
         menu->addAction(action);
-        if(settings.value(QStringLiteral("Default")).toBool() || (i==defaultID && !ui->btnExport->defaultAction()))
+        if(exportOptions.bDefault)
         {
             ui->btnExport->setDefaultAction(action);
         }
     }
-    settings.endArray();
     if(count==0)
     {
        QAction *action=new QAction(tr("Send to ..."),this);
@@ -1933,46 +1898,23 @@ void MainWindow::UpdateExportMenu()
 void MainWindow::ExportAction()
 {
     int id=qobject_cast<QAction*>(sender())->data().toInt();
-    QSettings settings;
-    int count=settings.beginReadArray(QStringLiteral("export"));
-    if(count>1 && ui->btnExport->defaultAction())
-    {
-        settings.setArrayIndex(ui->btnExport->defaultAction()->data().toInt());
-        if(!settings.value(QStringLiteral("Default")).toBool())
-        {
-            ui->btnExport->setDefaultAction(qobject_cast<QAction*>(sender()));
-            QList<QAction*> actions=ui->btnExport->menu()->actions();
-            foreach (QAction* action, actions)
-            {
-                QFont font(action->font());
-                font.setBold(action==ui->btnExport->defaultAction());
-                action->setFont(font);
-            }
-            QPalette palette = QApplication::style()->standardPalette();
-            bool darkTheme = palette.color(QPalette::Window).lightness()<127;
-            QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-            ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"),QIcon(sIconsPath + QStringLiteral("streamline.svg"))));
-        }
-    }
-    settings.endArray();
-    SendType type=SetCurrentExportSettings(id);
-   if(type==ST_Device)
-       SendToDevice();
+    if(options.vExportOptions.at(id).sSendTo == QStringLiteral("device"))
+       SendToDevice(options.vExportOptions.at(id));
    else
-       SendMail();
+       SendMail(options.vExportOptions.at(id));
 }
 
 void MainWindow::on_actionSwitch_to_convert_mode_triggered()
 {
-    QSettings settings;
+    QSettings *settings = GetSettings();
     if(mode==MODE_LIBRARY)
     {
-        settings.setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
-        settings.setValue(QStringLiteral("MainWnd/windowState"), saveState());
-        settings.setValue(QStringLiteral("MainWnd/tab/geometry"),ui->tabWidget->saveGeometry());
-        settings.setValue(QStringLiteral("MainWnd/tab/geometry"),ui->splitter->saveState());
-        settings.setValue(QStringLiteral("MainWnd/books/geometry"),ui->splitter_2->saveState());
-        settings.setValue(QStringLiteral("MainWnd/books_head/geometry"),ui->Books->header()->saveState());
+        settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
+        settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
+        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->tabWidget->saveGeometry());
+        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->splitter->saveState());
+        settings->setValue(QStringLiteral("MainWnd/books/geometry"),ui->splitter_2->saveState());
+        settings->setValue(QStringLiteral("MainWnd/books_head/geometry"),ui->Books->header()->saveState());
     }
     ui->stackedWidget->setCurrentWidget(ui->pageConvert);
     ui->actionSwitch_to_library_mode->setVisible(true);
@@ -1987,10 +1929,10 @@ void MainWindow::on_actionSwitch_to_convert_mode_triggered()
     mode=MODE_CONVERTER;
 
     setMinimumSize(200,200);
-    if(settings.contains(QStringLiteral("MainWndConvertMode/geometry")))
-        restoreGeometry(settings.value(QStringLiteral("MainWndConvertMode/geometry")).toByteArray());
+    if(settings->contains(QStringLiteral("MainWndConvertMode/geometry")))
+        restoreGeometry(settings->value(QStringLiteral("MainWndConvertMode/geometry")).toByteArray());
 
-    settings.setValue(QStringLiteral("ApplicationMode"), mode);
+    settings->setValue(QStringLiteral("ApplicationMode"), mode);
     if(pDropForm!=nullptr)
     {
         pDropForm->hide();
@@ -2001,10 +1943,10 @@ void MainWindow::on_actionSwitch_to_convert_mode_triggered()
 
 void MainWindow::on_actionSwitch_to_library_mode_triggered()
 {
-    QSettings settings;
+    QSettings *settings = GetSettings();
     if(mode==MODE_CONVERTER)
     {
-        settings.setValue(QStringLiteral("MainWndConvertMode/geometry"), saveGeometry());
+        settings->setValue(QStringLiteral("MainWndConvertMode/geometry"), saveGeometry());
     }
     mode=MODE_LIBRARY;
     if(pDropForm!=nullptr)
@@ -2024,23 +1966,23 @@ void MainWindow::on_actionSwitch_to_library_mode_triggered()
     setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?QLatin1String(""):QStringLiteral(" - ")+mLibs[idCurrentLib].name));
 
     setMinimumSize(800,400);
-    if(settings.contains(QStringLiteral("MainWnd/geometry")))
-        restoreGeometry(settings.value(QStringLiteral("MainWnd/geometry")).toByteArray());
-    if(settings.contains(QStringLiteral("MainWnd/windowState")))
-        restoreState(settings.value(QStringLiteral("MainWnd/windowState")).toByteArray());
-    if(settings.contains(QStringLiteral("MainWnd/tab/geometry")))
-        ui->splitter->restoreState(settings.value(QStringLiteral("MainWnd/tab/geometry")).toByteArray());
+    if(settings->contains(QStringLiteral("MainWnd/geometry")))
+        restoreGeometry(settings->value(QStringLiteral("MainWnd/geometry")).toByteArray());
+    if(settings->contains(QStringLiteral("MainWnd/windowState")))
+        restoreState(settings->value(QStringLiteral("MainWnd/windowState")).toByteArray());
+    if(settings->contains(QStringLiteral("MainWnd/tab/geometry")))
+        ui->splitter->restoreState(settings->value(QStringLiteral("MainWnd/tab/geometry")).toByteArray());
     //on_splitter_splitterMoved(0,0);
-    if(settings.contains(QStringLiteral("MainWnd/books/geometry")))
-        ui->splitter_2->restoreState(settings.value(QStringLiteral("MainWnd/books/geometry")).toByteArray());
-    settings.setValue(QStringLiteral("ApplicationMode"), mode);
+    if(settings->contains(QStringLiteral("MainWnd/books/geometry")))
+        ui->splitter_2->restoreState(settings->value(QStringLiteral("MainWnd/books/geometry")).toByteArray());
+    settings->setValue(QStringLiteral("ApplicationMode"), mode);
 }
 
 void MainWindow::onLanguageFilterChanged(int index)
 {
     QString sLanguage = ui->language->itemText(index);
-    QSettings settings;
-    settings.setValue(QStringLiteral("BookLanguage"),sLanguage);
+    QSettings *settings = GetSettings();
+    settings->setValue(QStringLiteral("BookLanguage"),sLanguage);
     idCurrentLanguage_ = ui->language->itemData(index).toInt();
 
     FillSerials();
@@ -2162,19 +2104,11 @@ void MainWindow::leaveEvent(QEvent */*ev*/)
     }
 }
 
+
 void MainWindow::ChangingTrayIcon(int index,int color)
 {
     if(CMDparser.isSet(QStringLiteral("tray")))
         index=2;
-    QSettings settings;
-    if(index<0)
-    {
-        index=settings.value(QStringLiteral("tray_icon"),0).toInt();
-    }
-    if(color<0)
-    {
-        color=settings.value(QStringLiteral("tray_color"),0).toInt();
-    }
     if(index==0)
     {
         if(trIcon)
@@ -2191,7 +2125,7 @@ void MainWindow::ChangingTrayIcon(int index,int color)
             trIcon = new QSystemTrayIcon(this);  //инициализируем объект
             connect(trIcon, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
         }
-        QIcon icon(QString(":/img/tray%1.png").arg(QString::number(color)));
+        QIcon icon(QStringLiteral(":/img/tray%1.png").arg(color));
         trIcon->setIcon(icon);//.arg(app->devicePixelRatio()>=2?"@2x":"")));  //устанавливаем иконку
         trIcon->show();
     }
@@ -2201,12 +2135,11 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
 {
     if(reson!=QSystemTrayIcon::Trigger && reson!=QSystemTrayIcon::Unknown)
         return;
-    QSettings settings;
 #ifdef Q_OS_WIN
     if(this->isVisible())
     {
         this->setWindowState(this->windowState()|Qt::WindowMinimized);
-        if(settings.value("tray_icon",0).toInt()!=0)
+        if(options.nIconTray !=0 )
             this->hide();
     }
     else
@@ -2224,7 +2157,7 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
         if(this->isActiveWindow() && this->isVisible())
         {
             this->setWindowState(this->windowState()|Qt::WindowMinimized);
-            if(settings.value("tray_icon",0).toInt()!=0)
+            if(options.nIconTray!=0)
                 this->hide();
         }
         else
@@ -2239,7 +2172,7 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
         if(this->isActiveWindow() && this->isVisible())
         {
             this->setWindowState(this->windowState()|Qt::WindowMinimized);
-            if(settings.value(QStringLiteral("tray_icon"),0).toInt()!=0)
+            if(options.nIconTray != 0)
                 this->hide();
         }
         else
@@ -2270,7 +2203,7 @@ void MainWindow::changeEvent(QEvent *event)
     {
         if(isMinimized())
         {
-            ChangingTrayIcon();
+            ChangingTrayIcon(options.nIconTray, options.nTrayColor);
             TrayMenuAction(QSystemTrayIcon::Unknown);
             event->ignore();
         }

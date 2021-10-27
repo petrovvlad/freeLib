@@ -105,98 +105,70 @@ void ExportFrame::onConnectionTypeChanged(int /*index*/)
         ui->Port->setText(QStringLiteral("465"));
 }
 
-void ExportFrame::Load(QSettings *_settings)
+void ExportFrame::Load(const ExportOptions *pExportOptions)
 {
     disconnect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
-    QSettings *settings=_settings;
-    if(_settings==0)
-        settings=new QSettings();
-    ui->Email->setText(settings->value("Email").toString());
-    ui->from_email->setText(settings->value("from_email").toString());
-    ui->mail_subject->setText(settings->value("mail_subject").toString());
-    ui->Server->setText(settings->value("EmailServer").toString());
-    ui->Port->setText(settings->value("EmailPort","25").toString());
-    ui->User->setText(settings->value("EmailUser").toString());
-    ui->Password->setText(decodeStr(settings->value("EmailPassword").toString()));
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    ui->PostprocessingCopy->setChecked(settings->value("PostprocessingCopy").toBool());
-    ui->Path->setText(settings->value("DevicePath",HomeDir).toString());
-    ui->originalFileName->setChecked(settings->value("originalFileName",false).toBool());
-    ui->ExportFileName->setText(settings->value("ExportFileName",default_exp_file_name).toString());
-    ui->PauseMail->setValue(settings->value("PauseMail",5).toInt());
-    ui->ConnectionType->setCurrentIndex(settings->value("ConnectionType",0).toInt());
-    ui->dropcaps->setChecked(settings->value("dropcaps").toBool());
-    ui->join_series->setChecked(settings->value("join_series").toBool());
-    ui->hyphenate->setCurrentIndex(settings->value("hyphenate").toInt());
-    ui->Vignette->setCurrentIndex(settings->value("Vignette").toInt());
-    ui->userCSS->setChecked(settings->value("userCSS",false).toBool());
-    ui->UserCSStext->setPlainText(settings->value("UserCSStext","").toString());
-    ui->split_file->setChecked(settings->value("split_file",true).toBool());
-    ui->OutputFormat->setCurrentText(settings->value("OutputFormat").toString());
-    ui->break_after_cupture->setChecked(settings->value("break_after_cupture",true).toBool());
-    ui->annotation->setChecked(settings->value("annotation",false).toBool());
-    ui->footnotes->setCurrentIndex(settings->value("footnotes",0).toInt());
-    ui->askPath->setChecked(settings->value("askPath",true).toBool());
-    ui->transliteration->setChecked(settings->value("transliteration",false).toBool());
-    ui->removePersonal->setChecked(settings->value("removePersonal",false).toBool());
-    ui->repairCover->setChecked(settings->value("repairCover",true).toBool());
-    ui->ml_toc->setChecked(settings->value("ml_toc",true).toBool());
-    ui->MAXcaptionLevel->setValue(settings->value("MAXcaptionLevel",2).toInt());
-    ui->seriaTranslit->setChecked(settings->value("seriaTranslit",false).toBool());
-    ui->authorTranslit->setChecked(settings->value("authorTranslit",false).toBool());
+    ui->Email->setText(pExportOptions->sEmail);
+    ui->from_email->setText(pExportOptions->sEmailFrom);
+    ui->mail_subject->setText(pExportOptions->sEmailSubject);
+    ui->Server->setText(pExportOptions->sEmailServer);
+    ui->Port->setText(QString::number(pExportOptions->nEmailServerPort));
+    ui->User->setText(pExportOptions->sEmailUser);
+    ui->Password->setText(decodeStr(pExportOptions->sEmailPassword));
+    ui->PostprocessingCopy->setChecked(pExportOptions->bPostprocessingCopy);
+    ui->Path->setText(pExportOptions->sDevicePath);
+    ui->originalFileName->setChecked(pExportOptions->bOriginalFileName);
+    ui->ExportFileName->setText(pExportOptions->sExportFileName);
+    ui->PauseMail->setValue(pExportOptions->nEmailPause);
+    ui->ConnectionType->setCurrentIndex(pExportOptions->nEmailConnectionType);
+    ui->dropcaps->setChecked(pExportOptions->bDropCaps);
+    ui->join_series->setChecked(pExportOptions->bJoinSeries);
+    ui->hyphenate->setCurrentIndex(pExportOptions->nHyphenate);
+    ui->Vignette->setCurrentIndex(pExportOptions->nVignette);
+    ui->userCSS->setChecked(pExportOptions->bUserCSS);
+    ui->UserCSStext->setPlainText(pExportOptions->sUserCSS);
+    ui->split_file->setChecked(pExportOptions->bSplitFile);
+    ui->OutputFormat->setCurrentText(pExportOptions->sOutputFormat);
+    ui->break_after_cupture->setChecked(pExportOptions->bBreakAfterCupture);
+    ui->annotation->setChecked(pExportOptions->bAnnotation);
+    ui->footnotes->setCurrentIndex(pExportOptions->nFootNotes);
+    ui->askPath->setChecked(pExportOptions->bAskPath);
+    ui->transliteration->setChecked(pExportOptions->bTransliteration);
+    ui->removePersonal->setChecked(pExportOptions->bRemovePersonal);
+    ui->repairCover->setChecked(pExportOptions->bRepairCover);
+    ui->ml_toc->setChecked(pExportOptions->bMlToc);
+    ui->MAXcaptionLevel->setValue(pExportOptions->nMaxCaptionLevel);
+    ui->seriaTranslit->setChecked(pExportOptions->bSeriaTranslit);
+    ui->authorTranslit->setChecked(pExportOptions->bAuthorTranslit);
 
-    ui->seriastring->setText(settings->value("bookseriestitle").toString());
-    ui->authorstring->setText(settings->value("authorstring").toString());
-    ui->createCover->setChecked(settings->value("createCover",false).toBool());
-    ui->createCaverAlways->setChecked(settings->value("createCaverAlways",false).toBool());
-    ui->addCoverLabel->setChecked(settings->value("addCoverLabel",false).toBool());
-    ui->coverLabel->setText(settings->value("coverLabel").toString());
-    if(settings->value("sendTo","device").toString()=="device")
+    ui->seriastring->setText(pExportOptions->sBookSeriesTitle);
+    ui->authorstring->setText(pExportOptions->sAuthorSring);
+    ui->createCover->setChecked(pExportOptions->bCreateCover);
+    ui->createCaverAlways->setChecked(pExportOptions->bCreateCoverAlways);
+    ui->addCoverLabel->setChecked(pExportOptions->bAddCoverLabel);
+    ui->coverLabel->setText(pExportOptions->sCoverLabel);
+    if(pExportOptions->sSendTo == QStringLiteral("device"))
         ui->radioDevice->setChecked(true);
     else
         ui->radioEmail->setChecked(true);
 
-    ui->content_placement->setCurrentIndex(settings->value("content_placement",0).toInt());
+    ui->content_placement->setCurrentIndex(pExportOptions->nContentPlacement);
 
-    UpdateToolComboBox(settings);
+    UpdateToolComboBox(pExportOptions->sCurrentTool);
 
 
     while(ui->fontLayout->count()>2)
         delete ui->fontLayout->itemAt(0)->widget();
-    if(_settings==0)
+    int count = pExportOptions->vFontExportOptions.count();
+    for(int i=0;i<count;i++)
     {
-        int size=100;
-        int id_tag=0;
-
-        foreach(tag i,tag_list)
-        {
-            if(i.font_name=="dropcaps_font")
-            {
-                size=i.font_size;
-                break;
-            }
-            id_tag++;
-        }
-        AddFont(true,id_tag,default_dropcaps_font,"","","",size);
-    }
-    else
-    {
-        int count=settings->beginReadArray("fonts");
-        for(int i=0;i<count;i++)
-        {
-            //qDebug()<<settings->value("font").toString();
-            settings->setArrayIndex(i);
-            AddFont(settings->value("use").toBool(),
-                    settings->value("tag").toInt(),
-                    settings->value("font").toString(),
-                    settings->value("font_b").toString(),
-                    settings->value("font_i").toString(),
-                    settings->value("font_bi").toString(),
-                    settings->value("fontSize",100).toInt());
-        }
-        settings->endArray();
+        AddFont(pExportOptions->vFontExportOptions.at(i).bUse,
+                pExportOptions->vFontExportOptions.at(i).nTag,
+                pExportOptions->vFontExportOptions.at(i).sFont,
+                pExportOptions->vFontExportOptions.at(i).sFontB,
+                pExportOptions->vFontExportOptions.at(i).sFontI,
+                pExportOptions->vFontExportOptions.at(i).sFontBI,
+                pExportOptions->vFontExportOptions.at(i).nFontSize);
     }
 
     onOriginalFileNameClicked();
@@ -204,116 +176,102 @@ void ExportFrame::Load(QSettings *_settings)
     onMlTocClicked();
     set_userCSS_clicked();
     connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
-    if(_settings==0)
-        delete settings;
 }
 
 
-QStringList ExportFrame::Save(QSettings *settings,bool save_passwords)
+QStringList ExportFrame::Save(ExportOptions *pExportOptions)
 {
-    if(save_passwords)
-    {
-        settings->setValue("Email",ui->Email->text().trimmed());
-        settings->setValue("from_email",ui->from_email->text().trimmed());
-        settings->setValue("mail_subject",ui->mail_subject->text().trimmed());
-        settings->setValue("EmailServer",ui->Server->text().trimmed());
-        settings->setValue("EmailPort",ui->Port->text().trimmed());
-        settings->setValue("EmailUser",ui->User->text().trimmed());
-        settings->setValue("EmailPassword",encodeStr(ui->Password->text()));
-        settings->setValue("PostprocessingCopy",ui->PostprocessingCopy->checkState()==Qt::Checked);
-        settings->setValue("DevicePath",ui->Path->text().trimmed());
-        settings->setValue("PauseMail",ui->PauseMail->value());
-        settings->setValue("ConnectionType",ui->ConnectionType->currentIndex());
-        settings->setValue("sendTo",(ui->radioDevice->isChecked()?"device":"e-mail"));
-        settings->setValue("current_tool",ui->CurrentTools->currentText());
-    }
-    settings->setValue("askPath",ui->askPath->checkState()==Qt::Checked);
-    settings->setValue("originalFileName",ui->originalFileName->checkState()==Qt::Checked);
-    settings->setValue("ExportFileName",ui->ExportFileName->text().trimmed());
-    settings->setValue("OutputFormat",ui->OutputFormat->currentText());
-    settings->setValue("dropcaps",ui->dropcaps->checkState()==Qt::Checked);
-    settings->setValue("join_series",ui->join_series->checkState()==Qt::Checked);
-    settings->setValue("hyphenate",ui->hyphenate->currentIndex());
-    settings->setValue("Vignette",ui->Vignette->currentIndex());
-    settings->setValue("userCSS",ui->userCSS->checkState()==Qt::Checked);
-    settings->setValue("UserCSStext",ui->UserCSStext->toPlainText());
-    settings->setValue("split_file",ui->split_file->checkState()==Qt::Checked);
-    settings->setValue("break_after_cupture",ui->break_after_cupture->checkState()==Qt::Checked);
-    settings->setValue("annotation",ui->annotation->checkState()==Qt::Checked);
-    settings->setValue("footnotes",ui->footnotes->currentIndex());
-    settings->setValue("transliteration",ui->transliteration->checkState()==Qt::Checked);
-    settings->setValue("removePersonal",ui->removePersonal->checkState()==Qt::Checked);
-    settings->setValue("repairCover",ui->repairCover->checkState()==Qt::Checked);
-    settings->setValue("ml_toc",ui->ml_toc->checkState()==Qt::Checked);
-    settings->setValue("MAXcaptionLevel",ui->MAXcaptionLevel->value());
-    settings->setValue("authorTranslit",ui->authorTranslit->checkState()==Qt::Checked);
-    settings->setValue("seriaTranslit",ui->seriaTranslit->checkState()==Qt::Checked);
-    settings->setValue("bookseriestitle",ui->seriastring->text().trimmed());
-    settings->setValue("authorstring",ui->authorstring->text().trimmed());
-    settings->setValue("createCover",ui->createCover->checkState()==Qt::Checked);
-    settings->setValue("createCaverAlways",ui->createCaverAlways->checkState()==Qt::Checked);
-    settings->setValue("addCoverLabel",ui->addCoverLabel->checkState()==Qt::Checked);
-    settings->setValue("coverLabel",ui->coverLabel->text().trimmed());
-    settings->setValue("content_placement",ui->content_placement->currentIndex());
+    ExportOptions* pExpOpt;
+    if(pExportOptions == nullptr)
+        pExpOpt = new ExportOptions;
+    else
+        pExpOpt = pExportOptions;
+    pExpOpt->sEmailFrom = ui->from_email->text().trimmed();
+    pExpOpt->sEmailSubject = ui->mail_subject->text().trimmed();
+    pExpOpt->sEmailServer = ui->Server->text().trimmed();
+    pExpOpt->nEmailServerPort = ui->Port->text().trimmed().toUInt();
+    pExpOpt->sEmailUser = ui->User->text().trimmed();
+    pExpOpt->sEmailPassword = encodeStr(ui->Password->text());
+    pExpOpt->bPostprocessingCopy = ui->PostprocessingCopy->isChecked();
+    pExpOpt->sDevicePath = ui->Path->text().trimmed();
+    pExpOpt->nEmailPause = ui->PauseMail->value();
+    pExpOpt->nEmailConnectionType = ui->ConnectionType->currentIndex();
+    pExpOpt->sSendTo = ui->radioDevice->isChecked() ?QStringLiteral("device") :QStringLiteral("e-mail");
+    pExpOpt->sCurrentTool = ui->CurrentTools->currentText();
+    pExpOpt->bAskPath = ui->askPath->isChecked();
+    pExpOpt->bOriginalFileName = ui->originalFileName->isChecked();
+    pExpOpt->sExportFileName = ui->ExportFileName->text().trimmed();
+    pExpOpt->sOutputFormat = ui->OutputFormat->currentText();
+    pExpOpt->bDropCaps = ui->dropcaps->isChecked();
+    pExpOpt->bJoinSeries = ui->join_series->isChecked();
+    pExpOpt->nHyphenate = ui->hyphenate->currentIndex();
+    pExpOpt->nVignette = ui->Vignette->currentIndex();
+    pExpOpt->bUserCSS = ui->userCSS->isChecked();
+    pExpOpt->sUserCSS = ui->UserCSStext->toPlainText();
+    pExpOpt->bSplitFile = ui->split_file->isChecked();
+    pExpOpt->bBreakAfterCupture = ui->break_after_cupture->isChecked();
+    pExpOpt->bAnnotation = ui->annotation->isChecked();
+    pExpOpt->nFootNotes = ui->footnotes->currentIndex();
+    pExpOpt->bTransliteration = ui->transliteration->isChecked();
+    pExpOpt->bRemovePersonal = ui->removePersonal->isChecked();
+    pExpOpt->bRepairCover = ui->repairCover->isChecked();
+    pExpOpt->bMlToc = ui->ml_toc->isChecked();
+    pExpOpt->nMaxCaptionLevel = ui->MAXcaptionLevel->value();
+    pExpOpt->bAuthorTranslit = ui->authorTranslit->isChecked();
+    pExpOpt->bSeriaTranslit = ui->seriaTranslit->isChecked();
+    pExpOpt->sBookSeriesTitle = ui->seriastring->text().trimmed();
+    pExpOpt->sAuthorSring = ui->authorstring->text().trimmed();
+    pExpOpt->bCreateCover = ui->createCover->isChecked();
+    pExpOpt->bCreateCoverAlways = ui->createCaverAlways->isChecked();
+    pExpOpt->bAddCoverLabel = ui->addCoverLabel->isChecked();
+    pExpOpt->sCoverLabel = ui->coverLabel->text().trimmed();
+    pExpOpt->nContentPlacement = ui->content_placement->currentIndex();
 
     QStringList fonts_list;
-    settings->beginWriteArray("fonts");
-    for (int i = 0; i < ui->fontLayout->count()-2; ++i)
+    int count = ui->fontLayout->count()-2;
+    pExpOpt->vFontExportOptions.resize(count);
+    for (int i = 0; i < count; ++i)
     {
-        settings->setArrayIndex(i);
-        settings->setValue("use",((FontFrame*)ui->fontLayout->itemAt(i)->widget())->use());
-        settings->setValue("tag",((FontFrame*)ui->fontLayout->itemAt(i)->widget())->tag());
-        fonts_list<<((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font();
-        fonts_list<<((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_b();
-        fonts_list<<((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_i();
-        fonts_list<<((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_bi();
-        if(save_passwords)
-        {
-            settings->setValue("font",((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font());
-            settings->setValue("font_b",((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_b());
-            settings->setValue("font_i",((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_i());
-            settings->setValue("font_bi",((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_bi());
-        }
-        else
-        {
-            settings->setValue("font",QFileInfo(((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font()).fileName());
-            settings->setValue("font",QFileInfo(((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_b()).fileName());
-            settings->setValue("font",QFileInfo(((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_i()).fileName());
-            settings->setValue("font",QFileInfo(((FontFrame*)ui->fontLayout->itemAt(i)->widget())->font_bi()).fileName());
-        }
-        settings->setValue("fontSize",((FontFrame*)ui->fontLayout->itemAt(i)->widget())->fontSize());
+        FontExportOptions &fontExportOptions = pExpOpt->vFontExportOptions[i];
+        FontFrame* pFontFrame = qobject_cast<FontFrame*>(ui->fontLayout->itemAt(i)->widget());
+        fontExportOptions.bUse = pFontFrame->use();
+        fontExportOptions.nTag = pFontFrame->tag();
+        fontExportOptions.sFont = pFontFrame->font();
+        fontExportOptions.sFontB = pFontFrame->font_b();
+        fontExportOptions.sFontI = pFontFrame->font_i();
+        fontExportOptions.sFontBI = pFontFrame->font_bi();
+        fontExportOptions.nFontSize = pFontFrame->fontSize();
+
+        fonts_list << fontExportOptions.sFont;
+        fonts_list << fontExportOptions.sFontB;
+        fonts_list << fontExportOptions.sFontI;
+        fonts_list << fontExportOptions.sFontBI;
     }
-    settings->endArray();
+    if(pExportOptions==nullptr)
+        delete pExpOpt;
     return fonts_list;
 }
 
-void ExportFrame::LoadDefault()
-{
-
-}
-
-void ExportFrame::UpdateToolComboBox(QSettings *settings)
+void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
 {
     QString CurrentTool;
-    if(!settings)
+    if(sCurrentTool.isEmpty())
         CurrentTool=ui->CurrentTools->currentText();
     else
-        CurrentTool=settings->value("current_tool").toString();
+        CurrentTool = sCurrentTool;
     while(ui->CurrentTools->count()>1)
         ui->CurrentTools->removeItem(1);
-    QSettings* set=GetSettings(true);
-    int count=set->beginReadArray("tools");
-    for(int i=0;i<count;i++)
-    {
-        set->setArrayIndex(i);
-        ui->CurrentTools->addItem(set->value("name").toString());
-        if(set->value("name").toString()==CurrentTool)
+    auto iTool = options.tools.constBegin();
+    int index=0;
+    while(iTool != options.tools.constEnd()){
+        ui->CurrentTools->addItem(iTool.key());
+        if(iTool.key() == CurrentTool)
         {
             ui->CurrentTools->setCurrentIndex(ui->CurrentTools->count()-1);
         }
+        ++index;
+        ++iTool;
     }
-    set->endArray();
-    delete set;
 }
 
 FontFrame* ExportFrame::AddFont(bool use, int tag, QString font,QString font_b,QString font_i,QString font_bi,int fontSize)

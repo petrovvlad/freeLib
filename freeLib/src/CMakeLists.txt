@@ -61,6 +61,7 @@ set(PROJECT_SOURCES
         exportthread.h
         opds_server.cpp
         opds_server.h
+        options.h options.cpp
         webpage.cpp
         webpage.h
         treebookitem.cpp

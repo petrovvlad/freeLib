@@ -64,8 +64,7 @@ QString ValidateFileName(QString str)
     mac=true;
 #endif
 
-    QSettings *settings=GetSettings();
-    if(!settings->value("extended_symbols",false).toBool() || windows)
+    if(!options.bExtendedSymbols || windows)
     {
 
         str=str.replace("\"","'");
@@ -83,10 +82,11 @@ QString ValidateFileName(QString str)
     return str;
 }
 
-ExportThread::ExportThread(QObject *parent) :
-    QObject(parent)
+ExportThread::ExportThread(const ExportOptions *pExportOptions) :
+    QObject(nullptr)
 {
     ID_lib=-1;
+    pExportOptions_ = pExportOptions;
 }
 
 void ExportThread::start(qlonglong id_lib,QString path)
@@ -112,24 +112,24 @@ QString BuildFileName(QString filename)
     return filename.replace("/",".").replace("\\",".").replace("*",".").replace("|",".").replace(":",".").replace("?",".").replace("<",".").replace(">",".").replace("\"","'");
 }
 
-bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count, bool remove_old, SBook &book)
+bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count, SBook &book)
 {
-    QSettings *settings=GetSettings();
-    QString tool=settings->value("current_tool").toString();
+    Q_CHECK_PTR(pExportOptions_);
     QString tool_path,tool_arg,tool_ext;
-    int count_tools=settings->beginReadArray("tools");
-    for(int i=0;i<count_tools;i++)
-    {
-        settings->setArrayIndex(i);
-        if(settings->value("name").toString()==tool)
+    auto iTool = options.tools.constBegin();
+    int index=0;
+    while(iTool != options.tools.constEnd()){
+        if(iTool.key() == pExportOptions_->sCurrentTool)
         {
-            tool_path=settings->value("path").toString();
-            tool_arg=settings->value("args").toString();
-            tool_ext=settings->value("ext").toString();
+            tool_path = iTool->sPath;
+            tool_arg = iTool->sArgs;
+            tool_ext = iTool->sExt;
             break;
         }
+        ++index;
+        ++iTool;
     }
-    settings->endArray();
+
     QDir book_dir;
     QFileInfo fi(file_name);
 
@@ -143,7 +143,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     QFile file;
     foreach (QBuffer* buf, outbuff)
     {
-        out_file<<tmp_dir+QString("/freeLib/book%1.").arg(QString::number(i))+fi.suffix();
+        out_file<<tmp_dir+QStringLiteral("/freeLib/book%1.").arg(QString::number(i))+fi.suffix();
         i++;
         QFile::remove(out_file.last());
         file.setFileName(out_file.last());
@@ -155,15 +155,15 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
         return false;
     QString current_out_file=out_file.first();
     if(
-            (settings->value("OutputFormat").toString()=="MOBI" ||
-             settings->value("OutputFormat").toString()=="EPUB" ||
-             settings->value("OutputFormat").toString()=="AZW3" ||
-             settings->value("OutputFormat").toString()=="MOBI7" ||
-             settings->value("OutputFormat").toString()=="PDF") &&
-            (fi.suffix().toLower()=="fb2" || fi.suffix().toLower()=="epub"))
+            (pExportOptions_->sOutputFormat == QStringLiteral("MOBI") ||
+             pExportOptions_->sOutputFormat == QStringLiteral("EPUB") ||
+             pExportOptions_->sOutputFormat == QStringLiteral("AZW3") ||
+             pExportOptions_->sOutputFormat == QStringLiteral("MOBI7") ||
+             pExportOptions_->sOutputFormat == QStringLiteral("PDF")) &&
+            (fi.suffix().toLower() == QStringLiteral("fb2") || fi.suffix().toLower() == QStringLiteral("epub")))
     {
-        fb2mobi conv;
-        current_out_file=conv.convert(out_file,remove_old,settings->value("OutputFormat").toString(),book);
+        fb2mobi conv(pExportOptions_);
+        current_out_file=conv.convert(out_file,book);
     }
 
     QString book_file_name=/*fi.absolutePath()*/fi.path()+"/"+fi.completeBaseName()+"."+QFileInfo(current_out_file).suffix();
@@ -172,20 +172,21 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     {
        if(count>1)
        {
-           QEventLoop loop; QTimer::singleShot(settings->value("PauseMail",5).toInt()*1000, &loop, &QEventLoop::quit); loop.exec();
+           QEventLoop loop; QTimer::singleShot(pExportOptions_->nEmailPause*1000, &loop, &QEventLoop::quit); loop.exec();
        }
-       SmtpClient smtp(settings->value("EmailServer").toString(),settings->value("EmailPort").toInt());
-       smtp.setConnectionType((SmtpClient::ConnectionType)settings->value("ConnectionType").toInt());
-       if(!settings->value("EmailUser").toString().isEmpty())
-           smtp.setUser(settings->value("EmailUser").toString());
-       if(!settings->value("EmailPassword").toString().isEmpty())
-           smtp.setPassword(decodeStr(settings->value("EmailPassword").toString()));
+       SmtpClient smtp(pExportOptions_->sEmailServer,pExportOptions_->nEmailServerPort);
+       smtp.setConnectionType((SmtpClient::ConnectionType)pExportOptions_->nEmailConnectionType);
+       if(!pExportOptions_->sEmailUser.isEmpty())
+           smtp.setUser(pExportOptions_->sEmailUser);
+       if(!pExportOptions_->sEmailPassword.isEmpty())
+           smtp.setPassword(decodeStr(pExportOptions_->sEmailPassword));
+
        MimeMessage msg(true);
 
        msg.setHeaderEncoding(MimePart::Base64);
-       msg.setSender(new EmailAddress(settings->value("from_email").toString(),""));
-       msg.addRecipient(new EmailAddress(settings->value("Email").toString(), ""));
-       QString caption=settings->value("mail_subject",AppName).toString();
+       msg.setSender(new EmailAddress(pExportOptions_->sEmailFrom,""));
+       msg.addRecipient(new EmailAddress(pExportOptions_->sEmail, ""));
+       QString caption = pExportOptions_->sEmailSubject;
        msg.setSubject(caption.isEmpty()?AppName:caption);
 
        QBuffer outbuff;//=new QBuffer;
@@ -222,7 +223,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
     {
         QStringList listArg;
         book_file_name=ValidateFileName(book_file_name);
-        if(!settings->value("PostprocessingCopy",false).toBool())
+        if(!pExportOptions_->bPostprocessingCopy)
         {
             //book_dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
             if(book_file_name.startsWith("mtp:/")){
@@ -262,11 +263,10 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count
 
 void ExportThread::export_books()
 {
-    QSettings *settings=GetSettings();
     QDir dir=export_dir;
     QFileInfo fi;
 
-    if(settings->value("originalFileName",false).toBool() && send_type!=ST_Mail && settings->value("OutputFormat").toString()=="-")
+    if(pExportOptions_->bOriginalFileName && send_type!=ST_Mail && pExportOptions_->sOutputFormat == QStringLiteral("-"))
     {
         //foreach(book_info i,book_list)
         QString LibPath=mLibs[idCurrentLib].path;
@@ -323,9 +323,10 @@ void ExportThread::export_books()
     QList<QList<uint> > books_group;
     uint current_seria_id=01;
     bool need_group_series=
-            (settings->value("OutputFormat").toString()=="EPUB" || settings->value("OutputFormat").toString()=="MOBI" ||
-             settings->value("OutputFormat").toString()=="AZW3" || settings->value("OutputFormat").toString()=="MOBI7") &&
-            settings->value("join_series").toBool();
+            (pExportOptions_->sOutputFormat == QStringLiteral("EPUB") || pExportOptions_->sOutputFormat == QStringLiteral("MOBI") ||
+             pExportOptions_->sOutputFormat == QStringLiteral("AZW3") || pExportOptions_->sOutputFormat == QStringLiteral("MOBI7")) &&
+            pExportOptions_->bJoinSeries;
+
     foreach(uint idBook,book_list)
     {
         SBook &book = mLibs[idCurrentLib].mBooks[idBook];
@@ -359,25 +360,25 @@ void ExportThread::export_books()
                 emit Progress(count*100/book_list.count(),count);
                 continue;
             }
-            if(settings->value("originalFileName",false).toBool())
+            if(pExportOptions_->bOriginalFileName)
             {
                 QString arh=book.sArchive;
                 arh=arh.left(arh.length()-4);
-                file_name=arh.isEmpty()?"":QString("%1/%2.%3").arg(arh,book.sFile,book.sFormat);
+                file_name=arh.isEmpty()?"":QStringLiteral("%1/%2.%3").arg(arh,book.sFile,book.sFormat);
             }
             else
             {
-                file_name=settings->value("ExportFileName",default_exp_file_name).toString().trimmed();
+                file_name = pExportOptions_->sExportFileName;
                 if(file_name.isEmpty())
                     file_name=default_exp_file_name;
                 file_name = fillParams(file_name,book) + "." + book.sFormat;
-                if(settings->value("transliteration",false).toBool())
+                if(pExportOptions_->bTransliteration)
                     file_name=Transliteration(file_name);
             }
             file_name=dir.path()+"/"+file_name;
         }
 
-        if(convert(buffers, file_name,count,true,mLibs[idCurrentLib].mBooks[listBooks[0]]))
+        if(convert(buffers, file_name,count,mLibs[idCurrentLib].mBooks[listBooks[0]]))
         {
             foreach(uint idBook,listBooks)
                 successful_export_books<<idBook;

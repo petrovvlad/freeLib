@@ -3,15 +3,15 @@
 
 #include <QThread>
 
-#include "common.h"
 #include "SmtpClient/src/smtpclient.h"
 #include "library.h"
+#include "options.h"
 
 class ExportThread : public QObject
 {
     Q_OBJECT
 public:
-    explicit ExportThread(QObject *parent = 0);
+    explicit ExportThread(const ExportOptions *pExportOptions = nullptr);
     void start(QString _export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author);
 
     void start(QString _export_dir, const QStringList &list_books, SendType send);
@@ -29,9 +29,10 @@ private:
     qlonglong IDauthor;
     QString export_dir;
     qlonglong ID_lib;
+    const ExportOptions* pExportOptions_;
     void export_books();
     void export_lib();
-    bool convert(QList<QBuffer *> outbuff, QString file_name, int count, bool remove_old, SBook& book /*book_info &bi*/);
+    bool convert(QList<QBuffer *> outbuff, QString file_name, int count,  SBook& book );
 public slots:
     void break_exp();
     //void smtpError(SmtpError e);

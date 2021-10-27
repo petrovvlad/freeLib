@@ -17,9 +17,9 @@
 
 QString fillParams(QString str, SBook& book);
 
-fb2mobi::fb2mobi()
+fb2mobi::fb2mobi(const ExportOptions *pExportOptions)
 {
-    QSettings *settings=GetSettings();
+    pExportOptions_ = pExportOptions;
     need_page_break=false;
     first_body=true;
     header=false;
@@ -27,7 +27,6 @@ fb2mobi::fb2mobi()
     current_header_level=0;
     current_section_level=0;
     first_header_in_body=false;
-    dropcaps=settings->value("dropcaps").toBool();
     nodropcaps="'\"-.…0123456789‒–—";
     toc_index=0;
     toctitle=tr("Contents");
@@ -37,7 +36,6 @@ fb2mobi::fb2mobi()
     subheader=false;
     annotation=false;
     toc_max_level=1000000;
-    authorstring=default_author_name;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
         tmp_dir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
     tmp_dir+="/freeLib";
@@ -46,19 +44,16 @@ fb2mobi::fb2mobi()
     annotation_title=tr("Abstract");
     notes_title=tr("Notes");
 
-    bookseriestitle=default_book_title;
-    if(!settings->value("bookseriestitle").toString().isEmpty())
-        bookseriestitle=settings->value("bookseriestitle").toString();
-    if(!settings->value("authorstring").toString().isEmpty())
-        authorstring=settings->value("authorstring").toString();
-    hyphenate=settings->value("hyphenate").toInt();
-    vignette=settings->value("Vignette",0).toInt();
-    break_after_cupture=settings->value("break_after_cupture",true).toBool();
-    notes_mode=settings->value("footnotes",0).toInt();
+    if(!pExportOptions_->sBookSeriesTitle.isEmpty())
+        bookseriestitle = pExportOptions_->sBookSeriesTitle;
+    else
+        bookseriestitle = QStringLiteral(default_book_title);
+    if(! pExportOptions_->sAuthorSring.isEmpty())
+        authorstring = pExportOptions_->sAuthorSring;
+    else
+        authorstring=default_author_name;
     notes_bodies<<"notes"<<"comments";
-    cut_html=settings->value("split_file",true).toBool();
     join_seria=false;
-    //delete settings;
 }
 
 QString test_language(QString language)
@@ -157,7 +152,7 @@ void fb2mobi::parse_description(QDomNode elem)
              }
          }
     }
-    hyphenator.init(test_language(mLibs[idCurrentLib].vLaguages[pBook->idLanguage] /*book_inf->language*/));
+    hyphenator.init(test_language(mLibs[idCurrentLib].vLaguages[pBook->idLanguage] ));
 }
 
 void fb2mobi::parse_binary(QDomNode elem)
@@ -220,7 +215,7 @@ void fb2mobi::parse_section(QDomNode elem)
     current_section_level++;
     need_end_chapter_vignette=true;
     parse_format(elem,"div","section");
-    if(body_name.isEmpty() && vignette>0 && need_end_chapter_vignette)
+    if(body_name.isEmpty() && pExportOptions_->nVignette>0 && need_end_chapter_vignette)
     {
         QString level = QString("h%1").arg(current_header_level <= 6?current_header_level:6);
         QString vignet=get_vignette(level,VIGNETTE_CHAPTER_END);
@@ -236,7 +231,7 @@ void fb2mobi::parse_section(QDomNode elem)
             *buf_current+="</div>";
             current_section_level--;
         }
-        if(cut_html )
+        if(pExportOptions_->bSplitFile )
         {
 
             html_files.last().content+=HTMLFOOT;
@@ -255,7 +250,7 @@ void fb2mobi::parse_section(QDomNode elem)
 QString fb2mobi::get_vignette(QString level,QString type)
 {
     QString result;
-    if(vignette==1)
+    if(pExportOptions_->nVignette == 1)
     {
         if(QFileInfo(tmp_dir+"/OEBPS/pic/"+level.toLower()+type).exists())
             result="";
@@ -279,7 +274,7 @@ QString fb2mobi::get_vignette(QString level,QString type)
             }
         }
     }
-    else if(vignette==2)
+    else if(pExportOptions_->nVignette == 2)
     {
         //qDebug()<<"-";
         QString file="";
@@ -336,11 +331,11 @@ void fb2mobi::parse_note_elem(QDomNode elem)
                }
                else
                {
-                   if(notes_mode==1)
+                   if(pExportOptions_->nFootNotes == 1)
                        notetext+=str.trimmed();
                }
            }
-           if(notes_mode!=1)
+           if(pExportOptions_->nFootNotes != 1)
            {
                   QString* cur=buf_current;
                   buf_current=&notetext;
@@ -398,7 +393,7 @@ void fb2mobi::parse_title(QDomNode elem)
     }
     toc_title=toc_title.trimmed();
 
-    if(break_after_cupture && need_page_break && !cut_html && !parsing_note)
+    if(pExportOptions_->bBreakAfterCupture && need_page_break && !pExportOptions_->bSplitFile  && !parsing_note)
     {
         *buf_current+="<div style=\"page-break-before:always;\"></div>";
         need_page_break=false;
@@ -410,7 +405,7 @@ void fb2mobi::parse_title(QDomNode elem)
         *buf_current+=QString("<div class=\"titleblock\" id=\"%1\">").arg(toc_ref_id);
         if((body_name.isEmpty() || first_body) && first_header_in_body)
         {
-            if(vignette>0 && !toc_title.isEmpty())
+            if(pExportOptions_->nVignette>0 && !toc_title.isEmpty())
             {
                 QString vignet=get_vignette("h0",VIGNETTE_TITLE_BEFORE);
                 if(!vignet.isEmpty())
@@ -418,7 +413,7 @@ void fb2mobi::parse_title(QDomNode elem)
             }
             parse_format(elem, "div", "h0");
             current_header_level = 0;
-            if(vignette>0 && !toc_title.isEmpty())
+            if(pExportOptions_->nVignette>0 && !toc_title.isEmpty())
             {
                 QString vignet=get_vignette("h0",VIGNETTE_TITLE_AFTER);
                 if(!vignet.isEmpty())
@@ -428,14 +423,14 @@ void fb2mobi::parse_title(QDomNode elem)
         else
         {
             QString level = QString("h%1").arg(current_header_level <= 6?current_header_level:6);
-            if(vignette>0 && !toc_title.isEmpty())
+            if(pExportOptions_->nVignette>0 && !toc_title.isEmpty())
             {
                 QString vignet=get_vignette(level,VIGNETTE_TITLE_BEFORE);
                 if(!vignet.isEmpty())
                     *buf_current+=vignet;
             }
             parse_format(elem, "div", level);
-            if(vignette>0 && !toc_title.isEmpty())
+            if(pExportOptions_->nVignette>0 && !toc_title.isEmpty())
             {
                 QString vignet=get_vignette(level,VIGNETTE_TITLE_AFTER);
                 if(!vignet.isEmpty())
@@ -485,17 +480,17 @@ void fb2mobi::parse_image(QDomNode elem)
     if(inline_image_mode)
     {
         if(!img_id.isEmpty())
-            *buf_current+=QString("<img id=\"%1\" class=\"inlineimage\" src=\"img%3/%2\" alt=\"%2\"/>").arg(img_id, image,QString::number(current_book));
+            *buf_current+=QStringLiteral("<img id=\"%1\" class=\"inlineimage\" src=\"img%3/%2\" alt=\"%2\"/>").arg(img_id, image,QString::number(current_book));
         else
-            *buf_current+=QString("<img class=\"inlineimage\" src=\"img%2/%1\" alt=\"%1\"/>").arg(image,QString::number(current_book));
+            *buf_current+=QStringLiteral("<img class=\"inlineimage\" src=\"img%2/%1\" alt=\"%1\"/>").arg(image,QString::number(current_book));
     }
     else
     {
         if(!img_id.isEmpty())
-            *buf_current+=QString("<div id=\"%1\" class=\"image\">").arg(img_id);
+            *buf_current+=QStringLiteral("<div id=\"%1\" class=\"image\">").arg(img_id);
         else
-            *buf_current+=QString("<div class=\"image\">");
-        *buf_current+=QString("<img src=\"img%2/%1\" alt=\"%1\"/>").arg(image,QString::number(current_book));
+            *buf_current+=QStringLiteral("<div class=\"image\">");
+        *buf_current+=QStringLiteral("<img src=\"img%2/%1\" alt=\"%1\"/>").arg(image,QString::number(current_book));
         *buf_current+="</div>";
     }
     parse_format(elem);
@@ -625,7 +620,7 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
     if(!tag.isEmpty())
     {
         dodropcaps=false;
-        if(dropcaps && first_chapter_line && !(header || subheader) && body_name.isEmpty() && tag.toLower()=="p")
+        if(pExportOptions_->bDropCaps && first_chapter_line && !(header || subheader) && body_name.isEmpty() && tag.toLower()=="p")
         {
             if(!no_paragraph)
             {
@@ -638,7 +633,7 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
             }
         }
 
-        if(notes_mode>0 && tag.toLower()=="a" && notes_mode!=3)
+        if(pExportOptions_->nFootNotes>0 && tag.toLower()=="a" && pExportOptions_->nFootNotes!=3)
         {
             QString note_id=href.right(href.length()-1);
             note.clear();
@@ -651,7 +646,7 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
             {
                 current_notes<<note;
                 tag="span";
-                css=QString("%1anchor").arg(notes_mode==1?"inline":"block");
+                css=QStringLiteral("%1anchor").arg(pExportOptions_->nFootNotes==1 ?"inline" :"block");
                 href="";
             }
         }
@@ -659,14 +654,14 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
         QString str;
         str+=QString("<%1").arg(tag);
         if(!css.isEmpty())
-            str+=QString(" class=\"%1\"").arg(css);
-        if(notes_mode==3 && tag.toLower()=="a" && outputFormat=="EPUB")
+            str+=QStringLiteral(" class=\"%1\"").arg(css);
+        if(pExportOptions_->nFootNotes==3 && tag.toLower()=="a" && outputFormat=="EPUB")
         {
-            str+=QString(" epub:type=\"noteref\"");
+            str+=QStringLiteral(" epub:type=\"noteref\"");
         }
         if(!href.isEmpty() && elem.attributes().namedItem("id").isNull())
         {
-            elem.toElement().setAttribute("id",QString("tocref%1").arg(QString::number(toc_index)));
+            elem.toElement().setAttribute("id",QStringLiteral("tocref%1").arg(QString::number(toc_index)));
             toc_index++;
         }
         if(!elem.attributes().namedItem("id").isNull())
@@ -704,13 +699,13 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
         }
         QString hstring;
         QString elem_text=save_html(elem.nodeValue());
-        if(hyphenate>0 && !(header || subheader))
+        if(pExportOptions_->nHyphenate>0 && !(header || subheader))
         {
 
             QStringList sl=elem_text.split(" ");
             foreach (QString str, sl)
             {
-                QString hyp=hyphenator.hyphenate_word(str,(hyphenate==1?SOFT_HYPHEN:CHILD_HYPHEN),hyphenate==1);
+                QString hyp=hyphenator.hyphenate_word(str,(pExportOptions_->nHyphenate==1 ?SOFT_HYPHEN :CHILD_HYPHEN),pExportOptions_->nHyphenate==1);
                 hstring+=" "+hyp;
             }
             hstring.remove(0,1);
@@ -743,7 +738,7 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
             else
                 len=hstring.length();
             len=hstring.left(len).trimmed().length();
-            *buf_current+=QString("<span class=\"dropcaps\">%1</span>").arg(hstring.left(len))+hstring.right(hstring.length()-len);
+            *buf_current+=QStringLiteral("<span class=\"dropcaps\">%1</span>").arg(hstring.left(len))+hstring.right(hstring.length()-len);
             dodropcaps=false;
         }
         else
@@ -819,21 +814,21 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
     if(!tag.isEmpty())
     {
         if(elem.toElement().tagName()!="section")
-            *buf_current+=QString("</%1>").arg(tag);
+            *buf_current+=QStringLiteral("</%1>").arg(tag);
         if(annotation)
         {
-            book_anntotation+=QString("</%1>").arg(tag);
+            book_anntotation+=QStringLiteral("</%1>").arg(tag);
         }
         if(tag=="p")
             inline_image_mode=false;
         if(current_notes.count()>0)
         {
-            if(notes_mode==1) //inline
+            if(pExportOptions_->nFootNotes==1) //inline
             {
-                *buf_current+=QString("<span class=\"inlinenote\">%1</span>").arg(current_notes.at(0).at(1));
+                *buf_current+=QStringLiteral("<span class=\"inlinenote\">%1</span>").arg(current_notes.at(0).at(1));
                 current_notes.clear();
             }
-            else if(notes_mode == 2 && tag == "p")
+            else if(pExportOptions_->nFootNotes == 2 && tag == "p")
             {
                 *buf_current+="<div class=\"blocknote\">";
                 foreach(QStringList note,current_notes)
@@ -851,9 +846,8 @@ void fb2mobi::generate_toc()
 {
     buf=HTMLHEAD;
     buf+="<div class=\"toc\">";
-    buf+=QString("<div class=\"h1\" id=\"toc\">%1</div>").arg(toctitle);
-    QSettings *settings=GetSettings();
-    if(!buf_annotation.isEmpty() && !settings->value("annotation",false).toBool())
+    buf+=QStringLiteral("<div class=\"h1\" id=\"toc\">%1</div>").arg(toctitle);
+    if(!buf_annotation.isEmpty() && !pExportOptions_->bAnnotation)
     {
         buf+=QString("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg("annotation.html", annotation_title);
     }
@@ -867,7 +861,7 @@ void fb2mobi::generate_toc()
                 if(indent==0)
                 {
                     QStringList lines=item.title.split("\n");
-                    buf+=QString("<div class=\"indent0\"><a href=\"%1\">").arg(item.href);
+                    buf+=QStringLiteral("<div class=\"indent0\"><a href=\"%1\">").arg(item.href);
                     foreach(QString line,lines)
                     {
                         if(!line.trimmed().isEmpty())
@@ -876,16 +870,16 @@ void fb2mobi::generate_toc()
                     buf+="</a></div>";
                 }
                 else
-                    buf+=QString("<div class=\"indent%1\"><a href=\"%2\">%3</a></div>").arg(QString::number(indent), item.href, save_html(item.title));
+                    buf+=QStringLiteral("<div class=\"indent%1\"><a href=\"%2\">%3</a></div>").arg(QString::number(indent), item.href, save_html(item.title));
             }
             else
-                buf+=QString("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg(item.href, save_html(item.title));
+                buf+=QStringLiteral("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg(item.href, save_html(item.title));
         }
     }
 
 
     buf+="</div>";
-    buf+=QString("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg("annotation.html", notes_title);
+    buf+=QStringLiteral("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg("annotation.html", notes_title);
     buf+=HTMLFOOT;
 }
 
@@ -900,29 +894,26 @@ void fb2mobi::generate_ncx()
             "</docTitle>"
             "<navMap>";
     int i=1;
-    QSettings *settings=GetSettings();
-    if(!buf_annotation.isEmpty() && !settings->value("annotation",false).toBool())
+    if(!buf_annotation.isEmpty() && !pExportOptions_->bAnnotation)
     {
-        buf+=QString("<navPoint id=\"annotation\" playOrder=\"%1\">").arg(QString::number(i));
-        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(annotation_title);
-        buf+=QString("<content src=\"annotation.html\" />");
-        buf+=QString("</navPoint>");
+        buf+=QStringLiteral("<navPoint id=\"annotation\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QStringLiteral("<navLabel><text>%1</text></navLabel>").arg(annotation_title);
+        buf+=QStringLiteral("<content src=\"annotation.html\" />");
+        buf+=QStringLiteral("</navPoint>");
         i++;
     }
-    if(settings->value("content_placement",0).toInt()==1)
+    if(pExportOptions_->nContentPlacement == 1)
     {
         // Включим содержание в навигацию джойстиком
-        buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
-        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(toctitle);
-        buf+=QString("<content src=\"toc.html\" />");
-        buf+=QString("</navPoint>");
+        buf+=QStringLiteral("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+        buf+=QStringLiteral("<navLabel><text>%1</text></navLabel>").arg(toctitle);
+        buf+=QStringLiteral("<content src=\"toc.html\" />");
+        buf+=QStringLiteral("</navPoint>");
         i++;
     }
     int current_level=-1;
-    bool flat=!settings->value("ml_toc",false).toBool();
-    int maxLevel=settings->value("MAXcaptionLevel",2).toInt();
     QList<STOC> tmp_toc=toc;
-    if(!flat)
+    if(pExportOptions_->bMlToc)
     {
         //считаем количество заголовков каждого уровня
         QMap<int,int> LevelsCount;
@@ -936,7 +927,7 @@ void fb2mobi::generate_ncx()
 
         //находим maxLevel уровней с максимальным количеством заголовков
         QList<int> levelsList;
-        for(int i=0;i<maxLevel;i++)
+        for(int i=0;i<pExportOptions_->nMaxCaptionLevel;i++)
         {
             int curMaxCount=0;
             int maxKey=0;
@@ -978,46 +969,47 @@ void fb2mobi::generate_ncx()
     }
     foreach(STOC item,tmp_toc)
     {
-        if(!flat)
+        if(pExportOptions_->bMlToc)
         {
             while(current_level>item.level)
             {
-                buf+=QString("</navPoint>");
+                buf += QStringLiteral("</navPoint>");
                 current_level--;
             }
             if(current_level==item.level)
-                buf+=QString("</navPoint>\n");
+                buf += QStringLiteral("</navPoint>\n");
         }
-        buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
-        buf+=QString("<navLabel><text>%1</text></navLabel>").arg(save_html(item.title));
-        buf+=QString("<content src=\"%1\" />").arg(item.href);
-        if(flat)
-            buf+=QString("</navPoint>\n");
+        buf += QStringLiteral("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+        buf += QStringLiteral("<navLabel><text>%1</text></navLabel>").arg(save_html(item.title));
+        buf += QStringLiteral("<content src=\"%1\" />").arg(item.href);
+        if(!pExportOptions_->bMlToc)
+            buf+=QStringLiteral("</navPoint>\n");
         current_level=item.level;
         i++;
     }
-    while(current_level>=0 && !flat)
+    while(current_level>=0 && pExportOptions_->bMlToc)
     {
-        buf+=QString("</navPoint>");
+        buf += QStringLiteral("</navPoint>");
         current_level--;
     }
 
 
-    if(settings->value("content_placement",0).toInt()==2)
+    if(pExportOptions_->nContentPlacement == 2)
     {
         // Включим содержание в навигацию джойстиком
         if( i > 1)
         {
-            buf+=QString("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
-            buf+=QString("<navLabel><text>%1</text></navLabel>").arg(toctitle);
-            buf+=QString("<content src=\"toc.html\" />");
-            buf+=QString("</navPoint>");
+            buf += QStringLiteral("<navPoint id=\"navpoint%1\" playOrder=\"%1\">").arg(QString::number(i));
+            buf += QStringLiteral("<navLabel><text>%1</text></navLabel>").arg(toctitle);
+            buf += QStringLiteral("<content src=\"toc.html\" />");
+            buf += QStringLiteral("</navPoint>");
             i++;
         }
     }
 
-    buf+=QString("</navMap></ncx>");
+    buf += QStringLiteral("</navMap></ncx>");
 }
+
 void fb2mobi::generate_ncx_epub()
 {
     buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
@@ -1124,7 +1116,6 @@ void fb2mobi::generate_opf_epub()
     buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
     buf+="<package xmlns=\"http://www.idpf.org/2007/opf\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" unique-identifier=\"bookid\" version=\"2.0\">";
     buf+=QString("<metadata xmlns:opf=\"http://www.idpf.org/2007/opf\">");
-    QSettings *settings=GetSettings();
     if(pBook->idSerial==0/*book_inf->seria==""*/)
         buf+=QString("<dc:title>%1</dc:title>").arg(pBook->sName/*book_inf->title*/);
     else
@@ -1132,7 +1123,7 @@ void fb2mobi::generate_opf_epub()
 
         QString title = bookseriestitle;
         title=fillParams(title,*pBook);
-        if(settings->value("seriaTranslit",false).toBool())
+        if(pExportOptions_->bSeriaTranslit)
             title=Transliteration(title);
         buf+=QString("<dc:title>%1</dc:title>").arg(title);
      }
@@ -1148,7 +1139,7 @@ void fb2mobi::generate_opf_epub()
     buf+=QString("</metadata>");
     buf+=QString("<manifest>"
                      "<item id=\"ncx\" media-type=\"application/x-dtbncx+xml\" href=\"toc.ncx\"/>");
-    buf+=((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<item id=\"annotation\" media-type=\"application/xhtml+xml\" href=\"annotation.html\"/>");
+    buf+=((buf_annotation.isEmpty() || pExportOptions_->bAnnotation)?"":"<item id=\"annotation\" media-type=\"application/xhtml+xml\" href=\"annotation.html\"/>");
     buf+=(book_cover.isEmpty()?"":QString("<item id=\"cover-image\" href=\"%1\" media-type=\"%2\"/>").arg(book_cover,MIME_TYPE(QFileInfo(book_cover).suffix())));
     QString spine_files;
     int i=0;
@@ -1161,7 +1152,7 @@ void fb2mobi::generate_opf_epub()
         }
         i++;
     }
-    if(settings->value("content_placement",0)!=0)
+    if(pExportOptions_->nContentPlacement != 0)
     {
         buf+="<item id=\"toc\" media-type=\"application/xhtml+xml\" href=\"toc.html\"/>"
         "<item id=\"css\" href=\"css/main.css\" media-type=\"text/css\"/>";
@@ -1189,19 +1180,19 @@ void fb2mobi::generate_opf_epub()
 
     buf+=QString("</manifest>")+
             "<spine toc=\"ncx\">"+
-            (settings->value("content_placement",0).toInt()==1?"<itemref idref=\"toc\"/>":"")+
-            +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<itemref idref=\"annotation\"/>")+
+            (pExportOptions_->nContentPlacement == 1 ?QStringLiteral("<itemref idref=\"toc\"/>"): QLatin1String(""))+
+            +((buf_annotation.isEmpty() || pExportOptions_->bAnnotation) ?"": "<itemref idref=\"annotation\"/>")+
             spine_files+
-            (settings->value("content_placement",0).toInt()==2?"<itemref idref=\"toc\"/>":"")+
+            (pExportOptions_->nContentPlacement == 2 ?QStringLiteral("<itemref idref=\"toc\"/>") :QLatin1String(""))+
             "</spine>"
             "</package>";
 }
 
 void fb2mobi::generate_opf()
 {
+    Q_CHECK_PTR(pExportOptions_);
     buf="<?xml version=\"1.0\" encoding=\"utf-8\"?>";
     buf+="<package><metadata><dc-metadata xmlns:dc=\"http://\">";
-    QSettings* settings=GetSettings();
     if(pBook->idSerial==0/*book_inf->seria==""*/)
         buf+=QString("<dc:Title>%1</dc:Title>").arg(pBook->sName/*book_inf->title*/);
     else
@@ -1214,7 +1205,7 @@ void fb2mobi::generate_opf()
 
         QString title = bookseriestitle;
         title=fillParams(title,*pBook);
-        if(settings->value("seriaTranslit",false).toBool())
+        if(pExportOptions_->bSeriaTranslit)
             title=Transliteration(title);
 
         buf+=QString("<dc:Title>%1</dc:Title>").arg(title);
@@ -1228,7 +1219,7 @@ void fb2mobi::generate_opf()
     buf+=QString("</x-metadata></dc-metadata></metadata>");
     buf+=QString(QString("<manifest>")+
                      "<item id=\"ncx\" media-type=\"application/x-dtbncx+xml\" href=\"toc.ncx\"/>"
-                     +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<item id=\"annotation\" media-type=\"text/x-oeb1-document\" href=\"annotation.html\"/>"));
+                     +((buf_annotation.isEmpty() || pExportOptions_->bAnnotation) ?QLatin1String("") :QStringLiteral("<item id=\"annotation\" media-type=\"text/x-oeb1-document\" href=\"annotation.html\"/>")));
 
     int i=0;
     QString spine_files;
@@ -1239,21 +1230,21 @@ void fb2mobi::generate_opf()
         i++;
     }
 
-    buf+=QString((settings->value("content_placement",0).toInt()!=0?"<item id=\"content\" media-type=\"text/x-oeb1-document\" href=\"toc.html\"/>":""))+
+    buf+=QString((pExportOptions_->nContentPlacement != 0?"<item id=\"content\" media-type=\"text/x-oeb1-document\" href=\"toc.html\"/>":""))+
                      "</manifest>"
                      "<spine toc=\"ncx\">"+
-                    (settings->value("content_placement",0).toInt()==1?"<itemref idref=\"content\"/>":"")+
-                     +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<itemref idref=\"annotation\"/>")+
+                     (pExportOptions_->nContentPlacement == 1 ?QStringLiteral("<itemref idref=\"content\"/>") :QLatin1String(""))
+                     +((buf_annotation.isEmpty() || pExportOptions_->bAnnotation) ?QLatin1String("") :QStringLiteral("<itemref idref=\"annotation\"/>"))+
                      spine_files+
-                    (settings->value("content_placement",0).toInt()==2?"<itemref idref=\"content\"/>":"")+
-                     "</spine>"
-                     "<guide>"
-                     +((buf_annotation.isEmpty() || settings->value("annotation",false).toBool())?"":"<reference type=\"other.intro\" title=\"Annotation\" href=\"annotation.html\"/>")+
-                     (settings->value("content_placement",0).toInt()==1?"<itemref idref=\"content\"/>":"")+
-                     QString("<reference type=\"text\" title=\"Book\" href=\"%1\"/>").arg(html_files.first().file_name)+
-                     (settings->value("content_placement",0).toInt()==2?"<itemref idref=\"content\"/>":"")+
-                     "</guide>"
-                     "</package>";
+                     (pExportOptions_->nContentPlacement == 2 ?QStringLiteral("<itemref idref=\"content\"/>") :QLatin1String(""))+
+                     QStringLiteral("</spine>"
+                     "<guide>")
+                     +((buf_annotation.isEmpty() || pExportOptions_->bAnnotation) ?QLatin1String("") :QStringLiteral("<reference type=\"other.intro\" title=\"Annotation\" href=\"annotation.html\"/>"))+
+                     (pExportOptions_->nContentPlacement == 1 ?QStringLiteral("<itemref idref=\"content\"/>") :QLatin1String(""))+
+                     QStringLiteral("<reference type=\"text\" title=\"Book\" href=\"%1\"/>").arg(html_files.first().file_name)+
+                     (pExportOptions_->nContentPlacement == 2 ?QStringLiteral("<itemref idref=\"content\"/>") :QLatin1String(""))+
+                     QStringLiteral("</guide>"
+                     "</package>");
 }
 
 void fb2mobi::generate_html(QFile *file)
@@ -1289,7 +1280,7 @@ void fb2mobi::generate_html(QFile *file)
         }
     }
 
-    if((notes_mode==0 || notes_mode==3) && notes_dict.count()>0)
+    if((pExportOptions_->nFootNotes==0 || pExportOptions_->nFootNotes==3) && notes_dict.count()>0)
     {
         int index=0;
         QString tmp="footnotes%1.html";
@@ -1309,11 +1300,11 @@ void fb2mobi::generate_html(QFile *file)
 
         }
         html_files<<html_content(tmp.arg(QString::number(index)));
-        STOC c_toc={QString("%1#%2").arg(html_files.last().file_name,QString("fn%1").arg(QString::number(toc_index))),tr("Footnotes"),1,body_name,""};
+        STOC c_toc={QString("%1#%2").arg(html_files.last().file_name,QStringLiteral("fn%1").arg(QString::number(toc_index))),tr("Footnotes"),1,body_name,""};
         toc<<c_toc;
         QString* str=&html_files.last().content;
         *str+=HTMLHEAD;
-        *str+=QString("<a name='fn%1'></a>").arg(QString::number(toc_index));
+        *str+=QStringLiteral("<a name='fn%1'></a>").arg(QString::number(toc_index));
         toc_index++;
         for(int i=0;i<notes_dict.count();i++)
         {
@@ -1331,22 +1322,22 @@ void fb2mobi::generate_html(QFile *file)
                 }
             }
             QString title=notes_dict[i].second[0].isEmpty()?"^":notes_dict[i].second[0];
-            if(notes_mode==3)
+            if(pExportOptions_->nFootNotes==3)
             {
                 if(outputFormat=="EPUB")
-                    *str+=QString("<div epub:type=\"footnote\" id=\"%1\">").arg(id);
+                    *str+=QStringLiteral("<div epub:type=\"footnote\" id=\"%1\">").arg(id);
                 else
-                    *str+=QString("<div id=\"%1\"><div class=\"titlenotes\"><a href=\"%2\">[%3] </a></div>").arg(id,href,title);
+                    *str+=QStringLiteral("<div id=\"%1\"><div class=\"titlenotes\"><a href=\"%2\">[%3] </a></div>").arg(id,href,title);
             }
             else
             {
                 if(outputFormat=="EPUB")
-                    *str+=QString("<div class=\"titlenotes\" id=\"%1\"><a href=\"%2\">[%3] </a></div>").arg(id,href,title);
+                    *str+=QStringLiteral("<div class=\"titlenotes\" id=\"%1\"><a href=\"%2\">[%3] </a></div>").arg(id,href,title);
                 else
-                    *str+=QString("<div class=\"titlenotes\" id=\"%1\">%2</div>").arg(id,title);
+                    *str+=QStringLiteral("<div class=\"titlenotes\" id=\"%1\">%2</div>").arg(id,title);
             }
             *str+=notes_dict[i].second[1];
-            if(notes_mode==3)
+            if(pExportOptions_->nFootNotes==3)
                 *str+="</div>";
             *str+="<div style=\"page-break-before:always;\"></div>";
             if(str->length()>10000)
@@ -1376,10 +1367,10 @@ void fb2mobi::generate_html(QFile *file)
 
 QString fb2mobi::GenerateAZW3(QString file)
 {
+    Q_CHECK_PTR(pExportOptions_);
     mobiEdit me(file);
     QString azw3File=file.left(file.length()-4)+"azw3";
-    QSettings *settings=GetSettings();
-    if(!me.SaveAZW(azw3File,settings->value("removePersonal",false).toBool(),settings->value("repairCover",true).toBool()))
+    if(!me.SaveAZW(azw3File, pExportOptions_->bRemovePersonal, pExportOptions_->bRepairCover))
         return file;
     QFile().remove(file);
     return azw3File;
@@ -1387,10 +1378,10 @@ QString fb2mobi::GenerateAZW3(QString file)
 
 QString fb2mobi::GenerateMOBI7(QString file)
 {
+    Q_CHECK_PTR(pExportOptions_);
     mobiEdit me(file);
     QString mobi7File=file.left(file.length()-4)+"mobi";
-    QSettings *settings=GetSettings();
-    if(!me.SaveMOBI7(mobi7File,settings->value("removePersonal",false).toBool(),settings->value("repairCover",true).toBool()))
+    if(!me.SaveMOBI7(mobi7File, pExportOptions_->bRemovePersonal, pExportOptions_->bRepairCover))
         return file;
     return mobi7File;
 }
@@ -1671,22 +1662,21 @@ struct fontfamily
     }
 };
 
-QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &book)
+QString fb2mobi::convert(QStringList files, SBook &book)
 {
-    QSettings *settings=GetSettings();
-
-    //book_inf=&book;
     pBook = &book;
-    outputFormat=format;
+    outputFormat = pExportOptions_->sOutputFormat;
     if(files.count()==1)
     {
         fb2file.setFile(files.first());
         QString out_file;
-        if(fb2file.suffix().toLower()=="epub" && (format=="MOBI" || format=="AZW3"))
+        if(fb2file.suffix().toLower() == QStringLiteral("epub") &&
+                (pExportOptions_->sOutputFormat == QStringLiteral("MOBI") ||
+                 pExportOptions_->sOutputFormat == QStringLiteral("AZW3")))
         {
             QProcess::execute(QApplication::applicationDirPath()+"/xsl/kindlegen",QStringList()<<tmp_dir+"/"+fb2file.fileName());
             out_file=tmp_dir+"/"+fb2file.completeBaseName()+".mobi";
-            if(format=="AZW3")
+            if(pExportOptions_->sOutputFormat == QStringLiteral("AZW3"))
             {
                 out_file=GenerateAZW3(out_file);
             }
@@ -1699,22 +1689,21 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
     dir.mkpath(tmp_dir+"/OEBPS");
     dir.mkpath(tmp_dir+"/OEBPS/css");
     QFile::copy(QApplication::applicationDirPath()+"/xsl/css/style.css",tmp_dir+"/OEBPS/css/main.css");
-    if(settings->value("userCSS",false).toBool())
+    if(pExportOptions_->bUserCSS)
     {
-        QString userCSS=settings->value("UserCSStext","").toString();
-        if(!userCSS.isEmpty())
+        if(!pExportOptions_->sUserCSS.isEmpty())
         {
             QFile file(tmp_dir+"/OEBPS/css/main.css");
             file.remove();
             if(file.open(QFile::WriteOnly))
             {
-                file.write(userCSS.toUtf8());
+                file.write(pExportOptions_->sUserCSS.toUtf8());
                 file.close();
             }
         }
     }
     dir.mkpath(tmp_dir+"/OEBPS/pic");
-    if(vignette>0)
+    if(pExportOptions_->nVignette>0)
     {
         dir.setPath(QApplication::applicationDirPath()+"/xsl/img");
         QFileInfoList list = dir.entryInfoList();
@@ -1727,23 +1716,23 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
     QString HomeDir="";
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString db_path=QFileInfo(settings->value("database_path",HomeDir+"/freeLib/freeLib.sqlite").toString()).absolutePath()+"/fonts";
+    QString db_path=QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
 
     QFile css(tmp_dir+"/OEBPS/css/main.css");
     css.open(QFile::Append);
-    int count=settings->beginReadArray("fonts");
+    int count = pExportOptions_->vFontExportOptions.count();
     QStringList fonts;
     QList<fontfamily> fonts_set;
     for(int i=0;i<count;i++)
     {
-        settings->setArrayIndex(i);
-        if(settings->value("use").toBool())
+        const FontExportOptions &fontExportOptions = pExportOptions_->vFontExportOptions.at(i);
+        if(fontExportOptions.bUse)
         {
             dir.mkpath(tmp_dir+"/OEBPS/fonts");
             fontfamily set;
             for(int j=0;j<4;j++)
             {
-                QString font_file=settings->value(j==0?"font":j==1?"font_b":j==2?"font_i":j==3?"font_bi":"").toString();
+                QString font_file = j==0 ?fontExportOptions.sFont :j==1 ?fontExportOptions.sFontB :j==2 ?fontExportOptions.sFontI :j==3 ?fontExportOptions.sFontBI :QLatin1String("");
                 int index=fonts.indexOf(font_file);
                 if(index<0 && !font_file.isEmpty())
                 {
@@ -1776,15 +1765,16 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
                 else if(j==3)
                     set.font_bi=index;
             }
-            int tag_id=settings->value("tag").toInt();
-            set.tags[tag_list[tag_id].css]=settings->value("fontSize").toString();
+            int tag_id = fontExportOptions.nTag;
+            QString sFontSize = QString::number(fontExportOptions.nFontSize);
+            set.tags[tag_list[tag_id].css] = sFontSize;
             bool find=false;
             for (int j=0;j<fonts_set.count();j++)
             {
                 if(fonts_set[j]==set)
                 {
                     find=true;
-                    fonts_set[j].tags[tag_list[tag_id].css]=settings->value("fontSize").toString();
+                    fonts_set[j].tags[tag_list[tag_id].css] = sFontSize;
                     break;
                 }
             }
@@ -1815,7 +1805,6 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
             }
         }
     }
-    settings->endArray();
     int font_index=0;
     foreach (fontfamily set_i, fonts_set)
     {
@@ -1855,13 +1844,13 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
     QTextStream ts(&f);
     foreach (html_content html, html_files)
     {
-        QString html_file=tmp_dir+QString("/OEBPS/%1").arg(html.file_name);
+        QString html_file=tmp_dir+QStringLiteral("/OEBPS/%1").arg(html.file_name);
         f.setFileName(html_file);
         f.open(QIODevice::WriteOnly);
         ts<<html.content;
         f.close();
     }
-    if(settings->value("repairCover",true).toBool() && !book_cover.isEmpty())
+    if(pExportOptions_->bRepairCover && !book_cover.isEmpty())
     {
         QImage img(tmp_dir+"/OEBPS/"+book_cover);
         img=img.convertToFormat(QImage::Format_RGB32);
@@ -1911,23 +1900,23 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
             img_new.save(tmp_dir+"/OEBPS/"+book_cover);
         }
     }
-    if(settings->value("addCoverLabel",false).toBool() || settings->value("createCover",false).toBool())
+    if(pExportOptions_->bAddCoverLabel || pExportOptions_->bCreateCover)
     {
         QString abbr = "";
-        foreach(QString str,/*book_inf->seria*/mLibs[idCurrentLib].mSerials[pBook->idSerial].sName.split(" "))
+        foreach(QString str,mLibs[idCurrentLib].mSerials[pBook->idSerial].sName.split(" "))
             abbr+=str.left(1);
         //qDebug()<<book_inf->seria;
-        QString title = settings->value("coverLabel").toString();
+        QString title = pExportOptions_->sCoverLabel;
         if(title.isEmpty())
             title=default_cover_label;
         title=fillParams(title,*pBook);
-        if(pBook->numInSerial==0 || !settings->value("addCoverLabel",false).toBool())
+        if(pBook->numInSerial==0 || !pExportOptions_->bAddCoverLabel)
             title="";
         InsertSeriaNumberToCover(title,
-                                 (settings->value("createCaverAlways",false).toBool()?cc_always:(settings->value("createCover",false).toBool()?cc_if_not_exists:cc_no)));
+                                 (pExportOptions_->bCreateCoverAlways ?cc_always :(pExportOptions_->bCreateCover ?cc_if_not_exists :cc_no)));
     }
     generate_toc();
-    if(settings->value("content_placement",0).toInt()!=0)
+    if(pExportOptions_->nContentPlacement != 0)
     {
         QString toc_file=tmp_dir+"/OEBPS/toc.html";;
         f.setFileName(toc_file);
@@ -1936,7 +1925,7 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
         f.close();
     }
 
-    if(!buf_annotation.isEmpty() && !settings->value("annotation",false).toBool())
+    if(!buf_annotation.isEmpty() && !pExportOptions_->bAnnotation)
     {
         QString annotation_file=tmp_dir+"/OEBPS/annotation.html";
         f.setFileName(annotation_file);
@@ -1945,7 +1934,9 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
         f.close();
     }
 
-    if(format=="MOBI" || format=="AZW3" || format=="MOBI7")
+    if(pExportOptions_->sOutputFormat == QStringLiteral("MOBI") ||
+            pExportOptions_->sOutputFormat == QStringLiteral("AZW3") ||
+            pExportOptions_->sOutputFormat == QStringLiteral("MOBI7"))
         generate_ncx();
     else
         generate_ncx_epub();
@@ -1955,7 +1946,9 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
     ts<<buf;
     f.close();
 
-    if(format=="MOBI" || format=="AZW3" || format=="MOBI7")
+    if(pExportOptions_->sOutputFormat == QStringLiteral("MOBI") ||
+            pExportOptions_->sOutputFormat == QStringLiteral("AZW3") ||
+            pExportOptions_->sOutputFormat == QStringLiteral("MOBI7"))
         generate_opf();
     else
         generate_opf_epub();
@@ -1965,20 +1958,22 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
     ts<<buf;
     f.close();
 
-    if(format=="MOBI" || format=="AZW3" || format=="MOBI7")
+    if(pExportOptions_->sOutputFormat == QStringLiteral("MOBI") ||
+            pExportOptions_->sOutputFormat == QStringLiteral("AZW3") ||
+            pExportOptions_->sOutputFormat == QStringLiteral("MOBI7"))
     {
         QProcess::execute(QApplication::applicationDirPath()+"/xsl/kindlegen",QStringList()<<opf_file);
         out_file=tmp_dir+"/OEBPS/book.mobi";
     }
-    if(format=="AZW3")
+    if(pExportOptions_->sOutputFormat == QStringLiteral("AZW3"))
     {
         out_file=GenerateAZW3(out_file);
     }
-    if(format=="MOBI7")
+    if(pExportOptions_->sOutputFormat == QStringLiteral("MOBI7"))
     {
         out_file=GenerateMOBI7(out_file);
     }
-    else if(format=="EPUB")
+    else if(pExportOptions_->sOutputFormat == QStringLiteral("EPUB"))
     {
         if(QDir(tmp_dir+"/OEBPS/pic").entryList(QStringList(),QDir::Files).count()==0)
         {
@@ -2013,7 +2008,7 @@ QString fb2mobi::convert(QStringList files, bool remove, QString format, SBook &
 
         out_file=tmp_dir+"/book.epub";
     }
-    else if(format=="PDF")
+    else if(pExportOptions_->sOutputFormat == QStringLiteral("PDF"))
     {
 
         QWebEnginePage* pdf=new QWebEnginePage();

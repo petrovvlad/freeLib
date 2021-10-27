@@ -6,6 +6,7 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "common.h"
+#include "options.h"
 
 void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
 {
@@ -587,8 +588,7 @@ void ImportThread::process()
         emit End();
         return;
     }
-    QSettings *settings=GetSettings();
-    QFileInfo fi(RelativeToAbsolutePath(settings->value("database_path").toString()));
+    QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
     QString sDbFile=fi.canonicalFilePath();
     QSqlDatabase dbase = QSqlDatabase::addDatabase("QSQLITE","importdb");
     dbase.setDatabaseName(sDbFile);

@@ -1,10 +1,13 @@
 #include "fontframe.h"
-#include "ui_fontframe.h"
+
 #include <QDir>
+#include <QFileDialog>
 #include <QFontDatabase>
 #include <QDebug>
+
+#include "ui_fontframe.h"
 #include "common.h"
-#include <QFileDialog>
+#include "options.h"
 
 
 typedef struct _tagTT_OFFSET_TABLE{
@@ -196,12 +199,11 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
         ui->font_i->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
         ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
     }
-    QString HomeDir="";
+    QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
-    QSettings  *settings=GetSettings();
-    QString db_path=QFileInfo(settings->value("database_path",HomeDir+"/freeLib/freeLib.sqlite").toString()).absolutePath()+"/fonts";
+    QString db_path=QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
     dir.setPath(db_path);
     foreach(QString str,dir.entryList(QStringList()<<"*.ttf",QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable,QDir::Name))
     {

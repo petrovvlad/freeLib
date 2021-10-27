@@ -9,6 +9,7 @@ ExportDlg::ExportDlg(QWidget *parent) :
     connect(ui->AbortButton, &QAbstractButton::clicked, this, &ExportDlg::BreakExport);
     itsOkToClose=false;
     worker=0;
+    pExportOptions_ = nullptr;
 }
 
 ExportDlg::~ExportDlg()
@@ -30,15 +31,15 @@ void ExportDlg::reject()
     }
 }
 
-void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_author)
+void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_author, const ExportOptions &exportOptions)
 {
+    pExportOptions_ = &exportOptions;
     ui->Exporting->setText("0");
-    QSettings* settings=GetSettings();
-    ui->CloseAfter->setChecked(settings->value("CloseExpDlg").toBool());
+    ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0,100);
     QString dir;
-    if(send!=ST_Mail && !settings->value("PostprocessingCopy",false).toBool())
+    if(send!=ST_Mail && !exportOptions.bPostprocessingCopy)
     {
         dir=SelectDir();
         if(dir.isEmpty())
@@ -48,7 +49,7 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
     }
     //qDebug()<<"ok";
     thread = new QThread;
-    worker=new ExportThread;
+    worker=new ExportThread(&exportOptions);
     worker->start(dir,list_books,send,id_author);
     worker->moveToThread(thread);
     connect(worker, &ExportThread::Progress, this, &ExportDlg::Process);
@@ -60,15 +61,12 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
     thread->start();
 
     QDialog::exec();
-    settings->setValue("CloseExpDlg",ui->CloseAfter->checkState()==Qt::Checked);
-    settings->sync();
 }
 
 void ExportDlg::exec(qlonglong id_lib, QString path)
 {
     ui->Exporting->setText("0");
-    QSettings *settings=GetSettings();
-    ui->CloseAfter->setChecked(settings->value("CloseExpDlg").toBool());
+    ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0,0);
 
@@ -85,8 +83,6 @@ void ExportDlg::exec(qlonglong id_lib, QString path)
     thread->start();
 
     QDialog::exec();
-    settings->setValue("CloseExpDlg",ui->CloseAfter->checkState()==Qt::Checked);
-    settings->sync();
 }
 int ExportDlg::exec()
 {
@@ -95,21 +91,10 @@ int ExportDlg::exec()
 
 QString ExportDlg::SelectDir()
 {
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QSettings *settings=GetSettings();
-    QString result=settings->value("DevicePath",HomeDir).toString().trimmed();
-    if(settings->value("askPath",true).toBool() || result.isEmpty())
+    QString result = pExportOptions_->sDevicePath;
+    if(pExportOptions_->bAskPath || result.isEmpty())
     {
-        if(!QDir::setCurrent(settings->value("DevicePath",HomeDir).toString()))
-            QDir::setCurrent(HomeDir);
-        result=QFileDialog::getExistingDirectory(this,tr("Select device directory"));
-    }
-    if(!result.isEmpty())
-    {
-        settings->setValue("DevicePath",result);
-        settings->sync();
+        result=QFileDialog::getExistingDirectory(this,tr("Select device directory"), result);
     }
     return result;
 }

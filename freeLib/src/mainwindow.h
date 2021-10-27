@@ -17,6 +17,7 @@
 #include "dropform.h"
 #include "opds_server.h"
 #include "common.h"
+#include "options.h"
 
 namespace Ui {
 class MainWindow;
@@ -72,8 +73,6 @@ private:
     uint idCurrentGenre_;
     uint idCurrentSerial_;
     uint idCurrentBook_;
-    bool bUseTag_;
-    bool bShowDeleted_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
 
 protected:
@@ -96,8 +95,8 @@ protected:
     void dragMoveEvent(QDragMoveEvent *ev);
     void proc_path(QString path, QStringList *book_list);
     void FillLibrariesMenu();
-    void SendMail();
-    void SendToDevice();
+    void SendMail(const ExportOptions &exportOptions);
+    void SendToDevice(const ExportOptions &exportOptions);
     void changeEvent(QEvent *event);
     void ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide);
 private slots:
@@ -143,7 +142,7 @@ private slots:
 
     //void on_splitter_splitterMoved(int pos, int index);
 
-    void ChangingTrayIcon(int index=-1, int color=-1);
+    void ChangingTrayIcon(int index, int color);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void dockClicked();
     void MinimizeWindow();
