@@ -362,35 +362,9 @@ int main(int argc, char *argv[])
     painter.setPen(Qt::white);
     painter.drawText(QRect(30,140,360,111),Qt::AlignLeft|Qt::AlignVCenter,PROG_VERSION);
 
-    QString HomeDir=QLatin1String("");
+    QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-
-    QPalette darkPalette;
-    darkPalette.setColor(QPalette::Window, QColor("#E0E0E0")); //основной цвет интер
-    darkPalette.setColor(QPalette::WindowText, Qt::black);
-    darkPalette.setColor(QPalette::Base, QColor("#FfFfFf"));
-    darkPalette.setColor(QPalette::AlternateBase, QColor("#F0F0F0"));
-    darkPalette.setColor(QPalette::ToolTipBase, Qt::black);
-    darkPalette.setColor(QPalette::ToolTipText, Qt::black);
-    darkPalette.setColor(QPalette::Text, Qt::black);
-    darkPalette.setColor(QPalette::Button, QColor("#e4e4e4"));
-    darkPalette.setColor(QPalette::ButtonText, Qt::black);
-    //darkPalette.setColor(QPalette::BrightText, Qt::red);
-
-    darkPalette.setColor(QPalette::Light, QColor("#c0c0c0"));
-    darkPalette.setColor(QPalette::Midlight, QColor("#b0b0b0"));
-    darkPalette.setColor(QPalette::Dark, QColor("#a0a0a0a"));
-    darkPalette.setColor(QPalette::Mid, QColor("#909090"));
-    darkPalette.setColor(QPalette::Shadow, QColor("#707070"));
-
-    darkPalette.setColor(QPalette::Highlight, QColor("#0B61A4"));
-    darkPalette.setColor(QPalette::HighlightedText, Qt::white);
-
-    //darkPalette.setColor(QPalette::Link, QColor(42, 130, 218));
-    //darkPalette.setColor(QPalette::LinkVisited, QColor(42, 130, 218));
-
-    //a.setPalette(darkPalette);
 
     translator=nullptr;
     translator_qt=nullptr;
