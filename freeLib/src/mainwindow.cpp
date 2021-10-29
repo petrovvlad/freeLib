@@ -1212,7 +1212,7 @@ void MainWindow::onSerachAuthorsChanded(const QString &str)
     else
     {
         last_search_symbol=str.left(1);
-        if((last_search_symbol==QLatin1String("*") || last_search_symbol==QLatin1String("#") ) && str>1)
+        if((last_search_symbol==QLatin1String("*") || last_search_symbol==QLatin1String("#") ) && str.length()>1)
         {
             ui->searchAuthor->setText(str.right(str.length()-1));
         }
