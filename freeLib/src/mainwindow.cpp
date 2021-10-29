@@ -483,7 +483,7 @@ void MainWindow::set_tag()
     uint id;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
-    if(current_list_for_tag==qobject_cast<QObject*>(ui->Books))
+    if(current_list_for_tag == ui->Books)
     {
         QTreeWidgetItem* item=ui->Books->selectedItems()[0];
         id=item->data(0,Qt::UserRole).toUInt();
@@ -519,7 +519,7 @@ void MainWindow::set_tag()
             break;
         }
     }
-    else if(current_list_for_tag==qobject_cast<QObject*>(ui->AuthorList))
+    else if(current_list_for_tag == ui->AuthorList)
     {
         id=ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toUInt();
         update_list_pix(id,1,tag_id);
@@ -529,7 +529,7 @@ void MainWindow::set_tag()
         query.exec();
         mLibs[idCurrentLib].mAuthors[id].nTag = tag_id;
     }
-    else if(current_list_for_tag==qobject_cast<QObject*>(ui->SeriaList))
+    else if(current_list_for_tag == ui->SeriaList)
     {
         id=ui->SeriaList->selectedItems()[0]->data(Qt::UserRole).toUInt();
         update_list_pix(id,2 ,tag_id);
@@ -1098,7 +1098,7 @@ void MainWindow::SelectBook()
                 replace(QLatin1String("#file_name#"),fi.fileName()).
                 replace(QLatin1String("#image#"),book.sImg).
                 replace(QLatin1String("#file_info#"),settings->value(QStringLiteral("show_fileinfo"),true).toBool()?QStringLiteral("block"):QStringLiteral("none"));
-        dynamic_cast<WebPage*>(ui->Review->page())->setHtml(content);
+        qobject_cast<WebPage*>(ui->Review->page())->setHtml(content);
     }
 }
 
@@ -1263,15 +1263,15 @@ void MainWindow::HelpDlg()
 
 void MainWindow::ContextMenu(QPoint point)
 {
-    if(QObject::sender()==qobject_cast<QObject*>(ui->Books) && !ui->Books->itemAt(point))
+    if(QObject::sender() == ui->Books && !ui->Books->itemAt(point))
         return;
-    if(QObject::sender()==qobject_cast<QObject*>(ui->AuthorList) && !ui->AuthorList->itemAt(point))
+    if(QObject::sender() == ui->AuthorList && !ui->AuthorList->itemAt(point))
         return;
-    if(QObject::sender()==qobject_cast<QObject*>(ui->SeriaList) && !ui->SeriaList->itemAt(point))
+    if(QObject::sender() == ui->SeriaList && !ui->SeriaList->itemAt(point))
         return;
     QMenu menu;
     current_list_for_tag=QObject::sender();
-    if(QObject::sender()==qobject_cast<QObject*>(ui->Books))
+    if(QObject::sender() == ui->Books)
     {
         QMenu *save=menu.addMenu(tr("Save as"));
         foreach (QAction* i, ui->btnExport->menu()->actions())

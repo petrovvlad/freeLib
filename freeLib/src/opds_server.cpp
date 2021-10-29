@@ -2248,7 +2248,7 @@ void opds_server::server_run(int _port)
 
 void opds_server::slotRead()
 {
-    QTcpSocket* clientSocket = dynamic_cast<QTcpSocket*>(sender());
+    QTcpSocket* clientSocket = qobject_cast<QTcpSocket*>(sender());
     if(clientSocket->bytesAvailable()==0)
         return;
     qintptr idusersocs=clientSocket->socketDescriptor();
