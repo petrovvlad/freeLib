@@ -41,7 +41,7 @@ bool SetCurrentZipFileName(QuaZip *zip,QString name)
 
 QString RelativeToAbsolutePath(QString path)
 {
-    if(QDir(path).isRelative() && path.indexOf("%")<0 && !path.startsWith("mtp:/"))
+    if(QDir(path).isRelative() && path.indexOf(QLatin1String("%"))<0 && !path.startsWith(QLatin1String("mtp:/")))
     {
         return app->applicationDirPath()+"/"+path;
     }
@@ -92,56 +92,56 @@ void setProxy()
 QString fillParams(QString str, SBook& book)
 {
     QString result=str;
-    QString abbr = "";
-    foreach(QString str,mLibs[idCurrentLib].mSerials[book.idSerial].sName.split(" "))
+    QString abbr = QLatin1String("");
+    foreach(QString str,mLibs[idCurrentLib].mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
     {
         if(!str.isEmpty())
                 abbr += str.at(0);
     }
-    result.replace("%abbrs", abbr.toLower());
-    result.replace("%app_dir",QApplication::applicationDirPath()+"/");
+    result.replace(QLatin1String("%abbrs"), abbr.toLower());
+    result.replace(QLatin1String("%app_dir"),QApplication::applicationDirPath()+"/");
 
     result
     //        .replace("%fn",book_file.completeBaseName()).
     //        replace("%d",book_file.absoluteDir().path()).
-            .replace("%app_dir",QApplication::applicationDirPath()+"/");
+            .replace(QLatin1String("%app_dir"),QApplication::applicationDirPath()+"/");
     //result.removeOne("%no_point");
     SAuthor& sFirstAuthor = mLibs[idCurrentLib].mAuthors[book.idFirstAuthor];
 
     qDebug()<<sFirstAuthor.getName();
     qDebug()<<str;
-    result.replace("%fi",sFirstAuthor.sFirstName.left(1)+(sFirstAuthor.sFirstName.isEmpty() ?"" :".")).
-            replace("%mi",sFirstAuthor.sMiddleName.left(1)+(sFirstAuthor.sMiddleName.isEmpty() ?"" :".")).
-            replace("%li",sFirstAuthor.sLastName.left(1)+(sFirstAuthor.sLastName.isEmpty() ?"" :".")).
-            replace("%nf",sFirstAuthor.sFirstName.trimmed()).
-            replace("%nm",sFirstAuthor.sMiddleName.trimmed()).
-            replace("%nl",sFirstAuthor.sLastName.trimmed());
+    result.replace(QLatin1String("%fi"),sFirstAuthor.sFirstName.left(1)+(sFirstAuthor.sFirstName.isEmpty() ?"" :".")).
+            replace(QLatin1String("%mi"),sFirstAuthor.sMiddleName.left(1)+(sFirstAuthor.sMiddleName.isEmpty() ?"" :".")).
+            replace(QLatin1String("%li"),sFirstAuthor.sLastName.left(1)+(sFirstAuthor.sLastName.isEmpty() ?"" :".")).
+            replace(QLatin1String("%nf"),sFirstAuthor.sFirstName.trimmed()).
+            replace(QLatin1String("%nm"),sFirstAuthor.sMiddleName.trimmed()).
+            replace(QLatin1String("%nl"),sFirstAuthor.sLastName.trimmed());
 
     //result.replace("%f",book_file.absoluteFilePath());
 
-    result = result.replace("%s",mLibs[idCurrentLib].mSerials[book.idSerial].sName)
-            .replace("%b",book.sName)
-            .replace("%a",sFirstAuthor.getName())
-            .replace(","," ").trimmed();
+    result = result.replace(QLatin1String("%s"),mLibs[idCurrentLib].mSerials[book.idSerial].sName)
+            .replace(QLatin1String("%b"),book.sName)
+            .replace(QLatin1String("%a"),sFirstAuthor.getName())
+            .replace(QLatin1String(","),QLatin1String(" ")).trimmed();
     QString num_in_seria=QString::number(book.numInSerial);
 //    for(int i=0;i<result.count();i++)
 //    {
-        if(result.contains("%n"))
+        if(result.contains(QLatin1String("%n")))
         {
-            int len=result.mid(result.indexOf("%n")+2,1).toInt();
+            int len=result.mid(result.indexOf(QLatin1String("%n"))+2,1).toInt();
             QString zerro;
             if(book.numInSerial==0)
-                result.replace("%n"+QString::number(len),"");
+                result.replace("%n"+QString::number(len),QLatin1String(""));
             else
-                result.replace("%n"+(len>0?QString::number(len):""),(len>0?zerro.fill('0',len-num_in_seria.length()):"")+num_in_seria+" ");
+                result.replace("%n"+(len>0?QString::number(len):QLatin1String("")),(len>0?zerro.fill('0',len-num_in_seria.length()):QLatin1String(""))+num_in_seria+" ");
         }
 //        result[i]=result[i].trimmed();
     //}
-    result.replace("/ ","/");
-    result.replace("/.","/");
-    result.replace("////","/");
-    result.replace("///","/");
-    result.replace("//","/");
+    result.replace(QLatin1String("/ "),QLatin1String("/"));
+    result.replace(QLatin1String("/."),QLatin1String("/"));
+    result.replace(QLatin1String("////"),QLatin1String("/"));
+    result.replace(QLatin1String("///"),QLatin1String("/"));
+    result.replace(QLatin1String("//"),QLatin1String("/"));
     return result;
 }
 
@@ -149,9 +149,9 @@ QString fillParams(QString str, SBook& book, QFileInfo book_file)
 {
     QString result=str;
     result
-            .replace("%fn",book_file.completeBaseName()).
-            replace("%f",book_file.absoluteFilePath()).
-            replace("%d",book_file.absoluteDir().path());
+            .replace(QLatin1String("%fn"),book_file.completeBaseName()).
+            replace(QLatin1String("%f"),book_file.absoluteFilePath()).
+            replace(QLatin1String("%d"),book_file.absoluteDir().path());
     result = fillParams(result,book);
     return result;
 }
@@ -198,14 +198,14 @@ void SetLocale(QString sLocale)
 
     tag_list.clear();
     tag_list<<
-               tag(app->translate("SettingsDlg","Top level captions"),".h0","top_caption_font",140)<<
-               tag(app->translate("SettingsDlg","Captions"),".h1,.h2,.h3,.h4,.h5,.h6","caption_font",120)<<
-               tag(app->translate("SettingsDlg","Dropcaps"),"span.dropcaps","dropcaps_font",300)<<
-               tag(app->translate("SettingsDlg","Footnotes"),".inlinenote,.blocknote","footnotes_font",80)<<
-               tag(app->translate("SettingsDlg","Annotation"),".annotation","annotation_font",100)<<
-               tag(app->translate("SettingsDlg","Poems"),".poem","poem_font",100)<<
-               tag(app->translate("SettingsDlg","Epigraph"),".epigraph","epigraph_font",100)<<
-               tag(app->translate("SettingsDlg","Book"),"body","body_font",100);
+               tag(app->translate("SettingsDlg","Top level captions"),QStringLiteral(".h0"),QStringLiteral("top_caption_font"),140)<<
+               tag(app->translate("SettingsDlg","Captions"),QStringLiteral(".h1,.h2,.h3,.h4,.h5,.h6"),QStringLiteral("caption_font"),120)<<
+               tag(app->translate("SettingsDlg","Dropcaps"),QStringLiteral("span.dropcaps"),QStringLiteral("dropcaps_font"),300)<<
+               tag(app->translate("SettingsDlg","Footnotes"),QStringLiteral(".inlinenote,.blocknote"),QStringLiteral("footnotes_font"),80)<<
+               tag(app->translate("SettingsDlg","Annotation"),QStringLiteral(".annotation"),QStringLiteral("annotation_font"),100)<<
+               tag(app->translate("SettingsDlg","Poems"),QStringLiteral(".poem"),QStringLiteral("poem_font"),100)<<
+               tag(app->translate("SettingsDlg","Epigraph"),QStringLiteral(".epigraph"),QStringLiteral("epigraph_font"),100)<<
+               tag(app->translate("SettingsDlg","Book"),QStringLiteral("body"),QStringLiteral("body_font"),100);
 }
 
 void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
@@ -213,7 +213,7 @@ void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QS
     QString tmp_dir;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
         tmp_dir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    tmp_dir+="/freeLib/log.txt";
+    tmp_dir+=QLatin1String("/freeLib/log.txt");
     QFile file(tmp_dir);
     file.open(QIODevice::Append|QIODevice::WriteOnly);
     QByteArray localMsg = msg.toLocal8Bit();
@@ -259,7 +259,7 @@ bool openDB(bool create, bool replace)
     {
         if(replace)
         {
-            QSqlDatabase dbase=QSqlDatabase::database("libdb",true);
+            QSqlDatabase dbase=QSqlDatabase::database(QStringLiteral("libdb"),true);
             dbase.close();
             if(!file.remove())
             {
@@ -275,7 +275,7 @@ bool openDB(bool create, bool replace)
         }
         QDir dir;
         dir.mkpath(QFileInfo(db_file).absolutePath());
-        file.setFileName(":/freeLib.sqlite");
+        file.setFileName(QStringLiteral(":/freeLib.sqlite"));
         file.open(QFile::ReadOnly);
         QByteArray data=file.readAll();
         file.close();
@@ -284,7 +284,7 @@ bool openDB(bool create, bool replace)
         file.write(data);
         file.close();
     }
-    QSqlDatabase dbase=QSqlDatabase::database("libdb",false);
+    QSqlDatabase dbase=QSqlDatabase::database(QStringLiteral("libdb"),false);
     dbase.setDatabaseName(db_file);
     if (!dbase.open())
     {
@@ -308,9 +308,9 @@ void UpdateLibs()
         idCurrentLib=-1;
     else{
         QSettings settings/*=GetSettings()*/;
-        idCurrentLib=settings.value("LibID",-1).toInt();
-        QSqlQuery query(QSqlDatabase::database("libdb"));
-        query.exec("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name");
+        idCurrentLib=settings.value(QStringLiteral("LibID"),-1).toInt();
+        QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+        query.exec(QStringLiteral("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name"));
         mLibs.clear();
         while(query.next())
         {
@@ -346,23 +346,23 @@ int main(int argc, char *argv[])
 #endif
 
     QApplication a(argc, argv);
-    a.setStyleSheet("QComboBox { combobox-popup: 0; }");
+    a.setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
 
-    a.setOrganizationName("freeLib");
-    a.setApplicationName("freeLib");
+    a.setOrganizationName(QStringLiteral("freeLib"));
+    a.setApplicationName(QStringLiteral("freeLib"));
 
-    QCommandLineOption trayOption("tray", "minimize to tray on start");
+    QCommandLineOption trayOption(QStringLiteral("tray"), QStringLiteral("minimize to tray on start"));
     CMDparser.addOption(trayOption);
     CMDparser.process(a);
 
-    QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
+    QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(app->devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
     pixmap.setDevicePixelRatio(app->devicePixelRatio());
     QPainter painter(&pixmap);
     painter.setFont(QFont(painter.font().family(),VERSION_FONT,QFont::Bold));
     painter.setPen(Qt::white);
     painter.drawText(QRect(30,140,360,111),Qt::AlignLeft|Qt::AlignVCenter,PROG_VERSION);
 
-    QString HomeDir="";
+    QString HomeDir=QLatin1String("");
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
         HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
@@ -396,7 +396,7 @@ int main(int argc, char *argv[])
     translator_qt=nullptr;
     app=&a;
     app->setAttribute(Qt::AA_UseHighDpiPixmaps);
-    QSqlDatabase::addDatabase("QSQLITE","libdb");
+    QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),QStringLiteral("libdb"));
 
     QSettings* settings=GetSettings();
     options.Load(settings);
@@ -404,7 +404,7 @@ int main(int argc, char *argv[])
     SetLocale(options.sUiLanguageName);
 
     QDir::setCurrent(HomeDir);
-    QString sDirTmp = QString("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
+    QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
     QDir dirTmp(sDirTmp);
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
@@ -428,7 +428,7 @@ int main(int argc, char *argv[])
 
     if(!w.error_quit)
     {
-        if(!CMDparser.isSet("tray") && options.nIconTray != 2)
+        if(!CMDparser.isSet(QStringLiteral("tray")) && options.nIconTray != 2)
             w.show();
     }
     else{

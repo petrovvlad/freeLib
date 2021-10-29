@@ -8,8 +8,8 @@ TagDialog::TagDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     int size =ui->listWidget->style()->pixelMetric(QStyle::PM_SmallIconSize);
-    QSqlQuery query(QSqlDatabase::database("libdb"));
-    query.exec("SELECT color,name,id from favorite");
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    query.exec(QStringLiteral("SELECT color,name,id from favorite"));
     ui->listWidget->clear();
     int con=1;
     while(query.next())
@@ -30,10 +30,10 @@ TagDialog::~TagDialog()
 
 void TagDialog::ok_btn()
 {
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     for(int i=0;i<ui->listWidget->count();i++)
     {
-        query.exec(QString("UPDATE favorite SET name='%1' WHERE id=%2").
+        query.exec(QStringLiteral("UPDATE favorite SET name='%1' WHERE id=%2").
                    arg(ui->listWidget->item(i)->text(),ui->listWidget->item(i)->data(Qt::UserRole).toString()));
     }
 }

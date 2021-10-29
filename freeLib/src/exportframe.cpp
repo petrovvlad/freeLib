@@ -22,7 +22,7 @@ QString encodeStr(const QString& str)
 
 QString decodeStr(const QString &str)
 {
-    if(str.left(3)!="#-#")
+    if(str.left(3)!=QLatin1String("#-#"))
         return str;
     QByteArray arr = QByteArray::fromBase64(str.mid(3).toLatin1());
     quint32 index=0;
@@ -65,7 +65,7 @@ ExportFrame::ExportFrame(QWidget *parent) :
     QToolButton* btnPath=new QToolButton(this);
     btnPath->setFocusPolicy(Qt::NoFocus);
     btnPath->setCursor(Qt::ArrowCursor);
-    btnPath->setText("...");
+    btnPath->setText(QStringLiteral("..."));
     QHBoxLayout*  layout=new QHBoxLayout(ui->Path);
     layout->addWidget(btnPath,0,Qt::AlignRight);
     layout->setSpacing(0);

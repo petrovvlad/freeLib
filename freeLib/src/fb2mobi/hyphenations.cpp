@@ -31,7 +31,7 @@ void hyphenations::init(QString language)
         return;
     }
     QTextStream ts(&file);
-    pattern=ts.readAll().trimmed().replace("\n"," ").split(" ");
+    pattern=ts.readAll().trimmed().replace(QLatin1String("\n"),QLatin1String(" ")).split(QStringLiteral(" "));
     file.close();
 //    file.setFileName(QApplication::applicationDirPath()+"/xsl/hyphenations/"+language.toLower()+"_ex.txt");
 //    if(!file.open(QFile::ReadOnly))
@@ -48,7 +48,7 @@ void hyphenations::init(QString language)
 //    abc=ts.readLine();
 //    abc_glasnie=ts.readLine();
     //file.close();
-    if(language=="ru")
+    if(language==QLatin1String("ru"))
     {
       //  file.setFileName(QApplication::applicationDirPath()+"/xsl/hyphenations/en.txt");
   //      if(!file.open(QFile::ReadOnly))
@@ -198,21 +198,21 @@ QString hyphenations::hyphenate_word(QString word_original, QString separator,bo
                 //qDebug()<<"dd";
                 if(!(!wh[i] /*|| (!slog_yest_glasnaya)*/))
                 {
-                    result+=((result.isEmpty() || (result.length()<2 /*&& hyphenation_only*/))?"":separator);
+                    result+=((result.isEmpty() || (result.length()<2 /*&& hyphenation_only*/)) ?QLatin1String("") :separator);
                     result+=slog;
                    // slog_yest_glasnaya=false;
-                    slog="";
+                    slog = QLatin1String("");
                 }
             //}
             slog+=word[i];
            // if(abc_glasnie.contains(word[i]))
             //    slog_yest_glasnaya=true;
         }
-        result+=((result.isEmpty()|| (result.length()<2 /*&& hyphenation_only*/) || slog.length()<2)?"":separator);
+        result+=((result.isEmpty()|| (result.length()<2 /*&& hyphenation_only*/) || slog.length()<2)?QLatin1String(""):separator);
         result+=slog;
 
         //qDebug()<<result;
-        result_word+=((result_word.length()>0 || last_word_empty)?"-":"")+begin_points+result+end_points;
+        result_word+=((result_word.length()>0 || last_word_empty) ?QStringLiteral("-") :QLatin1String(""))+begin_points+result+end_points;
         last_word_empty=false;
     }
     return result_word;

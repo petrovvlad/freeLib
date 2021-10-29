@@ -18,7 +18,7 @@ AddLibrary::AddLibrary(QWidget *parent) :
     QToolButton* tbInpx=new QToolButton(this);
     tbInpx->setFocusPolicy(Qt::NoFocus);
     tbInpx->setCursor(Qt::ArrowCursor);
-    tbInpx->setText("...");
+    tbInpx->setText(QStringLiteral("..."));
     QHBoxLayout* layout=new QHBoxLayout(ui->inpx);
     layout->addWidget(tbInpx,0,Qt::AlignRight);
     layout->setSpacing(0);
@@ -27,7 +27,7 @@ AddLibrary::AddLibrary(QWidget *parent) :
     QToolButton* tbBooksDir=new QToolButton(this);
     tbBooksDir->setFocusPolicy(Qt::NoFocus);
     tbBooksDir->setCursor(Qt::ArrowCursor);
-    tbBooksDir->setText("...");
+    tbBooksDir->setText(QStringLiteral("..."));
     layout=new QHBoxLayout(ui->BookDir);
     layout->addWidget(tbBooksDir,0,Qt::AlignRight);
     layout->setSpacing(0);
@@ -87,7 +87,7 @@ void AddLibrary::LogMessage(QString msg)
 void AddLibrary::InputINPX()
 {
     QDir::setCurrent(QFileInfo(ui->inpx->text()).absolutePath());
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Add library"),"",tr("Library")+" (*.inpx)");
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Add library"),QLatin1String(""),tr("Library")+" (*.inpx)");
     if(!fileName.isEmpty())
     {
         ui->inpx->setText(fileName);
@@ -98,7 +98,7 @@ void AddLibrary::InputINPX()
             qDebug()<<"Error open INPX file: "<<fileName;
             return;
         }
-        if(SetCurrentZipFileName(&uz,"COLLECTION.INFO"))
+        if(SetCurrentZipFileName(&uz,QStringLiteral("COLLECTION.INFO")))
         {
             QBuffer outbuff;
             QuaZipFile zip_file(&uz);
@@ -200,9 +200,9 @@ void AddLibrary::SelectLibrary(int idLib)
                 ui->inpx->setText(mLibs[idCurrentLib_].sInpx);
                 ui->firstAuthorOnly->setChecked(mLibs[idCurrentLib_].bFirstAuthor);
                 ui->checkwoDeleted->setChecked(mLibs[idCurrentLib_].bWoDeleted);
-                ui->OPDS->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>")
+                ui->OPDS->setText(idCurrentLib_<0?QLatin1String(""):QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>")
                                                   .arg(idCurrentLib_).arg(options.nOpdsPort));
-                ui->HTTP->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>")
+                ui->HTTP->setText(idCurrentLib_<0?QLatin1String(""):QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>")
                                                   .arg(idCurrentLib_).arg(options.nOpdsPort));
                 break;
             }
@@ -241,32 +241,32 @@ void AddLibrary::SelectLibrary()
     ui->BookDir->setDisabled(idCurrentLib_<0);
     ui->btnUpdate->setDisabled(idCurrentLib_<0);
     QSettings* settings=GetSettings();
-    ui->OPDS->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
-    ui->HTTP->setText(idCurrentLib_<0?"":QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+    ui->OPDS->setText(idCurrentLib_<0?QLatin1String(""):QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+    ui->HTTP->setText(idCurrentLib_<0?QLatin1String(""):QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
 
-    settings->setValue("LibID",idCurrentLib_);
+    settings->setValue(QStringLiteral("LibID"),idCurrentLib_);
     //idCurrentLib = idCurrentLib_;
 }
 
 void AddLibrary::SaveLibrary(int idLib, SLib &Lib)
 {
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     int idSaveLib = idLib;
     if(idLib<0)
     {
         LogMessage(tr("Add library"));
-        bool result = query.exec(QString("INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)").arg(Lib.name,Lib.path,Lib.sInpx,Lib.bFirstAuthor?"1":"0",Lib.bWoDeleted?"1":"0"));
+        bool result = query.exec(QStringLiteral("INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)").arg(Lib.name,Lib.path,Lib.sInpx,Lib.bFirstAuthor?"1":"0",Lib.bWoDeleted?"1":"0"));
         if(!result)
             qDebug()<<query.lastError().databaseText();
         idSaveLib = query.lastInsertId().toInt();
         QSettings* settings=GetSettings();
-        settings->setValue("LibID",idLib);
+        settings->setValue(QStringLiteral("LibID"),idLib);
         settings->sync();
     }
     else
     {
         LogMessage(tr("Update library"));
-        bool result = query.exec(QString("UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6").arg(Lib.name,Lib.path,Lib.sInpx,Lib.bFirstAuthor?"1":"0",Lib.bWoDeleted?"1":"0").arg(idLib));
+        bool result = query.exec(QStringLiteral("UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6").arg(Lib.name,Lib.path,Lib.sInpx,Lib.bFirstAuthor?"1":"0",Lib.bWoDeleted?"1":"0").arg(idLib));
         if(!result)
             qDebug()<<query.lastError().databaseText();
 
@@ -286,8 +286,8 @@ void AddLibrary::DeleteLibrary()
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    ClearLib(QSqlDatabase::database("libdb"),idCurrentLib_,false);
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    ClearLib(QSqlDatabase::database(QStringLiteral("libdb")),idCurrentLib_,false);
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec("DELETE FROM lib where ID="+QString::number(idCurrentLib_));
     mLibs.remove(idCurrentLib_);
     UpdateLibList();

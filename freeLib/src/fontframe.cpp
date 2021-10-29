@@ -102,7 +102,7 @@ QString GetFontNameFromFile(QString lpszFilePath)
         {
             f.read((char*)&tblDir, sizeof(TT_TABLE_DIRECTORY));
             csTemp=QString::fromLatin1(tblDir.szTag,4);
-            if(csTemp.toLower()=="name")
+            if(csTemp.toLower()==QLatin1String("name"))
             {
                 tblDir.uLength = SWAPLONG(tblDir.uLength);
                 tblDir.uOffset = SWAPLONG(tblDir.uOffset);
@@ -179,10 +179,10 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
     connect(ui->font_bi, &QComboBox::currentTextChanged, this ,&FontFrame::FontSelected);
     connect(ui->tag, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &FontFrame::onTagCurrentIndexChanged);
 
-    ui->font->addItem("");
-    ui->font_b->addItem("");
-    ui->font_i->addItem("");
-    ui->font_bi->addItem("");
+    ui->font->addItem(QLatin1String(""));
+    ui->font_b->addItem(QLatin1String(""));
+    ui->font_i->addItem(QLatin1String(""));
+    ui->font_bi->addItem(QLatin1String(""));
 
     ui->Use->setChecked(use);
     ui->tag->setCurrentIndex(tag);
@@ -192,7 +192,7 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
 
 
     QDir dir(QApplication::applicationDirPath()+"/xsl/fonts");
-    foreach(QString str,dir.entryList(QStringList()<<"*.ttf",QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable,QDir::Name))
+    foreach(QString str, dir.entryList(QStringList() << QStringLiteral("*.ttf"),QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable,QDir::Name))
     {
         ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
         ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
@@ -205,7 +205,7 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
 
     QString db_path=QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
     dir.setPath(db_path);
-    foreach(QString str,dir.entryList(QStringList()<<"*.ttf",QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable,QDir::Name))
+    foreach(QString str, dir.entryList(QStringList()<< QStringLiteral("*.ttf"),QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable,QDir::Name))
     {
         ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
         ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
@@ -213,7 +213,7 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
         ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
     }
 
-    if(font!="..." && !font.isEmpty())
+    if(font!=QLatin1String("...") && !font.isEmpty())
     {
         for(int i=0;i<4;i++)
         {
@@ -258,10 +258,10 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
             }
         }
     }
-    ui->font->addItem("...");
-    ui->font_b->addItem("...");
-    ui->font_i->addItem("...");
-    ui->font_bi->addItem("...");
+    ui->font->addItem(QStringLiteral("..."));
+    ui->font_b->addItem(QStringLiteral("..."));
+    ui->font_i->addItem(QStringLiteral("..."));
+    ui->font_bi->addItem(QStringLiteral("..."));
     current_font=ui->font->currentIndex();
     current_font_b=ui->font_b->currentIndex();
     current_font_i=ui->font_i->currentIndex();
@@ -273,9 +273,9 @@ void FontFrame::FontSelected(QString str)
 {
     QComboBox *font_box=(QComboBox*)sender();
     disconnect(font_box, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
-    if(str=="...")
+    if(str==QLatin1String("..."))
     {
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Select font"),"",tr("Fonts")+" (*.ttf)");
+        QString fileName = QFileDialog::getOpenFileName(this, tr("Select font"),QLatin1String(""),tr("Fonts")+" (*.ttf)");
         if(!fileName.isEmpty())
         {
             bool find=false;

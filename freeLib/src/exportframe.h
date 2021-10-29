@@ -24,7 +24,7 @@ signals:
     void ChangeTabIndex(int tab_id,int page_id);
 public slots:
     void SetTabIndex(int tab_id,int page_id);
-    void UpdateToolComboBox(const QString &sCurrentTool="");
+    void UpdateToolComboBox(const QString &sCurrentTool=QLatin1String(""));
 private slots:
     void onRadioDeviceToggled(bool checked);
     void onRadioEmailToggled(bool checked);
@@ -42,7 +42,7 @@ private slots:
 
     void FontMove(QWidget *font_widget, int direction);
     void RemoveFont(QWidget *font_widget);
-    FontFrame *AddFont(bool use=true, int tag=0, QString font="", QString font_b="", QString font_i="", QString font_bi="", int fontSize=100);
+    FontFrame *AddFont(bool use=true, int tag=0, QString font=QLatin1String(""), QString font_b=QLatin1String(""), QString font_i=QLatin1String(""), QString font_bi=QLatin1String(""), int fontSize=100);
     void btnPath();
 
 private:

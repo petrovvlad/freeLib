@@ -14,10 +14,10 @@ AboutDialog::AboutDialog(QWidget *parent) :
     ui->version->setText(PROG_VERSION);
 
     connect(ui->toolButton, &QAbstractButton::clicked, this, &AboutDialog::CloseBtn);
-    QPixmap pix(QString(":/splash%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
+    QPixmap pix(QStringLiteral(":/splash%1.png").arg(app->devicePixelRatio()>=2 ?QStringLiteral("@2x") :QLatin1String("")));
     pix.setDevicePixelRatio(app->devicePixelRatio());
     ui->label->setPixmap(pix);
-    pix.load(QString(":/icons/img/icons/close%1.png").arg(app->devicePixelRatio()>=2?"@2x":""));
+    pix.load(QStringLiteral(":/icons/img/icons/close%1.png").arg(app->devicePixelRatio()>=2 ?QStringLiteral("@2x"): QLatin1String("")));
     QFont f(ui->version->font());
     f.setPointSize(VERSION_FONT);
     ui->version->setFont(f);

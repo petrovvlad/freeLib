@@ -122,9 +122,9 @@ private slots:
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);
-    void MoveToAuthor(qlonglong id=-1,QString FirstLetter="");
+    void MoveToAuthor(qlonglong id=-1,QString FirstLetter=QLatin1String(""));
     void MoveToGenre(qlonglong id);
-    void MoveToSeria(qlonglong id=-1,QString FirstLetter="");
+    void MoveToSeria(qlonglong id=-1,QString FirstLetter=QLatin1String(""));
     void tag_select(int index);
     void set_tag();
     void ChangingPort(int i);

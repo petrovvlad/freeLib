@@ -34,7 +34,7 @@ void ExportDlg::reject()
 void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_author, const ExportOptions &exportOptions)
 {
     pExportOptions_ = &exportOptions;
-    ui->Exporting->setText("0");
+    ui->Exporting->setText(QStringLiteral("0"));
     ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0,100);
@@ -65,7 +65,7 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
 
 void ExportDlg::exec(qlonglong id_lib, QString path)
 {
-    ui->Exporting->setText("0");
+    ui->Exporting->setText(QStringLiteral("0"));
     ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0,0);

@@ -19,9 +19,9 @@ struct STOC
     QString html;
 };
 
-#define VIGNETTE_TITLE_BEFORE   "tb"
-#define VIGNETTE_TITLE_AFTER    "ta"
-#define VIGNETTE_CHAPTER_END    "te"
+#define VIGNETTE_TITLE_BEFORE   QStringLiteral("tb")
+#define VIGNETTE_TITLE_AFTER    QStringLiteral("ta")
+#define VIGNETTE_CHAPTER_END    QStringLiteral("te")
 
 enum CreateCover{cc_no,cc_if_not_exists,cc_always};
 
@@ -82,7 +82,7 @@ private:
     void parse_body(QDomNode elem);
     void parse_description(QDomNode child);
     void parse_binary(QDomNode elem);
-    void parse_format(QDomNode elem, QString tag="" , QString css="", QString href="");
+    void parse_format(QDomNode elem, QString tag=QLatin1String("") , QString css=QLatin1String(""), QString href=QLatin1String(""));
     void parse_span(QString span, QDomNode elem);
 
     void generate_toc();

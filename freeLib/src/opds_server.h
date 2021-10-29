@@ -33,7 +33,7 @@ private:
     QMap<qintptr,QTcpSocket *> OPDS_clients;
     QStringList sesions_auth;
     QDomElement AddTextNode(QString name, QString text, QDomNode &node);
-    QString WriteSuccess(QString contentType = "text/html;charset=utf-8", bool isGZip=false);
+    QString WriteSuccess(QString contentType = QStringLiteral("text/html;charset=utf-8"), bool isGZip=false);
     int port;
     void stop_server();
     //QString books_list(QString lib_url, QString current_url, QString id_lib, QString author, QString seria, QString ganre,  QTextStream& ts, bool opds, QString lib_name, QString session, bool all=false, QString search="");

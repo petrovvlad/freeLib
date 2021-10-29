@@ -3,6 +3,7 @@
 #include <QApplication>
 #include <QNetworkProxy>
 #include <algorithm>
+#include <QStringBuilder>
 
 #include "aboutdialog.h"
 #include "opds_server.h"
@@ -37,19 +38,19 @@ QDomElement opds_server::AddTextNode(QString name, QString text,QDomNode &node)
 QString OPDS_MIME_TYPE(QString type)
 {
     type=type.toLower();
-    if(type=="jpg" || type=="jpeg")
-        return "image/jpeg";
-    if(type=="png")
-        return "image/png";
-    if(type=="txt")
-        return "text/plain";
-    if(type=="fb2")
-        return "application/fb2+zip";
-    if(type=="epub")
-        return "application/epub+zip";
-    if(type=="mobi" || type=="azw" || type=="azw3")
-        return "application/x-mobipocket-ebook";
-    return "application/octet-stream";
+    if(type==QLatin1String("jpg") || type==QLatin1String("jpeg"))
+        return QStringLiteral("image/jpeg");
+    if(type==QLatin1String("png"))
+        return QStringLiteral("image/png");
+    if(type==QLatin1String("txt"))
+        return QStringLiteral("text/plain");
+    if(type==QLatin1String("fb2"))
+        return QStringLiteral("application/fb2+zip");
+    if(type==QLatin1String("epub"))
+        return QStringLiteral("application/epub+zip");
+    if(type==QLatin1String("mobi") || type==QLatin1String("azw") || type==QLatin1String("azw3"))
+        return QStringLiteral("application/x-mobipocket-ebook");
+    return QStringLiteral("application/octet-stream");
 }
 
 QDomElement opds_server::doc_header(QString session, bool html, QString lib_name, QString lib_url)
@@ -57,15 +58,15 @@ QDomElement opds_server::doc_header(QString session, bool html, QString lib_name
     doc.clear();
     if(html)
     {
-        QDomProcessingInstruction xmlProcessingInstruction = doc.createProcessingInstruction("DOCTYPE", "HTML");
+        QDomProcessingInstruction xmlProcessingInstruction = doc.createProcessingInstruction(QStringLiteral("DOCTYPE"), QStringLiteral("HTML"));
         doc.appendChild(xmlProcessingInstruction);
-        QDomElement html=doc.createElement("HTML");
+        QDomElement html=doc.createElement(QStringLiteral("HTML"));
         doc.appendChild(html);
-        QDomElement head=doc.createElement("HEAD");
+        QDomElement head=doc.createElement(QStringLiteral("HEAD"));
         html.appendChild(head);
-        AddTextNode("TITLE",lib_name,head);
+        AddTextNode(QStringLiteral("TITLE"),lib_name,head);
 
-        QString css=QString(
+        QString css = QStringLiteral(
                 "a.lib {font-size:%1em;font-weight: bold;}\n"
                 "a.book {font-size:%1em;font-weight: bold;}\n"
                 "div.author {font-size: %2em; background: #eeeeee; border-radius: 0.5em ;margin: 0.5em;padding: 0.1em;}\n"
@@ -87,69 +88,68 @@ QDomElement opds_server::doc_header(QString session, bool html, QString lib_name
                 "a.author:hover {color: #444444;}\n"
                 "body {background-color: #ffffff;}\n"
                 "img.cover {height: %4em; float:left; margin-right: 0.5em;}\n"
-
                     ).arg(
-                    for_mobile?"3":"2",for_mobile?"1.5":"1",for_mobile?"2":"1.5",for_mobile?"8":"6");
+                    for_mobile ?"3":"2", for_mobile?"1.5":"1", for_mobile?"2":"1.5", for_mobile?"8":"6");
                 ;
-        QDomElement style=AddTextNode("style",css,head);
-        style.setAttribute("type","text/css");
-        QDomElement meta=doc.createElement("META");
-        meta.setAttribute("http-equiv","Content-Type");
-        meta.setAttribute("content","text/html; charset=utf-8");
+        QDomElement style=AddTextNode(QStringLiteral("style"),css,head);
+        style.setAttribute(QStringLiteral("type"),QStringLiteral("text/css"));
+        QDomElement meta=doc.createElement(QStringLiteral("META"));
+        meta.setAttribute(QStringLiteral("http-equiv"),QStringLiteral("Content-Type"));
+        meta.setAttribute(QStringLiteral("content"),QStringLiteral("text/html; charset=utf-8"));
         head.appendChild(meta);
 
         QDomElement link;
-        QString icon_file="/icon_256x256.png";
+        QString icon_file=QStringLiteral("/icon_256x256.png");
         if(for_preview)
-            icon_file="/splash_opera.png";
+            icon_file=QStringLiteral("/splash_opera.png");
 
-        link=doc.createElement("LINK");
-        link.setAttribute("rel","icon");
-        link.setAttribute("type","image/png");
-        link.setAttribute("href",icon_file+(session.isEmpty()?"":"?session="+session));
+        link=doc.createElement(QStringLiteral("LINK"));
+        link.setAttribute(QStringLiteral("rel"),QStringLiteral("icon"));
+        link.setAttribute(QStringLiteral("type"),QStringLiteral("image/png"));
+        link.setAttribute(QStringLiteral("href"),icon_file+(session.isEmpty() ?QLatin1String("") :QStringLiteral("?session=")+session));
         head.appendChild(link);
-        link=doc.createElement("LINK");
-        link.setAttribute("rel","shortcut icon");
-        link.setAttribute("type","image/png");
-        link.setAttribute("href",icon_file+(session.isEmpty()?"":"?session="+session));
+        link=doc.createElement(QStringLiteral("LINK"));
+        link.setAttribute(QStringLiteral("rel"),QStringLiteral("shortcut icon"));
+        link.setAttribute(QStringLiteral("type"),QStringLiteral("image/png"));
+        link.setAttribute(QStringLiteral("href"),icon_file+(session.isEmpty() ?QLatin1String("") :QStringLiteral("?session=")+session));
         head.appendChild(link);
-        link=doc.createElement("LINK");
-        link.setAttribute("rel","apple-touch-icon");
-        link.setAttribute("type","image/png");
-        link.setAttribute("href",icon_file+(session.isEmpty()?"":"?session="+session));
+        link=doc.createElement(QStringLiteral("LINK"));
+        link.setAttribute(QStringLiteral("rel"), QStringLiteral("apple-touch-icon"));
+        link.setAttribute(QStringLiteral("type"), QStringLiteral("image/png"));
+        link.setAttribute(QStringLiteral("href"), icon_file+(session.isEmpty() ?QLatin1String(""): QStringLiteral("?session=")+session));
         head.appendChild(link);
 
-        QDomElement body=doc.createElement("BODY");
+        QDomElement body=doc.createElement(QStringLiteral("BODY"));
         html.appendChild(body);
-        QDomElement div=AddTextNode("a","",body);
-        div.setAttribute("class","lib");
-        div.setAttribute("href",(lib_url.isEmpty()?"/":lib_url)+(session.isEmpty()?"":"?session="+session));
-        QDomElement img=doc.createElement("img");
-        img.setAttribute("src","/home.png");
-        img.setAttribute("border","0");
-        img.setAttribute("height",QString("%1px").arg(for_mobile?"48":"32"));
+        QDomElement div=AddTextNode(QStringLiteral("a"), QLatin1String(""), body);
+        div.setAttribute(QStringLiteral("class"), QStringLiteral("lib"));
+        div.setAttribute(QStringLiteral("href"), (lib_url.isEmpty()?QStringLiteral("/"):lib_url)+(session.isEmpty()?QLatin1String(""):"?session="+session));
+        QDomElement img=doc.createElement(QStringLiteral("img"));
+        img.setAttribute(QStringLiteral("src"), QStringLiteral("/home.png"));
+        img.setAttribute(QStringLiteral("border"), QStringLiteral("0"));
+        img.setAttribute(QStringLiteral("height"), QStringLiteral("%1px").arg(for_mobile ?QStringLiteral("48") :QStringLiteral("32")));
         div.appendChild(img);
-        div=AddTextNode("a"," "+lib_name,body);
-        div.setAttribute("class","lib");
-        div.setAttribute("href",(lib_url.isEmpty()?"/":lib_url)+(session.isEmpty()?"":"?session="+session));
+        div=AddTextNode(QStringLiteral("a"), " "+lib_name,body);
+        div.setAttribute(QStringLiteral("class"), QStringLiteral("lib"));
+        div.setAttribute(QStringLiteral("href"), (lib_url.isEmpty()?QStringLiteral("/"):lib_url)+(session.isEmpty() ?QLatin1String("") :"?session="+session));
 
-        QDomElement hr=doc.createElement("HR");
-        hr.setAttribute("size","3");
-        hr.setAttribute("color","black");
+        QDomElement hr=doc.createElement(QStringLiteral("HR"));
+        hr.setAttribute(QStringLiteral("size"), QStringLiteral("3"));
+        hr.setAttribute(QStringLiteral("color"), QStringLiteral("black"));
         body.appendChild(hr);
 
         return body;
     }
     else
     {
-        QDomProcessingInstruction xmlProcessingInstruction = doc.createProcessingInstruction("xml", "version=\"1.0\" encoding=\"utf-8\"");
+        QDomProcessingInstruction xmlProcessingInstruction = doc.createProcessingInstruction(QStringLiteral("xml"), QStringLiteral("version=\"1.0\" encoding=\"utf-8\""));
         doc.appendChild(xmlProcessingInstruction);
-        QDomElement feed=doc.createElement("feed");
+        QDomElement feed=doc.createElement(QStringLiteral("feed"));
         doc.appendChild(feed);
-        feed.setAttribute("xmlns","http://www.w3.org/2005/Atom");
-        feed.setAttribute("xmlns:dc","http://purl.org/dc/terms/");
-        feed.setAttribute("xmlns:os","http://a9.com/-/spec/opensearch/1.1/");
-        feed.setAttribute("xmlns:opds","http://opds-spec.org/2010/catalog");
+        feed.setAttribute(QStringLiteral("xmlns"),QStringLiteral("http://www.w3.org/2005/Atom"));
+        feed.setAttribute(QStringLiteral("xmlns:dc"),QStringLiteral("http://purl.org/dc/terms/"));
+        feed.setAttribute(QStringLiteral("xmlns:os"),QStringLiteral("http://a9.com/-/spec/opensearch/1.1/"));
+        feed.setAttribute(QStringLiteral("xmlns:opds"),QStringLiteral("http://opds-spec.org/2010/catalog"));
         return feed;
     }
 }
@@ -703,7 +703,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
     QDomElement feed;
     if(opds)
     {
-        ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+        ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
         feed=doc_header(session);
     }
     else
@@ -712,87 +712,87 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
         feed=doc_header(session,true,lib.name,lib_url);
     }
     if(listBooks.isEmpty())
-        return "";
-    QString parameters="";
+        return QLatin1String("");
+    QString parameters=QLatin1String("");
     QStringList keys=params.keys();
     foreach (QString param, keys)
     {
         //qDebug()<<"param="<<param;
-        if(param!="page")
+        if(param!=QLatin1String("page"))
         {
             parameters+="&"+param+"="+params.value(param);
         }
     }
-    parameters+=(session.isEmpty()?"":QString((parameters.isEmpty()?"?":"&"))+"session="+session);
+    parameters += (session.isEmpty() ?QLatin1String("") :QString((parameters.isEmpty() ?QStringLiteral("?") :QStringLiteral("&")))+QStringLiteral("session=")+session);
 
     if(opds)
     {
-        AddTextNode("title",sTitle,feed);
-        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-        AddTextNode("icon","/icon_256x256.png",feed);
+        AddTextNode(QStringLiteral("title"),sTitle,feed);
+        AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+        AddTextNode(QStringLiteral("icon"),QStringLiteral("/icon_256x256.png"),feed);
         int iBook =0;
         foreach(uint idBook,listBooks){
             if(iBook>=nPage*MAX_BOOKS_PER_PAGE && iBook<(nPage+1)*MAX_BOOKS_PER_PAGE){
                 SBook& book = lib.mBooks[idBook];
                 QString sIdBook = QString::number(idBook);
-                QDomElement entry=doc.createElement("entry");
+                QDomElement entry=doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
-                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id",QString("tag:book:%1").arg(idBook),entry);
-                AddTextNode("title",book.sName+(book.idSerial==0?"":" ("+lib.mSerials[book.idSerial].sName+")"),entry);
+                AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode(QStringLiteral("id"),QStringLiteral("tag:book:%1").arg(idBook),entry);
+                AddTextNode(QStringLiteral("title"),book.sName+(book.idSerial==0?QLatin1String(""):" ("+lib.mSerials[book.idSerial].sName+")"),entry);
                 foreach(uint idAuthor,book.listIdAuthors){
-                    QDomElement author=doc.createElement("author");
+                    QDomElement author=doc.createElement(QStringLiteral("author"));
                     entry.appendChild(author);
-                    AddTextNode("name",lib.mAuthors[idAuthor].getName(),author);
+                    AddTextNode(QStringLiteral("name"),lib.mAuthors[idAuthor].getName(),author);
                 }
                 foreach(uint idGenre,book.listIdGenres){
-                    QDomElement category=doc.createElement("category");
+                    QDomElement category=doc.createElement(QStringLiteral("category"));
                     entry.appendChild(category);
-                    category.setAttribute("term",mGenre[idGenre].sName);
-                    category.setAttribute("label",mGenre[idGenre].sName);
+                    category.setAttribute(QStringLiteral("term"),mGenre[idGenre].sName);
+                    category.setAttribute(QStringLiteral("label"),mGenre[idGenre].sName);
                 }
-                if(book.sFormat=="fb2")
+                if(book.sFormat == QLatin1String("fb2"))
                 {
-                    QDomElement el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/fb2"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                    el.setAttribute("type","application/fb2");
+                    QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/fb2"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("application/fb2"));
                 }
-                else if(book.sFormat=="epub" || book.sFormat=="mobi"){
-                    QDomElement el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                    el.setAttribute("type","application/" + book.sFormat);
+                else if(book.sFormat == QLatin1String("epub") || book.sFormat == QLatin1String("mobi")){
+                    QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                    el.setAttribute(QStringLiteral("type"),"application/" + book.sFormat);
                 }
                 QDomElement el;
 
-                el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?"":"?session="+session));
-                el.setAttribute("rel","alternate");
-                el.setAttribute("type","application/"+book.sFormat);
-                el.setAttribute("title",tr("Download"));
+                el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                el.setAttribute(QStringLiteral("rel"),QStringLiteral("alternate"));
+                el.setAttribute(QStringLiteral("type"),"application/"+book.sFormat);
+                el.setAttribute(QStringLiteral("title"),tr("Download"));
 
                 if(options.bOpdsShowCover)
                 {
-                    el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("rel","http://opds-spec.org/image");
-                    el.setAttribute("type","image/jpeg");
-                    el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("rel","x-stanza-cover-image");
-                    el.setAttribute("type","image/jpeg");
-                    el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("rel","http://opds-spec.org/thumbnail");
-                    el.setAttribute("type","image/jpeg");
-                    el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("rel","x-stanza-cover-image-thumbnail");
-                    el.setAttribute("type","image/jpeg");
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/image"));
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("image/jpeg"));
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("rel"),QStringLiteral("x-stanza-cover-image"));
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("image/jpeg"));
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/thumbnail"));
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("image/jpeg"));
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("rel"),QStringLiteral("x-stanza-cover-image-thumbnail"));
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("image/jpeg"));
                 }
-                AddTextNode("dc:language",lib.vLaguages[book.idLanguage],entry);
-                AddTextNode("dc:format",book.sFormat,entry);
+                AddTextNode(QStringLiteral("dc:language"),lib.vLaguages[book.idLanguage],entry);
+                AddTextNode(QStringLiteral("dc:format"),book.sFormat,entry);
 
                 if(options.bOpdsShowAnotation)
                 {
@@ -800,123 +800,133 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     QBuffer infobuff;
                     QFileInfo fi_book;
                     fi_book=lib.getBookFile(outbuff,infobuff,idBook);
-                    if(fi_book.suffix().toLower()=="fb2")
+                    if(fi_book.suffix().toLower()==QLatin1String("fb2"))
                     {
                         if(book.sAnnotation.isEmpty()){
                             lib.loadAnnotation(idBook);
                         }
-                        el=AddTextNode("content",book.sAnnotation,entry);
-                        el.setAttribute("type","text/html");
+                        el=AddTextNode(QStringLiteral("content"),book.sAnnotation,entry);
+                        el.setAttribute(QStringLiteral("type"),QStringLiteral("text/html"));
                     }
                 }
             }
             iBook++;
         }
         if(nPage>=1){
-            QDomElement entry=doc.createElement("entry");
+            QDomElement entry=doc.createElement(QStringLiteral("entry"));
             feed.appendChild(entry);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:root",entry);
-            AddTextNode("title",tr("Previous page"),entry);
-            QDomElement el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(nPage-1)+parameters);
-            el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+            AddTextNode(QStringLiteral("id"),QStringLiteral("tag:root"),entry);
+            AddTextNode(QStringLiteral("title"),tr("Previous page"),entry);
+            QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+            el.setAttribute(QStringLiteral("href"),lib_url % current_url % QStringLiteral("?page=%1").arg(nPage-1) % parameters);
+            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
-            el=AddTextNode("link","",entry);
-            el.setAttribute("href","/arrow_left.png"+(session.isEmpty()?"":"?session="+session));
-            el.setAttribute("rel","http://opds-spec.org/image");
-            el.setAttribute("type","image/jpeg");
+            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+            el.setAttribute(QStringLiteral("href"),"/arrow_left.png"+(session.isEmpty() ?QLatin1String("") :QStringLiteral("?session=")+session));
+            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/image"));
+            el.setAttribute(QStringLiteral("type"),QStringLiteral("image/jpeg"));
         }
         if(listBooks.size()>(nPage+1)*MAX_BOOKS_PER_PAGE){
-            QDomElement entry=doc.createElement("entry");
+            QDomElement entry=doc.createElement(QStringLiteral("entry"));
             feed.appendChild(entry);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:root",entry);
-            AddTextNode("title",tr("Next page"),entry);
-            QDomElement el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(QString::number(nPage+1))+parameters);
-            el.setAttribute("type","application/atom+xml;profile=opds-catalog");
-            el=AddTextNode("link","",entry);
-            el.setAttribute("href","/arrow_right.png"+(session.isEmpty()?"":"?session="+session));
-            el.setAttribute("rel","http://opds-spec.org/image");
-            el.setAttribute("type","image/jpeg");
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+            AddTextNode(QStringLiteral("id"),QStringLiteral("tag:root"),entry);
+            AddTextNode(QStringLiteral("title"),tr("Next page"),entry);
+            QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+            el.setAttribute(QStringLiteral("href"),lib_url+current_url+QStringLiteral("?page=%1").arg(QString::number(nPage+1))+parameters);
+            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
+            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+            el.setAttribute(QStringLiteral("href"),QStringLiteral("/arrow_right.png") + (session.isEmpty() ?QLatin1String("") :QStringLiteral("?session=") + session));
+            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/image"));
+            el.setAttribute(QStringLiteral("type"),QStringLiteral("image/jpeg"));
         }
         return doc.toString();
     }
     else
     {
-        QDomElement div=AddTextNode("DIV",sTitle,feed);
-        div.setAttribute("class","caption");
+        QDomElement div=AddTextNode(QStringLiteral("DIV"),sTitle,feed);
+        div.setAttribute(QStringLiteral("class"),QStringLiteral("caption"));
         int iBook =0;
         foreach(uint idBook,listBooks){
             if(iBook>=nPage*MAX_BOOKS_PER_PAGE && iBook<(nPage+1)*MAX_BOOKS_PER_PAGE){
                 SBook& book = lib.mBooks[idBook];
                 QString sIdBook = QString::number(idBook);
-                QDomElement entry=doc.createElement("div");
-                entry.setAttribute("class","author");
+                QDomElement entry=doc.createElement(QStringLiteral("div"));
+                entry.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
                 feed.appendChild(entry);
 
-                QDomElement table=doc.createElement("table");
-                table.setAttribute("width","100%");
+                QDomElement table=doc.createElement(QStringLiteral("table"));
+                table.setAttribute(QStringLiteral("width"), QStringLiteral("100%"));
                 entry.appendChild(table);
-                QDomElement tr=doc.createElement("tr");
+                QDomElement tr = doc.createElement(QStringLiteral("tr"));
                 table.appendChild(tr);
-                entry=doc.createElement("td");
+                entry=doc.createElement(QStringLiteral("td"));
                 tr.appendChild(entry);
 
                 if(options.bOpdsShowCover)
                 {
-                    QDomElement el=doc.createElement("img");
+                    QDomElement el=doc.createElement(QStringLiteral("img"));
                     entry.appendChild(el);
-                    el.setAttribute("src",lib_url+"/covers/"+ QUrl::toPercentEncoding(sIdBook)+"/cover.jpg");
-                    el.setAttribute("class","cover");
+                    el.setAttribute(QStringLiteral("src"),lib_url % QStringLiteral("/covers/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/cover.jpg"));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("cover"));
                 }
                 if(bShowAuthor){
-                    QDomElement el=AddTextNode("a",lib.mAuthors[book.idFirstAuthor].getName(),entry);
-                    el.setAttribute("class","book");
-                    el.setAttribute("href",QString("/author/%1").arg(book.idFirstAuthor)+(session.isEmpty()?"":"?session="+session));
+                    QDomElement el=AddTextNode(QStringLiteral("a"),lib.mAuthors[book.idFirstAuthor].getName(),entry);
+                    el.setAttribute(QStringLiteral("class"),QStringLiteral("book"));
+                    el.setAttribute(QStringLiteral("href"),QStringLiteral("/author/%1").arg(book.idFirstAuthor) +
+                                    (session.isEmpty() ?QLatin1String("") :(QStringLiteral("?session=")+session)));
                 }
-                QDomElement el=AddTextNode("div",
-                     book.sName+(book.idSerial==0?"":" ("+lib.mSerials[book.idSerial].sName+"["+QString::number(book.numInSerial)+"])"),entry);
-                el.setAttribute("class","book");
-                QDomElement br=doc.createElement("br");
+                QDomElement el=AddTextNode(QStringLiteral("div"),
+                     book.sName + (book.idSerial==0 ?QLatin1String("") :(QStringLiteral(" (")) + lib.mSerials[book.idSerial].sName %
+                                           QStringLiteral("[") % QString::number(book.numInSerial) % QStringLiteral("])")), entry);
+                el.setAttribute(QStringLiteral("class"), QStringLiteral("book"));
+                QDomElement br=doc.createElement(QStringLiteral("br"));
                 entry.appendChild(br);
 
-                if(book.sFormat=="fb2")
+                if(book.sFormat == QLatin1String("fb2"))
                 {
-                    QDomElement el=AddTextNode("a","fb2",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/fb2"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
-                    el=AddTextNode("a","epub",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/epub"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
-                    el=AddTextNode("a","mobi",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/mobi"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
-                    el=AddTextNode("a","azw3",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/azw3"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
+                    QDomElement el=AddTextNode(QStringLiteral("a"), QStringLiteral("fb2"),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/fb2") %
+                                    (session.isEmpty() ?QLatin1String("") :(QStringLiteral("?session=")+session)));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
+                    el=AddTextNode(QStringLiteral("a"), QStringLiteral("epub"),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/epub") %
+                                    (session.isEmpty() ?QLatin1String("") :(QStringLiteral("?session=")+session)));
+                    el.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
+                    el=AddTextNode(QStringLiteral("a"), QStringLiteral("mobi"),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/mobi") %
+                                    (session.isEmpty() ?QLatin1String("") :(QStringLiteral("?session=")+session)));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
+                    el=AddTextNode(QStringLiteral("a"), QStringLiteral("azw3"),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/azw3") %
+                                    (session.isEmpty() ?QLatin1String("") :(QStringLiteral("?session=")+session)));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
                 }
-                else if(book.sFormat=="epub")
+                else if(book.sFormat==QLatin1String("epub"))
                 {
-                    QDomElement el=AddTextNode("a","epub",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/epub"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
-                    el=AddTextNode("a","mobi",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/mobi"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
+                    QDomElement el=AddTextNode(QStringLiteral("a"), QStringLiteral("epub"),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/epub") %
+                                    (session.isEmpty() ?QLatin1String("") :(QStringLiteral("?session=")+session)));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
+                    el=AddTextNode(QStringLiteral("a"), QStringLiteral("mobi"),entry);
+                    el.setAttribute(QStringLiteral("href"), lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/mobi") %
+                                    (session.isEmpty() ?QLatin1String("") :QStringLiteral("?session=")+session));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
                 }
-                else if(book.sFormat=="mobi")
+                else if(book.sFormat==QLatin1String("mobi"))
                 {
-                    QDomElement el=AddTextNode("a","mobi",entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/mobi"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
+                    QDomElement el=AddTextNode(QStringLiteral("a"), QStringLiteral("mobi"),entry);
+                    el.setAttribute(QStringLiteral("href"), lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/mobi") %
+                                    (session.isEmpty() ?QLatin1String("") :QStringLiteral("?session=")+session));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
                 }
                 else
                 {
-                    QDomElement el=AddTextNode("a",book.sFormat,entry);
-                    el.setAttribute("href",lib_url+"/book/"+ QUrl::toPercentEncoding(sIdBook)+"/download"+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("class","author");
+                    QDomElement el=AddTextNode(QStringLiteral("a"), book.sFormat,entry);
+                    el.setAttribute(QStringLiteral("href"), lib_url % QStringLiteral("/book/") % QUrl::toPercentEncoding(sIdBook) % QStringLiteral("/download") %
+                                    (session.isEmpty() ?QLatin1String("") :(QStringLiteral("?session=")+session)));
+                    el.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
                 }
 
                 if(options.bOpdsShowAnotation)
@@ -925,13 +935,12 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
                     QBuffer infobuff;
                     QFileInfo fi_book;
                     fi_book=lib.getBookFile(outbuff,infobuff,idBook);
-                    if(fi_book.suffix().toLower()=="fb2")
+                    if(fi_book.suffix().toLower() == QLatin1String("fb2"))
                     {
-                        if(book.sAnnotation.isEmpty()){
+                        if(book.sAnnotation.isEmpty())
                             lib.loadAnnotation(idBook);
-                        }
                         QDomDocument an;
-                        an.setContent(QString("<dev>%1</dev>").arg(book.sAnnotation));
+                        an.setContent(QStringLiteral("<dev>%1</dev>").arg(book.sAnnotation));
                         QDomNode an_node=doc.importNode(an.childNodes().at(0),true);
                         entry.appendChild(an_node);
                     }
@@ -940,24 +949,24 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
             iBook++;
         }
         if(nPage>=1){
-            QDomElement entry=doc.createElement("div");
+            QDomElement entry=doc.createElement(QStringLiteral("div"));
             feed.appendChild(entry);
-            QDomElement el=AddTextNode("a",tr("Previous page"),entry);
-            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(QString::number(nPage-1))+parameters);
-            el.setAttribute("class","author");
+            QDomElement el=AddTextNode(QStringLiteral("a"),tr("Previous page"),entry);
+            el.setAttribute(QStringLiteral("href"),lib_url % current_url % QStringLiteral("?page=%1").arg(QString::number(nPage-1)) % parameters);
+            el.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
         }
         if(listBooks.size()>(nPage+1)*MAX_BOOKS_PER_PAGE){
-            QDomElement entry=doc.createElement("div");
+            QDomElement entry=doc.createElement(QStringLiteral("div"));
             feed.appendChild(entry);
 
-            QDomElement el=AddTextNode("a",tr("Next page"),entry);
-            el.setAttribute("href",lib_url+current_url+QString("?page=%1").arg(QString::number(nPage+1))+parameters);
-            el.setAttribute("class","author");
+            QDomElement el=AddTextNode(QStringLiteral("a"),tr("Next page"),entry);
+            el.setAttribute(QStringLiteral("href"),lib_url % current_url % QStringLiteral("?page=%1").arg(QString::number(nPage+1)) % parameters);
+            el.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
 
         }
         QString str;
         QTextStream t(&str,QIODevice::WriteOnly);
-        doc.namedItem("HTML").save(t,SAVE_INDEX);
+        doc.namedItem(QStringLiteral("HTML")).save(t,SAVE_INDEX);
         return str;
     }
 }
@@ -979,50 +988,50 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     }
     pExportOptions_ = &options.vExportOptions[http_settings];
     url=QUrl::fromPercentEncoding(url.toLatin1());
-    int posQuestion=url.indexOf("?");
+    int posQuestion=url.indexOf(QLatin1String("?"));
     QStringList strings;
     if(posQuestion>=0)
     {
-        strings=url.left(posQuestion).split("/");
+        strings=url.left(posQuestion).split(QStringLiteral("/"));
         strings.last().append(url.right(url.length()-posQuestion));
     }
     else
     {
-        strings=url.split("/");
+        strings=url.split(QStringLiteral("/"));
     }
     //qDebug()<<strings;
     int id_lib=idCurrentLib;
-    QString lib_url="/http";
+    QString lib_url=QStringLiteral("/http");
     qDebug()<<"url:"<<url;
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     bool opds=false;
     params.clear();
     if(strings.count()>1)
     {
-        if(strings[1].startsWith("opds"))
+        if(strings[1].startsWith(QLatin1String("opds")))
         {
-            url+="/";
-            if(strings[1].startsWith("opds_"))
+            url+=QLatin1String("/");
+            if(strings[1].startsWith(QLatin1String("opds_")))
             {
-                id_lib=strings[1].replace("opds_","").toInt();
+                id_lib=strings[1].replace(QLatin1String("opds_"),QLatin1String("")).toInt();
                 lib_url="/opds_"+QString::number(id_lib);
             }
             else
             {
-                lib_url="/opds";
+                lib_url=QStringLiteral("/opds");
                 id_lib = idCurrentLib;
             }
             strings.removeFirst();
             url.remove(0,1);
-            url=url.right(url.length()-url.indexOf("/"));
+            url=url.right(url.length()-url.indexOf(QLatin1String("/")));
             opds=true;
         }
-        else if(strings[1].startsWith("http"))
+        else if(strings[1].startsWith(QLatin1String("http")))
         {
-            url+="/";
-            if(strings[1].startsWith("http_"))
+            url+=QLatin1String("/");
+            if(strings[1].startsWith(QLatin1String("http_")))
             {
-                id_lib=strings[1].replace("http_","").toInt();
+                id_lib=strings[1].replace(QLatin1String("http_"),QLatin1String("")).toInt();
 //                query.exec("SELECT name FROM lib WHERE id="+QString::number(id_lib));
 //                if(query.next())
 //                    libName+=" ("+query.value(0).toString()+")";
@@ -1030,12 +1039,12 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             }
             else
             {
-                lib_url="/http";
+                lib_url=QStringLiteral("/http");
                 id_lib = idCurrentLib;
             }
             strings.removeFirst();
             url.remove(0,1);
-            url=url.right(url.length()-url.indexOf("/"));
+            url=url.right(url.length()-url.indexOf(QLatin1String("/")));
             opds=false;
         }
     }
@@ -1052,15 +1061,15 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             int pos=last.indexOf('?');
             if(pos>=0)
             {
-                QStringList str_params=last.right(last.length()-pos-1).split('&');
+                QStringList str_params=last.right(last.length()-pos-1).split(QStringLiteral("&"));
                 foreach (QString str, str_params)
                 {
                     int pos_eqv=str.indexOf('=');
                     if(pos_eqv>0)
                         params.insert(str.left(pos_eqv),str.right(str.length()-pos_eqv-1));
                     else
-                        params.insert(str,"");
-                    if(str.left(pos_eqv) == "page")
+                        params.insert(str,QLatin1String(""));
+                    if(str.left(pos_eqv) == QLatin1String("page"))
                         nPage = str.right(str.length()-pos_eqv-1).toUInt();
                 }
                 strings.last()=strings.last().left(pos);
@@ -1078,9 +1087,9 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
 //    qDebug()<<params;
 
     QFileInfo fi(url);
-    if(url=="/robots.txt" || url=="/robots.txt/")
+    if(url==QLatin1String("/robots.txt") || url==QLatin1String("/robots.txt/"))
     {
-        ts<<WriteSuccess(OPDS_MIME_TYPE("txt"));
+        ts<<WriteSuccess(OPDS_MIME_TYPE(QStringLiteral("txt")));
         ts.flush();
         ts<<"User-agent: *"<<char(10);
         ts<<"Disallow: /";
@@ -1101,34 +1110,34 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             ts.device()->write(file.readAll());
         }
     }
-    else if((url.endsWith("cover.jpg/",Qt::CaseInsensitive) || url.endsWith("cover.jpg",Qt::CaseInsensitive)) && !QFileInfo::exists(url))
+    else if((url.endsWith(QLatin1String("cover.jpg/"),Qt::CaseInsensitive) || url.endsWith(QLatin1String("cover.jpg"),Qt::CaseInsensitive)) && !QFileInfo::exists(url))
     {
         QString id=strings[2];
         fb2mobi fb(pExportOptions_);
         QString file=fb.convert(id.toLongLong());
         process(file,ts,session);
     }
-    else if(fi.suffix().toLower()=="ico")
+    else if(fi.suffix().toLower()==QLatin1String("ico"))
     {
         QString ico=QApplication::applicationDirPath()+"/xsl/opds/"+url;
         QFile file(ico);
         file.open(QFile::ReadOnly);
-        ts<<WriteSuccess("image/x-icon");
+        ts<<WriteSuccess(QStringLiteral("image/x-icon"));
         ts.flush();
         ts.device()->write(file.readAll());
     }
-    else if(fi.suffix().toLower()=="png")
+    else if(fi.suffix().toLower()==QLatin1String("png"))
     {
         QString ico=QApplication::applicationDirPath()+"/xsl/opds/"+url;
         if(fi.exists())
             ico=fi.absoluteFilePath();
         QFile file(ico);
         file.open(QFile::ReadOnly);
-        ts<<WriteSuccess("image/png");
+        ts<<WriteSuccess(QStringLiteral("image/png"));
         ts.flush();
         ts.device()->write(file.readAll());
     }
-    else if(fi.suffix().toLower()=="jpg")
+    else if(fi.suffix().toLower()==QLatin1String("jpg"))
     {
         //qDebug()<<"!!!-jpg"<<fi.absoluteFilePath();
         QString ico=QApplication::applicationDirPath()+"/xsl/opds/"+url;
@@ -1138,143 +1147,143 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         //qDebug()<<ico;
         QFile file(ico);
         file.open(QFile::ReadOnly);
-        ts<<WriteSuccess("image/jpeg");
+        ts<<WriteSuccess(QStringLiteral("image/jpeg"));
         ts.flush();
         ts.device()->write(file.readAll());
     }
-    else if(url=="/")
+    else if(url==QLatin1String("/"))
     {
         if(opds)
         {
             QDomElement feed=doc_header(session);
-            AddTextNode("id","tag:root",feed);
-            AddTextNode("title",lib.name,feed);
+            AddTextNode(QStringLiteral("id"),QStringLiteral("tag:root"),feed);
+            AddTextNode(QStringLiteral("title"),lib.name,feed);
            // QDateTime td=QDateTime::currentDateTime();
            // td.setTimeSpec(Qt::OffsetFromUTC);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-            AddTextNode("icon","/icon_256x256.png",feed);
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+            AddTextNode(QStringLiteral("icon"),QStringLiteral("/icon_256x256.png"),feed);
 
-            QDomElement link=doc.createElement("link");
-            link.setAttribute("href",lib_url+"/search?search_string={searchTerms}"+(session.isEmpty()?"":"&session="+session));
-            link.setAttribute("rel","search");
-            link.setAttribute("type","application/atom+xml");
+            QDomElement link=doc.createElement(QStringLiteral("link"));
+            link.setAttribute(QStringLiteral("href"),lib_url+"/search?search_string={searchTerms}"+(session.isEmpty()?QLatin1String(""):"&session="+session));
+            link.setAttribute(QStringLiteral("rel"),QStringLiteral("search"));
+            link.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml"));
             feed.appendChild(link);
 
             QDomElement entry;
             QDomElement el;
             if(db_is_open)
             {
-                entry=doc.createElement("entry");
+                entry=doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
-                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:root:authors",entry);
-                AddTextNode("title",tr("Books by authors"),entry);
-                el=AddTextNode("content",tr("Finding books by authors"),entry);
-                el.setAttribute("type","text");
-                el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/authorsindex"+(session.isEmpty()?"":"?session="+session));
-                el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode(QStringLiteral("id"),QStringLiteral("tag:root:authors"),entry);
+                AddTextNode(QStringLiteral("title"),tr("Books by authors"),entry);
+                el=AddTextNode(QStringLiteral("content"),tr("Finding books by authors"),entry);
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/authorsindex"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
-                entry=doc.createElement("entry");
+                entry=doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
-                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:root:sequences",entry);
-                AddTextNode("title",tr("Books by sequences"),entry);
-                el=AddTextNode("content",tr("Finding books by sequences"),entry);
-                el.setAttribute("type","text");
-                el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/sequencesindex"+(session.isEmpty()?"":"?session="+session));
-                el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode(QStringLiteral("id"),QStringLiteral("tag:root:sequences"),entry);
+                AddTextNode(QStringLiteral("title"),tr("Books by sequences"),entry);
+                el=AddTextNode(QStringLiteral("content"),tr("Finding books by sequences"),entry);
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/sequencesindex"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
-                entry=doc.createElement("entry");
+                entry=doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
-                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:root:genre",entry);
-                AddTextNode("title",tr("Books by genre"),entry);
-                el=AddTextNode("content",tr("Finding books by genre"),entry);
-                el.setAttribute("type","text");
-                el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/genres"+(session.isEmpty()?"":"?session="+session));
-                el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode(QStringLiteral("id"),QStringLiteral("tag:root:genre"),entry);
+                AddTextNode(QStringLiteral("title"),tr("Books by genre"),entry);
+                el=AddTextNode(QStringLiteral("content"),tr("Finding books by genre"),entry);
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/genres"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
             }
             if(options.bBrowseDir)
             {
-                entry=doc.createElement("entry");
+                entry=doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
-                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:root:genre",entry);
-                AddTextNode("title",tr("Browse directory"),entry);
-                el=AddTextNode("content",tr("Finding books by directory"),entry);
-                el.setAttribute("type","text");
-                el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/directory"+(session.isEmpty()?"":"?session="+session));
-                el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode(QStringLiteral("id"),QStringLiteral("tag:root:genre"),entry);
+                AddTextNode(QStringLiteral("title"),tr("Browse directory"),entry);
+                el=AddTextNode(QStringLiteral("content"),tr("Finding books by directory"),entry);
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/directory"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
             }
 
-            ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+            ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
             ts<<doc.toString();
         }
         else
         {
             ts<<WriteSuccess();
             QDomElement feed=doc_header(session,true,lib.name,lib_url);
-            QDomElement div=doc.createElement("DIV");
+            QDomElement div=doc.createElement(QStringLiteral("DIV"));
             feed.appendChild(div);
             QDomElement el;
             if(db_is_open)
             {
-                el=AddTextNode("A",tr("Finding books by authors"),div);
-                el.setAttribute("href",lib_url+"/authorsindex"+(session.isEmpty()?"":"?session="+session));
-                div=doc.createElement("DIV");
+                el=AddTextNode(QStringLiteral("A"),tr("Finding books by authors"),div);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/authorsindex"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                div=doc.createElement(QStringLiteral("DIV"));
                 feed.appendChild(div);
-                el=AddTextNode("A",tr("Finding books by sequences"),div);
-                el.setAttribute("href",lib_url+"/sequencesindex"+(session.isEmpty()?"":"?session="+session));
-                div=doc.createElement("DIV");
+                el=AddTextNode(QStringLiteral("A"),tr("Finding books by sequences"),div);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/sequencesindex"+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                div=doc.createElement(QStringLiteral("DIV"));
                 feed.appendChild(div);
-                el=AddTextNode("A",tr("Finding books by genre"),div);
-                el.setAttribute("href",lib_url+"/genres"+(session.isEmpty()?"":"?session="+session));
+                el=AddTextNode(QStringLiteral("A"),tr("Finding books by genre"),div);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/genres"+(session.isEmpty()?QLatin1String(""):"?session="+session));
             }
             if(options.bBrowseDir)
             {
-                div=doc.createElement("DIV");
+                div=doc.createElement(QStringLiteral("DIV"));
                 feed.appendChild(div);
-                el=AddTextNode("A",tr("Browse directory"),div);
-                el.setAttribute("href",lib_url+"/directory"+(session.isEmpty()?"":"?session="+session));
+                el=AddTextNode(QStringLiteral("A"),tr("Browse directory"),div);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/directory"+(session.isEmpty()?QLatin1String(""):"?session="+session));
             }
             if(db_is_open)
             {
-                QDomElement hr=doc.createElement("HR");
-                hr.setAttribute("size","3");
-                hr.setAttribute("color","black");
+                QDomElement hr=doc.createElement(QStringLiteral("HR"));
+                hr.setAttribute(QStringLiteral("size"),QStringLiteral("3"));
+                hr.setAttribute(QStringLiteral("color"),QStringLiteral("black"));
                 feed.appendChild(hr);
 
-                QDomElement form=doc.createElement("FORM");
-                form.setAttribute("method","get");
-                form.setAttribute("action","search");
+                QDomElement form=doc.createElement(QStringLiteral("FORM"));
+                form.setAttribute(QStringLiteral("method"),QStringLiteral("get"));
+                form.setAttribute(QStringLiteral("action"),QStringLiteral("search"));
                 feed.appendChild(form);
 
-                div=doc.createElement("DIV");
+                div=doc.createElement(QStringLiteral("DIV"));
                 //div.setAttribute("class","book");
                 form.appendChild(div);
-                el=AddTextNode("div",tr("Finding books by name/author: "),div);
-                el.setAttribute("class","book");
+                el=AddTextNode(QStringLiteral("div"),tr("Finding books by name/author: "),div);
+                el.setAttribute(QStringLiteral("class"),QStringLiteral("book"));
                 div.appendChild(el);
 
-                el=doc.createElement("INPUT");
-                el.setAttribute("type","text");
-                el.setAttribute("name","search_string");
+                el=doc.createElement(QStringLiteral("INPUT"));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                el.setAttribute(QStringLiteral("name"),QStringLiteral("search_string"));
                 //el.setAttribute("class","book");
                 div.appendChild(el);
 
-                el=doc.createElement("INPUT");
-                el.setAttribute("type","hidden");
-                el.setAttribute("name","session");
-                el.setAttribute("value",session);
+                el=doc.createElement(QStringLiteral("INPUT"));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("hidden"));
+                el.setAttribute(QStringLiteral("name"),QStringLiteral("session"));
+                el.setAttribute(QStringLiteral("value"),session);
                 div.appendChild(el);
 
-                el=doc.createElement("INPUT");
-                el.setAttribute("type","submit");
-                el.setAttribute("value",tr("Find"));
+                el=doc.createElement(QStringLiteral("INPUT"));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("submit"));
+                el.setAttribute(QStringLiteral("value"),tr("Find"));
                 div.appendChild(el);
 /*
                 hr=doc.createElement("HR");
@@ -1309,66 +1318,66 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
 
 
             ts<<"<!DOCTYPE html>";
-            doc.namedItem("HTML").save(ts,SAVE_INDEX);
+            doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
         }
     }
-    else if(url.startsWith("/convert",Qt::CaseInsensitive) && !opds)
+    else if(url.startsWith(QLatin1String("/convert"),Qt::CaseInsensitive) && !opds)
     {
         QDomElement feed;
         feed=doc_header(session,true,lib.name,lib_url);
         ts<<WriteSuccess();
         ts<<"<!DOCTYPE html>";
-        doc.namedItem("HTML").save(ts,SAVE_INDEX);
+        doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
     }
-    else if(url.startsWith("/search",Qt::CaseInsensitive))
+    else if(url.startsWith(QLatin1String("/search"),Qt::CaseInsensitive))
     {
-        if(!params.contains("search_string"))
+        if(!params.contains(QStringLiteral("search_string")))
         {
-            process("/",ts,session);
+            process(QStringLiteral("/"),ts,session);
             return;
         }
-        if(params.value("search_string").isEmpty())
+        if(params.value(QStringLiteral("search_string")).isEmpty())
         {
-            process("/",ts,session);
+            process(QStringLiteral("/"),ts,session);
             return;
         }
 
         //qDebug()<<(params.value("search_string"))<<123;
         //qDebug()<<QUrl::fromPercentEncoding(params.value("search_string").toUtf8())<<1234;
         //ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"","","","",ts,opds,libName,session,false,QString(params.value("search_string")).replace("+"," ").replace("%20"," "));
-        QList<uint> listBooks = book_list(lib,0,0,0,QString(params.value("search_string")).replace("+"," ").replace("%20"," "));
+        QList<uint> listBooks = book_list(lib,0,0,0,QString(params.value(QStringLiteral("search_string"))).replace(QLatin1String("+"),QLatin1String(" ")).replace(QLatin1String("%20"),QLatin1String(" ")));
         ts<<FillPage(listBooks,lib,tr("Books search"),lib_url, url,ts,opds,nPage,session,true);
 
 
     }
-    else if(url.startsWith("/sequencebooks",Qt::CaseInsensitive) && strings.count()>=3)
+    else if(url.startsWith(QLatin1String("/sequencebooks"),Qt::CaseInsensitive) && strings.count()>=3)
     {
         //QString id_author="";
         QString id_sequence=strings[2];
         //ts<<books_list(lib_url,url,id_lib>0?QString::number(id_lib):"",id_author,id_sequence,"",ts,opds,libName,session,true);
-        QList<uint> listBooks = book_list(lib,0,id_sequence.toUInt(),0,"");
+        QList<uint> listBooks = book_list(lib,0,id_sequence.toUInt(),0,QLatin1String(""));
         ts<<FillPage(listBooks,lib,tr("Books of sequence")+" ("+lib.mSerials[id_sequence.toUInt()].sName+")",lib_url, url,ts,opds,nPage,session,false);
 
     }
-    else if(url.startsWith("/sequencesindex",Qt::CaseInsensitive))
+    else if(url.startsWith(QLatin1String("/sequencesindex"),Qt::CaseInsensitive))
     {
-        QString index="";
+        QString index=QLatin1String("");
         if(strings.count()>2)
             index=strings[2];
         bool by_books=false;
         if(strings.count()>3)
         {
-            by_books=strings[3]=="books";
+            by_books=strings[3]==QLatin1String("books");
         }
       //  qDebug()<<strings<<index;
         QDomElement feed;
         if(opds)
         {
             feed=doc_header(session);
-            AddTextNode("title",tr("Books by sequences"),feed);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-            AddTextNode("icon","/icon_256x256.png",feed);
-            ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+            AddTextNode(QStringLiteral("title"),tr("Books by sequences"),feed);
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+            AddTextNode(QStringLiteral("icon"),QStringLiteral("/icon_256x256.png"),feed);
+            ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
         }
         else
         {
@@ -1403,7 +1412,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             int current_column=0;
             if(!opds)
             {
-                tag_table=doc.createElement("TABLE");
+                tag_table=doc.createElement(QStringLiteral("TABLE"));
                 feed.appendChild(tag_table);
             }
             foreach(auto iIndex,listKeys)
@@ -1413,21 +1422,21 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 if(opds)
                 {
 
-                    QDomElement entry=doc.createElement("entry");
+                    QDomElement entry=doc.createElement(QStringLiteral("entry"));
                     feed.appendChild(entry);
-                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                    AddTextNode("id","tag:sequences:"+iIndex,entry);
-                    AddTextNode("title",iIndex,entry);
-                    QDomElement el=AddTextNode("content",QString::number(mCount[iIndex])+" "+tr("series beginning with")+" '"+iIndex+"'",entry);
-                    el.setAttribute("type","text");
-                    el=AddTextNode("link","",entry);
+                    AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode(QStringLiteral("id"),"tag:sequences:"+iIndex,entry);
+                    AddTextNode(QStringLiteral("title"),iIndex,entry);
+                    QDomElement el=AddTextNode(QStringLiteral("content"),QString::number(mCount[iIndex])+" "+tr("series beginning with")+" '"+iIndex+"'",entry);
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
                     if(mCount[iIndex]==1)
                     {
                         auto iSerial = lib.mSerials.constBegin();
                         while(iSerial != lib.mSerials.constEnd()){
                             if(iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                             {
-                                el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key())))+(session.isEmpty()?"":"?session="+session));
+                                el.setAttribute(QStringLiteral("href"),lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key())))+(session.isEmpty()?QLatin1String(""):"?session="+session));
                                 break;
                             }
                             ++iSerial;
@@ -1436,35 +1445,35 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                     }
                     else
                     {
-                        el.setAttribute("href",lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
-                                        (setSerials.contains(iIndex) ?"/books":"")+(session.isEmpty()?"":"?session="+session));
+                        el.setAttribute(QStringLiteral("href"),lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setSerials.contains(iIndex) ?"/books":"")+(session.isEmpty()?QLatin1String(""):"?session="+session));
                     }
-                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
                 }
                 else
                 {
 
                     if(current_column==0)
                     {
-                        tag_tr=doc.createElement("tr");
+                        tag_tr=doc.createElement(QStringLiteral("tr"));
                         tag_table.appendChild(tag_tr);
                     }
-                    QDomElement td=doc.createElement("td");
+                    QDomElement td=doc.createElement(QStringLiteral("td"));
                     tag_tr.appendChild(td);
 
-                    QDomElement div=doc.createElement("DIV");
-                    div.setAttribute("class","author");
+                    QDomElement div=doc.createElement(QStringLiteral("DIV"));
+                    div.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
                     td.appendChild(div);
-                    QDomElement el=AddTextNode("a",iIndex,div);
-                    el.setAttribute("class","block");
-                    AddTextNode("div",QString::number(mCount[iIndex])+" "+tr("series beginning with")+" '"+iIndex+"'",div);
+                    QDomElement el=AddTextNode(QStringLiteral("a"),iIndex,div);
+                    el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+                    AddTextNode(QStringLiteral("div"),QString::number(mCount[iIndex])+" "+tr("series beginning with")+" '"+iIndex+"'",div);
                     if(mCount[iIndex]==1)
                     {
                         auto iSerial = lib.mSerials.constBegin();
                         while(iSerial != lib.mSerials.constEnd()){
                             if(iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                             {
-                                el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key())))+(session.isEmpty()?"":"?session="+session));
+                                el.setAttribute(QStringLiteral("href"),lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key())))+(session.isEmpty()?QLatin1String(""):"?session="+session));
                                 break;
                             }
                             ++iSerial;
@@ -1473,8 +1482,8 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                     }
                     else
                     {
-                        el.setAttribute("href",lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
-                                        (setSerials.contains(iIndex) ?"/books":"")+(session.isEmpty()?"":"?session="+session));
+                        el.setAttribute(QStringLiteral("href"),lib_url+"/sequencesindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setSerials.contains(iIndex) ?"/books":"")+(session.isEmpty()?QLatin1String(""):"?session="+session));
 
                     }
                     current_column++;
@@ -1485,7 +1494,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             if(!opds)
                 while(current_column<MAX_COLUMN_COUNT)
                 {
-                    AddTextNode("td", "",tag_tr);
+                    AddTextNode(QStringLiteral("td"), QLatin1String(""),tag_tr);
                     current_column++;
                 }
         }
@@ -1515,35 +1524,35 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 }
                 if(opds)
                 {
-                    QDomElement entry=doc.createElement("entry");
+                    QDomElement entry=doc.createElement(QStringLiteral("entry"));
                     feed.appendChild(entry);
-                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                    AddTextNode("id","tag:sequences:"+QString::number(iIndex),entry);
-                    AddTextNode("title",lib.mSerials[iIndex].sName,entry);
-                    QDomElement el=AddTextNode("content",QString::number(nBooksCount)+" "+tr("books"),entry);
-                    el.setAttribute("type","text");
-                    el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                    AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode(QStringLiteral("id"),"tag:sequences:"+QString::number(iIndex),entry);
+                    AddTextNode(QStringLiteral("title"),lib.mSerials[iIndex].sName,entry);
+                    QDomElement el=AddTextNode(QStringLiteral("content"),QString::number(nBooksCount)+" "+tr("books"),entry);
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
                 }
                 else
                 {
-                    QDomElement div=doc.createElement("DIV");
-                    div.setAttribute("class","author");
+                    QDomElement div=doc.createElement(QStringLiteral("DIV"));
+                    div.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
                     feed.appendChild(div);
-                    QDomElement el=AddTextNode("a",lib.mSerials[iIndex].sName,div);
-                    el.setAttribute("class","block");
-                    el.setAttribute("href",lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
-                    AddTextNode("div",QString::number(nBooksCount)+" "+tr("books"),div);
+                    QDomElement el=AddTextNode(QStringLiteral("a"),lib.mSerials[iIndex].sName,div);
+                    el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/sequencebooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    AddTextNode(QStringLiteral("div"),QString::number(nBooksCount)+" "+tr("books"),div);
                 }
             }
         }
         if(opds)
             ts<<doc.toString();
         else
-            doc.namedItem("HTML").save(ts,SAVE_INDEX);
+            doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
     }
-    else if(url.startsWith("/genres",Qt::CaseInsensitive))
+    else if(url.startsWith(QLatin1String("/genres"),Qt::CaseInsensitive))
     {
         QList<uint> listIdGenres;
         QMap<uint,uint> mCounts;
@@ -1551,7 +1560,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         {
             uint idParrentGenre = strings[2].toUInt();
             if(mGenre[idParrentGenre].idParrentGenre>0){
-                QList<uint> listBooks = book_list(lib,0,0,idParrentGenre,"");
+                QList<uint> listBooks = book_list(lib,0,0,idParrentGenre,QLatin1String(""));
                 ts<<FillPage(listBooks,lib,tr("Books by ABC"),lib_url, url,ts,opds,nPage,session,true);
                 return;
             }
@@ -1587,10 +1596,10 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         if(opds)
         {
             feed=doc_header(session);
-            AddTextNode("title",tr("Books by genre"),feed);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-            AddTextNode("icon","/icon_256x256.png",feed);
-            ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+            AddTextNode(QStringLiteral("title"),tr("Books by genre"),feed);
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+            AddTextNode(QStringLiteral("icon"),QStringLiteral("/icon_256x256.png"),feed);
+            ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
         }
         else
         {
@@ -1601,64 +1610,64 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         {
             if(opds)
             {
-                QDomElement entry=doc.createElement("entry");
+                QDomElement entry=doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
-                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:root:genre:"+mGenre[idGenre].sName ,entry);
-                AddTextNode("title",mGenre[idGenre].sName,entry);
+                AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode(QStringLiteral("id"),"tag:root:genre:"+mGenre[idGenre].sName ,entry);
+                AddTextNode(QStringLiteral("title"),mGenre[idGenre].sName,entry);
                 if(strings.count()>2)
                 {
-                    QDomElement el=AddTextNode("content",QString::number(mCounts[idGenre])/*query.value(2).toString()*/+" "+tr("books"),entry);
-                    el.setAttribute("type","text");
+                    QDomElement el=AddTextNode(QStringLiteral("content"),QString::number(mCounts[idGenre])/*query.value(2).toString()*/+" "+tr("books"),entry);
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
                 }
                 else
                 {
-                    QDomElement el=AddTextNode("content",tr("Books of genre")+" "+mGenre[idGenre].sName,entry);
-                    el.setAttribute("type","text");
+                    QDomElement el=AddTextNode(QStringLiteral("content"),tr("Books of genre")+" "+mGenre[idGenre].sName,entry);
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
                 }
-                QDomElement el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/genres/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idGenre)))+(session.isEmpty()?"":"?session="+session));
-                        el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/genres/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idGenre)))+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                        el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
             }
             else
             {
-                QDomElement div=doc.createElement("DIV");
+                QDomElement div=doc.createElement(QStringLiteral("DIV"));
                 feed.appendChild(div);
-                div.setAttribute("class","author");
-                QDomElement el=AddTextNode("A",mGenre[idGenre].sName,div);
-                el.setAttribute("class","block");
-                el.setAttribute("href","/genres/"+QString::number(idGenre)+(session.isEmpty()?"":"?session="+session));
+                div.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
+                QDomElement el=AddTextNode(QStringLiteral("A"),mGenre[idGenre].sName,div);
+                el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+                el.setAttribute(QStringLiteral("href"),"/genres/"+QString::number(idGenre)+(session.isEmpty()?QLatin1String(""):"?session="+session));
                 if(strings.count()>2)
                 {
-                    QDomElement el=AddTextNode("div",QString::number(mCounts[idGenre])+" "+tr("books"),div);
+                    QDomElement el=AddTextNode(QStringLiteral("div"),QString::number(mCounts[idGenre])+" "+tr("books"),div);
                 }
             }
         }
         if(opds)
             ts<<doc.toString();
         else
-            doc.namedItem("HTML").save(ts,SAVE_INDEX);
+            doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
         qDebug() << doc.toString();
     }
-    else if(url.startsWith("/authorsindex",Qt::CaseInsensitive))
+    else if(url.startsWith(QLatin1String("/authorsindex"),Qt::CaseInsensitive))
     {
-        QString index="";
+        QString index=QLatin1String("");
         if(strings.count()>2)
             index=strings[2];
         bool by_books=false;
         if(strings.count()>3)
         {
-            by_books=strings[3]=="books";
+            by_books=strings[3]==QLatin1String("books");
         }
         QDomElement feed;
         if(opds)
         {
             feed=doc_header(session);
-            AddTextNode("title",tr("Books by authors"),feed);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-            AddTextNode("icon","/icon_256x256.png",feed);
-            ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+            AddTextNode(QStringLiteral("title"),tr("Books by authors"),feed);
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+            AddTextNode(QStringLiteral("icon"),QStringLiteral("/icon_256x256.png"),feed);
+            ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
         }
         else
         {
@@ -1696,7 +1705,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             int current_column=0;
             if(!opds)
             {
-                tag_table=doc.createElement("TABLE");
+                tag_table=doc.createElement(QStringLiteral("TABLE"));
                 feed.appendChild(tag_table);
             }
 
@@ -1704,14 +1713,14 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             {
                 if(opds)
                 {
-                    QDomElement entry=doc.createElement("entry");
+                    QDomElement entry=doc.createElement(QStringLiteral("entry"));
                     feed.appendChild(entry);
-                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                    AddTextNode("id","tag:authors:"+iIndex,entry);
-                    AddTextNode("title",iIndex,entry);
-                    QDomElement el=AddTextNode("content",QString::number(mCount[iIndex])+" "+tr("authors beginning with")+" '"+iIndex+"'",entry);
-                    el.setAttribute("type","text");
-                    el=AddTextNode("link","",entry);
+                    AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode(QStringLiteral("id"),"tag:authors:"+iIndex,entry);
+                    AddTextNode(QStringLiteral("title"),iIndex,entry);
+                    QDomElement el=AddTextNode(QStringLiteral("content"),QString::number(mCount[iIndex])+" "+tr("authors beginning with")+" '"+iIndex+"'",entry);
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
                     if(mCount[iIndex]==1)
                     {
                         iAuthor = lib.mAuthors.constBegin();
@@ -1719,7 +1728,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                         {
                             if(iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
                             {
-                                el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?"":"?session="+session));
+                                el.setAttribute(QStringLiteral("href"),lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?QLatin1String(""):"?session="+session));
                                 break;
                             }
                             ++iAuthor;
@@ -1727,27 +1736,27 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                     }
                     else
                     {
-                        el.setAttribute("href",lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
-                                        (setAuthors.contains(iIndex)?"/books":"")+(session.isEmpty()?"":"?session="+session));
+                        el.setAttribute(QStringLiteral("href"),lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setAuthors.contains(iIndex)?"/books":"")+(session.isEmpty()?QLatin1String(""):"?session="+session));
 
                     }
-                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
                 }
                 else
                 {
                     if(current_column==0)
                     {
-                        tag_tr=doc.createElement("tr");
+                        tag_tr=doc.createElement(QStringLiteral("tr"));
                         tag_table.appendChild(tag_tr);
                     }
-                    QDomElement td=doc.createElement("td");
+                    QDomElement td=doc.createElement(QStringLiteral("td"));
                     tag_tr.appendChild(td);
-                    QDomElement div=doc.createElement("div");
-                    div.setAttribute("class","author");
+                    QDomElement div=doc.createElement(QStringLiteral("div"));
+                    div.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
                     td.appendChild(div);
-                    QDomElement el=AddTextNode("a",iIndex,div);
-                    el.setAttribute("class","block");
-                    AddTextNode("div",QString::number(mCount[iIndex])+" "+tr("authors beginning with")+" '"+iIndex+"'",div);
+                    QDomElement el=AddTextNode(QStringLiteral("a"),iIndex,div);
+                    el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+                    AddTextNode(QStringLiteral("div"),QString::number(mCount[iIndex])+" "+tr("authors beginning with")+" '"+iIndex+"'",div);
                     if(mCount[iIndex]==1)
                     {
                         iAuthor = lib.mAuthors.constBegin();
@@ -1755,7 +1764,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                         {
                             if(iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
                             {
-                                el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?"":"?session="+session));
+                                el.setAttribute(QStringLiteral("href"),lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key())))+(session.isEmpty()?QLatin1String(""):"?session="+session));
                                 break;
                             }
                             ++iAuthor;
@@ -1763,8 +1772,8 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                     }
                     else
                     {
-                        el.setAttribute("href",lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
-                                        (setAuthors.contains(iIndex)?"/books":"")+(session.isEmpty()?"":"?session="+session));
+                        el.setAttribute(QStringLiteral("href"),lib_url+"/authorsindex/"+ QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData())+
+                                        (setAuthors.contains(iIndex)?"/books":"")+(session.isEmpty()?QLatin1String(""):"?session="+session));
 
                     }
 
@@ -1777,7 +1786,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
             {
                 while(current_column<MAX_COLUMN_COUNT)
                 {
-                    AddTextNode("td", "",tag_tr);
+                    AddTextNode(QStringLiteral("td"), QLatin1String(""),tag_tr);
                     current_column++;
                 }
             }
@@ -1806,26 +1815,26 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
 
                 if(opds)
                 {
-                    QDomElement entry=doc.createElement("entry");
+                    QDomElement entry=doc.createElement(QStringLiteral("entry"));
                     feed.appendChild(entry);
-                    AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                    AddTextNode("id","tag:author:"+QString::number(iIndex),entry);
-                    AddTextNode("title",lib.mAuthors[iIndex].getName(),entry);
-                    QDomElement el=AddTextNode("content",QString::number(nBooksCount)+" "+tr("books"),entry);
-                    el.setAttribute("type","text");
-                    el=AddTextNode("link","",entry);
-                    el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
-                    el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                    AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                    AddTextNode(QStringLiteral("id"),"tag:author:"+QString::number(iIndex),entry);
+                    AddTextNode(QStringLiteral("title"),lib.mAuthors[iIndex].getName(),entry);
+                    QDomElement el=AddTextNode(QStringLiteral("content"),QString::number(nBooksCount)+" "+tr("books"),entry);
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                    el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
                 }
                 else
                 {
-                    QDomElement div=doc.createElement("DIV");
-                    div.setAttribute("class","author");
+                    QDomElement div=doc.createElement(QStringLiteral("DIV"));
+                    div.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
                     feed.appendChild(div);
-                    QDomElement el=AddTextNode("a",lib.mAuthors[iIndex].getName(),div);
-                    el.setAttribute("class","block");
-                    el.setAttribute("href",lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?"":"?session="+session));
-                    AddTextNode("div",QString::number(nBooksCount)+" "+tr("books"),div);
+                    QDomElement el=AddTextNode(QStringLiteral("a"),lib.mAuthors[iIndex].getName(),div);
+                    el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+                    el.setAttribute(QStringLiteral("href"),lib_url+"/author/"+ QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                    AddTextNode(QStringLiteral("div"),QString::number(nBooksCount)+" "+tr("books"),div);
                 }
             }
 
@@ -1834,24 +1843,24 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         if(opds)
             ts<<doc.toString();
         else
-            doc.namedItem("HTML").save(ts,SAVE_INDEX);
+            doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
     }
-    else if(url.startsWith("/authorsequenceless/",Qt::CaseInsensitive) && strings.count()>=3)
+    else if(url.startsWith(QLatin1String("/authorsequenceless/"),Qt::CaseInsensitive) && strings.count()>=3)
     {
         uint idAuthor = strings[2].toUInt();
 
-        QList<uint> listBooks = book_list(lib,idAuthor,0,0,"",true);
+        QList<uint> listBooks = book_list(lib,idAuthor,0,0,QLatin1String(""),true);
         ts<<FillPage(listBooks,lib,tr("Books without sequence")+" ("+lib.mAuthors[idAuthor].getName()+")",lib_url, url,ts,opds,nPage,session,false);
 
     }
-    else if(url.startsWith("/authorbooks/",Qt::CaseInsensitive) && strings.count()>=3)
+    else if(url.startsWith(QLatin1String("/authorbooks/"),Qt::CaseInsensitive) && strings.count()>=3)
     {
         uint idAuthor = strings[2].toUInt();
-        QList<uint> listBooks = book_list(lib,idAuthor,0,0,"",false);
+        QList<uint> listBooks = book_list(lib,idAuthor,0,0,QLatin1String(""),false);
         ts<<FillPage(listBooks,lib,tr("Books by ABC")+" ("+lib.mAuthors[idAuthor].getName()+")",lib_url, url,ts,opds,nPage,session,false);
 
     }
-    else if(url.startsWith("/authorsequences/",Qt::CaseInsensitive) && strings.count()>=3)
+    else if(url.startsWith(QLatin1String("/authorsequences/"),Qt::CaseInsensitive) && strings.count()>=3)
     {
         QString id=strings[2];
         uint idAuthor = id.toUInt();
@@ -1859,16 +1868,16 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         if(opds)
         {
             feed=doc_header(session);
-            AddTextNode("id","tag:author:"+query.value(0).toString(),feed);
-            AddTextNode("title",tr("Book sequences")+" "+lib.mAuthors[idAuthor].getName(),feed);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-            AddTextNode("icon","/icon_256x256.png",feed);
+            AddTextNode(QStringLiteral("id"),"tag:author:"+query.value(0).toString(),feed);
+            AddTextNode(QStringLiteral("title"),tr("Book sequences")+" "+lib.mAuthors[idAuthor].getName(),feed);
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+            AddTextNode(QStringLiteral("icon"),QStringLiteral("/icon_256x256.png"),feed);
         }
         else
         {
              feed=doc_header(session,true,lib.name,lib_url);
-             QDomElement div=AddTextNode("DIV",tr("Book sequences")+" "+lib.mAuthors[idAuthor].getName(),feed);
-             div.setAttribute("class","caption");
+             QDomElement div=AddTextNode(QStringLiteral("DIV"),tr("Book sequences")+" "+lib.mAuthors[idAuthor].getName(),feed);
+             div.setAttribute(QStringLiteral("class"),QStringLiteral("caption"));
         }
 
         QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
@@ -1890,49 +1899,49 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         {
             if(opds)
             {
-                QDomElement entry=doc.createElement("entry");
+                QDomElement entry=doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
-                AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode("id","tag:author:"+id+":sequence:"+QString::number(idSerial),entry);
-                AddTextNode("title",lib.mSerials[idSerial].sName,entry);
-                QDomElement el=AddTextNode("content",QString::number(mapCountBooks[idSerial])+" "+tr("books in sequence"),entry);
-                el.setAttribute("type","text");
-                el=AddTextNode("link","",entry);
-                el.setAttribute("href",lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idSerial)))+(session.isEmpty()?"":"?session="+session));
-                el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                AddTextNode(QStringLiteral("id"),"tag:author:"+id+":sequence:"+QString::number(idSerial),entry);
+                AddTextNode(QStringLiteral("title"),lib.mSerials[idSerial].sName,entry);
+                QDomElement el=AddTextNode(QStringLiteral("content"),QString::number(mapCountBooks[idSerial])+" "+tr("books in sequence"),entry);
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("text"));
+                el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"),lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idSerial)))+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
             }
             else
             {
-                QDomElement entry=doc.createElement("div");
-                entry.setAttribute("class","author");
+                QDomElement entry=doc.createElement(QStringLiteral("div"));
+                entry.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
                 feed.appendChild(entry);
-                QDomElement el=AddTextNode("a",lib.mSerials[idSerial].sName,entry);
-                el.setAttribute("class","block");
-                el.setAttribute("href",lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idSerial)))+(session.isEmpty()?"":"?session="+session));
-                AddTextNode("div",QString::number(mapCountBooks[idSerial])+" "+tr("books in sequence"),entry);
+                QDomElement el=AddTextNode(QStringLiteral("a"),lib.mSerials[idSerial].sName,entry);
+                el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+                el.setAttribute(QStringLiteral("href"),lib_url+"/authorsequence/"+ QString::fromLatin1(QUrl::toPercentEncoding(id))+"/"+QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idSerial)))+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                AddTextNode(QStringLiteral("div"),QString::number(mapCountBooks[idSerial])+" "+tr("books in sequence"),entry);
             }
         }
         if(opds)
         {
-            ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+            ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
             ts<<doc.toString();
         }
         else
         {
             ts<<WriteSuccess();
-            doc.namedItem("HTML").save(ts,SAVE_INDEX);
+            doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
         }
 
     }
-    else if(url.startsWith("/authorsequence/",Qt::CaseInsensitive) && strings.count()>=4)
+    else if(url.startsWith(QLatin1String("/authorsequence/"),Qt::CaseInsensitive) && strings.count()>=4)
     {
         QString id_author=strings[2];
         QString id_sequence=strings[3];
         uint idSequence = id_sequence.toUInt();
-        QList<uint> listBooks = book_list(lib,id_author.toUInt(),idSequence,0,"");
+        QList<uint> listBooks = book_list(lib,id_author.toUInt(),idSequence,0,QLatin1String(""));
         ts<<FillPage(listBooks,lib,tr("Books of sequence")+" ("+lib.mSerials[idSequence].sName +")",lib_url, url,ts,opds,nPage,session,false);
     }
-    else if(url.startsWith("/author/",Qt::CaseInsensitive) && strings.count()>=3)
+    else if(url.startsWith(QLatin1String("/author/"),Qt::CaseInsensitive) && strings.count()>=3)
     {
         QString sIdAuthor = strings[2];
         uint idAuthor = sIdAuthor.toUInt();
@@ -1940,92 +1949,92 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
         if(opds)
         {
             QDomElement feed=doc_header(session);
-            AddTextNode("id","tag:author:"+query.value(0).toString(),feed);
-            AddTextNode("title",tr("Books by")+" "+sAuthor,feed);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-            AddTextNode("icon","/icon_256x256.png"+(session.isEmpty()?"":"?session="+session),feed);
+            AddTextNode(QStringLiteral("id"),"tag:author:"+query.value(0).toString(),feed);
+            AddTextNode(QStringLiteral("title"),tr("Books by")+" "+sAuthor,feed);
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+            AddTextNode(QStringLiteral("icon"),"/icon_256x256.png"+(session.isEmpty()?QLatin1String(""):"?session="+session),feed);
 
-            QDomElement entry=doc.createElement("entry");
+            QDomElement entry=doc.createElement(QStringLiteral("entry"));
             feed.appendChild(entry);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:author:"+sIdAuthor+":sequences",entry);
-            AddTextNode("title",tr("Books by sequences"),entry);
-            QDomElement el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
-            el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+            AddTextNode(QStringLiteral("id"),"tag:author:"+sIdAuthor+":sequences",entry);
+            AddTextNode(QStringLiteral("title"),tr("Books by sequences"),entry);
+            QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+            el.setAttribute(QStringLiteral("href"),lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
+            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
-            entry=doc.createElement("entry");
+            entry=doc.createElement(QStringLiteral("entry"));
             feed.appendChild(entry);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:author:"+sIdAuthor+":sequenceless",entry);
-            AddTextNode("title",tr("Books without sequence"),entry);
-            el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
-            el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+            AddTextNode(QStringLiteral("id"),"tag:author:"+sIdAuthor+":sequenceless",entry);
+            AddTextNode(QStringLiteral("title"),tr("Books without sequence"),entry);
+            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+            el.setAttribute(QStringLiteral("href"),lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
+            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
-            entry=doc.createElement("entry");
+            entry=doc.createElement(QStringLiteral("entry"));
             feed.appendChild(entry);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-            AddTextNode("id","tag:author:"+sIdAuthor+":sequences",entry);
-            AddTextNode("title",tr("All books"),entry);
-            el=AddTextNode("link","",entry);
-            el.setAttribute("href",lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
-            el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+            AddTextNode(QStringLiteral("id"),"tag:author:"+sIdAuthor+":sequences",entry);
+            AddTextNode(QStringLiteral("title"),tr("All books"),entry);
+            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+            el.setAttribute(QStringLiteral("href"),lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
+            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
-            ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+            ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
             ts<<doc.toString();
         }
         else
         {
             QDomElement feed=doc_header(session,true,lib.name,lib_url);
-            QDomElement div_auth=doc.createElement("DIV");;
-            div_auth.setAttribute("class","author");
+            QDomElement div_auth=doc.createElement(QStringLiteral("DIV"));;
+            div_auth.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
             feed.appendChild(div_auth);
-            QDomElement div_caption=AddTextNode("div",tr("Books by")+" "+sAuthor,div_auth);
-            div_caption.setAttribute("class","caption");
+            QDomElement div_caption=AddTextNode(QStringLiteral("div"),tr("Books by")+" "+sAuthor,div_auth);
+            div_caption.setAttribute(QStringLiteral("class"),QStringLiteral("caption"));
 
-            QDomElement div=doc.createElement("DIV");
+            QDomElement div=doc.createElement(QStringLiteral("DIV"));
             div_auth.appendChild(div);
-            QDomElement el=AddTextNode("a",tr("Books by sequences"),div);
-            el.setAttribute("class","block");
-            el.setAttribute("href",lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
+            QDomElement el=AddTextNode(QStringLiteral("a"),tr("Books by sequences"),div);
+            el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+            el.setAttribute(QStringLiteral("href"),lib_url+"/authorsequences/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
 
-            div=doc.createElement("DIV");
+            div=doc.createElement(QStringLiteral("DIV"));
             div_auth.appendChild(div);
-            el=AddTextNode("a",tr("Books without sequence"),div);
-            el.setAttribute("class","block");
-            el.setAttribute("href",lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
+            el=AddTextNode(QStringLiteral("a"),tr("Books without sequence"),div);
+            el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+            el.setAttribute(QStringLiteral("href"),lib_url+"/authorsequenceless/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
 
 
-            div=doc.createElement("DIV");
+            div=doc.createElement(QStringLiteral("DIV"));
             div_auth.appendChild(div);
-            el=AddTextNode("a",tr("All books"),div);
-            el.setAttribute("class","block");
-            el.setAttribute("href",lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?"":"?session="+session));
+            el=AddTextNode(QStringLiteral("a"),tr("All books"),div);
+            el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+            el.setAttribute(QStringLiteral("href"),lib_url+"/authorbooks/"+ QString::fromLatin1(QUrl::toPercentEncoding(sIdAuthor).constData())+(session.isEmpty()?QLatin1String(""):"?session="+session));
 
             ts<<WriteSuccess();
-            doc.namedItem("HTML").save(ts,SAVE_INDEX);
+            doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
         }
     }
-    else if(url.startsWith("/book/",Qt::CaseInsensitive) && strings.count()>=4)
+    else if(url.startsWith(QLatin1String("/book/"),Qt::CaseInsensitive) && strings.count()>=4)
     {
         QString id=strings[2];
         uint idBook = id.toUInt();
         QString format=strings[3];
-        convert(lib,idBook,format,"",opds,ts);
+        convert(lib,idBook,format,QLatin1String(""),opds,ts);
     }
-    else if(url.startsWith("/directory",Qt::CaseInsensitive) && options.bBrowseDir)
+    else if(url.startsWith(QLatin1String("/directory"),Qt::CaseInsensitive) && options.bBrowseDir)
     {
         QSettings *settings=GetSettings();
-        QString Path=settings->value("dirForBrowsing").toString();
-        QString additionalPath=url.mid(QString("/directory").length());
+        QString Path=settings->value(QStringLiteral("dirForBrowsing")).toString();
+        QString additionalPath=url.mid(QStringLiteral("/directory").length());
         if(opds)
         {
             QDomElement feed=doc_header(session);
-            AddTextNode("id","tag:directory",feed);
-            AddTextNode("title",tr("Browse directory"),feed);
-            AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
-            AddTextNode("icon","/icon_256x256.png"+(session.isEmpty()?"":"?session="+session),feed);
+            AddTextNode(QStringLiteral("id"),QStringLiteral("tag:directory"),feed);
+            AddTextNode(QStringLiteral("title"),tr("Browse directory"),feed);
+            AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),feed);
+            AddTextNode(QStringLiteral("icon"),"/icon_256x256.png"+(session.isEmpty()?QLatin1String(""):"?session="+session),feed);
             QDir dir(Path+additionalPath);
             QString canonical_path=dir.canonicalPath().toLower();
             if(canonical_path.left(Path.length())==Path.toLower())
@@ -2036,83 +2045,83 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 {
                     if(file.isDir())
                     {
-                        entry=doc.createElement("entry");
+                        entry=doc.createElement(QStringLiteral("entry"));
                         feed.appendChild(entry);
-                        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                        AddTextNode("id","tag:directory:"+file.fileName(),entry);
-                        AddTextNode("title","/"+file.fileName(),entry);
-                        el=AddTextNode("link","",entry);
-                        el.setAttribute("href","/opds/directory"+additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                        el.setAttribute("type","application/atom+xml;profile=opds-catalog");
+                        AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                        AddTextNode(QStringLiteral("id"),"tag:directory:"+file.fileName(),entry);
+                        AddTextNode(QStringLiteral("title"),"/"+file.fileName(),entry);
+                        el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                        el.setAttribute(QStringLiteral("href"),"/opds/directory"+additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                        el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
                     }
                     else
                     {
-                        entry=doc.createElement("entry");
+                        entry=doc.createElement(QStringLiteral("entry"));
                         feed.appendChild(entry);
-                        AddTextNode("updated",QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                        AddTextNode("id","tag:book:"+file.fileName(),entry);
-                        AddTextNode("title",file.fileName(),entry);
+                        AddTextNode(QStringLiteral("updated"),QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
+                        AddTextNode(QStringLiteral("id"),"tag:book:"+file.fileName(),entry);
+                        AddTextNode(QStringLiteral("title"),file.fileName(),entry);
 
-                        if(file.suffix().toLower()=="fb2")
+                        if(file.suffix().toLower()==QLatin1String("fb2"))
                         {
-                            el=AddTextNode("link","",entry);
-                            el.setAttribute("href","/download"+additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                            el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                            el.setAttribute("type","application/fb2+zip");
-                            el=AddTextNode("link","",entry);
-                            el.setAttribute("href","/convert/epub"+additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                            el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                            el.setAttribute("type","application/epub+zip");
-                            el=AddTextNode("link","",entry);
-                            el.setAttribute("href","/convert/mobi"+additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                            el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                            el.setAttribute("type","application/x-mobipocket-ebook");
+                            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                            el.setAttribute(QStringLiteral("href"),"/download"+additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/fb2+zip"));
+                            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                            el.setAttribute(QStringLiteral("href"),"/convert/epub"+additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/epub+zip"));
+                            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                            el.setAttribute(QStringLiteral("href"),"/convert/mobi"+additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/x-mobipocket-ebook"));
                         }
-                        if(file.suffix().toLower()=="epub")
+                        if(file.suffix().toLower()==QLatin1String("epub"))
                         {
-                            el=AddTextNode("link","",entry);
-                            el.setAttribute("href","/download"+additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                            el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                            el.setAttribute("type","application/epub+zip");
-                            el=AddTextNode("link","",entry);
-                            el.setAttribute("href","/convert/mobi"+additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                            el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                            el.setAttribute("type","application/x-mobipocket-ebook");
+                            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                            el.setAttribute(QStringLiteral("href"),"/download"+additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/epub+zip"));
+                            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                            el.setAttribute(QStringLiteral("href"),"/convert/mobi"+additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/x-mobipocket-ebook"));
                         }
-                        if(file.suffix().toLower()=="mobi")
+                        if(file.suffix().toLower()==QLatin1String("mobi"))
                         {
-                            el=AddTextNode("link","",entry);
-                            el.setAttribute("href","/download"+additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                            el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                            el.setAttribute("type","application/x-mobipocket-ebook");
+                            el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                            el.setAttribute(QStringLiteral("href"),"/download"+additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                            el.setAttribute(QStringLiteral("type"),QStringLiteral("application/x-mobipocket-ebook"));
                         }
-                        if(!(file.suffix().toLower()=="fb2" || file.suffix().toLower()=="mobi" || file.suffix().toLower()=="epub"))
+                        if(!(file.suffix().toLower()==QLatin1String("fb2") || file.suffix().toLower()==QLatin1String("mobi") || file.suffix().toLower()==QLatin1String("epub")))
                         {
-                            QDomElement el=AddTextNode("link","",entry);
-                            el.setAttribute("href",lib_url+"/download/"+ additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                            el.setAttribute("rel","http://opds-spec.org/acquisition/open-access");
-                            el.setAttribute("type","application/"+file.suffix());
+                            QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                            el.setAttribute(QStringLiteral("href"),lib_url+"/download/"+ additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                            el.setAttribute(QStringLiteral("rel"),QStringLiteral("http://opds-spec.org/acquisition/open-access"));
+                            el.setAttribute(QStringLiteral("type"),"application/"+file.suffix());
                         }
-                        QDomElement el=AddTextNode("link","",entry);
-                        el.setAttribute("href",lib_url+"/download/"+ additionalPath+file.fileName()+(session.isEmpty()?"":"?session="+session));// /"+query.value(2).toString()+"."+query.value(3).toString());
-                        el.setAttribute("rel","alternate");
-                        el.setAttribute("type","text/html");
-                        el.setAttribute("title",tr("Download"));
+                        QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
+                        el.setAttribute(QStringLiteral("href"),lib_url+"/download/"+ additionalPath+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));// /"+query.value(2).toString()+"."+query.value(3).toString());
+                        el.setAttribute(QStringLiteral("rel"),QStringLiteral("alternate"));
+                        el.setAttribute(QStringLiteral("type"),QStringLiteral("text/html"));
+                        el.setAttribute(QStringLiteral("title"),tr("Download"));
                     }
                 }
             }
-            ts<<WriteSuccess("application/atom+xml;charset=utf-8");
+            ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
             ts<<doc.toString();
         }
         else
         {
             QDomElement feed=doc_header(session,true,lib.name,lib_url);
-            QDomElement div_auth=doc.createElement("DIV");;
-            div_auth.setAttribute("class","author");
+            QDomElement div_auth=doc.createElement(QStringLiteral("DIV"));;
+            div_auth.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
             feed.appendChild(div_auth);
-            QDomElement div_caption=AddTextNode("div",tr("Browse directory"),div_auth);
-            div_caption.setAttribute("class","caption");
-            AddTextNode("div",additionalPath,div_auth);
+            QDomElement div_caption=AddTextNode(QStringLiteral("div"),tr("Browse directory"),div_auth);
+            div_caption.setAttribute(QStringLiteral("class"),QStringLiteral("caption"));
+            AddTextNode(QStringLiteral("div"),additionalPath,div_auth);
             QDir dir(Path+additionalPath);
             QString canonical_path=dir.canonicalPath().toLower();
             if(canonical_path.left(Path.length())==Path.toLower())
@@ -2120,53 +2129,53 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
                 QFileInfoList files=dir.entryInfoList(QDir::AllEntries|QDir::NoDotAndDotDot|QDir::Readable,QDir::DirsFirst|QDir::Name|QDir::IgnoreCase);
                 foreach (QFileInfo file, files)
                 {
-                    QDomElement entry=doc.createElement("div");
-                    entry.setAttribute("class","author");
+                    QDomElement entry=doc.createElement(QStringLiteral("div"));
+                    entry.setAttribute(QStringLiteral("class"),QStringLiteral("author"));
                     feed.appendChild(entry);
                     if(file.isDir())
                     {
-                        QDomElement el=AddTextNode("a","/"+file.fileName(),entry);
-                        el.setAttribute("class","block");
-                        el.setAttribute("href","/directory"+additionalPath+"/"+file.fileName()+(session.isEmpty()?"":"?session="+session));
+                        QDomElement el=AddTextNode(QStringLiteral("a"),"/"+file.fileName(),entry);
+                        el.setAttribute(QStringLiteral("class"),QStringLiteral("block"));
+                        el.setAttribute(QStringLiteral("href"),"/directory"+additionalPath+"/"+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
                     }
                     else
                     {
-                        QDomElement el=AddTextNode("a",file.fileName(),entry);
-                        el.setAttribute("class","");
-                        el.setAttribute("href","/download"+additionalPath+"/"+file.fileName()+(session.isEmpty()?"":"?session="+session));
-                        if(file.suffix().toLower()=="fb2" || file.suffix().toLower()=="epub")
+                        QDomElement el=AddTextNode(QStringLiteral("a"),file.fileName(),entry);
+                        el.setAttribute(QStringLiteral("class"),QLatin1String(""));
+                        el.setAttribute(QStringLiteral("href"),"/download"+additionalPath+"/"+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
+                        if(file.suffix().toLower()==QLatin1String("fb2") || file.suffix().toLower()==QLatin1String("epub"))
                         {
-                            QDomElement el_b=doc.createElement("b");
+                            QDomElement el_b=doc.createElement(QStringLiteral("b"));
                             entry.appendChild(el_b);
 
-                            el=AddTextNode("a"," [mobi]",el_b);
-                            el.setAttribute("class","");
-                            el.setAttribute("href","/convert/mobi"+additionalPath+"/"+file.fileName()+(session.isEmpty()?"":"?session="+session));
+                            el=AddTextNode(QStringLiteral("a"),QStringLiteral(" [mobi]"),el_b);
+                            el.setAttribute(QStringLiteral("class"),QLatin1String(""));
+                            el.setAttribute(QStringLiteral("href"),"/convert/mobi"+additionalPath+"/"+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
 
-                            if(file.suffix().toLower()!="epub")
+                            if(file.suffix().toLower()!=QLatin1String("epub"))
                             {
-                                el=AddTextNode("a"," [epub]",el_b);
-                                el.setAttribute("class","");
-                                el.setAttribute("href","/convert/epub"+additionalPath+"/"+file.fileName()+(session.isEmpty()?"":"?session="+session));
+                                el=AddTextNode(QStringLiteral("a"),QStringLiteral(" [epub]"),el_b);
+                                el.setAttribute(QStringLiteral("class"),QLatin1String(""));
+                                el.setAttribute(QStringLiteral("href"),"/convert/epub"+additionalPath+"/"+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
                             }
 
-                            el=AddTextNode("a"," [azw3]",el_b);
-                            el.setAttribute("class","");
-                            el.setAttribute("href","/convert/azw3"+additionalPath+"/"+file.fileName()+(session.isEmpty()?"":"?session="+session));
+                            el=AddTextNode(QStringLiteral("a"),QStringLiteral(" [azw3]"),el_b);
+                            el.setAttribute(QStringLiteral("class"),QLatin1String(""));
+                            el.setAttribute(QStringLiteral("href"),"/convert/azw3"+additionalPath+"/"+file.fileName()+(session.isEmpty()?QLatin1String(""):"?session="+session));
                         }
                     }
                 }
             }
 
             ts<<WriteSuccess();
-            doc.namedItem("HTML").save(ts,SAVE_INDEX);
+            doc.namedItem(QStringLiteral("HTML")).save(ts,SAVE_INDEX);
         }
     }
-    else if(url.startsWith("/convert/",Qt::CaseInsensitive) && options.bBrowseDir)
+    else if(url.startsWith(QLatin1String("/convert/"),Qt::CaseInsensitive) && options.bBrowseDir)
     {
         QSettings *settings=GetSettings();
-        QString Path=settings->value("dirForBrowsing").toString();
-        QString additionalPath=url.mid(QString("/convert/").length());
+        QString Path=settings->value(QStringLiteral("dirForBrowsing")).toString();
+        QString additionalPath=url.mid(QStringLiteral("/convert/").length());
         QString format=additionalPath.left(additionalPath.indexOf('/'));
         additionalPath=additionalPath.mid(format.length());
         QDir dir(Path+additionalPath);
@@ -2182,7 +2191,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
 
 QString opds_server::WriteSuccess(QString contentType, bool isGZip)
 {
-    return QString("HTTP/1.1 200 OK\n")+
+    return QStringLiteral("HTTP/1.1 200 OK\n")+
             "Server: freeLib "+PROG_VERSION+"\n"+
             "Content-Type: " + contentType + "\n"+
             "Pragma: no-cache\n"+
@@ -2225,7 +2234,7 @@ void opds_server::server_run(int _port)
         if(OPDS_server_status==0)
         {
             if(!OPDS_server.listen(QHostAddress::Any,port))
-                qDebug()<<QString("Unable to start the server: %1.").arg(OPDS_server.errorString());
+                qDebug()<<QStringLiteral("Unable to start the server: %1.").arg(OPDS_server.errorString());
             else
                 OPDS_server_status=1;
         }
@@ -2252,14 +2261,14 @@ void opds_server::slotRead()
     {
         QString str=clientSocket->readLine();
         QStringList tokens = QString(str).split(QRegExp("[ \r\n][ \r\n]*"));
-        if (tokens[0] == "GET" || tokens[0] == "POST")
+        if (tokens[0] == QLatin1String("GET") || tokens[0] == QLatin1String("POST"))
             TCPtokens=tokens;
-        if (tokens[0] == "Authorization:")
+        if (tokens[0] == QLatin1String("Authorization:"))
             AUTHtokens=tokens;
-        if(tokens[0] == "X-Purpose:")
-            for_preview=(tokens[1]=="preview");
-        if(tokens[0] == "User-Agent:")
-            for_mobile=(tokens.contains("Mobile",Qt::CaseInsensitive));
+        if(tokens[0] == QLatin1String("X-Purpose:"))
+            for_preview=(tokens[1]==QLatin1String("preview"));
+        if(tokens[0] == QLatin1String("User-Agent:"))
+            for_mobile=(tokens.contains(QStringLiteral("Mobile"),Qt::CaseInsensitive));
 //        if(tokens[0] == "Cookie:")
 //            for_mobile=(tokens.contains("PWDCHECK=1",Qt::CaseInsensitive));
 //        qDebug()<<tokens;
@@ -2277,15 +2286,15 @@ void opds_server::slotRead()
             {
                 QByteArray ba;
                 ba.append(AUTHtokens[2]);
-                QStringList auth_str=QString(QByteArray::fromBase64(ba)).split(":");
+                QStringList auth_str=QString(QByteArray::fromBase64(ba)).split(QStringLiteral(":"));
                 if(auth_str.count()==2)
                 {
                     auth=(options.sOpdsUser==auth_str[0] && options.sOpdsPassword==auth_str[1]);
                 }
             }
-            if(TCPtokens[1].contains("session=") && !auth)
+            if(TCPtokens[1].contains(QLatin1String("session=")) && !auth)
             {
-                int pos=TCPtokens[1].indexOf("session=");
+                int pos=TCPtokens[1].indexOf(QLatin1String("session="));
                 session=TCPtokens[1].mid(pos+8,session_number_len);
                // qDebug()<<sessions;
                 auth=sessions.contains(session);
@@ -2299,8 +2308,8 @@ void opds_server::slotRead()
                 if(auth)
                 {
                     //генерируем номер сессии
-                    QString chars = "abdefhiknrstyzABDEFGHKNQRSTYZ23456789";
-                    session="";
+                    QString chars = QStringLiteral("abdefhiknrstyzABDEFGHKNQRSTYZ23456789");
+                    session=QLatin1String("");
                     for(int i=0;i<session_number_len;i++)
                         session+=chars[rand()%32];
                     sessions.insert(session,QDateTime::currentDateTime());
@@ -2319,7 +2328,7 @@ void opds_server::slotRead()
         }
         else
         {
-            os<<QString("HTTP/1.1 401 Authorization Required\n")+
+            os<<QStringLiteral("HTTP/1.1 401 Authorization Required\n")+
             "WWW-Authenticate: Basic\n"+
             "Content-Type: text/html;charset=utf-8\n"+
             "Connection: close\n\n";
@@ -2365,14 +2374,14 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
         if(book_file_name.isEmpty())
             book_file_name = default_exp_file_name;
         SBook& book = lib.mBooks[idBook];
-        book_file_name = fillParams(book_file_name,book) + QStringLiteral(".") + (format==QStringLiteral("download") ? fi_book.suffix().toLower() :format);
+        book_file_name = fillParams(book_file_name,book) % QStringLiteral(".") % (format==QStringLiteral("download") ? fi_book.suffix().toLower() :format);
         if(pExportOptions_->bTransliteration)
             book_file_name=Transliteration(book_file_name);
-        book_file_name.replace(" ","_");
-        book_file_name.replace("\"","_");
-        book_file_name.replace("'","_");
-        book_file_name.replace(",","_");
-        book_file_name.replace("__","_");
+        book_file_name.replace(QLatin1String(" "), QLatin1String("_"));
+        book_file_name.replace(QLatin1String("\""), QLatin1String("_"));
+        book_file_name.replace(QLatin1String("'"), QLatin1String("_"));
+        book_file_name.replace(QLatin1String(","), QLatin1String("_"));
+        book_file_name.replace(QLatin1String("__"), QLatin1String("_"));
         //book_file_name.replace("\\","_");
         //book_file_name.replace("/","_");
         QFileInfo book_file(book_file_name);
@@ -2386,7 +2395,7 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
             if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
                 tmp_dir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
             QDir().mkpath(tmp_dir+"/freeLib");
-            file.setFileName(tmp_dir+"/freeLib/book0."+fi_book.suffix());
+            file.setFileName(tmp_dir % QStringLiteral("/freeLib/book0.") % fi_book.suffix());
             file.open(QFile::WriteOnly);
             file.write(outbuff.data());
             file.close();
@@ -2402,24 +2411,24 @@ void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_n
             outbuff.setData(file.readAll());
             if(opds)
             {
-                if(format=="epub")
-                    ts<<WriteSuccess("application/epub+zip");
+                if(format==QLatin1String("epub"))
+                    ts<<WriteSuccess(QStringLiteral("application/epub+zip"));
                 else
-                    ts<<WriteSuccess("application/x-mobipocket-ebook");
+                    ts<<WriteSuccess(QStringLiteral("application/x-mobipocket-ebook"));
             }
             else
             {
-                if(format=="epub")
-                    ts<<WriteSuccess("application/epub+zip\nContent-Disposition: attachment; filename=\""+book_file_name+"\"");
-                else if(format=="mobi")
-                    ts<<WriteSuccess("application/x-mobipocket-ebook\nContent-Disposition: attachment; filename=\""+book_file_name+"\"");
+                if(format == QLatin1String("epub"))
+                    ts<<WriteSuccess(QStringLiteral("application/epub+zip\nContent-Disposition: attachment; filename=\"") % book_file_name % QStringLiteral("\""));
+                else if(format == QLatin1String("mobi"))
+                    ts<<WriteSuccess(QStringLiteral("application/x-mobipocket-ebook\nContent-Disposition: attachment; filename=\"") % book_file_name % QStringLiteral("\""));
                 else
-                    ts<<WriteSuccess("text/plain; charset=UTF-8\nContent-Disposition: attachment; filename=\""+book_file_name+"\"");
+                    ts<<WriteSuccess(QStringLiteral("text/plain; charset=UTF-8\nContent-Disposition: attachment; filename=\"") % book_file_name % QStringLiteral("\""));
             }
         }
         else
         {
-            ts<<WriteSuccess("text/plain; charset=UTF-8\nContent-Disposition: attachment; filename=\""+book_file_name+"\"");
+            ts<<WriteSuccess(QStringLiteral("text/plain; charset=UTF-8\nContent-Disposition: attachment; filename=\"") % book_file_name % QStringLiteral("\""));
         }
         ts.flush();
         ts.device()->write(outbuff.data());

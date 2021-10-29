@@ -32,9 +32,9 @@ public:
         frame->setAttribute(Qt::WA_TranslucentBackground);
         QHBoxLayout *layout=new QHBoxLayout(frame);
         QLineEdit *editor=new QLineEdit(frame);
-        editor->setObjectName("editor");
+        editor->setObjectName(QStringLiteral("editor"));
         QToolButton *button=new QToolButton(frame);
-        button->setText("...");
+        button->setText(QStringLiteral("..."));
         layout->addWidget(editor,1);
         editor->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
         layout->addWidget(button,0);
@@ -48,19 +48,19 @@ public:
     }
     void setModelData(QWidget * editor, QAbstractItemModel * model, const QModelIndex & index) const
     {
-        QLineEdit *editor_file=editor->findChild<QLineEdit*>("editor");
+        QLineEdit *editor_file=editor->findChild<QLineEdit*>(QStringLiteral("editor"));
         model->setData(index,editor_file->text());
     }
     void setEditorData(QWidget * editor, const QModelIndex & index) const
     {
-        QLineEdit *editor_file=editor->findChild<QLineEdit*>("editor");
+        QLineEdit *editor_file=editor->findChild<QLineEdit*>(QStringLiteral("editor"));
         editor_file->setText(index.data().toString());
     }
     bool eventFilter(QObject* object, QEvent* event)
     {
         if(event->type()==QEvent::FocusIn)
         {
-            QLineEdit *editor=object->findChild<QLineEdit*>("editor");
+            QLineEdit *editor=object->findChild<QLineEdit*>(QStringLiteral("editor"));
             editor->setFocus();
         }
        // qDebug()<<event->type();
@@ -74,7 +74,7 @@ private slots:
     }
     void SelectFile()
     {
-        QLineEdit *editor_file=sender()->parent()->findChild<QLineEdit*>("editor");
+        QLineEdit *editor_file=sender()->parent()->findChild<QLineEdit*>(QStringLiteral("editor"));
         QFileInfo fi(editor_file->text());
         QString file_name=QFileDialog::getOpenFileName((QWidget*)sender(),tr("Select application"),fi.absolutePath());
         if(!file_name.isEmpty())
