@@ -52,7 +52,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui(new Ui::MainWindow)
 {
     trIcon=nullptr;
-    pDropForm=nullptr;
+    //pDropForm=nullptr;
     error_quit=false;
     QSettings *settings = GetSettings();
 
@@ -186,20 +186,16 @@ MainWindow::MainWindow(QWidget *parent) :
     FillAlphabet(options.sAlphabetName);
     ExportBookListBtn(false);
 
-    mode=static_cast<APP_MODE>(settings->value(QStringLiteral("ApplicationMode"),0).toInt());
-    switch(mode)
-    {
-    case MODE_LIBRARY:
-        on_actionSwitch_to_library_mode_triggered();
-        break;
-    case MODE_SHELF:
-        //on_actionSwitch_to_shelf_mode_triggered();
-        break;
-    default:
-        connect(this, &MainWindow::window_loaded, this, &MainWindow::on_actionSwitch_to_convert_mode_triggered);
-        on_actionSwitch_to_convert_mode_triggered();
-        break;
-    }
+    setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?QLatin1String(""):QStringLiteral(" - ")+mLibs[idCurrentLib].name));
+    if(settings->contains(QStringLiteral("MainWnd/geometry")))
+        restoreGeometry(settings->value(QStringLiteral("MainWnd/geometry")).toByteArray());
+    if(settings->contains(QStringLiteral("MainWnd/windowState")))
+        restoreState(settings->value(QStringLiteral("MainWnd/windowState")).toByteArray());
+    if(settings->contains(QStringLiteral("MainWnd/tab/geometry")))
+        ui->splitter->restoreState(settings->value(QStringLiteral("MainWnd/tab/geometry")).toByteArray());
+    if(settings->contains(QStringLiteral("MainWnd/books/geometry")))
+        ui->splitter_2->restoreState(settings->value(QStringLiteral("MainWnd/books/geometry")).toByteArray());
+
 
     ui->tabWidget->setCurrentIndex(nCurrentTab);
     switch (nCurrentTab) {
@@ -586,29 +582,20 @@ void MainWindow::closeEvent(QCloseEvent *event)
 {
     if(pHelpDlg!=nullptr)
         delete pHelpDlg;
-    SaveLibPosition();
+    if(options.bStorePosition)
+        SaveLibPosition();
     QSettings *settings = GetSettings();
-    settings->setValue(QStringLiteral("ApplicationMode"), mode);
-    if(mode==MODE_LIBRARY)
-    {
-        if(options.bStorePosition)
-            SaveLibPosition();
-        settings->beginGroup(QStringLiteral("Columns"));
-        QByteArray baHeaders = ui->Books->header()->saveState();
-        settings->setValue(QStringLiteral("headers"),baHeaders);
+    settings->beginGroup(QStringLiteral("Columns"));
+    QByteArray baHeaders = ui->Books->header()->saveState();
+    settings->setValue(QStringLiteral("headers"),baHeaders);
 
-        settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
-        settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
-        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->tabWidget->saveGeometry());
-        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->splitter->saveState());
-        settings->setValue(QStringLiteral("MainWnd/books/geometry"),ui->splitter_2->saveState());
-        settings->setValue(QStringLiteral("MainWnd/books_head/geometry"),ui->Books->header()->saveState());
-    }
-    else
-    {
-        settings->setValue(QStringLiteral("MainWndConvertMode/geometry"), saveGeometry());
-    }
-    QString TempDir=QLatin1String("");
+    settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
+    settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
+    settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->tabWidget->saveGeometry());
+    settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->splitter->saveState());
+    settings->setValue(QStringLiteral("MainWnd/books/geometry"),ui->splitter_2->saveState());
+    settings->setValue(QStringLiteral("MainWnd/books_head/geometry"),ui->Books->header()->saveState());
+    QString TempDir;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
         TempDir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
     QDir(TempDir+"/freeLib/").removeRecursively();
@@ -1772,75 +1759,6 @@ bool MainWindow::IsBookInList(const SBook &book)
              ||(mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].nTag == current_tag));
 }
 
-void MainWindow::DeleteDropForm()
-{
-    if(pDropForm!=nullptr)
-    {
-        if(pDropForm->isHidden())
-        {
-            delete pDropForm;
-            pDropForm=nullptr;
-        }
-    }
-}
-
-void MainWindow::ShowDropForm()
-{
-    if(pDropForm==nullptr)
-        pDropForm=new DropForm(this);
-    if(mode==MODE_CONVERTER)
-    {
-        pDropForm->setFixedWidth(ui->drop_buttons->rect().width());
-        pDropForm->setFixedHeight(ui->drop_buttons->rect().height());
-        pDropForm->move(ui->drop_buttons->mapToGlobal(ui->drop_buttons->pos())-this->mapToGlobal(QPoint(0,0)));
-    }
-    else
-    {
-        pDropForm->setFixedWidth(rect().width()/10*9);
-        pDropForm->setFixedHeight(rect().height()/10*9);
-        pDropForm->move(QPoint(rect().width()/20,rect().height()/20));
-    }
-    QStringList cmd;
-    foreach (QAction* action, ui->btnExport->menu()->actions())
-    {
-        cmd<<action->text();
-    }
-    pDropForm->AddCommand(cmd);
-    pDropForm->setWindowFlags(Qt::WindowStaysOnTopHint);
-    pDropForm->show();
-    pDropForm->activateWindow();
-    pDropForm->raise();
-}
-
-void MainWindow::dragEnterEvent(QDragEnterEvent *ev)
-{
-    if(ev->mimeData()->urls().count()>0)
-    {
-        ev->accept();
-        if(mode==MODE_LIBRARY)
-        {
-            DeleteDropForm();
-            ShowDropForm();
-        }
-    }
-    else
-    {
-        ev->setAccepted(false);
-        if(mode==MODE_LIBRARY)
-            pDropForm->hide();
-    }
-}
-void MainWindow::dragMoveEvent(QDragMoveEvent *ev)
-{
-    pDropForm->switch_command(ev->pos());
-}
-
-void MainWindow::dragLeaveEvent(QDragLeaveEvent *)
-{
-    if(mode==MODE_LIBRARY)
-        pDropForm->hide();
-}
-
 void MainWindow::UpdateExportMenu()
 {
     QMenu* menu=ui->btnExport->menu();
@@ -1904,80 +1822,6 @@ void MainWindow::ExportAction()
        SendMail(options.vExportOptions.at(id));
 }
 
-void MainWindow::on_actionSwitch_to_convert_mode_triggered()
-{
-    QSettings *settings = GetSettings();
-    if(mode==MODE_LIBRARY)
-    {
-        settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
-        settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
-        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->tabWidget->saveGeometry());
-        settings->setValue(QStringLiteral("MainWnd/tab/geometry"),ui->splitter->saveState());
-        settings->setValue(QStringLiteral("MainWnd/books/geometry"),ui->splitter_2->saveState());
-        settings->setValue(QStringLiteral("MainWnd/books_head/geometry"),ui->Books->header()->saveState());
-    }
-    ui->stackedWidget->setCurrentWidget(ui->pageConvert);
-    ui->actionSwitch_to_library_mode->setVisible(true);
-    ui->actionSwitch_to_convert_mode->setVisible(false);
-
-    ui->actionCheck_uncheck->setVisible(false);
-    ui->actionLibraries->setVisible(false);
-    ui->actionAddLibrary->setVisible(false);
-    ui->actionNew_labrary_wizard->setVisible(false);
-
-    setWindowTitle(AppName);
-    mode=MODE_CONVERTER;
-
-    setMinimumSize(200,200);
-    if(settings->contains(QStringLiteral("MainWndConvertMode/geometry")))
-        restoreGeometry(settings->value(QStringLiteral("MainWndConvertMode/geometry")).toByteArray());
-
-    settings->setValue(QStringLiteral("ApplicationMode"), mode);
-    if(pDropForm!=nullptr)
-    {
-        pDropForm->hide();
-        DeleteDropForm();
-    }
-    ShowDropForm();
-}
-
-void MainWindow::on_actionSwitch_to_library_mode_triggered()
-{
-    QSettings *settings = GetSettings();
-    if(mode==MODE_CONVERTER)
-    {
-        settings->setValue(QStringLiteral("MainWndConvertMode/geometry"), saveGeometry());
-    }
-    mode=MODE_LIBRARY;
-    if(pDropForm!=nullptr)
-    {
-        delete pDropForm;
-        pDropForm=nullptr;
-    }
-    ui->stackedWidget->setCurrentWidget(ui->pageLabrary);
-    ui->actionSwitch_to_library_mode->setVisible(false);
-    ui->actionSwitch_to_convert_mode->setVisible(true);
-
-    ui->actionCheck_uncheck->setVisible(true);
-    ui->actionLibraries->setVisible(true);
-    ui->actionAddLibrary->setVisible(true);
-    ui->actionNew_labrary_wizard->setVisible(true);
-
-    setWindowTitle(AppName+(idCurrentLib<0||mLibs[idCurrentLib].name.isEmpty()?QLatin1String(""):QStringLiteral(" - ")+mLibs[idCurrentLib].name));
-
-    setMinimumSize(800,400);
-    if(settings->contains(QStringLiteral("MainWnd/geometry")))
-        restoreGeometry(settings->value(QStringLiteral("MainWnd/geometry")).toByteArray());
-    if(settings->contains(QStringLiteral("MainWnd/windowState")))
-        restoreState(settings->value(QStringLiteral("MainWnd/windowState")).toByteArray());
-    if(settings->contains(QStringLiteral("MainWnd/tab/geometry")))
-        ui->splitter->restoreState(settings->value(QStringLiteral("MainWnd/tab/geometry")).toByteArray());
-    //on_splitter_splitterMoved(0,0);
-    if(settings->contains(QStringLiteral("MainWnd/books/geometry")))
-        ui->splitter_2->restoreState(settings->value(QStringLiteral("MainWnd/books/geometry")).toByteArray());
-    settings->setValue(QStringLiteral("ApplicationMode"), mode);
-}
-
 void MainWindow::onLanguageFilterChanged(int index)
 {
     QString sLanguage = ui->language->itemText(index);
@@ -2014,11 +1858,6 @@ void MainWindow::onChangeAlpabet(const QString &sAlphabetName)
     }
     FillAlphabet(sAlphabetName);
     FirstButton->click();
-}
-
-void MainWindow::on_btnSwitchToLib_clicked()
-{
-    on_actionSwitch_to_library_mode_triggered();
 }
 
 void MainWindow::on_btnPreference_clicked()
@@ -2069,41 +1908,6 @@ void MainWindow::onTabWidgetChanged(int index)
         break;
     }
 }
-
-void MainWindow::resizeEvent(QResizeEvent */*e*/)
-{
-
-    if(pDropForm!=nullptr)
-    {
-        if(pDropForm->isVisible())
-        {
-            const QSignalBlocker blocker(this);
-            pDropForm->deleteLater();
-            pDropForm=nullptr;
-            ShowDropForm();
-        }
-    }
-}
-void MainWindow::mouseMoveEvent(QMouseEvent *ev)
-{
-    if(mode==MODE_CONVERTER)
-    {
-        if(pDropForm==nullptr)
-        {
-            ShowDropForm();
-        }
-        pDropForm->switch_command(ev->pos());
-    }
-}
-
-void MainWindow::leaveEvent(QEvent */*ev*/)
-{
-    if(pDropForm!=nullptr)
-    {
-        pDropForm->switch_command(QPoint(-1,-1));
-    }
-}
-
 
 void MainWindow::ChangingTrayIcon(int index,int color)
 {
@@ -2185,11 +1989,6 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
         }
     #endif
 #endif
-}
-
-void MainWindow::dockClicked()
-{
-    //qDebug()<<"dock";
 }
 
 void MainWindow::MinimizeWindow()

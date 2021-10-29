@@ -20,9 +20,7 @@ set(PROJECT_SOURCES
         main.cpp
         common.h
         build_number.h
-        mainwindow.cpp
-        mainwindow.h
-        mainwindow.ui
+        mainwindow.cpp mainwindow.h mainwindow.ui
         library.cpp
         library.h
         addlibrary.cpp
@@ -49,9 +47,6 @@ set(PROJECT_SOURCES
         tagdialog.cpp
         tagdialog.h
         tagdialog.ui
-        dropform.cpp
-        dropform.h
-        dropform.ui
         bookeditdlg.cpp
         bookeditdlg.h
         bookeditdlg.ui

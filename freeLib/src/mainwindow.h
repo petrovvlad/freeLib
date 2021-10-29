@@ -8,13 +8,10 @@
 #include <QtWidgets/QTreeWidgetItem>
 #include <QBuffer>
 #include <QMenu>
-#include <QDropEvent>
-#include <QDragEnterEvent>
 #include <QTcpServer>
 #include <QSystemTrayIcon>
 
 #include "helpdialog.h"
-#include "dropform.h"
 #include "opds_server.h"
 #include "common.h"
 #include "options.h"
@@ -43,7 +40,6 @@ private:
     QSystemTrayIcon *trIcon;
     void UpdateBooks();
     void UpdateTags();
-    DropForm *pDropForm;
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
     QMenu TagMenu;
@@ -58,7 +54,6 @@ private:
     QToolButton *FirstButton;
     QToolButton *btn_Hash;
     void UpdateExportMenu();
-    void DeleteDropForm();
     void FillAuthors();
     void FillSerials();
     void FillGenres();
@@ -77,11 +72,6 @@ private:
 
 protected:
     void showEvent(QShowEvent *ev);
-    void resizeEvent(QResizeEvent * e);
-    void mouseMoveEvent(QMouseEvent *e);
-    //void mouseReleaseEvent(QMouseEvent *e);
-    void leaveEvent(QEvent *e);
-    APP_MODE mode;
     void closeEvent(QCloseEvent *event);
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
@@ -90,9 +80,6 @@ protected:
     void FillCheckedItemsBookList(QList<uint> &list, QTreeWidgetItem* item, bool send_all);
 
     void ExportBookListBtn(bool Enable);
-    void dragEnterEvent(QDragEnterEvent *ev);
-    void dragLeaveEvent(QDragLeaveEvent *);
-    void dragMoveEvent(QDragMoveEvent *ev);
     void proc_path(QString path, QStringList *book_list);
     void FillLibrariesMenu();
     void SendMail(const ExportOptions &exportOptions);
@@ -100,7 +87,6 @@ protected:
     void changeEvent(QEvent *event);
     void ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide);
 private slots:
-    void ShowDropForm();
     void ExportAction();
     void ManageLibrary();
     void CheckBooks();
@@ -131,9 +117,6 @@ private slots:
     void ChangingLanguage();
     void ReviewLink(QUrl url);
     void SelectLibrary();
-    void on_actionSwitch_to_convert_mode_triggered();
-    void on_actionSwitch_to_library_mode_triggered();
-    void on_btnSwitchToLib_clicked();
     void on_btnPreference_clicked();
     void onTabWidgetChanged(int index);
     void onLanguageFilterChanged(int index);
@@ -144,7 +127,6 @@ private slots:
 
     void ChangingTrayIcon(int index, int color);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
-    void dockClicked();
     void MinimizeWindow();
 
 //public slots:
