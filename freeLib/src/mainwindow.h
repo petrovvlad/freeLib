@@ -113,7 +113,6 @@ private slots:
     void MoveToSeria(qlonglong id=-1,const QString &FirstLetter=QLatin1String(""));
     void tag_select(int index);
     void set_tag();
-    void ChangingPort(int i);
     void ChangingLanguage();
     void ReviewLink(const QUrl &url);
     void SelectLibrary();
@@ -121,7 +120,6 @@ private slots:
     void onTabWidgetChanged(int index);
     void onLanguageFilterChanged(int index);
     void onChangeAlpabet(const QString &sAlphabetName);
-
 
     //void on_splitter_splitterMoved(int pos, int index);
 

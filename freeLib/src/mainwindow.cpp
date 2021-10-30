@@ -602,15 +602,9 @@ void MainWindow::closeEvent(QCloseEvent *event)
     QMainWindow::closeEvent(event);
 }
 
-void MainWindow::ChangingPort(int i)
-{
-    opds.server_run(i);
-}
-
 void MainWindow::Settings()
 {
     SettingsDlg *pDlg = new SettingsDlg(this);
-    connect(pDlg, &SettingsDlg::ChangingPort, this, &MainWindow::ChangingPort);
     connect(pDlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);

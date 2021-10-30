@@ -2218,7 +2218,7 @@ void opds_server::stop_server()
     }
 }
 
-void opds_server::server_run(int _port)
+void opds_server::server_run()
 {
     if(options.nOpdsPort != port && OPDS_server_status==1)
     {

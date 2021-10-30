@@ -16,7 +16,7 @@ public:
     explicit opds_server(QObject *parent = nullptr);
     void process(QString url,QTextStream& ts,const QString &session);
 
-    void server_run(int _port=-1);
+    void server_run();
 signals:
 
 private slots:
