@@ -264,11 +264,11 @@ QString fb2mobi::get_vignette(const QString &level, const QString &type)
     QString result;
     if(pExportOptions_->nVignette == 1)
     {
-        if(QFileInfo(tmp_dir % QStringLiteral("/OEBPS/pic/") % level.toLower() % type).exists())
+        if(QFileInfo::exists(tmp_dir % QStringLiteral("/OEBPS/pic/") % level.toLower() % type))
             result = QLatin1String("");
-        if(QFileInfo(tmp_dir % QStringLiteral("/OEBPS/pic/") % level.toLower() % type % QStringLiteral(".png")).exists())
+        if(QFileInfo::exists(tmp_dir % QStringLiteral("/OEBPS/pic/") % level.toLower() % type % QStringLiteral(".png")))
             result = level.toLower() % type % QStringLiteral(".png");
-        if(QFileInfo(tmp_dir % QStringLiteral("/OEBPS/pic/") % type % QStringLiteral(".png")).exists())
+        if(QFileInfo::exists(tmp_dir % QStringLiteral("/OEBPS/pic/") % type % QStringLiteral(".png")))
             result=type+".png";
         if(!result.isEmpty())
         {
@@ -291,11 +291,11 @@ QString fb2mobi::get_vignette(const QString &level, const QString &type)
         //qDebug()<<"-";
         QString file = QLatin1String("");
         QString txt_dir=QApplication::applicationDirPath()+"/xsl/img/";
-        if(QFileInfo(txt_dir % level.toLower() % type).exists())
+        if(QFileInfo::exists(txt_dir % level.toLower() % type))
             file = QLatin1String("");
-        if(QFileInfo(txt_dir % level.toLower() % type % QStringLiteral(".txt")).exists())
+        if(QFileInfo::exists(txt_dir % level.toLower() % type % QStringLiteral(".txt")))
             file = txt_dir % level.toLower() % type % QStringLiteral(".txt");
-        if(QFileInfo(txt_dir % type % QStringLiteral(".txt")).exists())
+        if( QFileInfo::exists(txt_dir % type % QStringLiteral(".txt")) )
             file=txt_dir %  type % QStringLiteral(".txt");
         //qDebug()<<"-"+file;
         if(!file.isEmpty())
