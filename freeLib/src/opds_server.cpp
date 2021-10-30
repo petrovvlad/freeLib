@@ -623,7 +623,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
                 listBooks<<i.value();
             ++i;
         }
-        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
+        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
     }
     if(idAuthor != 0 && idSeria==0){
         QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
@@ -640,7 +640,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
                 ++i;
             }
         }
-        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
+        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
     }
     if(idAuthor==0 && idSeria>0){
         auto iBook = lib.mBooks.constBegin();
@@ -649,7 +649,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
                 listBooks << iBook.key();
             ++iBook;
         }
-        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
+        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){return lib.mBooks[lhs].numInSerial<lib.mBooks[rhs].numInSerial;});
     }
     if(idGenre!=0){
         auto iBook = lib.mBooks.constBegin();
@@ -664,7 +664,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
             }
             ++iBook;
         }
-        std::sort(listBooks.begin(), listBooks.end(),[lib](const uint& lhs, const uint& rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
+        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){return lib.mBooks[lhs].sName<lib.mBooks[rhs].sName;});
     }
     if(!sSearch.isEmpty()){
         auto iBook = lib.mBooks.constBegin();
@@ -683,7 +683,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
             }
             ++iBook;
         }
-        std::sort(listBooks.begin(), listBooks.end(), [lib](const uint& lhs, const uint& rhs){
+        std::sort(listBooks.begin(), listBooks.end(), [lib](uint lhs, uint rhs){
             if(lib.mBooks[lhs].idFirstAuthor != lib.mBooks[rhs].idFirstAuthor)
                 return lib.mAuthors[lib.mBooks[lhs].idFirstAuthor].getName()<lib.mAuthors[lib.mBooks[rhs].idFirstAuthor].getName();
             else
@@ -1510,7 +1510,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 }
                 ++iSerial;
             }
-            std::sort(listSerialId.begin(),listSerialId.end(),[lib](const uint& lhs,const uint& rhs) {return lib.mSerials[lhs].sName < lib.mSerials[rhs].sName;});
+            std::sort(listSerialId.begin(),listSerialId.end(),[lib](uint lhs,uint rhs) {return lib.mSerials[lhs].sName < lib.mSerials[rhs].sName;});
 
             foreach(auto iIndex,listSerialId)
             {
@@ -1803,7 +1803,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 }
                 ++iAuthor;
             }
-            std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](const uint& lhs,const uint& rhs) {return lib.mAuthors[lhs].getName() < lib.mAuthors[rhs].getName();});
+            std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](uint lhs,uint rhs) {return lib.mAuthors[lhs].getName() < lib.mAuthors[rhs].getName();});
             foreach(auto iIndex,listAuthorId)
             {
                 uint nBooksCount=0;
@@ -1893,7 +1893,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             ++i;
         }
         QList<uint> listSerials = mapCountBooks.keys();
-        std::sort(listSerials.begin(),listSerials.end(),[lib](const uint& lhs,const uint& rhs) {return QString::localeAwareCompare(lib.mSerials[lhs].sName, lib.mSerials[rhs].sName) < 0;});
+        std::sort(listSerials.begin(),listSerials.end(),[lib](uint lhs,uint rhs) {return QString::localeAwareCompare(lib.mSerials[lhs].sName, lib.mSerials[rhs].sName) < 0;});
 
         foreach(uint idSerial,listSerials)
         {
