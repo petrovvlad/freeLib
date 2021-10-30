@@ -10,7 +10,7 @@ class SAuthor
 {
 public:
     SAuthor();
-    SAuthor(QString sName);
+    SAuthor(const QString &sName);
     QString getName() const;
     int nTag;
     QString sFirstName;
@@ -58,7 +58,7 @@ class SLib
 {
 public:
     uint findAuthor(SAuthor& author);
-    uint findSerial(QString sSerial);
+    uint findSerial(const QString &sSerial);
     void loadAnnotation(uint idBook);
     QFileInfo getBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool caption=false, QDateTime *file_data=nullptr);
     QString name;

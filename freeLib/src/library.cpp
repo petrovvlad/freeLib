@@ -156,7 +156,7 @@ SAuthor::SAuthor()
     nTag = 0;
 }
 
-SAuthor::SAuthor(QString sName)
+SAuthor::SAuthor(const QString &sName)
 {
     QStringList listNames=sName.split(QStringLiteral(","));
     if(listNames.count()>0)
@@ -190,7 +190,7 @@ uint SLib::findAuthor(SAuthor &author)
     return idAuthor;
 }
 
-uint SLib::findSerial(QString sSerial)
+uint SLib::findSerial(const QString &sSerial)
 {
     uint idSerial = 0;
     auto iSerial = mSerials.constBegin();

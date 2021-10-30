@@ -28,10 +28,10 @@ private:
     ImportThread *imp_tr;
     QThread *thread;
     void UpdateLibList();
-    void SaveLibrary(int idLib, SLib& Lib);
+    void SaveLibrary(int idLib, const SLib &Lib);
     int idCurrentLib_;
 private slots:
-    void LogMessage(QString msg);
+    void LogMessage(const QString &msg);
     void InputINPX();
     void SelectBooksDir();
     void StartImport();

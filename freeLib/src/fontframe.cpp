@@ -75,7 +75,7 @@ typedef struct _tagTT_HEAD_RECORD{
 #define SWAPWORD(x)		MAKEWORD(HIBYTE(x), LOBYTE(x))
 #define SWAPLONG(x)		MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
 
-QString GetFontNameFromFile(QString lpszFilePath)
+QString GetFontNameFromFile(const QString &lpszFilePath)
 {
     QFile f(lpszFilePath);
     QString csRetVal=QApplication::translate("FontFrame","not found");
@@ -151,7 +151,7 @@ QString GetFontNameFromFile(QString lpszFilePath)
     return csRetVal;
 }
 
-FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString font_i, QString font_bi, int fontSize, QWidget *parent) :
+FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font_b, const QString &font_i, const QString &font_bi, int fontSize, QWidget *parent) :
     QFrame(parent),
     ui(new Ui::FontFrame)
 {
@@ -269,7 +269,7 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
     UseChange(use);
 }
 
-void FontFrame::FontSelected(QString str)
+void FontFrame::FontSelected(const QString &str)
 {
     QComboBox *font_box=(QComboBox*)sender();
     disconnect(font_box, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);

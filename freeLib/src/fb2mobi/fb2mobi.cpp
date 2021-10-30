@@ -16,7 +16,7 @@
 #include <importthread.h>
 #include "fb2mobi.h"
 
-QString fillParams(QString str, SBook& book);
+QString fillParams(const QString &str, const SBook& book);
 
 fb2mobi::fb2mobi(const ExportOptions *pExportOptions)
 {
@@ -92,7 +92,7 @@ QString HTMLHEAD = QStringLiteral("<html xmlns=\"http://www.w3.org/1999/xhtml\" 
 QString HTMLFOOT = QStringLiteral("</body>"
               "</html>");
 
-void fb2mobi::parse_description(QDomNode elem)
+void fb2mobi::parse_description(const QDomNode &elem)
 {
     if(join_seria)
     {
@@ -163,7 +163,7 @@ void fb2mobi::parse_description(QDomNode elem)
     hyphenator.init(test_language(mLibs[idCurrentLib].vLaguages[pBook->idLanguage] ));
 }
 
-void fb2mobi::parse_binary(QDomNode elem)
+void fb2mobi::parse_binary(const QDomNode &elem)
 {
     QString filename=elem.attributes().namedItem(QStringLiteral("id")).toAttr().value();
     if(!filename.isEmpty())
@@ -184,7 +184,8 @@ void fb2mobi::parse_binary(QDomNode elem)
         image_list<<(("img%1/"+filename).arg(current_book));
     }
 }
-void fb2mobi::parse_body(QDomNode elem)
+
+void fb2mobi::parse_body(const QDomNode &elem)
 {
     body_name = QLatin1String("");
     if(!elem.attributes().namedItem(QStringLiteral("name")).isNull())
@@ -195,7 +196,8 @@ void fb2mobi::parse_body(QDomNode elem)
     parse_format(elem);
     first_body=false;
 }
-void fb2mobi::parse_p(QDomNode elem)
+
+void fb2mobi::parse_p(const QDomNode &elem)
 {
     QString ptag;
     QString pcss;
@@ -212,12 +214,13 @@ void fb2mobi::parse_p(QDomNode elem)
     parse_format(elem,ptag,pcss);
 }
 
-void fb2mobi::parse_other(QDomNode elem)
+void fb2mobi::parse_other(const QDomNode &elem)
 {
     //qDebug()<<elem.toElement().tagName();
     parse_format(elem,elem.toElement().tagName());
 }
-void fb2mobi::parse_section(QDomNode elem)
+
+void fb2mobi::parse_section(const QDomNode &elem)
 {
     current_header_level++;
     current_section_level++;
@@ -255,7 +258,8 @@ void fb2mobi::parse_section(QDomNode elem)
     }
 
 }
-QString fb2mobi::get_vignette(QString level,QString type)
+
+QString fb2mobi::get_vignette(const QString &level, const QString &type)
 {
     QString result;
     if(pExportOptions_->nVignette == 1)
@@ -319,7 +323,7 @@ QString fb2mobi::get_vignette(QString level,QString type)
     return result;
 }
 
-void fb2mobi::parse_note_elem(QDomNode elem)
+void fb2mobi::parse_note_elem(const QDomNode &elem)
 {
        QString note_title=QLatin1String("");
 
@@ -360,7 +364,8 @@ void fb2mobi::parse_note_elem(QDomNode elem)
               parse_note_elem(elem.childNodes().at(e));
        }
 }
-void fb2mobi::get_notes_dict(QString body_names)
+
+void fb2mobi::get_notes_dict(const QString &body_names)
 {
     parsing_note=true;
     notes_dict.clear();
@@ -381,7 +386,7 @@ void fb2mobi::get_notes_dict(QString body_names)
     parsing_note=false;
 }
 
-void fb2mobi::parse_title(QDomNode elem)
+void fb2mobi::parse_title(const QDomNode &elem)
 {
     QString toc_ref_id = QStringLiteral("tocref%1").arg(toc_index);
     if(parsing_note)
@@ -463,7 +468,8 @@ void fb2mobi::parse_title(QDomNode elem)
     first_header_in_body=false;
     header=false;
 }
-void fb2mobi::parse_image(QDomNode elem)
+
+void fb2mobi::parse_image(const QDomNode &elem)
 {
     //qDebug()<<" find img"<<href_pref;
     QString image;
@@ -503,23 +509,27 @@ void fb2mobi::parse_image(QDomNode elem)
     }
     parse_format(elem);
 }
-void fb2mobi::parse_emptyline(QDomNode)
+
+void fb2mobi::parse_emptyline(const QDomNode&)
 {
     *buf_current += QLatin1String("<br/>");
 }
-void fb2mobi::parse_epigraph(QDomNode elem)
+
+void fb2mobi::parse_epigraph(const QDomNode &elem)
 {
     no_paragraph=true;
     parse_format(elem, QStringLiteral("div"), QStringLiteral("epigraph"));
     no_paragraph=false;
 }
-void fb2mobi::parse_annotation(QDomNode elem)
+
+void fb2mobi::parse_annotation(const QDomNode &elem)
 {
     no_paragraph=true;
     parse_format(elem, QStringLiteral("div"), QStringLiteral("annotation"));
     no_paragraph=false;
 }
-void fb2mobi::parse_a(QDomNode elem)
+
+void fb2mobi::parse_a(const QDomNode &elem)
 {
     for(int j=0;j<elem.attributes().count();j++)
     {
@@ -530,43 +540,52 @@ void fb2mobi::parse_a(QDomNode elem)
         }
     }
 }
-void fb2mobi::parse_emphasis(QDomNode elem)
+
+void fb2mobi::parse_emphasis(const QDomNode &elem)
 {
     parse_span(QStringLiteral("emphasis"), elem);
 }
-void fb2mobi::parse_strong(QDomNode elem)
+
+void fb2mobi::parse_strong(const QDomNode &elem)
 {
     parse_span(QStringLiteral("strong"), elem);
 }
-void fb2mobi::parse_strikethrough(QDomNode elem)
+
+void fb2mobi::parse_strikethrough(const QDomNode &elem)
 {
     parse_span(QStringLiteral("strike"), elem);
 }
-void fb2mobi::parse_span(QString span, QDomNode elem)
+
+void fb2mobi::parse_span(const QString &span, const QDomNode &elem)
 {
     parse_format(elem,QStringLiteral("span"), span);
 }
-void fb2mobi::parse_textauthor(QDomNode elem)
+
+void fb2mobi::parse_textauthor(const QDomNode &elem)
 {
     no_paragraph = true;
     parse_format(elem, QStringLiteral("div"), QStringLiteral("text-author"));
     no_paragraph = false;
 }
-void fb2mobi::parse_v(QDomNode elem)
+
+void fb2mobi::parse_v(const QDomNode &elem)
 {
     parse_format(elem, QStringLiteral("p"));
 }
-void fb2mobi::parse_poem(QDomNode elem)
+
+void fb2mobi::parse_poem(const QDomNode &elem)
 {
     no_paragraph = true;
     parse_format(elem, QStringLiteral("div"), QStringLiteral("poem"));
     no_paragraph = false;
 }
-void fb2mobi::parse_stanza(QDomNode elem)
+
+void fb2mobi::parse_stanza(const QDomNode &elem)
 {
     parse_format(elem, QStringLiteral("div"), QStringLiteral("stanza"));
 }
-void fb2mobi::parse_table(QDomNode elem)
+
+void fb2mobi::parse_table(const QDomNode &elem)
 {
     *buf_current+=QLatin1String("<table class=\"table\"");
     for(int i=0;i<elem.attributes().count();i++)
@@ -577,7 +596,8 @@ void fb2mobi::parse_table(QDomNode elem)
     parse_format(elem);
     *buf_current+=QLatin1String("</table>");
 }
-void fb2mobi::parse_table_element(QDomNode elem)
+
+void fb2mobi::parse_table_element(const QDomNode &elem)
 {
     *buf_current+="<"+elem.toElement().tagName();
 
@@ -591,15 +611,17 @@ void fb2mobi::parse_table_element(QDomNode elem)
     *buf_current+="</"+elem.toElement().tagName()+">";
 }
 
-void fb2mobi::parse_code(QDomNode elem)
+void fb2mobi::parse_code(const QDomNode &elem)
 {
     parse_format(elem, QStringLiteral("code"));
 }
-void fb2mobi::parse_date(QDomNode elem)
+
+void fb2mobi::parse_date(const QDomNode &elem)
 {
     parse_format(elem, QStringLiteral("time"));
 }
-void fb2mobi::parse_subtitle(QDomNode elem)
+
+void fb2mobi::parse_subtitle(const QDomNode &elem)
 {
     if(parsing_note)
         return;
@@ -607,21 +629,23 @@ void fb2mobi::parse_subtitle(QDomNode elem)
     parse_format(elem, QStringLiteral("p"), QStringLiteral("subtitle"));
     subheader = false;
 }
-void fb2mobi::parse_style(QDomNode)
+
+void fb2mobi::parse_style(const QDomNode&)
 {
     return;
 }
-void fb2mobi::parse_cite(QDomNode elem)
+
+void fb2mobi::parse_cite(const QDomNode &elem)
 {
     parse_format(elem, QStringLiteral("div"), QStringLiteral("cite"));
 }
 
-QString fb2mobi::save_html(QString str)
+QString fb2mobi::save_html(const QString &str)
 {
     return QString(str).toHtmlEscaped();
 }
 
-void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString href)
+void fb2mobi::parse_format(const QDomNode &elem, QString tag , QString css, QString href)
 {
     QStringList note;
     bool need_popup=false;
@@ -850,6 +874,7 @@ void fb2mobi::parse_format(QDomNode elem, QString tag , QString css, QString hre
         }
     }
 }
+
 void fb2mobi::generate_toc()
 {
     buf=HTMLHEAD;
@@ -1309,7 +1334,6 @@ void fb2mobi::generate_html(QFile *file)
                     break;
                 }
             }
-
         }
         html_files<<html_content(tmp.arg(QString::number(index)));
         STOC c_toc={QStringLiteral("%1#%2").arg(html_files.last().file_name, QStringLiteral("fn%1").arg(toc_index)), tr("Footnotes"), 1, body_name, ""};
@@ -1354,7 +1378,7 @@ void fb2mobi::generate_html(QFile *file)
             *str += QStringLiteral("<div style=\"page-break-before:always;\"></div>");
             if(str->length()>10000)
             {
-                *str+=HTMLFOOT;
+                *str += HTMLFOOT;
                 //i++;
                 html_files<<html_content(tmp.arg(QString::number(i+1)));
                 str=&html_files.last().content;
@@ -1362,7 +1386,7 @@ void fb2mobi::generate_html(QFile *file)
             }
         }
 
-        *str+=HTMLFOOT;
+        *str += HTMLFOOT;
     }
 
     QMapIterator<QString, QString> ref(ref_files);
@@ -1398,7 +1422,7 @@ QString fb2mobi::GenerateMOBI7(QString file)
     return mobi7File;
 }
 
-void PaintText(QPainter* painter,QRect rect,int to,QString text,QRect* br=0)
+void PaintText(QPainter* painter,QRect rect,int to,const QString &text,QRect* br=0)
 {
     QFont font(painter->font());
     QRect bound;
@@ -1411,7 +1435,7 @@ void PaintText(QPainter* painter,QRect rect,int to,QString text,QRect* br=0)
     painter->drawText(rect,to,text,br);
 }
 
-void fb2mobi::InsertSeriaNumberToCover(QString number,CreateCover create_cover)
+void fb2mobi::InsertSeriaNumberToCover(const QString &number,CreateCover create_cover)
 {
     if(book_cover.isEmpty() && cc_no)
         return;
@@ -1477,7 +1501,7 @@ void fb2mobi::InsertSeriaNumberToCover(QString number,CreateCover create_cover)
     delete painter;
 }
 
-void recurseAddDir(QDir d, QStringList & list)
+void recurseAddDir(const QDir &d, QStringList & list)
 {
     QStringList qsl = d.entryList(QDir::NoDotAndDotDot | QDir::Dirs | QDir::Files);
     foreach (QString file, qsl)
@@ -1495,7 +1519,7 @@ void recurseAddDir(QDir d, QStringList & list)
     }
 }
 
-void ZipDir(QuaZip *zip,QDir dir)
+void ZipDir(QuaZip *zip,const QDir &dir)
 {
     QFile inFile;
     QStringList sl;
@@ -1599,7 +1623,7 @@ struct group_colors
     QList<QColor> list;
 };
 
-QColor GetColor(QImage img)
+QColor GetColor(const QImage &img)
 {
     int h=img.height();
     int w=img.width();
@@ -1669,7 +1693,7 @@ struct fontfamily
         font_bi=-1;
     }
 
-    bool operator ==(const fontfamily a)
+    bool operator ==(const fontfamily &a)
     {
         return font==a.font && font_b==a.font_b && font_i==a.font_i && font_bi==a.font_bi;
     }

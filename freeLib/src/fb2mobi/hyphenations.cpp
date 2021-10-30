@@ -22,7 +22,7 @@ bool pattern_compare(const pattern_t* a, const pattern_t* b)
     return first;
 }
 
-void hyphenations::init(QString language)
+void hyphenations::init(const QString &language)
 {
     QFile file(QApplication::applicationDirPath()+"/xsl/hyphenations/"+language.toLower()+".txt");
     if(!file.open(QFile::ReadOnly))
@@ -99,7 +99,7 @@ void hyphenations::init(QString language)
 }
 
 
-QString hyphenations::hyphenate_word(QString word_original, QString separator,bool hyphenation_only)
+QString hyphenations::hyphenate_word(QString word_original, const QString &separator,bool hyphenation_only)
 {
     if(plist.list.count()==0)
         return word_original;

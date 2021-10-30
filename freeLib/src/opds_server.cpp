@@ -13,7 +13,7 @@
 #define SAVE_INDEX  4
 //#define MAX_BOOKS_PER_PAGE  15
 #define MAX_COLUMN_COUNT    3
-QString fillParams(QString str, SBook& book);
+QString fillParams(const QString &str, const SBook& book);
 
 opds_server::opds_server(QObject *parent) :
     QObject(parent)
@@ -23,7 +23,7 @@ opds_server::opds_server(QObject *parent) :
     port=0;
 }
 
-QDomElement opds_server::AddTextNode(QString name, QString text,QDomNode &node)
+QDomElement opds_server::AddTextNode(const QString &name, const QString &text,QDomNode &node)
 {
     QDomElement el=doc.createElement(name);
     node.appendChild(el);
@@ -53,7 +53,7 @@ QString OPDS_MIME_TYPE(QString type)
     return QStringLiteral("application/octet-stream");
 }
 
-QDomElement opds_server::doc_header(QString session, bool html, QString lib_name, QString lib_url)
+QDomElement opds_server::doc_header(const QString &session, bool html, const QString &lib_name, const QString &lib_url)
 {
     doc.clear();
     if(html)
@@ -613,7 +613,7 @@ QString opds_server::books_list(QString lib_url, QString current_url, QString id
 }
 */
 
-QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint idGenre, QString sSearch, bool sequenceless = false)
+QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint idGenre, const QString &sSearch, bool sequenceless = false)
 {
     QList<uint> listBooks;
     if(idAuthor!=0 && idSeria>0){
@@ -695,7 +695,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
     return listBooks;
 }
 
-QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, QString lib_url, QString current_url, QTextStream &ts, bool opds, uint nPage, QString session, bool bShowAuthor)
+QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &sTitle, const QString &lib_url, const QString &current_url, QTextStream &ts, bool opds, uint nPage, const QString &session, bool bShowAuthor)
 {
     long MAX_BOOKS_PER_PAGE=options.nOpdsBooksPerPage;
     if(MAX_BOOKS_PER_PAGE==0)
@@ -971,7 +971,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, QString sTitle, 
     }
 }
 
-void opds_server::process(QString url, QTextStream &ts, QString session)
+void opds_server::process(QString url, QTextStream &ts, const QString &session)
 {
     int http_settings = options.nHttpExport - 1;
     if(http_settings==-1)
@@ -2189,7 +2189,7 @@ void opds_server::process(QString url, QTextStream &ts, QString session)
     // return result;
 }
 
-QString opds_server::WriteSuccess(QString contentType, bool isGZip)
+QString opds_server::WriteSuccess(const QString &contentType, bool isGZip)
 {
     return QStringLiteral("HTTP/1.1 200 OK\n")+
             "Server: freeLib "+PROG_VERSION+"\n"+
@@ -2351,7 +2351,7 @@ void opds_server::new_connection()
     }
 }
 
-void opds_server::convert(SLib &lib, uint idBook, QString format, QString file_name, bool opds, QTextStream &ts)
+void opds_server::convert(SLib &lib, uint idBook, const QString &format, const QString &file_name, bool opds, QTextStream &ts)
 {
     QBuffer outbuff;
     QBuffer infobuff;

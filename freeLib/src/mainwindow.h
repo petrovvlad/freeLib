@@ -80,12 +80,12 @@ protected:
     void FillCheckedItemsBookList(QList<uint> &list, QTreeWidgetItem* item, bool send_all);
 
     void ExportBookListBtn(bool Enable);
-    void proc_path(QString path, QStringList *book_list);
+    void proc_path(const QString &path, QStringList *book_list);
     void FillLibrariesMenu();
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
     void changeEvent(QEvent *event);
-    void ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide);
+    void ShowHeaderCoulmn(int nColumn,const QString &sSetting,bool bHide);
 private slots:
     void ExportAction();
     void ManageLibrary();
@@ -108,14 +108,14 @@ private slots:
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);
-    void MoveToAuthor(qlonglong id=-1,QString FirstLetter=QLatin1String(""));
+    void MoveToAuthor(qlonglong id=-1,const QString &FirstLetter=QLatin1String(""));
     void MoveToGenre(qlonglong id);
-    void MoveToSeria(qlonglong id=-1,QString FirstLetter=QLatin1String(""));
+    void MoveToSeria(qlonglong id=-1,const QString &FirstLetter=QLatin1String(""));
     void tag_select(int index);
     void set_tag();
     void ChangingPort(int i);
     void ChangingLanguage();
-    void ReviewLink(QUrl url);
+    void ReviewLink(const QUrl &url);
     void SelectLibrary();
     void on_btnPreference_clicked();
     void onTabWidgetChanged(int index);

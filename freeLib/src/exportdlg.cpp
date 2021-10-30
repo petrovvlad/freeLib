@@ -63,7 +63,7 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
     QDialog::exec();
 }
 
-void ExportDlg::exec(qlonglong id_lib, QString path)
+void ExportDlg::exec(qlonglong id_lib, const QString &path)
 {
     ui->Exporting->setText(QStringLiteral("0"));
     ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);

@@ -16,8 +16,8 @@
 #include "quazip/quazip/quazipfile.h"
 #include "library.h"
 
-QString fillParams(QString str, SBook& book);
-QString fillParams(QString str, SBook& book, QFileInfo book_file);
+QString fillParams(const QString &str, const SBook& book);
+QString fillParams(const QString &str,const SBook& book, const QFileInfo &book_file);
 
 QString Transliteration(QString str)
 {
@@ -94,14 +94,14 @@ ExportThread::ExportThread(const ExportOptions *pExportOptions) :
     pExportOptions_ = pExportOptions;
 }
 
-void ExportThread::start(qlonglong id_lib,QString path)
+void ExportThread::start(qlonglong id_lib, const QString &path)
 {
     loop_enable=true;
     ID_lib=id_lib;
     export_dir=path;
 }
 
-void ExportThread::start(QString _export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author)
+void ExportThread::start(const QString &_export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author)
 {
     ID_lib=-1;
     loop_enable=true;
@@ -117,7 +117,7 @@ QString BuildFileName(QString filename)
     return filename.replace(QLatin1String("/"),QLatin1String(".")).replace(QLatin1String("\\"),QLatin1String(".")).replace(QLatin1String("*"),QLatin1String(".")).replace(QLatin1String("|"),QLatin1String(".")).replace(QLatin1String(":"),QLatin1String(".")).replace(QLatin1String("?"),QLatin1String(".")).replace(QLatin1String("<"),QLatin1String(".")).replace(QLatin1String(">"),QLatin1String(".")).replace(QLatin1String("\""),QLatin1String("'"));
 }
 
-bool ExportThread::convert(QList<QBuffer*> outbuff, QString file_name, int count, SBook &book)
+bool ExportThread::convert(QList<QBuffer*> outbuff, const QString &file_name, int count, SBook &book)
 {
     Q_CHECK_PTR(pExportOptions_);
     QString tool_path,tool_arg,tool_ext;

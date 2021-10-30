@@ -12,10 +12,10 @@ class ExportThread : public QObject
     Q_OBJECT
 public:
     explicit ExportThread(const ExportOptions *pExportOptions = nullptr);
-    void start(QString _export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author);
+    void start(const QString &_export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author);
 
     void start(QString _export_dir, const QStringList &list_books, SendType send);
-    void start(qlonglong id_lib,QString path);
+    void start(qlonglong id_lib, const QString &path);
     QList<qlonglong> successful_export_books;
     bool loop_enable;
  signals:
@@ -32,7 +32,7 @@ private:
     const ExportOptions* pExportOptions_;
     void export_books();
     void export_lib();
-    bool convert(QList<QBuffer *> outbuff, QString file_name, int count,  SBook& book );
+    bool convert(QList<QBuffer *> outbuff, const QString &file_name, int count,  SBook& book );
 public slots:
     void break_exp();
     //void smtpError(SmtpError e);

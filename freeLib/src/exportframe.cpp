@@ -178,7 +178,6 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
     connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
 }
 
-
 QStringList ExportFrame::Save(ExportOptions *pExportOptions)
 {
     ExportOptions* pExpOpt;
@@ -274,7 +273,7 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
     }
 }
 
-FontFrame* ExportFrame::AddFont(bool use, int tag, QString font,QString font_b,QString font_i,QString font_bi,int fontSize)
+FontFrame* ExportFrame::AddFont(bool use, int tag, const QString &font,const QString &font_b,const QString &font_i,const QString &font_bi,int fontSize)
 {
     FontFrame* frame=new FontFrame(use,tag,font,font_b,font_i,font_bi,fontSize,this);
     ui->fontLayout->insertWidget(ui->fontLayout->count()-2,frame);
@@ -298,6 +297,7 @@ void ExportFrame::FontMove(QWidget *font_widget, int direction)
     ui->fontLayout->removeWidget(font_widget);
     ui->fontLayout->insertWidget(index-direction,font_widget);
 }
+
 void ExportFrame::btnPath()
 {
     QDir::setCurrent(ui->Path->text());
@@ -305,6 +305,7 @@ void ExportFrame::btnPath()
     if(!dir.isEmpty())
         ui->Path->setText(dir);
 }
+
 void ExportFrame::SetTabIndex(int tab_id, int page_id)
 {
     ui->tabWidget->setCurrentIndex(tab_id);

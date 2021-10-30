@@ -77,13 +77,14 @@ void AddLibrary::Add_Library()
     ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
 }
 
-void AddLibrary::LogMessage(QString msg)
+void AddLibrary::LogMessage(const QString &msg)
 {
     while(ui->Log->count()>100)
         delete ui->Log->takeItem(0);
     ui->Log->addItem(msg);
     ui->Log->setCurrentRow(ui->Log->count()-1);
 }
+
 void AddLibrary::InputINPX()
 {
     QDir::setCurrent(QFileInfo(ui->inpx->text()).absolutePath());
@@ -110,6 +111,7 @@ void AddLibrary::InputINPX()
         }
     }
 }
+
 void AddLibrary::SelectBooksDir()
 {
     QDir::setCurrent(ui->BookDir->text());
@@ -188,7 +190,6 @@ void AddLibrary::AddNewLibrary(SLib &lib)
     exec();
 }
 
-
 void AddLibrary::SelectLibrary(int idLib)
 {
     bool block = ui->ExistingLibs->blockSignals(true);
@@ -248,7 +249,7 @@ void AddLibrary::SelectLibrary()
     //idCurrentLib = idCurrentLib_;
 }
 
-void AddLibrary::SaveLibrary(int idLib, SLib &Lib)
+void AddLibrary::SaveLibrary(int idLib, const SLib &Lib)
 {
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     int idSaveLib = idLib;
@@ -276,7 +277,8 @@ void AddLibrary::SaveLibrary(int idLib, SLib &Lib)
     UpdateLibList();
     SelectLibrary(idSaveLib);
     bLibChanged = true;
- }
+}
+
 void AddLibrary::DeleteLibrary()
 {
     if(idCurrentLib_<0)
@@ -298,6 +300,7 @@ void AddLibrary::DeleteLibrary()
     bLibChanged = true;
     QApplication::restoreOverrideCursor();
 }
+
 void AddLibrary::EndUpdate()
 {
     LogMessage(tr("Ending"));
@@ -315,6 +318,7 @@ void AddLibrary::EndUpdate()
     QApplication::restoreOverrideCursor();
 
 }
+
 void AddLibrary::terminateImport()
 {
     emit break_import();

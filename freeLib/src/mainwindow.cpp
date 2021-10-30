@@ -335,7 +335,7 @@ void MainWindow::EditBooks()
     dlg.exec();
 }
 
-void MainWindow::ReviewLink(QUrl url)
+void MainWindow::ReviewLink(const QUrl &url)
 {
     QString sPath = url.path();
     if(sPath.startsWith(QLatin1String("/author_")))
@@ -1340,7 +1340,7 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     menu.exec(QCursor::pos());
 }
 
-void MainWindow::ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide)
+void MainWindow::ShowHeaderCoulmn(int nColumn,const QString &sSetting,bool bHide)
 {
     ui->Books->setColumnHidden(nColumn,bHide);
     QSettings *settings = GetSettings();
@@ -1349,7 +1349,7 @@ void MainWindow::ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide)
     settings->endGroup();
 }
 
-void MainWindow::MoveToSeria(qlonglong id,QString FirstLetter)
+void MainWindow::MoveToSeria(qlonglong id,const QString &FirstLetter)
 {
     ui->searchSeries->setText(FirstLetter);
     ui->tabWidget->setCurrentIndex(TabSeries);
@@ -1385,7 +1385,7 @@ void MainWindow::MoveToGenre(qlonglong id)
     }
 }
 
-void MainWindow::MoveToAuthor(qlonglong id, QString FirstLetter)
+void MainWindow::MoveToAuthor(qlonglong id, const QString &FirstLetter)
 {
     ui->searchAuthor->setText(FirstLetter);
     ui->tabWidget->setCurrentIndex(TabAuthors);
@@ -1402,7 +1402,7 @@ void MainWindow::MoveToAuthor(qlonglong id, QString FirstLetter)
     }
 }
 
-void MainWindow::proc_path(QString path,QStringList *book_list)
+void MainWindow::proc_path(const QString &path,QStringList *book_list)
 {
 #ifdef Q_OS_WIN
     while(path.left(1)=="/")

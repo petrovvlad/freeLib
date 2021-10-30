@@ -9,7 +9,7 @@
 #include "common.h"
 #include "options.h"
 
-void ClearLib(QSqlDatabase dbase, qlonglong id_lib, bool delete_only)
+void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
 {
     QSqlQuery query(dbase);
     if(delete_only)
@@ -49,8 +49,7 @@ ImportThread::ImportThread(QObject *parent) :
 //14- ключевые слова
 
 
-
-qlonglong ImportThread::AddSeria(QString str, qlonglong libID, int tag)
+qlonglong ImportThread::AddSeria(const QString &str, qlonglong libID, int tag)
 {
     if(str.trimmed().isEmpty())
         return -1;
@@ -71,7 +70,7 @@ qlonglong ImportThread::AddSeria(QString str, qlonglong libID, int tag)
     return id;
 }
 
-qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_book, bool first_author, QString language, int tag)
+qlonglong ImportThread::AddAuthor(const QString &str, qlonglong libID, qlonglong id_book, bool first_author, const QString &language, int tag)
 {
     if(str.trimmed().isEmpty())
         return -1;
@@ -123,7 +122,7 @@ qlonglong ImportThread::AddAuthor(QString str, qlonglong libID, qlonglong id_boo
     return id;
 }
 
-qlonglong ImportThread::addAuthor(SAuthor author, uint libID, uint idBook, bool first_author, QString language, int tag)
+qlonglong ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, const QString &language, int tag)
 {
     QString sQuery = QStringLiteral("SELECT id,favorite FROM author WHERE id_lib=%1 and %2 and %3 and %4").arg(
                 QString::number(libID),
@@ -162,8 +161,8 @@ qlonglong ImportThread::addAuthor(SAuthor author, uint libID, uint idBook, bool 
     return id;
 }
 
-qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria, int num_in_seria, QString file,
-             int size, int IDinLib, bool deleted, QString format, QDate date, QString language, QString keys, qlonglong id_lib, QString archive, int tag)
+qlonglong ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
+             int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, int tag)
 {
     query->prepare(QStringLiteral("INSERT INTO book(name,star,id_seria,num_in_seria,language,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive,favorite) "
                    "values(:name,:star,:id_seria,:num_in_seria,:language,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive,:favorite)"));
@@ -189,7 +188,8 @@ qlonglong ImportThread::AddBook(qlonglong star, QString name, qlonglong id_seria
 
     return id;
 }
-qlonglong ImportThread::AddGenre(qlonglong id_book,QString janre,qlonglong id_lib,QString language)
+
+qlonglong ImportThread::AddGenre(qlonglong id_book,QString janre,qlonglong id_lib,const QString &language)
 {
     qlonglong id_janre=0;
     janre.replace(QLatin1String(" "),QLatin1String("_"));
@@ -208,7 +208,7 @@ qlonglong ImportThread::AddGenre(qlonglong id_book,QString janre,qlonglong id_li
     return id;
 }
 
-void ImportThread::start(QString fileName, QString name, QString path, long ID, int update_type, bool save_only, bool firstAuthor, bool bWoDeleted)
+void ImportThread::start(const QString &fileName, const QString &name, const QString &path, long ID, int update_type, bool save_only, bool firstAuthor, bool bWoDeleted)
 {
     _fileName=RelativeToAbsolutePath(fileName);
     if(!QFileInfo::exists(_fileName) || !QFileInfo(_fileName).isFile())
@@ -447,7 +447,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
         AddGenre(id_book,sGenre,existingID,sLanguage);
 }
 
-void ImportThread::importFB2_main(QString path)
+void ImportThread::importFB2_main(const QString &path)
 {
     int count=0;
     importFB2(path, count);
@@ -455,7 +455,7 @@ void ImportThread::importFB2_main(QString path)
         query->exec(QStringLiteral("COMMIT;"));
 }
 
-void ImportThread::importFB2(QString path, int &count)
+void ImportThread::importFB2(const QString &path, int &count)
 {
     QDir dir(path);
     QFileInfoList info_list = dir.entryInfoList(QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable|QDir::Files|QDir::Dirs);

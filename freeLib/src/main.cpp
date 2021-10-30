@@ -28,7 +28,7 @@ QSplashScreen *splash;
 QApplication *app;
 Options options;
 
-bool SetCurrentZipFileName(QuaZip *zip,QString name)
+bool SetCurrentZipFileName(QuaZip *zip,const QString &name)
 {
     bool result=zip->setCurrentFile(name,QuaZip::csInsensitive);
     if(!result)
@@ -89,7 +89,7 @@ void setProxy()
     QNetworkProxy::setApplicationProxy(proxy);
 }
 
-QString fillParams(QString str, SBook& book)
+QString fillParams(const QString &str, const SBook& book)
 {
     QString result=str;
     QString abbr = QLatin1String("");
@@ -145,7 +145,7 @@ QString fillParams(QString str, SBook& book)
     return result;
 }
 
-QString fillParams(QString str, SBook& book, QFileInfo book_file)
+QString fillParams(const QString &str,const SBook& book, const QFileInfo &book_file)
 {
     QString result=str;
     result
@@ -156,7 +156,7 @@ QString fillParams(QString str, SBook& book, QFileInfo book_file)
     return result;
 }
 
-void SetLocale(QString sLocale)
+void SetLocale(const QString &sLocale)
 {
     setlocale(LC_ALL, (sLocale+".UTF-8").toLatin1().data());
     QLocale::setDefault(QLocale(sLocale));

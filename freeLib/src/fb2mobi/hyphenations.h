@@ -22,8 +22,8 @@ class hyphenations
 {
 public:
     hyphenations();
-    void init(QString language);
-    QString hyphenate_word(QString word, QString separator=QStringLiteral("-"),bool hyphenation_only=false);
+    void init(const QString &language);
+    QString hyphenate_word(QString word, const QString &separator=QStringLiteral("-"),bool hyphenation_only=false);
 private:
     QStringList pattern;
     //QStringList exceptions;
