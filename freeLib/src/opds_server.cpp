@@ -2206,14 +2206,13 @@ void opds_server::stop_server()
 {
     if(OPDS_server_status==1)
     {
-        foreach(int i,OPDS_clients.keys())
+        auto i = OPDS_clients.constBegin();
+        while(i != OPDS_clients.constEnd())
         {
-              //  QTextStream os(OPDS_clients[i]);
-              //  os.setAutoDetectUnicode(true);
-              //  os << QDateTime::currentDateTime().toString() << "\n";
-                OPDS_clients[i]->close();
-                OPDS_clients.remove(i);
+            i.value()->close();
+            ++i;
         }
+        OPDS_clients.clear();
         OPDS_server.close();
         OPDS_server_status=0;
     }
