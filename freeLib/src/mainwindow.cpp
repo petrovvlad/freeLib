@@ -1854,11 +1854,6 @@ void MainWindow::onChangeAlpabet(const QString &sAlphabetName)
     FirstButton->click();
 }
 
-void MainWindow::on_btnPreference_clicked()
-{
-    Settings();
-}
-
 void MainWindow::onTabWidgetChanged(int index)
 {
     switch(index){

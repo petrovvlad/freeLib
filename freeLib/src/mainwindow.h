@@ -116,7 +116,6 @@ private slots:
     void ChangingLanguage();
     void ReviewLink(const QUrl &url);
     void SelectLibrary();
-    void on_btnPreference_clicked();
     void onTabWidgetChanged(int index);
     void onLanguageFilterChanged(int index);
     void onChangeAlpabet(const QString &sAlphabetName);
