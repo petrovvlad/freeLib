@@ -2050,7 +2050,7 @@ QString fb2mobi::convert(QStringList files, SBook &book)
 
         QWebEnginePage* pdf=new QWebEnginePage();
          QEventLoop loop;
-        connect(pdf,SIGNAL(loadFinished(bool)),&loop,SLOT(quit()));
+        connect(pdf,&QWebEnginePage::loadFinished,&loop,&QEventLoop::quit);
         qDebug()<<QUrl::fromLocalFile(tmp_dir % QStringLiteral("/OEBPS/") % html_files[0].file_name);
         pdf->load(QUrl::fromLocalFile(tmp_dir % QStringLiteral("/OEBPS/") % html_files[0].file_name));
         loop.exec();
