@@ -16,6 +16,10 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(ZLIB REQUIRED)
 
+add_definitions(
+                -DQT_USE_QSTRINGBUILDER
+               )
+
 set(PROJECT_SOURCES
         main.cpp
         common.h
