@@ -45,10 +45,9 @@ class fb2mobi:public QObject
 {
     Q_OBJECT
 public:
-    fb2mobi(const ExportOptions *pExportOptions);
-    //QString convert(QString files, bool remove, QString format, QString language);
-    QString convert(QStringList files, SBook &book);
-    QString convert(qlonglong id);
+    fb2mobi(const ExportOptions *pExportOptions, uint idLib);
+    QString convert(QStringList files, uint idBook);
+    QString convert(uint idBook);
     void generate_html(QFile *file);
     //QWebView *pdf;
 private:
@@ -112,6 +111,8 @@ private:
     int current_section_level;
     QString body_name;
     SBook *pBook;
+    uint idBook_;
+    uint idLib_;
     QString book_cover;
     QString bookseriestitle;
     QString authorstring;
@@ -144,7 +145,6 @@ private:
 
     QList<STOC> toc;
     QStringList image_list;
-    //QString current_file;
     QString tmp_dir;
 
     hyphenations hyphenator;
@@ -156,7 +156,6 @@ private:
     void InsertSeriaNumberToCover(const QString &number, CreateCover create_cover);
     bool need_end_chapter_vignette;
     const ExportOptions *pExportOptions_;
-    //bool page_load;
 //private slots:
 //    void OnLoad(bool ok);
 };

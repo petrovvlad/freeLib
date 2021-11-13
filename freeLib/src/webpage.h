@@ -17,12 +17,9 @@ public:
             case QWebEnginePage::NavigationTypeLinkClicked:
                 emit linkClicked(url);
                 return false;
-//            case QWebEnginePage::NavigationTypeTyped:
-//                return false;
             default:
                 return true;
         }
-        return true;
     }
 
 signals:

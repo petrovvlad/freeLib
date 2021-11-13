@@ -4,7 +4,9 @@
 #include <QMultiMap>
 #include <QList>
 #include <QDateTime>
-#include "common.h"
+#include <QFileInfo>
+#include <QBuffer>
+#include <QVariant>
 
 class SAuthor
 {
@@ -60,7 +62,11 @@ public:
     uint findAuthor(SAuthor& author);
     uint findSerial(const QString &sSerial);
     void loadAnnotation(uint idBook);
-    QFileInfo getBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool caption=false, QDateTime *file_data=nullptr);
+    QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr);
+    QString fillParams(const QString &str, uint idBook);
+    QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file);
+
+
     QString name;
     QString path;
     QString sInpx;
@@ -79,8 +85,8 @@ void loadGenres();
 
 extern bool db_is_open;
 
-extern SLib currentLib;
-extern QMap<int,SLib> mLibs;
-extern QMap <uint,SGenre> mGenre;
+extern uint idCurrentLib;
+extern QMap<uint, SLib> mLibs;
+extern QMap <uint, SGenre> mGenre;
 
 #endif // LIBRARY_H

@@ -24,7 +24,7 @@ signals:
     void ChangeTabIndex(int tab_id,int page_id);
 public slots:
     void SetTabIndex(int tab_id,int page_id);
-    void UpdateToolComboBox(const QString &sCurrentTool=QLatin1String(""));
+    void UpdateToolComboBox(const QString &sCurrentTool = QLatin1String(""));
 private slots:
     void onRadioDeviceToggled(bool checked);
     void onRadioEmailToggled(bool checked);

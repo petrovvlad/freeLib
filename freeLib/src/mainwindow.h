@@ -48,7 +48,7 @@ private:
     QList<Stag> tags_pic;
 
     QPixmap GetTag(int id);
-    void update_list_pix(qlonglong id,int list,int tag_id);
+    void update_list_pix(qlonglong id, int list, int tag_id);
     void uncheck_books(QList<qlonglong> list);
     opds_server opds;
     QToolButton *FirstButton;
@@ -80,12 +80,11 @@ protected:
     void FillCheckedItemsBookList(QList<uint> &list, QTreeWidgetItem* item, bool send_all);
 
     void ExportBookListBtn(bool Enable);
-    void proc_path(const QString &path, QStringList *book_list);
     void FillLibrariesMenu();
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
     void changeEvent(QEvent *event);
-    void ShowHeaderCoulmn(int nColumn,const QString &sSetting,bool bHide);
+    void ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide);
 private slots:
     void ExportAction();
     void ManageLibrary();
@@ -108,9 +107,9 @@ private slots:
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);
-    void MoveToAuthor(qlonglong id=-1,const QString &FirstLetter=QLatin1String(""));
-    void MoveToGenre(qlonglong id);
-    void MoveToSeria(qlonglong id=-1,const QString &FirstLetter=QLatin1String(""));
+    void MoveToAuthor(uint id, const QString &FirstLetter);
+    void MoveToGenre(uint id);
+    void MoveToSeria(uint id, const QString &FirstLetter);
     void tag_select(int index);
     void set_tag();
     void ChangingLanguage();

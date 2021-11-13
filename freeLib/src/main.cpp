@@ -1,40 +1,37 @@
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QNetworkProxy>
-#include <QStyleFactory>
-#include <quazip/quazip/quazip.h>
 #include <QLocale>
-#include <QTextCodec>
 #include <QTranslator>
 #include <QLibraryInfo>
 #include <QSplashScreen>
 #include <QPainter>
-#include <QMap>
+#include <QStringBuilder>
+#include <QDir>
 
+#include "quazip/quazip/quazip.h"
 
 #include "mainwindow.h"
 #include "aboutdialog.h"
-#include "fb2mobi/hyphenations.h"
 #include "common.h"
 #include "build_number.h"
 
-int idCurrentLib;
+uint idCurrentLib;
 QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
-QSettings *global_settings=nullptr;
+QSettings *global_settings = nullptr;
 QCommandLineParser CMDparser;
 QSplashScreen *splash;
-QApplication *app;
 Options options;
 
-bool SetCurrentZipFileName(QuaZip *zip,const QString &name)
+bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
 {
-    bool result=zip->setCurrentFile(name,QuaZip::csInsensitive);
+    bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     if(!result)
     {
         zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-        result=zip->setCurrentFile(name,QuaZip::csInsensitive);
+        result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     }
     return result;
 }
@@ -43,7 +40,7 @@ QString RelativeToAbsolutePath(QString path)
 {
     if(QDir(path).isRelative() && path.indexOf(QLatin1String("%"))<0 && !path.startsWith(QLatin1String("mtp:/")))
     {
-        return app->applicationDirPath()+"/"+path;
+        return QApplication::applicationDirPath() + QLatin1String("/") + path;
     }
     return path;
 }
@@ -56,8 +53,8 @@ QSettings* GetSettings(bool reopen)
         delete global_settings;
         global_settings = nullptr;
     }
-    if(global_settings==nullptr){
-        QString sFile = app->applicationDirPath() + QStringLiteral("/freeLib.cfg");
+    if(global_settings == nullptr){
+        QString sFile = QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg");
         if(QFile::exists(sFile))
             global_settings = new QSettings(sFile, QSettings::IniFormat);
         else
@@ -89,152 +86,56 @@ void setProxy()
     QNetworkProxy::setApplicationProxy(proxy);
 }
 
-QString fillParams(const QString &str, const SBook& book)
-{
-    QString result=str;
-    QString abbr = QLatin1String("");
-    foreach(QString str,mLibs[idCurrentLib].mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
-    {
-        if(!str.isEmpty())
-                abbr += str.at(0);
-    }
-    result.replace(QLatin1String("%abbrs"), abbr.toLower());
-    result.replace(QLatin1String("%app_dir"),QApplication::applicationDirPath()+"/");
-
-    result
-    //        .replace("%fn",book_file.completeBaseName()).
-    //        replace("%d",book_file.absoluteDir().path()).
-            .replace(QLatin1String("%app_dir"),QApplication::applicationDirPath()+"/");
-    //result.removeOne("%no_point");
-    SAuthor& sFirstAuthor = mLibs[idCurrentLib].mAuthors[book.idFirstAuthor];
-
-    qDebug()<<sFirstAuthor.getName();
-    qDebug()<<str;
-    result.replace(QLatin1String("%fi"),sFirstAuthor.sFirstName.left(1)+(sFirstAuthor.sFirstName.isEmpty() ?"" :".")).
-            replace(QLatin1String("%mi"),sFirstAuthor.sMiddleName.left(1)+(sFirstAuthor.sMiddleName.isEmpty() ?"" :".")).
-            replace(QLatin1String("%li"),sFirstAuthor.sLastName.left(1)+(sFirstAuthor.sLastName.isEmpty() ?"" :".")).
-            replace(QLatin1String("%nf"),sFirstAuthor.sFirstName.trimmed()).
-            replace(QLatin1String("%nm"),sFirstAuthor.sMiddleName.trimmed()).
-            replace(QLatin1String("%nl"),sFirstAuthor.sLastName.trimmed());
-
-    //result.replace("%f",book_file.absoluteFilePath());
-
-    result = result.replace(QLatin1String("%s"),mLibs[idCurrentLib].mSerials[book.idSerial].sName)
-            .replace(QLatin1String("%b"),book.sName)
-            .replace(QLatin1String("%a"),sFirstAuthor.getName())
-            .replace(QLatin1String(","),QLatin1String(" ")).trimmed();
-    QString num_in_seria=QString::number(book.numInSerial);
-//    for(int i=0;i<result.count();i++)
-//    {
-        if(result.contains(QLatin1String("%n")))
-        {
-            int len=result.mid(result.indexOf(QLatin1String("%n"))+2,1).toInt();
-            QString zerro;
-            if(book.numInSerial==0)
-                result.replace("%n"+QString::number(len),QLatin1String(""));
-            else
-                result.replace("%n"+(len>0?QString::number(len):QLatin1String("")),(len>0?zerro.fill('0',len-num_in_seria.length()):QLatin1String(""))+num_in_seria+" ");
-        }
-//        result[i]=result[i].trimmed();
-    //}
-    result.replace(QLatin1String("/ "),QLatin1String("/"));
-    result.replace(QLatin1String("/."),QLatin1String("/"));
-    result.replace(QLatin1String("////"),QLatin1String("/"));
-    result.replace(QLatin1String("///"),QLatin1String("/"));
-    result.replace(QLatin1String("//"),QLatin1String("/"));
-    return result;
-}
-
-QString fillParams(const QString &str,const SBook& book, const QFileInfo &book_file)
-{
-    QString result=str;
-    result
-            .replace(QLatin1String("%fn"),book_file.completeBaseName()).
-            replace(QLatin1String("%f"),book_file.absoluteFilePath()).
-            replace(QLatin1String("%d"),book_file.absoluteDir().path());
-    result = fillParams(result,book);
-    return result;
-}
-
 void SetLocale(const QString &sLocale)
 {
-    setlocale(LC_ALL, (sLocale+".UTF-8").toLatin1().data());
+    setlocale(LC_ALL, (sLocale + QLatin1String(".UTF-8")).toLatin1().data());
     QLocale::setDefault(QLocale(sLocale));
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 
     if(translator)
     {
-        app->removeTranslator(translator);
+        QApplication::removeTranslator(translator);
     }
     if(translator_qt)
     {
-        app->removeTranslator(translator_qt);
+        QApplication::removeTranslator(translator_qt);
     }
 
-    if(translator==nullptr)
-        translator=new QTranslator(app);
+    if(translator == nullptr)
+        translator = new QTranslator();
     if(translator->load(QStringLiteral(":/language/language_%1.qm").arg(sLocale)))
     {
-        app->installTranslator(translator);
+        QApplication::installTranslator(translator);
     }
     else
     {
         delete translator;
-        translator=nullptr;
+        translator = nullptr;
     }
 
-    if(translator_qt==nullptr)
-        translator_qt=new QTranslator(app);
-    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale),QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
+    if(translator_qt == nullptr)
+        translator_qt = new QTranslator();
+    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale), QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
     {
-        app->installTranslator(translator_qt);
+        QApplication::installTranslator(translator_qt);
     }
     else
     {
         delete translator_qt;
-        translator_qt=nullptr;
+        translator_qt = nullptr;
     }
 
     tag_list.clear();
     tag_list<<
-               tag(app->translate("SettingsDlg","Top level captions"),QStringLiteral(".h0"),QStringLiteral("top_caption_font"),140)<<
-               tag(app->translate("SettingsDlg","Captions"),QStringLiteral(".h1,.h2,.h3,.h4,.h5,.h6"),QStringLiteral("caption_font"),120)<<
-               tag(app->translate("SettingsDlg","Dropcaps"),QStringLiteral("span.dropcaps"),QStringLiteral("dropcaps_font"),300)<<
-               tag(app->translate("SettingsDlg","Footnotes"),QStringLiteral(".inlinenote,.blocknote"),QStringLiteral("footnotes_font"),80)<<
-               tag(app->translate("SettingsDlg","Annotation"),QStringLiteral(".annotation"),QStringLiteral("annotation_font"),100)<<
-               tag(app->translate("SettingsDlg","Poems"),QStringLiteral(".poem"),QStringLiteral("poem_font"),100)<<
-               tag(app->translate("SettingsDlg","Epigraph"),QStringLiteral(".epigraph"),QStringLiteral("epigraph_font"),100)<<
-               tag(app->translate("SettingsDlg","Book"),QStringLiteral("body"),QStringLiteral("body_font"),100);
-}
-
-void myMessageOutput(QtMsgType type, const QMessageLogContext &context, const QString &msg)
-{
-    QString tmp_dir;
-    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count()>0)
-        tmp_dir=QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    tmp_dir+=QLatin1String("/freeLib/log.txt");
-    QFile file(tmp_dir);
-    file.open(QIODevice::Append|QIODevice::WriteOnly);
-    QByteArray localMsg = msg.toLocal8Bit();
-    switch (type) {
-    case QtDebugMsg:
-        file.write(localMsg.constData());
-        file.write("\r\n");
-        fprintf(stderr, "Debug: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-        break;
-    case QtWarningMsg:
-        fprintf(stderr, "Warning: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-        break;
-    case QtCriticalMsg:
-        fprintf(stderr, "Critical: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-        break;
-    case QtFatalMsg:
-        fprintf(stderr, "Fatal: %s (%s:%u, %s)\n", localMsg.constData(), context.file, context.line, context.function);
-        abort();
-    default:
-        break;
-    }
+               tag(QApplication::translate("SettingsDlg", "Top level captions"), QStringLiteral(".h0"), QStringLiteral("top_caption_font"), 140)<<
+               tag(QApplication::translate("SettingsDlg", "Captions"), QStringLiteral(".h1,.h2,.h3,.h4,.h5,.h6"), QStringLiteral("caption_font"), 120)<<
+               tag(QApplication::translate("SettingsDlg", "Dropcaps"), QStringLiteral("span.dropcaps"), QStringLiteral("dropcaps_font"), 300)<<
+               tag(QApplication::translate("SettingsDlg", "Footnotes"), QStringLiteral(".inlinenote,.blocknote"), QStringLiteral("footnotes_font"), 80)<<
+               tag(QApplication::translate("SettingsDlg", "Annotation"), QStringLiteral(".annotation"), QStringLiteral("annotation_font"), 100)<<
+               tag(QApplication::translate("SettingsDlg", "Poems"), QStringLiteral(".poem"), QStringLiteral("poem_font"), 100)<<
+               tag(QApplication::translate("SettingsDlg", "Epigraph"), QStringLiteral(".epigraph"), QStringLiteral("epigraph_font"), 100)<<
+               tag(QApplication::translate("SettingsDlg", "Book"), QStringLiteral("body"), QStringLiteral("body_font"), 100);
 }
 
 bool openDB(bool create, bool replace)
@@ -245,70 +146,70 @@ bool openDB(bool create, bool replace)
     QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
     if(fi.exists() && fi.isFile())
     {
-        db_file=fi.canonicalFilePath();
+        db_file = fi.canonicalFilePath();
     }
     else
     {
-        sAppDir=QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-        db_file=sAppDir+"/freeLib.sqlite";
+        sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
+        db_file = sAppDir + QLatin1String("/freeLib.sqlite");
         options.sDatabasePath = db_file;
-        settings.setValue(QStringLiteral("database_path"),db_file);
+        settings.setValue(QStringLiteral("database_path"), db_file);
     }
     QFile file(db_file);
     if(!file.exists() || replace)
     {
         if(replace)
         {
-            QSqlDatabase dbase=QSqlDatabase::database(QStringLiteral("libdb"),true);
+            QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("libdb"), true);
             dbase.close();
             if(!file.remove())
             {
                 qDebug()<<("Can't remove old database");
-                db_is_open=false;
+                db_is_open = false;
                 return false;
             }
         }
         if(!create && !replace)
         {
-            db_is_open=false;
+            db_is_open = false;
             return true;
         }
         QDir dir;
         dir.mkpath(QFileInfo(db_file).absolutePath());
         file.setFileName(QStringLiteral(":/freeLib.sqlite"));
         file.open(QFile::ReadOnly);
-        QByteArray data=file.readAll();
+        QByteArray data = file.readAll();
         file.close();
         file.setFileName(db_file);
         file.open(QFile::WriteOnly);
         file.write(data);
         file.close();
     }
-    QSqlDatabase dbase=QSqlDatabase::database(QStringLiteral("libdb"),false);
+    QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("libdb"), false);
     dbase.setDatabaseName(db_file);
     if (!dbase.open())
     {
         qDebug() << ("Error connect! ")<<db_file;
-        db_is_open=false;
+        db_is_open = false;
         return false;
     }
-    db_is_open=true;
+    db_is_open = true;
     qDebug()<<"Open DB OK. "<<db_file;
     return true;
 }
 
 void UpdateLibs()
 {
-    db_is_open=false;
+    db_is_open = false;
     //error_quit=false;
     openDB(true,false);
 //    if(!openDB(false,false))
 //        error_quit=true;
     if(!db_is_open)
-        idCurrentLib=-1;
+        idCurrentLib = 0;
     else{
-        QSettings settings/*=GetSettings()*/;
-        idCurrentLib=settings.value(QStringLiteral("LibID"),-1).toInt();
+        QSettings *settings = GetSettings();
+        idCurrentLib = settings->value(QStringLiteral("LibID"), 0).toInt();
         QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
         query.exec(QStringLiteral("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name"));
         mLibs.clear();
@@ -322,12 +223,12 @@ void UpdateLibs()
             mLibs[idLib].bWoDeleted = query.value(5).toBool();
         }
         if(mLibs.empty())
-            idCurrentLib = -1;
+            idCurrentLib = 0;
         else{
-            if(idCurrentLib ==-1)
+            if(idCurrentLib == 0)
                 idCurrentLib = mLibs.constBegin().key();
             if(!mLibs.contains(idCurrentLib))
-                idCurrentLib = -1;
+                idCurrentLib = 0;
         }
     }
 }
@@ -355,24 +256,16 @@ int main(int argc, char *argv[])
     CMDparser.addOption(trayOption);
     CMDparser.process(a);
 
-    QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(app->devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
-    pixmap.setDevicePixelRatio(app->devicePixelRatio());
-    QPainter painter(&pixmap);
-    painter.setFont(QFont(painter.font().family(),VERSION_FONT,QFont::Bold));
-    painter.setPen(Qt::white);
-    painter.drawText(QRect(30,140,360,111),Qt::AlignLeft|Qt::AlignVCenter,PROG_VERSION);
-
     QString HomeDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
+        HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
-    translator=nullptr;
-    translator_qt=nullptr;
-    app=&a;
-    app->setAttribute(Qt::AA_UseHighDpiPixmaps);
-    QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"),QStringLiteral("libdb"));
+    translator = nullptr;
+    translator_qt = nullptr;
+    a.setAttribute(Qt::AA_UseHighDpiPixmaps);
+    QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("libdb"));
 
-    QSettings* settings=GetSettings();
+    QSettings* settings = GetSettings();
     options.Load(settings);
 
     SetLocale(options.sUiLanguageName);
@@ -384,7 +277,13 @@ int main(int argc, char *argv[])
         dirTmp.mkpath(sDirTmp);
 
     if(options.bShowSplash){
-        splash=new QSplashScreen(pixmap);
+        QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(a.devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
+        pixmap.setDevicePixelRatio(a.devicePixelRatio());
+        QPainter painter(&pixmap);
+        painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
+        painter.setPen(Qt::white);
+        painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, PROG_VERSION);
+        splash = new QSplashScreen(pixmap);
         splash->resize(640,400);
 #ifdef Q_OS_LINUX
         splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
@@ -393,7 +292,6 @@ int main(int argc, char *argv[])
     }
     a.processEvents();
     setProxy();
-    //idCurrentLib=settings->value("LibID",-1).toInt();
     UpdateLibs();
     MainWindow w;
 #ifdef Q_OS_OSX
@@ -410,8 +308,7 @@ int main(int argc, char *argv[])
     }
     if(options.bShowSplash)
         splash->finish(&w);
-    //current_lib.UpdateLib();
-    int result=a.exec();
+    int result = a.exec();
     if(global_settings)
     {
         global_settings->sync();

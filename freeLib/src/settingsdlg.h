@@ -46,26 +46,29 @@ public:
 
         return frame;
     }
+
     void setModelData(QWidget * editor, QAbstractItemModel * model, const QModelIndex & index) const
     {
-        QLineEdit *editor_file=editor->findChild<QLineEdit*>(QStringLiteral("editor"));
+        QLineEdit *editor_file = editor->findChild<QLineEdit* > (QStringLiteral("editor"));
         model->setData(index,editor_file->text());
     }
+
     void setEditorData(QWidget * editor, const QModelIndex & index) const
     {
-        QLineEdit *editor_file=editor->findChild<QLineEdit*>(QStringLiteral("editor"));
+        QLineEdit *editor_file = editor->findChild<QLineEdit*>(QStringLiteral("editor"));
         editor_file->setText(index.data().toString());
     }
+
     bool eventFilter(QObject* object, QEvent* event)
     {
-        if(event->type()==QEvent::FocusIn)
+        if(event->type() == QEvent::FocusIn)
         {
-            QLineEdit *editor=object->findChild<QLineEdit*>(QStringLiteral("editor"));
+            QLineEdit *editor = object->findChild<QLineEdit*>(QStringLiteral("editor"));
             editor->setFocus();
         }
-       // qDebug()<<event->type();
         return true;
     }
+
 private slots:
     void editingFinished()
     {
@@ -76,7 +79,7 @@ private slots:
     {
         QLineEdit *editor_file=sender()->parent()->findChild<QLineEdit*>(QStringLiteral("editor"));
         QFileInfo fi(editor_file->text());
-        QString file_name=QFileDialog::getOpenFileName((QWidget*)sender(),tr("Select application"),fi.absolutePath());
+        QString file_name = QFileDialog::getOpenFileName((QWidget*)sender(), tr("Select application"), fi.absolutePath());
         if(!file_name.isEmpty())
         {
             editor_file->setText(file_name);
@@ -116,7 +119,7 @@ private slots:
     void onAddExportClicked();
     void onDelExportClicked();
     void onExportNameCurrentIndexChanged(int index);
-    void onChangeExportFrameTab(int tab_id,int page_id);
+    void onChangeExportFrameTab(int tab_id, int page_id);
     void onDefaultExportClicked();
     void onBtnDefaultSettingsClicked();
     void onTabWidgetCurrentChanged(int index);
@@ -138,9 +141,9 @@ signals:
     void ChangingPort(int i);
     void ChangingLanguage();
     void ChangeAlphabet(const QString &str);
-    void ChangingExportFrameTab(int tab_id,int page_id);
+    void ChangingExportFrameTab(int tab_id, int page_id);
     void NeedUpdateTools();
-    void ChangingTrayIcon(int index,int color);
+    void ChangingTrayIcon(int index, int color);
 };
 
 #endif // SETTINGSDLG_H

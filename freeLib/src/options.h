@@ -7,6 +7,8 @@
 #include <QSettings>
 #include <QVector>
 
+enum SendType{ST_Device, ST_Mail};
+
 struct ToolsOptions
 {
     QString sPath;
@@ -30,6 +32,12 @@ struct ExportOptions
     void Save(QSettings *pSettings, bool bSavePasswords=true);
     void Load(QSettings *pSettings);
     void setDefault(const QString &_sName, const QString &_sOtputFormat, bool _bDefault);
+
+    constexpr const static char* sDefaultEexpFileName = "%a/%s/%n3%b";
+    constexpr const static char* sDefaultDropcapsFont = "sangha.ttf";
+    constexpr const static char* sDefaultAuthorName =  "%nf %nm %nl";
+    constexpr const static char* sDefaultCoverLabel = "%abbrs - %n2";
+    constexpr const static char* sDefaultBookTitle = "(%abbrs %n2) %b";
     QString sName;
     bool bDefault;
     QString sCurrentTool;
@@ -85,6 +93,8 @@ struct Options
     void Load(QSettings *pSettings);
     void Save(QSettings *pSettings);
 
+    const static ushort nDefaultOpdsPort = 8080;
+    const static ushort  nDefaultProxyPort = 8080;
     bool bShowDeleted;
     bool bUseTag;
     bool bShowSplash;
@@ -123,6 +133,7 @@ struct Options
     QHash <QString,ToolsOptions> tools;
     QVector<ExportOptions> vExportOptions;
 };
+
 
 extern Options options;
 

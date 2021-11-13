@@ -1,6 +1,6 @@
 #include "aboutdialog.h"
 #include "ui_aboutdialog.h"
-#include "common.h"
+
 #include "build_number.h"
 
 
@@ -8,16 +8,15 @@ AboutDialog::AboutDialog(QWidget *parent) :
     QDialog(parent,Qt::Window | Qt::FramelessWindowHint),
     ui(new Ui::AboutDialog)
 {
-    //qDebug()<<app->devicePixelRatio();
     ui->setupUi(this);
     //setFixedSize(400,200);
     ui->version->setText(PROG_VERSION);
 
     connect(ui->toolButton, &QAbstractButton::clicked, this, &AboutDialog::CloseBtn);
-    QPixmap pix(QStringLiteral(":/splash%1.png").arg(app->devicePixelRatio()>=2 ?QStringLiteral("@2x") :QLatin1String("")));
-    pix.setDevicePixelRatio(app->devicePixelRatio());
+    QPixmap pix(QStringLiteral(":/splash%1.png").arg(devicePixelRatio()>=2 ?QStringLiteral("@2x") :QLatin1String("")));
+    pix.setDevicePixelRatio(devicePixelRatio());
     ui->label->setPixmap(pix);
-    pix.load(QStringLiteral(":/icons/img/icons/close%1.png").arg(app->devicePixelRatio()>=2 ?QStringLiteral("@2x"): QLatin1String("")));
+    pix.load(QStringLiteral(":/icons/img/icons/close%1.png").arg(devicePixelRatio()>=2 ?QStringLiteral("@2x"): QLatin1String("")));
     QFont f(ui->version->font());
     f.setPointSize(VERSION_FONT);
     ui->version->setFont(f);
@@ -34,12 +33,6 @@ AboutDialog::~AboutDialog()
 {
     delete ui;
 }
-
-//void AboutDialog::Donate()
-//{
-//    DoDonate();
-//    accept();
-//}
 
 void AboutDialog::CloseBtn()
 {

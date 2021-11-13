@@ -3,7 +3,6 @@
 
 #include <QThread>
 
-#include "SmtpClient/src/smtpclient.h"
 #include "library.h"
 #include "options.h"
 
@@ -32,7 +31,7 @@ private:
     const ExportOptions* pExportOptions_;
     void export_books();
     void export_lib();
-    bool convert(QList<QBuffer *> outbuff, const QString &file_name, int count,  SBook& book );
+    bool convert(QList<QBuffer *> outbuff, uint idLib, const QString &file_name, int count,  uint idBook );
 public slots:
     void break_exp();
     //void smtpError(SmtpError e);

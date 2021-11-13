@@ -2,8 +2,8 @@
 #define ADDLIBRARY_H
 
 #include <QDialog>
+
 #include "importthread.h"
-#include "common.h"
 #include "library.h"
 
 namespace Ui {
@@ -20,16 +20,17 @@ public:
     //int exec();
     void AddNewLibrary(SLib &lib);
     void StartImport(SLib &Lib);
-    void SelectLibrary(int idLib);
     bool bLibChanged;
     
 private:
+    void UpdateLibList();
+    void SaveLibrary(uint idLib, const SLib &Lib);
+
     Ui::AddLibrary *ui;
     ImportThread *imp_tr;
     QThread *thread;
-    void UpdateLibList();
-    void SaveLibrary(int idLib, const SLib &Lib);
-    int idCurrentLib_;
+    uint idCurrentLib_;
+
 private slots:
     void LogMessage(const QString &msg);
     void InputINPX();
@@ -43,6 +44,7 @@ private slots:
     void reject();
     void ExistingLibsChanged();
     void ExportLib();
+    void onComboboxLibraryChanged(int index);
 
 
 signals:

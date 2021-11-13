@@ -1,10 +1,14 @@
 #include "exportframe.h"
 #include "ui_exportframe.h"
-#include "QStandardPaths"
-#include "common.h"
-#include <QToolButton>
 
-quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
+#include <QToolButton>
+#include <QStringBuilder>
+#include <QFileDialog>
+#include <QMessageBox>
+#include <QTextStream>
+
+
+static const quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
 QString encodeStr(const QString& str)
 {
     QByteArray arr(str.toUtf8());
@@ -13,25 +17,25 @@ QString encodeStr(const QString& str)
     {
         arr[i] = arr[i] ^ key[index];
         index++;
-        if(index>=sizeof(key)/sizeof(quint32))
-            index=0;
+        if(index >= sizeof(key) / sizeof(quint32))
+            index = 0;
     }
 
-    return "#-#"+QString::fromLatin1(arr.toBase64());
+    return QLatin1String("#-#") + QString::fromLatin1(arr.toBase64());
 }
 
 QString decodeStr(const QString &str)
 {
-    if(str.left(3)!=QLatin1String("#-#"))
+    if(str.left(3) != QLatin1String("#-#"))
         return str;
     QByteArray arr = QByteArray::fromBase64(str.mid(3).toLatin1());
-    quint32 index=0;
+    quint32 index = 0;
     for(int i =0; i<arr.size(); i++)
     {
-        arr[i] =arr[i] ^ key[index];
+        arr[i] = arr[i] ^ key[index];
         index++;
-        if(index>=sizeof(key)/sizeof(quint32))
-            index=0;
+        if(index >= sizeof(key) / sizeof(quint32))
+            index = 0;
     }
     return QString::fromUtf8(arr);
 }
@@ -62,12 +66,12 @@ ExportFrame::ExportFrame(QWidget *parent) :
     connect(ui->userCSS, &QCheckBox::clicked, this, &ExportFrame::onUserCSSclicked);
     connect(ui->btnDefaultCSS, &QToolButton::clicked, this, &ExportFrame::onBtnDefaultCSSclicked);
 
-    QToolButton* btnPath=new QToolButton(this);
+    QToolButton* btnPath = new QToolButton(this);
     btnPath->setFocusPolicy(Qt::NoFocus);
     btnPath->setCursor(Qt::ArrowCursor);
     btnPath->setText(QStringLiteral("..."));
-    QHBoxLayout*  layout=new QHBoxLayout(ui->Path);
-    layout->addWidget(btnPath,0,Qt::AlignRight);
+    QHBoxLayout*  layout = new QHBoxLayout(ui->Path);
+    layout->addWidget(btnPath, 0, Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
     connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
@@ -94,12 +98,12 @@ void ExportFrame::onRadioEmailToggled(bool checked)
 
 void ExportFrame::onOutputFormatChanged(int /*index*/)
 {
-    ui->tabFormat->setDisabled(ui->OutputFormat->currentText()==QStringLiteral("-"));
+    ui->tabFormat->setDisabled(ui->OutputFormat->currentText() == QStringLiteral("-"));
 }
 
 void ExportFrame::onConnectionTypeChanged(int /*index*/)
 {
-    if(ui->ConnectionType->currentText().toLower()==QStringLiteral("tcp"))
+    if(ui->ConnectionType->currentText().toLower() == QStringLiteral("tcp"))
         ui->Port->setText(QStringLiteral("25"));
     else
         ui->Port->setText(QStringLiteral("465"));
@@ -157,10 +161,10 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
     UpdateToolComboBox(pExportOptions->sCurrentTool);
 
 
-    while(ui->fontLayout->count()>2)
+    while(ui->fontLayout->count() > 2)
         delete ui->fontLayout->itemAt(0)->widget();
     int count = pExportOptions->vFontExportOptions.count();
-    for(int i=0;i<count;i++)
+    for(int i=0; i<count; i++)
     {
         AddFont(pExportOptions->vFontExportOptions.at(i).bUse,
                 pExportOptions->vFontExportOptions.at(i).nTag,
@@ -180,58 +184,53 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
 
 QStringList ExportFrame::Save(ExportOptions *pExportOptions)
 {
-    ExportOptions* pExpOpt;
-    if(pExportOptions == nullptr)
-        pExpOpt = new ExportOptions;
-    else
-        pExpOpt = pExportOptions;
-    pExpOpt->sEmailFrom = ui->from_email->text().trimmed();
-    pExpOpt->sEmailSubject = ui->mail_subject->text().trimmed();
-    pExpOpt->sEmailServer = ui->Server->text().trimmed();
-    pExpOpt->nEmailServerPort = ui->Port->text().trimmed().toUInt();
-    pExpOpt->sEmailUser = ui->User->text().trimmed();
-    pExpOpt->sEmailPassword = encodeStr(ui->Password->text());
-    pExpOpt->bPostprocessingCopy = ui->PostprocessingCopy->isChecked();
-    pExpOpt->sDevicePath = ui->Path->text().trimmed();
-    pExpOpt->nEmailPause = ui->PauseMail->value();
-    pExpOpt->nEmailConnectionType = ui->ConnectionType->currentIndex();
-    pExpOpt->sSendTo = ui->radioDevice->isChecked() ?QStringLiteral("device") :QStringLiteral("e-mail");
-    pExpOpt->sCurrentTool = ui->CurrentTools->currentText();
-    pExpOpt->bAskPath = ui->askPath->isChecked();
-    pExpOpt->bOriginalFileName = ui->originalFileName->isChecked();
-    pExpOpt->sExportFileName = ui->ExportFileName->text().trimmed();
-    pExpOpt->sOutputFormat = ui->OutputFormat->currentText();
-    pExpOpt->bDropCaps = ui->dropcaps->isChecked();
-    pExpOpt->bJoinSeries = ui->join_series->isChecked();
-    pExpOpt->nHyphenate = ui->hyphenate->currentIndex();
-    pExpOpt->nVignette = ui->Vignette->currentIndex();
-    pExpOpt->bUserCSS = ui->userCSS->isChecked();
-    pExpOpt->sUserCSS = ui->UserCSStext->toPlainText();
-    pExpOpt->bSplitFile = ui->split_file->isChecked();
-    pExpOpt->bBreakAfterCupture = ui->break_after_cupture->isChecked();
-    pExpOpt->bAnnotation = ui->annotation->isChecked();
-    pExpOpt->nFootNotes = ui->footnotes->currentIndex();
-    pExpOpt->bTransliteration = ui->transliteration->isChecked();
-    pExpOpt->bRemovePersonal = ui->removePersonal->isChecked();
-    pExpOpt->bRepairCover = ui->repairCover->isChecked();
-    pExpOpt->bMlToc = ui->ml_toc->isChecked();
-    pExpOpt->nMaxCaptionLevel = ui->MAXcaptionLevel->value();
-    pExpOpt->bAuthorTranslit = ui->authorTranslit->isChecked();
-    pExpOpt->bSeriaTranslit = ui->seriaTranslit->isChecked();
-    pExpOpt->sBookSeriesTitle = ui->seriastring->text().trimmed();
-    pExpOpt->sAuthorSring = ui->authorstring->text().trimmed();
-    pExpOpt->bCreateCover = ui->createCover->isChecked();
-    pExpOpt->bCreateCoverAlways = ui->createCaverAlways->isChecked();
-    pExpOpt->bAddCoverLabel = ui->addCoverLabel->isChecked();
-    pExpOpt->sCoverLabel = ui->coverLabel->text().trimmed();
-    pExpOpt->nContentPlacement = ui->content_placement->currentIndex();
+    pExportOptions->sEmailFrom = ui->from_email->text().trimmed();
+    pExportOptions->sEmailSubject = ui->mail_subject->text().trimmed();
+    pExportOptions->sEmailServer = ui->Server->text().trimmed();
+    pExportOptions->nEmailServerPort = ui->Port->text().trimmed().toUInt();
+    pExportOptions->sEmailUser = ui->User->text().trimmed();
+    pExportOptions->sEmailPassword = encodeStr(ui->Password->text());
+    pExportOptions->bPostprocessingCopy = ui->PostprocessingCopy->isChecked();
+    pExportOptions->sDevicePath = ui->Path->text().trimmed();
+    pExportOptions->nEmailPause = ui->PauseMail->value();
+    pExportOptions->nEmailConnectionType = ui->ConnectionType->currentIndex();
+    pExportOptions->sSendTo = ui->radioDevice->isChecked() ?QStringLiteral("device") :QStringLiteral("e-mail");
+    pExportOptions->sCurrentTool = ui->CurrentTools->currentText();
+    pExportOptions->bAskPath = ui->askPath->isChecked();
+    pExportOptions->bOriginalFileName = ui->originalFileName->isChecked();
+    pExportOptions->sExportFileName = ui->ExportFileName->text().trimmed();
+    pExportOptions->sOutputFormat = ui->OutputFormat->currentText();
+    pExportOptions->bDropCaps = ui->dropcaps->isChecked();
+    pExportOptions->bJoinSeries = ui->join_series->isChecked();
+    pExportOptions->nHyphenate = ui->hyphenate->currentIndex();
+    pExportOptions->nVignette = ui->Vignette->currentIndex();
+    pExportOptions->bUserCSS = ui->userCSS->isChecked();
+    pExportOptions->sUserCSS = ui->UserCSStext->toPlainText();
+    pExportOptions->bSplitFile = ui->split_file->isChecked();
+    pExportOptions->bBreakAfterCupture = ui->break_after_cupture->isChecked();
+    pExportOptions->bAnnotation = ui->annotation->isChecked();
+    pExportOptions->nFootNotes = ui->footnotes->currentIndex();
+    pExportOptions->bTransliteration = ui->transliteration->isChecked();
+    pExportOptions->bRemovePersonal = ui->removePersonal->isChecked();
+    pExportOptions->bRepairCover = ui->repairCover->isChecked();
+    pExportOptions->bMlToc = ui->ml_toc->isChecked();
+    pExportOptions->nMaxCaptionLevel = ui->MAXcaptionLevel->value();
+    pExportOptions->bAuthorTranslit = ui->authorTranslit->isChecked();
+    pExportOptions->bSeriaTranslit = ui->seriaTranslit->isChecked();
+    pExportOptions->sBookSeriesTitle = ui->seriastring->text().trimmed();
+    pExportOptions->sAuthorSring = ui->authorstring->text().trimmed();
+    pExportOptions->bCreateCover = ui->createCover->isChecked();
+    pExportOptions->bCreateCoverAlways = ui->createCaverAlways->isChecked();
+    pExportOptions->bAddCoverLabel = ui->addCoverLabel->isChecked();
+    pExportOptions->sCoverLabel = ui->coverLabel->text().trimmed();
+    pExportOptions->nContentPlacement = ui->content_placement->currentIndex();
 
     QStringList fonts_list;
-    int count = ui->fontLayout->count()-2;
-    pExpOpt->vFontExportOptions.resize(count);
+    int count = ui->fontLayout->count() - 2;
+    pExportOptions->vFontExportOptions.resize(count);
     for (int i = 0; i < count; ++i)
     {
-        FontExportOptions &fontExportOptions = pExpOpt->vFontExportOptions[i];
+        FontExportOptions &fontExportOptions = pExportOptions->vFontExportOptions[i];
         FontFrame* pFontFrame = qobject_cast<FontFrame*>(ui->fontLayout->itemAt(i)->widget());
         fontExportOptions.bUse = pFontFrame->use();
         fontExportOptions.nTag = pFontFrame->tag();
@@ -246,8 +245,6 @@ QStringList ExportFrame::Save(ExportOptions *pExportOptions)
         fonts_list << fontExportOptions.sFontI;
         fonts_list << fontExportOptions.sFontBI;
     }
-    if(pExportOptions==nullptr)
-        delete pExpOpt;
     return fonts_list;
 }
 
@@ -255,7 +252,7 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
 {
     QString CurrentTool;
     if(sCurrentTool.isEmpty())
-        CurrentTool=ui->CurrentTools->currentText();
+        CurrentTool = ui->CurrentTools->currentText();
     else
         CurrentTool = sCurrentTool;
     while(ui->CurrentTools->count()>1)
@@ -273,10 +270,10 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
     }
 }
 
-FontFrame* ExportFrame::AddFont(bool use, int tag, const QString &font,const QString &font_b,const QString &font_i,const QString &font_bi,int fontSize)
+FontFrame* ExportFrame::AddFont(bool use, int tag, const QString &font, const QString &font_b, const QString &font_i, const QString &font_bi, int fontSize)
 {
-    FontFrame* frame=new FontFrame(use,tag,font,font_b,font_i,font_bi,fontSize,this);
-    ui->fontLayout->insertWidget(ui->fontLayout->count()-2,frame);
+    FontFrame* frame = new FontFrame(use, tag, font, font_b, font_i, font_bi, fontSize, this);
+    ui->fontLayout->insertWidget(ui->fontLayout->count()-2, frame);
     connect(frame, &FontFrame::remove_font, this, &ExportFrame::RemoveFont);
     connect(frame, &FontFrame::move_font, this, &ExportFrame::FontMove);
     return frame;
@@ -289,19 +286,19 @@ void ExportFrame::RemoveFont(QWidget *font_widget)
 
 void ExportFrame::FontMove(QWidget *font_widget, int direction)
 {
-    int index=ui->fontLayout->indexOf(font_widget);
-    if(index==0 && direction>0)
+    int index = ui->fontLayout->indexOf(font_widget);
+    if(index == 0 && direction>0)
         return;
-    if(index==ui->fontLayout->count()-3 && direction<0)
+    if(index == ui->fontLayout->count()-3 && direction<0)
         return;
     ui->fontLayout->removeWidget(font_widget);
-    ui->fontLayout->insertWidget(index-direction,font_widget);
+    ui->fontLayout->insertWidget(index-direction, font_widget);
 }
 
 void ExportFrame::btnPath()
 {
     QDir::setCurrent(ui->Path->text());
-    QString dir=QFileDialog::getExistingDirectory(this,tr("Select device directory"));
+    QString dir = QFileDialog::getExistingDirectory(this, tr("Select device directory"));
     if(!dir.isEmpty())
         ui->Path->setText(dir);
 }
@@ -315,13 +312,13 @@ void ExportFrame::SetTabIndex(int tab_id, int page_id)
 
 void ExportFrame::onTabWidgetCurrentChanged(int )
 {
-    emit ChangeTabIndex(ui->tabWidget->currentIndex(),ui->toolBox->currentIndex());
+    emit ChangeTabIndex(ui->tabWidget->currentIndex(), ui->toolBox->currentIndex());
 }
 
 void ExportFrame::onAddCoverLabelClicked()
 {
-    ui->coverLabel->setEnabled(ui->addCoverLabel->isChecked()&&!ui->createCaverAlways->isChecked());
-    ui->label_tmplate->setEnabled(ui->addCoverLabel->isChecked()&&!ui->createCaverAlways->isChecked());
+    ui->coverLabel->setEnabled(ui->addCoverLabel->isChecked() && !ui->createCaverAlways->isChecked());
+    ui->label_tmplate->setEnabled(ui->addCoverLabel->isChecked() && !ui->createCaverAlways->isChecked());
 }
 
 void ExportFrame::onCreateCaverAlwaysClicked()
@@ -376,10 +373,10 @@ void ExportFrame::onBtnDefaultCSSclicked()
 {
     if(!ui->UserCSStext->toPlainText().isEmpty())
     {
-        if(QMessageBox::question(this,tr("Load CSS"),tr("Are you sure you want to load default CSS?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::NoButton)!=QMessageBox::Yes)
+        if(QMessageBox::question(this, tr("Load CSS"), tr("Are you sure you want to load default CSS?"), QMessageBox::Yes|QMessageBox::No, QMessageBox::NoButton) != QMessageBox::Yes)
             return;
     }
-    QFile file(QApplication::applicationDirPath()+"/xsl/css/style.css");
+    QFile file(QApplication::applicationDirPath() + QLatin1String("/xsl/css/style.css"));
     file.open(QFile::ReadOnly);
     QTextStream in(&file);
     ui->UserCSStext->setPlainText(in.readAll());

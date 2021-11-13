@@ -1,6 +1,7 @@
 #include "options.h"
 
-#include "common.h"
+#include <QFileInfo>
+#include <QStringBuilder>
 
 void ExportOptions::Save(QSettings *pSettings, bool bSavePasswords)
 {
@@ -92,13 +93,13 @@ void ExportOptions::Load(QSettings *pSettings)
     sEmailFrom = pSettings->value(QStringLiteral("from_email")).toString();
     sEmailSubject = pSettings->value(QStringLiteral("mail_subject")).toString();
     sEmailServer = pSettings->value(QStringLiteral("EmailServer")).toString();
-    nEmailServerPort = pSettings->value(QStringLiteral("EmailPort"),25).toUInt();
+    nEmailServerPort = pSettings->value(QStringLiteral("EmailPort"), 25).toUInt();
     sEmailUser = pSettings->value(QStringLiteral("EmailUser")).toString();
     sEmailPassword =  pSettings->value(QStringLiteral("EmailPassword")).toString();
     bPostprocessingCopy = pSettings->value(QStringLiteral("PostprocessingCopy"), false).toBool();
     sDevicePath = pSettings->value(QStringLiteral("DevicePath"),HomeDir).toString();
     bOriginalFileName = pSettings->value(QStringLiteral("originalFileName"), false).toBool();
-    sExportFileName = pSettings->value(QStringLiteral("ExportFileName"), default_exp_file_name).toString();
+    sExportFileName = pSettings->value(QStringLiteral("ExportFileName"), QLatin1String(sDefaultEexpFileName)).toString();
     nEmailPause = pSettings->value(QStringLiteral("PauseMail"), 5).toInt();
     nEmailConnectionType = pSettings->value(QStringLiteral("ConnectionType"), 0).toInt();
     bDropCaps = pSettings->value(QStringLiteral("dropcaps"), false).toBool();
@@ -130,7 +131,7 @@ void ExportOptions::Load(QSettings *pSettings)
     nContentPlacement = pSettings->value(QStringLiteral("content_placement"), 0).toInt();
     int countFonts = pSettings->beginReadArray(QStringLiteral("fonts"));
     vFontExportOptions.resize(countFonts);
-    for(int i=0;i<countFonts;i++)
+    for(int i=0; i<countFonts; i++)
     {
         pSettings->setArrayIndex(i);
         FontExportOptions &fontExport = vFontExportOptions[i];
@@ -140,7 +141,7 @@ void ExportOptions::Load(QSettings *pSettings)
         fontExport.sFontB = pSettings->value(QStringLiteral("font_b")).toString(),
         fontExport.sFontI = pSettings->value(QStringLiteral("font_i")).toString(),
         fontExport.sFontBI = pSettings->value(QStringLiteral("font_bi")).toString(),
-        fontExport.nFontSize = pSettings->value(QStringLiteral("fontSize"),100).toInt();
+        fontExport.nFontSize = pSettings->value(QStringLiteral("fontSize"), 100).toInt();
     }
     pSettings->endArray();
 }
@@ -154,7 +155,7 @@ void ExportOptions::setDefault(const QString &_sName, const QString &_sOtputForm
     nEmailServerPort = 25;
     bPostprocessingCopy = false;
     bOriginalFileName = false;
-    sExportFileName = default_exp_file_name;
+    sExportFileName = QLatin1String(sDefaultEexpFileName);
     nEmailPause = 5;
     nEmailConnectionType = 0;
     bDropCaps = false;
@@ -182,7 +183,7 @@ void ExportOptions::setDefault(const QString &_sName, const QString &_sOtputForm
     FontExportOptions *pFontExportOptions = &vFontExportOptions[0];
     pFontExportOptions->bUse = true;
     pFontExportOptions->nTag = 2;  //"Dropcaps"
-    pFontExportOptions->sFont = QStringLiteral(default_dropcaps_font);
+    pFontExportOptions->sFont = QLatin1String(sDefaultDropcapsFont);
     pFontExportOptions->nFontSize = 300;
 }
 
@@ -194,7 +195,7 @@ void Options::setDefault(){
     sAlphabetName = QLocale::system().name().left(2);
     sUiLanguageName = QLocale::system().name();
     QString sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-    sDatabasePath = sAppDir+ QStringLiteral("/freeLib.sqlite");
+    sDatabasePath = sAppDir + QStringLiteral("/freeLib.sqlite");
     nIconTray = 0;
     nTrayColor = 0;
     bCloseDlgAfterExport = true;
@@ -208,11 +209,11 @@ void Options::setDefault(){
     bOpdsNeedPassword = false;
     sOpdsUser = QLatin1String("");
     sOpdsPassword = QLatin1String("");
-    nOpdsPort = default_OPDS_port;
+    nOpdsPort = nDefaultOpdsPort;
     nOpdsBooksPerPage = 15;
     nHttpExport = 0;
     nProxyType = 0;
-    nProxyPort = default_proxy_port;
+    nProxyPort = nDefaultProxyPort;
     sProxyHost = QLatin1String("");
     sProxyUser = QLatin1String("");
     sProxyPassword = QLatin1String("");
@@ -227,7 +228,7 @@ void Options::setExportDefault()
     vExportOptions[0].setDefault(QApplication::tr("Save as") + QStringLiteral(" ..."), QStringLiteral("-"), true);
     vExportOptions[1].setDefault(QApplication::tr("Save as") + QStringLiteral(" MOBI"), QStringLiteral("MOBI"), false);
     vExportOptions[2].setDefault(QApplication::tr("Save as") + QStringLiteral(" EPUB"), QStringLiteral("EPUB"), false);
-    vExportOptions[3].setDefault(QApplication::tr("Save as") + QStringLiteral(" AZW3"),QStringLiteral("AZW3"), false);
+    vExportOptions[3].setDefault(QApplication::tr("Save as") + QStringLiteral(" AZW3"), QStringLiteral("AZW3"), false);
 }
 
 void Options::Load(QSettings *pSettings)
@@ -239,7 +240,7 @@ void Options::Load(QSettings *pSettings)
     sAlphabetName = pSettings->value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
     sUiLanguageName = pSettings->value(QStringLiteral("localeUI"), QLocale::system().name()).toString();
     QString sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-    sDatabasePath = pSettings->value(QStringLiteral("database_path") ,sAppDir+ QStringLiteral("/freeLib.sqlite")).toString();
+    sDatabasePath = pSettings->value(QStringLiteral("database_path"), QString(sAppDir + QLatin1String("/freeLib.sqlite"))).toString();
     nIconTray = pSettings->value(QStringLiteral("tray_icon"), 0).toInt();
     nTrayColor = pSettings->value(QStringLiteral("tray_color"), 0).toInt();
     bCloseDlgAfterExport = pSettings->value(QStringLiteral("CloseExpDlg"), true).toBool();
@@ -253,11 +254,11 @@ void Options::Load(QSettings *pSettings)
     bOpdsNeedPassword = pSettings->value(QStringLiteral("HTTP_need_pasword"), false).toBool();
     sOpdsUser = pSettings->value(QStringLiteral("HTTP_user")).toString();
     sOpdsPassword = pSettings->value(QStringLiteral("HTTP_password")).toString();
-    nOpdsPort = pSettings->value(QStringLiteral("OPDS_port"), default_OPDS_port).toInt();
+    nOpdsPort = pSettings->value(QStringLiteral("OPDS_port"), nDefaultOpdsPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
-    nHttpExport = pSettings->value(QStringLiteral("httpExport"),0).toInt();
-    nProxyType = pSettings->value(QStringLiteral("proxy_type"),0).toInt();
-    nProxyPort = pSettings->value(QStringLiteral("proxy_port"),default_proxy_port).toInt();
+    nHttpExport = pSettings->value(QStringLiteral("httpExport"), 0).toInt();
+    nProxyType = pSettings->value(QStringLiteral("proxy_type"), 0).toInt();
+    nProxyPort = pSettings->value(QStringLiteral("proxy_port"), nDefaultProxyPort).toInt();
     sProxyHost = pSettings->value(QStringLiteral("proxy_host")).toString();
     sProxyUser = pSettings->value(QStringLiteral("proxy_password")).toString();
     sProxyPassword = pSettings->value(QStringLiteral("proxy_user")).toString();
@@ -287,11 +288,11 @@ void Options::Load(QSettings *pSettings)
     pSettings->endArray();
 
     QString HomeDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    count=pSettings->beginReadArray(QStringLiteral("export"));
+    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
+        HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+    count = pSettings->beginReadArray(QStringLiteral("export"));
     vExportOptions.resize(count);
-    for(int i=0;i<count;i++)
+    for(int i=0; i<count; i++)
     {
         pSettings->setArrayIndex(i);
         vExportOptions[i].Load(pSettings);

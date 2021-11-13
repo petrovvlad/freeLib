@@ -39,7 +39,7 @@ private slots:
 
 signals:
     void remove_font(QWidget* widget);
-    void move_font(QWidget* widget,int direction);
+    void move_font(QWidget* widget, int direction);
 };
 
 #endif // FONTFRAME_H

@@ -1,5 +1,6 @@
 #include "tagdialog.h"
 #include "ui_tagdialog.h"
+
 #include "common.h"
 
 TagDialog::TagDialog(QWidget *parent) :
@@ -31,7 +32,7 @@ TagDialog::~TagDialog()
 void TagDialog::ok_btn()
 {
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    for(int i=0;i<ui->listWidget->count();i++)
+    for(int i=0; i<ui->listWidget->count(); i++)
     {
         query.exec(QStringLiteral("UPDATE favorite SET name='%1' WHERE id=%2").
                    arg(ui->listWidget->item(i)->text(),ui->listWidget->item(i)->data(Qt::UserRole).toString()));

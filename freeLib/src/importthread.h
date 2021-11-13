@@ -1,16 +1,15 @@
 #ifndef IMPORTTHREAD_H
 #define IMPORTTHREAD_H
 
-#include <QThread>
-#include <QSqlQuery>
-#include <QStringList>
+#include <QSqlDatabase>
+
+#include "library.h"
 
 //способы обновления
 #define UT_FULL 10
 #define UT_DEL_AND_NEW 11
 #define UT_NEW 12
 
-#include "library.h"
 
 void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only);
 
@@ -33,9 +32,9 @@ protected:
     void importFB2(const QString &path,int &count);
     void importFB2_main(const QString &path);
 
-    void readFB2(const QByteArray &ba,QString file_name, QString arh_name,qint32 file_size=0);
-    void readEPUB(const QByteArray &ba,QString file_name, QString arh_name,qint32 file_size=0);
-    void readFB2_test(const QByteArray& ba,QString file_name,QString arh_name);
+    void readFB2(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
+    void readEPUB(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
+    void readFB2_test(const QByteArray& ba, QString file_name, QString arh_name);
 private:
     QString _fileName;
     QString _name;
@@ -46,13 +45,13 @@ private:
     bool bWoDeleted_;
     long existingID;
     QSqlQuery *query;
-    qlonglong AddSeria(const QString &str,qlonglong libID,int tag);
-    qlonglong AddAuthor(const QString &str,qlonglong libID,qlonglong id_book,bool first_author,const QString &language,int tag);
-    qlonglong addAuthor(const SAuthor &author,uint libID,uint idBook,bool first_author,const QString &language,int tag);
+    qlonglong AddSeria(const QString &str, qlonglong libID, int tag);
+    qlonglong AddAuthor(const QString &str, qlonglong libID, qlonglong id_book, bool first_author, const QString &language, int tag);
+    qlonglong addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, const QString &language, int tag);
     qlonglong AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
                  int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, int tag);
 
-    qlonglong AddGenre(qlonglong id_book,QString janre,qlonglong id_lib,const QString &language);
+    qlonglong AddGenre(qlonglong id_book, QString sGenre, qlonglong id_lib, const QString &language);
 
 };
 
