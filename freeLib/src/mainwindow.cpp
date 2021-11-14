@@ -876,8 +876,9 @@ void MainWindow::StartSearch()
 
 void MainWindow::SelectLibrary()
 {
-    QAction* action = qobject_cast<QAction*>(sender());
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
+    QAction* action = qobject_cast<QAction*>(sender());
     SaveLibPosition();
     QSettings *settings = GetSettings();
     idCurrentLib = action->data().toUInt();
@@ -899,6 +900,8 @@ void MainWindow::SelectLibrary()
 
     setWindowTitle(AppName + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
     FillLibrariesMenu();
+
+    QApplication::restoreOverrideCursor();
 }
 
 void MainWindow::SelectGenre()
