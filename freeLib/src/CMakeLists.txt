@@ -66,7 +66,8 @@ set(PROJECT_SOURCES
         treebookitem.cpp
         treebookitem.h
         genresortfilterproxymodel.cpp
-        genresortfilterproxymodel.h      
+        genresortfilterproxymodel.h
+        starsdelegate.h starsdelegate.cpp
         fb2mobi/hyphenations.cpp
         fb2mobi/fb2mobi.cpp
         fb2mobi/fb2mobi.h

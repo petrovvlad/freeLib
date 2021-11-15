@@ -21,6 +21,7 @@
 #include "treebookitem.h"
 #include "genresortfilterproxymodel.h"
 #include "library.h"
+#include "starsdelegate.h"
 
 extern QSplashScreen *splash;
 
@@ -101,6 +102,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Review->setPage(new WebPage());
     connect(static_cast<WebPage*>(ui->Review->page()), &WebPage::linkClicked, this, &MainWindow::ReviewLink);
 
+    StarsDelegate* delegate = new StarsDelegate(this);
+    ui->Books->setItemDelegateForColumn(3, delegate);
 
     idCurrentLanguage_ = -1;
 
@@ -1608,6 +1611,8 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                 item_author->setFont(0, bold_font);
                 item_author->setCheckState(0, Qt::Unchecked);
                 item_author->setData(0, Qt::UserRole, idAuthor);
+                item_author->setData(3, Qt::UserRole, -1);
+
                 if(options.bUseTag)
                     item_author->setIcon(0, GetTag(mLibs[idCurrentLib].mAuthors[idAuthor].nTag));
                 mAuthors[idAuthor] = item_author;
@@ -1630,6 +1635,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                     item_seria->setFont(0, bold_font);
                     item_seria->setCheckState(0, Qt::Unchecked);
                     item_seria->setData(0, Qt::UserRole, idSerial);
+                    item_seria->setData(3, Qt::UserRole, -1);
                     if(options.bUseTag)
                         item_seria->setIcon(0, GetTag(mLibs[idCurrentLib].mSerials[idSerial].nTag));
 
@@ -1655,9 +1661,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                 item_book->setText(2, locale.formattedDataSize(book.nSize, 1, QLocale::DataSizeTraditionalFormat));
             item_book->setTextAlignment(2, Qt::AlignRight|Qt::AlignVCenter);
 
-            QPixmap pix(QLatin1String(":/icons/img/icons/stars/") + QString::number(book.nStars).trimmed() + QStringLiteral("star%1.png").arg(devicePixelRatio()>=2 ?QLatin1String("@2x") :QLatin1String("")));
-            pix.setDevicePixelRatio(devicePixelRatio());
-            item_book->setData(3,Qt::DecorationRole, pix);
+            item_book->setData(3, Qt::UserRole, book.nStars);
 
             item_book->setText(4, book.date.toString(QStringLiteral("dd.MM.yyyy")));
             item_book->setTextAlignment(4, Qt::AlignCenter);
