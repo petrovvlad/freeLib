@@ -376,7 +376,7 @@ void ExportFrame::onBtnDefaultCSSclicked()
         if(QMessageBox::question(this, tr("Load CSS"), tr("Are you sure you want to load default CSS?"), QMessageBox::Yes|QMessageBox::No, QMessageBox::NoButton) != QMessageBox::Yes)
             return;
     }
-    QFile file(QApplication::applicationDirPath() + QLatin1String("/xsl/css/style.css"));
+    QFile file(QStringLiteral(":/xsl/css/style.css"));
     file.open(QFile::ReadOnly);
     QTextStream in(&file);
     ui->UserCSStext->setPlainText(in.readAll());

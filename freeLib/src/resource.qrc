@@ -39,6 +39,7 @@
         <file>xsl/hyphenations/en.txt</file>
         <file>xsl/hyphenations/ru.txt</file>
         <file>xsl/hyphenations/uk.txt</file>
+        <file>xsl/css/style.css</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>

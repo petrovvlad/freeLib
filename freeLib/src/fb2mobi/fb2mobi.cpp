@@ -1702,7 +1702,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     dir.removeRecursively();
     dir.mkpath(tmp_dir + QLatin1String("/OEBPS"));
     dir.mkpath(tmp_dir + QLatin1String("/OEBPS/css"));
-    QFile::copy(QApplication::applicationDirPath() + QLatin1String("/xsl/css/style.css"), tmp_dir + QLatin1String("/OEBPS/css/main.css"));
+    QFile::copy(QStringLiteral(":/xsl/css/style.css"), tmp_dir + QLatin1String("/OEBPS/css/main.css"));
     if(pExportOptions_->bUserCSS)
     {
         if(!pExportOptions_->sUserCSS.isEmpty())
