@@ -61,10 +61,8 @@ set(PROJECT_SOURCES
         opds_server.cpp
         opds_server.h
         options.h options.cpp
-        webpage.cpp
-        webpage.h
-        treebookitem.cpp
-        treebookitem.h
+        treebookitem.h treebookitem.cpp
+        coverlabel.h coverlabel.cpp
         genresortfilterproxymodel.cpp
         genresortfilterproxymodel.h
         starsdelegate.h starsdelegate.cpp

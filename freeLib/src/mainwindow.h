@@ -15,6 +15,7 @@
 #include "opds_server.h"
 #include "common.h"
 #include "options.h"
+#include "coverlabel.h"
 
 namespace Ui {
 class MainWindow;
@@ -68,6 +69,7 @@ private:
     uint idCurrentGenre_;
     uint idCurrentSerial_;
     uint idCurrentBook_;
+    CoverLabel *pCover;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
 
 protected:
@@ -119,7 +121,6 @@ private slots:
     void onLanguageFilterChanged(int index);
     void onChangeAlpabet(const QString &sAlphabetName);
 
-    //void on_splitter_splitterMoved(int pos, int index);
 
     void ChangingTrayIcon(int index, int color);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);

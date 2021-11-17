@@ -317,7 +317,7 @@ void SLib::loadAnnotation(uint idBook)
             {
                 if(binarys.at(i).attributes().namedItem(QStringLiteral("id")).toAttr().value() == cover.right(cover.length() - 1))
                 {
-                    QString sImgFile = QStringLiteral("%1/freeLib/%2.jpg")
+                    book.sImg = QStringLiteral("%1/freeLib/%2.jpg")
                             .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                             .arg(idBook);
                     QPixmap image;
@@ -325,8 +325,7 @@ void SLib::loadAnnotation(uint idBook)
                     ba.append(binarys.at(i).toElement().text().toLatin1());
                     QByteArray ba64 = QByteArray::fromBase64(ba);
                     image.loadFromData(ba64);
-                    image.save(sImgFile);
-                    book.sImg = QStringLiteral("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
+                    image.save(book.sImg);
                     break;
                 }
             }
