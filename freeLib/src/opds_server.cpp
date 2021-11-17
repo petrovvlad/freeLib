@@ -1114,7 +1114,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
     }
     else if(fi.suffix().toLower() == QLatin1String("ico"))
     {
-        QString ico = QApplication::applicationDirPath() + QLatin1String("/xsl/opds/") + url;
+        QString ico = QLatin1String(":/xsl/opds/") + url;
         QFile file(ico);
         file.open(QFile::ReadOnly);
         ts << WriteSuccess(QStringLiteral("image/x-icon"));
@@ -1123,7 +1123,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
     }
     else if(fi.suffix().toLower() == QLatin1String("png"))
     {
-        QString ico = QApplication::applicationDirPath() + QLatin1String("/xsl/opds/") + url;
+        QString ico = QLatin1String(":/xsl/opds/") + url;
         if(fi.exists())
             ico = fi.absoluteFilePath();
         QFile file(ico);
@@ -1134,7 +1134,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
     }
     else if(fi.suffix().toLower() == QLatin1String("jpg"))
     {
-        QString ico = QApplication::applicationDirPath() + QLatin1String("/xsl/opds/") + url;
+        QString ico = QLatin1String(":/xsl/opds/") + url;
         // проверить
             ico = fi.absoluteFilePath();
         QFile file(ico);

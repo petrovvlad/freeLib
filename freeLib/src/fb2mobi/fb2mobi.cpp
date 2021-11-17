@@ -275,7 +275,7 @@ QString fb2mobi::get_vignette(const QString &level, const QString &type)
     else if(pExportOptions_->nVignette == 2)
     {
         QString file;
-        QString txt_dir = QApplication::applicationDirPath() + QLatin1String("/xsl/img/");
+        QString txt_dir = QStringLiteral(":/xsl/img/");
         //проверить: похоже лишние строки
 //        if(QFileInfo::exists(txt_dir + level.toLower() + type))
 //            file = QLatin1String("");
@@ -1422,7 +1422,7 @@ void fb2mobi::InsertSeriaNumberToCover(const QString &number,CreateCover create_
     bool create_new = false;
     if((book_cover.isEmpty() && create_cover==cc_if_not_exists) || create_cover==cc_always)
     {
-        QImage img(QApplication::applicationDirPath() + QLatin1String("/xsl/img/cover.jpg"));
+        QImage img(QStringLiteral(":/xsl/img/cover.jpg"));
         if(book_cover.isEmpty())
         {
             book_cover = QStringLiteral("cover.jpg");
@@ -1719,7 +1719,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     dir.mkpath(tmp_dir + QLatin1String("/OEBPS/pic"));
     if(pExportOptions_->nVignette > 0)
     {
-        dir.setPath(QApplication::applicationDirPath() + QLatin1String("/xsl/img"));
+        dir.setPath(QStringLiteral(":/xsl/img"));
         QFileInfoList list = dir.entryInfoList();
         foreach (const QFileInfo &i, list)
         {

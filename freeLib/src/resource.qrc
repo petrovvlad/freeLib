@@ -40,6 +40,23 @@
         <file>xsl/hyphenations/ru.txt</file>
         <file>xsl/hyphenations/uk.txt</file>
         <file>xsl/css/style.css</file>
+        <file>xsl/img/cover.jpg</file>
+        <file>xsl/img/h0ta.png</file>
+        <file>xsl/img/h0ta.txt</file>
+        <file>xsl/img/h0tb.png</file>
+        <file>xsl/img/h0tb.txt</file>
+        <file>xsl/img/h1ta.png</file>
+        <file>xsl/img/h1ta.txt</file>
+        <file>xsl/img/h1tb.png</file>
+        <file>xsl/img/h1tb.txt</file>
+        <file>xsl/img/te.png</file>
+        <file>xsl/img/te.txt</file>
+        <file>xsl/opds/arrow_left.png</file>
+        <file>xsl/opds/arrow_right.png</file>
+        <file>xsl/opds/favicon.ico</file>
+        <file>xsl/opds/home.png</file>
+        <file>xsl/opds/icon_256x256.png</file>
+        <file>xsl/opds/splash_opera.png</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>
