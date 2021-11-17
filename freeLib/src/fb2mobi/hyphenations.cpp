@@ -25,7 +25,7 @@ bool pattern_compare(const pattern_t* a, const pattern_t* b)
 
 void hyphenations::init(const QString &language)
 {
-    QFile file(QApplication::applicationDirPath() + QLatin1String("/xsl/hyphenations/") + language.toLower() + QLatin1String(".txt"));
+    QFile file(QLatin1String(":/xsl/hyphenations/") + language.toLower() + QLatin1String(".txt"));
     if(!file.open(QFile::ReadOnly))
     {
         qDebug()<<"Error open file "+file.fileName();

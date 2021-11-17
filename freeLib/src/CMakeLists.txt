@@ -109,7 +109,7 @@ qt5_add_resources(PROJECT_SOURCES resource.qrc)
 configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 
 if(UNIX AND NOT APPLE)
-    file(COPY xsl DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+    file(COPY xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
     file(COPY ../../KindleGenLinux/kindlegen DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
     file(COPY Help DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 endif(UNIX AND NOT APPLE)
