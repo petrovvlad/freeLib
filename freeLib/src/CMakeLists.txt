@@ -1,6 +1,6 @@
 ﻿cmake_minimum_required(VERSION 3.5)
 
-project(freeLib VERSION 0.1 LANGUAGES CXX)
+project(freeLib VERSION 6.0 LANGUAGES CXX)
 
 set(CMAKE_INCLUDE_CURRENT_DIR ON)
 
@@ -10,6 +10,12 @@ set(CMAKE_AUTORCC ON)
 
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(UNIX AND NOT APPLE)
+    option(QUAZIP_STATIC "" OFF)
+else()
+    option(QUAZIP_STATIC "" ON)
+endif()
 
 set(QT_COMPONENTS Core Network Widgets Gui WebEngineWidgets Sql Xml XmlPatterns LinguistTools)
 find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
@@ -99,7 +105,12 @@ set(PROJECT_SOURCES
         SmtpClient/src/mimeqpencoder.h SmtpClient/src/mimeqpencoder.cpp
         SmtpClient/src/mimecontentencoder.h SmtpClient/src/mimecontentencoder.cpp
 )
-add_subdirectory(quazip)
+
+if(QUAZIP_STATIC)
+    add_subdirectory(quazip)
+else()
+    find_package(QuaZip-Qt5)
+endif()
 
 
 FILE(GLOB TS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.ts")
