@@ -716,6 +716,8 @@ void MainWindow::BookDblClick()
     if(ui->Books->selectedItems().count() == 0)
         return;
     QTreeWidgetItem* item = ui->Books->selectedItems()[0];
+    if(item->type() != ITEM_TYPE_BOOK)
+        return;
     QBuffer outbuff;
     QFileInfo fi = mLibs[idCurrentLib].getBookFile(item->data(0, Qt::UserRole).toUInt(), &outbuff);
     if(fi.fileName().isEmpty())
