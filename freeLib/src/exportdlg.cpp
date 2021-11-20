@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "exportdlg.h"
 #include "ui_exportdlg.h"
 

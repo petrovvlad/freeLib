@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "settingsdlg.h"
 #include "ui_settingsdlg.h"
 

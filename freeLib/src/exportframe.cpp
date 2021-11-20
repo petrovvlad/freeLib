@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "exportframe.h"
 #include "ui_exportframe.h"
 

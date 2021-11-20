@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
