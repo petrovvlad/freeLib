@@ -16,10 +16,6 @@ find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(ZLIB REQUIRED)
 
-add_definitions(
-                -DQT_USE_QSTRINGBUILDER
-               )
-
 set(PROJECT_SOURCES
         main.cpp
         common.h
@@ -97,7 +93,11 @@ set(PROJECT_SOURCES
         SmtpClient/src/quotedprintable.h
         SmtpClient/src/smtpclient.cpp
         SmtpClient/src/smtpclient.h
-        SmtpClient/src/smtpexports.h
+        SmtpClient/src/mimebase64encoder.h SmtpClient/src/mimebase64encoder.cpp
+        SmtpClient/src/mimebase64formatter.h SmtpClient/src/mimebase64formatter.cpp
+        SmtpClient/src/mimeqpformatter.h SmtpClient/src/mimeqpformatter.cpp
+        SmtpClient/src/mimeqpencoder.h SmtpClient/src/mimeqpencoder.cpp
+        SmtpClient/src/mimecontentencoder.h SmtpClient/src/mimecontentencoder.cpp
 )
 add_subdirectory(quazip)
 

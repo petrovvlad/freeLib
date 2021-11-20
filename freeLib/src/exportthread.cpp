@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "exportthread.h"
 
 #include <QXmlQuery>
@@ -182,18 +183,14 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
        {
            QEventLoop loop; QTimer::singleShot(pExportOptions_->nEmailPause*1000, &loop, &QEventLoop::quit); loop.exec();
        }
-       SmtpClient smtp(pExportOptions_->sEmailServer, pExportOptions_->nEmailServerPort);
-       smtp.setConnectionType((SmtpClient::ConnectionType)pExportOptions_->nEmailConnectionType);
-       if(!pExportOptions_->sEmailUser.isEmpty())
-           smtp.setUser(pExportOptions_->sEmailUser);
-       if(!pExportOptions_->sEmailPassword.isEmpty())
-           smtp.setPassword(decodeStr(pExportOptions_->sEmailPassword));
+       SmtpClient smtp(pExportOptions_->sEmailServer, pExportOptions_->nEmailServerPort, (SmtpClient::ConnectionType)pExportOptions_->nEmailConnectionType);
 
        MimeMessage msg(true);
-
        msg.setHeaderEncoding(MimePart::Base64);
-       msg.setSender(new EmailAddress(pExportOptions_->sEmailFrom, QLatin1String("")));
-       msg.addRecipient(new EmailAddress(pExportOptions_->sEmail, QLatin1String("")));
+       EmailAddress sender(pExportOptions_->sEmailFrom, QLatin1String(""));
+       msg.setSender(sender);
+       EmailAddress to(pExportOptions_->sEmail, QLatin1String(""));
+       msg.addRecipient(to);
        QString caption = pExportOptions_->sEmailSubject;
        msg.setSubject(caption.isEmpty() ?AppName :caption);
 
@@ -217,8 +214,9 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
        msg.addPart(&text);
        msg.addPart(new MimeAttachment(outbuff.data(), onlyFileName));
        smtp.connectToHost();
-       smtp.login();
-       if(!smtp.sendMail(msg))
+       smtp.login(pExportOptions_->sEmailUser, pExportOptions_->sEmailPassword);
+       smtp.sendMail(msg);
+       if(!smtp.waitForMailSent())
        {
            qDebug()<<"Error send e-mail.";
            return false;
