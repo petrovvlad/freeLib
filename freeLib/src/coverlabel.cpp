@@ -9,7 +9,7 @@ CoverLabel::CoverLabel(QWidget *parent)
     setScaledContents(false);
 }
 
-void CoverLabel::setBook(SBook *pBook)
+void CoverLabel::setBook(const SBook *pBook)
 {
     if(pBook != nullptr && !pBook->sImg.isEmpty()){
         pix = QPixmap(pBook->sImg);
