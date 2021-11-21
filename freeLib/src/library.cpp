@@ -186,7 +186,7 @@ QString SAuthor::getName() const
     return sAuthorName;
 }
 
-uint SLib::findAuthor(SAuthor &author)
+uint SLib::findAuthor(SAuthor &author) const
 {
     uint idAuthor = 0;
     auto iAuthor = mAuthors.constBegin();
@@ -200,7 +200,7 @@ uint SLib::findAuthor(SAuthor &author)
     return idAuthor;
 }
 
-uint SLib::findSerial(const QString &sSerial)
+uint SLib::findSerial(const QString &sSerial) const
 {
     uint idSerial = 0;
     auto iSerial = mSerials.constBegin();
@@ -342,17 +342,19 @@ void SLib::loadAnnotation(uint idBook)
     }
 }
 
-QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData)
+QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData) const
 {
     QString file,archive;
     QFileInfo fi;
-    SBook &book = mBooks[idBook];
+    const SBook &book = mBooks[idBook];
     QString LibPath = RelativeToAbsolutePath(path);
     if(book.sArchive.isEmpty()){
         file = QStringLiteral("%1/%2.%3").arg(LibPath, book.sFile, book.sFormat);
     }else{
-        file = QStringLiteral("%1.%2").arg(book.sFile,book.sFormat);
-        archive = QStringLiteral("%1/%2").arg(LibPath,book.sArchive.replace(QLatin1String(".inp"),QLatin1String(".zip")));
+        file = QStringLiteral("%1.%2").arg(book.sFile, book.sFormat);
+        QString sArchive = book.sArchive;
+        sArchive.replace(QLatin1String(".inp"), QLatin1String(".zip"));
+        archive = QStringLiteral("%1/%2").arg(LibPath, sArchive);
     }
 
     archive = archive.replace('\\', '/');
@@ -447,7 +449,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
 
 */
 
-QString SLib::fillParams(const QString &str, uint idBook)
+QString SLib::fillParams(const QString &str, uint idBook) const
 {
     const SBook& book = mBooks[idBook];
     QString result = str;
@@ -461,7 +463,7 @@ QString SLib::fillParams(const QString &str, uint idBook)
     result.replace(QLatin1String("%app_dir"), QApplication::applicationDirPath() + QLatin1String("/"));
 
     //result.removeOne("%no_point");
-    SAuthor& sFirstAuthor = mAuthors[book.idFirstAuthor];
+    const SAuthor& sFirstAuthor = mAuthors[book.idFirstAuthor];
 
     result.replace(QLatin1String("%fi"), sFirstAuthor.sFirstName.left(1) + (sFirstAuthor.sFirstName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
             replace(QLatin1String("%mi"), sFirstAuthor.sMiddleName.left(1) + (sFirstAuthor.sMiddleName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
@@ -477,7 +479,7 @@ QString SLib::fillParams(const QString &str, uint idBook)
     QString num_in_seria = QString::number(book.numInSerial);
     if(result.contains(QLatin1String("%n")))
     {
-        int len = result.mid(result.indexOf(QLatin1String("%n")) + 2, 1).toInt();
+        int len = result.midRef(result.indexOf(QLatin1String("%n")) + 2, 1).toInt();
         QString zerro;
         if(book.numInSerial == 0)
             result.replace("%n" + QString::number(len), QLatin1String(""));
@@ -493,13 +495,12 @@ QString SLib::fillParams(const QString &str, uint idBook)
     return result;
 }
 
-QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_file)
+QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_file) const
 {
-    QString result=str;
-    result
-            .replace(QLatin1String("%fn"), book_file.completeBaseName()).
-            replace(QLatin1String("%f"), book_file.absoluteFilePath()).
-            replace(QLatin1String("%d"), book_file.absoluteDir().path());
+    QString result = str;
+    result.replace(QLatin1String("%fn"), book_file.completeBaseName()).
+           replace(QLatin1String("%f"), book_file.absoluteFilePath()).
+           replace(QLatin1String("%d"), book_file.absoluteDir().path());
     result = fillParams(result, idBook);
     return result;
 }

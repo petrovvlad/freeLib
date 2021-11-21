@@ -59,12 +59,12 @@ struct SGenre
 class SLib
 {
 public:
-    uint findAuthor(SAuthor& author);
-    uint findSerial(const QString &sSerial);
+    uint findAuthor(SAuthor& author) const;
+    uint findSerial(const QString &sSerial) const;
     void loadAnnotation(uint idBook);
-    QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr);
-    QString fillParams(const QString &str, uint idBook);
-    QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file);
+    QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr) const;
+    QString fillParams(const QString &str, uint idBook) const;
+    QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file) const;
 
 
     QString name;
