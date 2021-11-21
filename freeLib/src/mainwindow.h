@@ -78,8 +78,8 @@ protected:
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
-    void FillCheckedBookList(QList<uint> &list, QTreeWidgetItem* item=nullptr, bool send_all=false, bool checked_only=false);
-    void FillCheckedItemsBookList(QList<uint> &list, QTreeWidgetItem* item, bool send_all);
+    QList<uint> listCheckedBooks(bool bCheckedOnly = false);
+    void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, QList<uint> *pList);
 
     void ExportBookListBtn(bool Enable);
     void FillLibrariesMenu();
