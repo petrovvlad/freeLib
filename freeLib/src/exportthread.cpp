@@ -9,6 +9,8 @@
 #include <QProcess>
 #include <QFileInfo>
 #include <QDir>
+#include <QSqlError>
+
 
 #include "SmtpClient/src/smtpclient.h"
 #include "SmtpClient/src/mimeattachment.h"
@@ -18,6 +20,7 @@
 
 #include "fb2mobi/fb2mobi.h"
 #include "library.h"
+#include "utilites.h"
 
 QString Transliteration(QString str)
 {
@@ -420,8 +423,10 @@ void ExportThread::process()
 
 void ExportThread::export_lib()
 {
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.exec(QStringLiteral("SELECT book.id,author.id,janre.id,book.name,star,num_in_seria,book.language,file,size,deleted,date,format,book.keys,archive,date,book.id_inlib, "
+    if(!openDB(QStringLiteral("ExpThrdDb"), true, false))
+        return;
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("ExpThrdDb")));
+    if(!query.exec(QStringLiteral("SELECT book.id,author.id,janre.id,book.name,star,num_in_seria,book.language,file,size,deleted,date,format,book.keys,archive,date,book.id_inlib, "
                "book.favorite,seria.name,seria.favorite,janre.main_janre||':',author.favorite,author.name1||','||author.name2||','||author.name3||':' "
                "FROM book_author "
                "JOIN book on book.id=book_author.id_book "
@@ -430,7 +435,12 @@ void ExportThread::export_lib()
                "LEFT JOIN seria ON seria.id=book.id_seria "
                "JOIN author ON author.id=book_author.id_author "
                "WHERE book_author.id_lib=%1 "
-               "ORDER BY book.id,seria.id,num_in_seria;").arg(ID_lib));
+               "ORDER BY book.id,seria.id,num_in_seria;").arg(ID_lib)))
+    {
+        qDebug() << query.lastError();
+        QSqlDatabase::database(QStringLiteral("ExpThrdDb")).close();
+        return;
+    }
     int count = 0;
     qlonglong lastbookid= - 1;
 
@@ -528,6 +538,7 @@ void ExportThread::export_lib()
                         );
         }
     }
+    QSqlDatabase::database(QStringLiteral("ExpThrdDb")).close();
     inpx.close();
     QuaZip zip(export_dir + QStringLiteral("/%1.inpx").arg(BuildFileName(mLibs[idCurrentLib].name)));
     qDebug()<<zip.getZipName();
@@ -564,6 +575,7 @@ void ExportThread::export_lib()
     zip_file.close();
 
     zip.close();
+    QSqlDatabase::database(QStringLiteral("ExpThrdDb")).close();
     emit Progress(0, count);
 }
 

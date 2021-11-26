@@ -21,7 +21,7 @@ QString RelativeToAbsolutePath(QString path);
 
 void loadLibrary(uint idLibrary)
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
 
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
@@ -140,7 +140,7 @@ void loadLibrary(uint idLibrary)
 
 void loadGenres()
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));

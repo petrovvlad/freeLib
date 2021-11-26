@@ -23,10 +23,9 @@
 #include "genresortfilterproxymodel.h"
 #include "library.h"
 #include "starsdelegate.h"
+#include "utilites.h"
 
 extern QSplashScreen *splash;
-
-bool db_is_open;
 
 QPixmap GetTag(QColor color,int size)
 {
@@ -48,7 +47,7 @@ MainWindow::MainWindow(QWidget *parent) :
     error_quit = false;
     QSettings *settings = GetSettings();
 
-    if(db_is_open)
+    if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
     {
         QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
         //query.exec("CREATE TABLE IF NOT EXISTS params (id INTEGER PRIMARY KEY, name TEXT, value TEXT)");
@@ -62,7 +61,7 @@ MainWindow::MainWindow(QWidget *parent) :
             splash->hide();
             if(QMessageBox::question(nullptr,tr("Database"),tr("This version needs new database version. All your old books data will be lost. Continue?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::Yes)
             {
-                if(!openDB(false,true))
+                if(!openDB(QStringLiteral("libdb"), false, true))
                     error_quit = true;
             }
             else
@@ -264,7 +263,7 @@ QPixmap MainWindow::GetTag(int id)
 
 void MainWindow::UpdateTags()
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QSettings *settings = GetSettings();
@@ -1383,7 +1382,7 @@ void MainWindow::MoveToAuthor(uint id, const QString &FirstLetter)
 
 void MainWindow::FillLibrariesMenu()
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     QMenu *lib_menu = new QMenu(this);
     auto i = mLibs.constBegin();

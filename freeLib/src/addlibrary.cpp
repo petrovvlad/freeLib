@@ -14,9 +14,9 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "exportdlg.h"
+#include "utilites.h"
 
 bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
-bool openDB(bool create,bool replace);
 QSettings* GetSettings(bool reopen=false);
 
 AddLibrary::AddLibrary(QWidget *parent) :
@@ -133,7 +133,7 @@ void AddLibrary::SelectBooksDir()
 void AddLibrary::UpdateLibList()
 
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     bool block = ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->clear();
@@ -194,9 +194,9 @@ void AddLibrary::StartImport(SLib &Lib)
 
 void AddLibrary::AddNewLibrary(SLib &lib)
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
     {
-        db_is_open = openDB(true, false);
+        openDB(QStringLiteral("libdb"), true, false);
     }
     idCurrentLib_ = 0;
     StartImport(lib);
@@ -329,8 +329,11 @@ void AddLibrary::ExistingLibsChanged()
 void AddLibrary::ExportLib()
 {
     QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
-    ExportDlg ed(this);
-    ed.exec(idCurrentLib_, dirName);
+    if (dirName != "")
+    {
+        ExportDlg ed(this);
+        ed.exec(idCurrentLib_, dirName);
+    }
 }
 
 void AddLibrary::onComboboxLibraryChanged(int index)

@@ -1162,7 +1162,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
 
             QDomElement entry;
             QDomElement el;
-            if(db_is_open)
+            if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
             {
                 entry = doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
@@ -1221,7 +1221,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             QDomElement div = doc.createElement(QStringLiteral("DIV"));
             feed.appendChild(div);
             QDomElement el;
-            if(db_is_open)
+            if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
             {
                 el = AddTextNode(QStringLiteral("A"), tr("Finding books by authors"), div);
                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/authorsindex") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
@@ -1241,7 +1241,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 el = AddTextNode(QStringLiteral("A"), tr("Browse directory"), div);
                 el.setAttribute(QStringLiteral("href"), lib_url + u"/directory" + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
             }
-            if(db_is_open)
+            if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
             {
                 QDomElement hr = doc.createElement(QStringLiteral("HR"));
                 hr.setAttribute(QStringLiteral("size"), QStringLiteral("3"));

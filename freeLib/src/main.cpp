@@ -16,6 +16,7 @@
 #include "aboutdialog.h"
 #include "common.h"
 #include "build_number.h"
+#include "utilites.h"
 
 uint idCurrentLib;
 QTranslator* translator;
@@ -35,15 +36,6 @@ bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
         result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     }
     return result;
-}
-
-QString RelativeToAbsolutePath(QString path)
-{
-    if(QDir(path).isRelative() && path.indexOf(QLatin1String("%"))<0 && !path.startsWith(QLatin1String("mtp:/")))
-    {
-        return QApplication::applicationDirPath() + QLatin1String("/") + path;
-    }
-    return path;
 }
 
 QSettings* GetSettings(bool reopen)
@@ -139,74 +131,9 @@ void SetLocale(const QString &sLocale)
                tag(QApplication::translate("SettingsDlg", "Book"), QStringLiteral("body"), QStringLiteral("body_font"), 100);
 }
 
-bool openDB(bool create, bool replace)
-{
-    QString sAppDir,db_file;
-    QSettings settings;
-
-    QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
-    if(fi.exists() && fi.isFile())
-    {
-        db_file = fi.canonicalFilePath();
-    }
-    else
-    {
-        sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-        db_file = sAppDir + QLatin1String("/freeLib.sqlite");
-        options.sDatabasePath = db_file;
-        settings.setValue(QStringLiteral("database_path"), db_file);
-    }
-    QFile file(db_file);
-    if(!file.exists() || replace)
-    {
-        if(replace)
-        {
-            QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("libdb"), true);
-            dbase.close();
-            if(!file.remove())
-            {
-                qDebug()<<("Can't remove old database");
-                db_is_open = false;
-                return false;
-            }
-        }
-        if(!create && !replace)
-        {
-            db_is_open = false;
-            return true;
-        }
-        QDir dir;
-        dir.mkpath(QFileInfo(db_file).absolutePath());
-        file.setFileName(QStringLiteral(":/freeLib.sqlite"));
-        file.open(QFile::ReadOnly);
-        QByteArray data = file.readAll();
-        file.close();
-        file.setFileName(db_file);
-        file.open(QFile::WriteOnly);
-        file.write(data);
-        file.close();
-    }
-    QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("libdb"), false);
-    dbase.setDatabaseName(db_file);
-    if (!dbase.open())
-    {
-        qDebug() << ("Error connect! ")<<db_file;
-        db_is_open = false;
-        return false;
-    }
-    db_is_open = true;
-    qDebug()<<"Open DB OK. "<<db_file;
-    return true;
-}
-
 void UpdateLibs()
 {
-    db_is_open = false;
-    //error_quit=false;
-    openDB(true,false);
-//    if(!openDB(false,false))
-//        error_quit=true;
-    if(!db_is_open)
+    if(!openDB(QStringLiteral("libdb"), true, false))
         idCurrentLib = 0;
     else{
         QSettings *settings = GetSettings();
@@ -264,11 +191,9 @@ int main(int argc, char *argv[])
     translator = nullptr;
     translator_qt = nullptr;
     a.setAttribute(Qt::AA_UseHighDpiPixmaps);
-    QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("libdb"));
 
     QSettings* settings = GetSettings();
     options.Load(settings);
-
     SetLocale(options.sUiLanguageName);
 
     QDir::setCurrent(HomeDir);

@@ -68,13 +68,13 @@ set(PROJECT_SOURCES
         genresortfilterproxymodel.cpp
         genresortfilterproxymodel.h
         starsdelegate.h starsdelegate.cpp
+        utilites.h utilites.cpp
         fb2mobi/hyphenations.cpp
         fb2mobi/fb2mobi.cpp
         fb2mobi/fb2mobi.h
         fb2mobi/hyphenations.h
         mobiEdit/mobiedit.cpp
         mobiEdit/mobiedit.h
-        SmtpClient/src/SmtpMime
         SmtpClient/src/emailaddress.cpp
         SmtpClient/src/emailaddress.h
         SmtpClient/src/mimeattachment.cpp

@@ -83,8 +83,6 @@ public:
 void loadLibrary(uint idLibrary);
 void loadGenres();
 
-extern bool db_is_open;
-
 extern uint idCurrentLib;
 extern QMap<uint, SLib> mLibs;
 extern QMap <uint, SGenre> mGenre;
