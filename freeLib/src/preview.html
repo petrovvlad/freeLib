@@ -1,74 +1,34 @@
 <html>
     <head>
         <style type="text/css">
-            img
-            {
-                width: #width#px;
-            }
             p{
-                font-size: 12pt;
-                text-align:justify;
                 padding-bottom:0px;
                 padding-top:0px;
-                text-indent:30px;
-                margin-top:0pt;
-                margin-bottom:0.5em;
-                line-height: 1em;
-            }
-            p.caption{
-                text-align:left;
-                text-indent:0px;
+                margin-top:0px;
+                margin-bottom:0.0px;
+                text-indent:20px;
             }
             body
             {
-                color:#color#;
                 margin: 0.2em;
-                line-height: 1em;
-                font-family: serif, sans-serif;
-                font-size: 12pt;
-            }
-            div
-            {
-                line-height: 1em;
-            }
-            td
-            {
-                font-size: 12pt;
-                line-height: 1em;
-                padding-bottom:0px;
-                padding-top:0px;
-                margin-top:0pt;
-                margin-bottom:0em;
-            }
-            a{
-               color: #a_color#;
-            }
-            #identifikator{
-              background:#identifikator_background#;
+                font-size: 11pt;
             }
         </style>
         <meta http-equiv="Content-Type" content="text/html; charset=utf-8">
     </head>
     <body>
-        <p style="text-align:center;font-size: 16pt;font-weight: bold;margin-top:0.25em;margin-bottom:0.25em;">#title#</p>
-        <table cellpadding=5px cellspacing=0 width=100% border=0>
-            <tr>
-            <td valign=top>
-                <table border=0>
-                <tr><td style="vertical-align: top"><b>Автор:</b></td><td>#author#</td></tr>
-		<tr><td style="vertical-align: top"><b>Жанр:</b></td><td>#genre#</td></tr>
-                <tr><td style="vertical-align: top"><b>Серия:</b></td><td>#series#</td></tr>
-                </table>
-                <p style="padding-bottom: 0">#annotation#</p>
-                <div><a href="show_fileinfo">Информация о файле:</a></div>
-                <div id="identifikator" style="display:#file_info#;border-radius:5px;margin-left: 0px;margin-right: 0px; padding-left: 10px;padding-right: 5px;padding-bottom: 10px;padding-top: 10px;">
-                    <b>Путь к файлу:</b> #file_path#<br>
-                    <b>Имя файла:</b> #file_name#<br>
-                    <b>Размер файла (архива):</b> #file_size#<br>
-                    <b>Дата создания:</b> #file_data#
-                </div>
-            </td>#image#
-            </tr>
+        <h1 align="center">#title#</h1>
+        <table border=0>
+            <tr><td style="vertical-align: top"><b>Автор:</b></td><td>#author#</td></tr>
+            <tr><td style="vertical-align: top"><b>Жанр:</b></td><td>#genre#</td></tr>
+            <tr><td style="vertical-align: top"><b>Серия:</b></td><td>#series#</td></tr>
         </table>
+        <p>#annotation#</p>
+        <div style="background:#infobcolor; margin-left: 0px; margin-right:10px; padding-left:10px; margin-top:10px; padding-right: 5px;padding-bottom: 10px;padding-top: 10px;">
+            <b>Путь к файлу:</b> #file_path#<br>
+            <b>Имя файла:</b> #file_name#<br>
+            <b>Размер файла (архива):</b> #file_size#<br>
+            <b>Дата создания:</b> #file_data#
+        </div>
     </body>
 </html>

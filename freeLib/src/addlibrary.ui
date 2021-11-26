@@ -81,8 +81,8 @@
         <widget class="QToolButton" name="Add">
          <property name="maximumSize">
           <size>
-           <width>22</width>
-           <height>22</height>
+           <width>25</width>
+           <height>25</height>
           </size>
          </property>
          <property name="toolTip">
@@ -91,18 +91,14 @@
          <property name="text">
           <string notr="true">+</string>
          </property>
-         <property name="icon">
-          <iconset resource="resource.qrc">
-           <normaloff>:/icons/img/icons/plus.png</normaloff>:/icons/img/icons/plus.png</iconset>
-         </property>
         </widget>
        </item>
        <item>
         <widget class="QToolButton" name="Del">
          <property name="maximumSize">
           <size>
-           <width>22</width>
-           <height>22</height>
+           <width>25</width>
+           <height>25</height>
           </size>
          </property>
          <property name="toolTip">
@@ -110,10 +106,6 @@
          </property>
          <property name="text">
           <string notr="true">-</string>
-         </property>
-         <property name="icon">
-          <iconset resource="resource.qrc">
-           <normaloff>:/icons/img/icons/minus.png</normaloff>:/icons/img/icons/minus.png</iconset>
          </property>
         </widget>
        </item>
@@ -286,9 +278,7 @@
   <tabstop>BookDir</tabstop>
   <tabstop>Log</tabstop>
  </tabstops>
- <resources>
-  <include location="resource.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>btnCancel</sender>

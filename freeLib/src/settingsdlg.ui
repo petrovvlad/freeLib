@@ -47,7 +47,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab_common">
       <attribute name="title">
@@ -285,10 +285,6 @@
             <property name="text">
              <string notr="true">+</string>
             </property>
-            <property name="icon">
-             <iconset resource="resource.qrc">
-              <normaloff>:/icons/img/icons/plus.png</normaloff>:/icons/img/icons/plus.png</iconset>
-            </property>
            </widget>
           </item>
           <item>
@@ -304,10 +300,6 @@
             </property>
             <property name="text">
              <string notr="true">-</string>
-            </property>
-            <property name="icon">
-             <iconset resource="resource.qrc">
-              <normaloff>:/icons/img/icons/minus.png</normaloff>:/icons/img/icons/minus.png</iconset>
             </property>
            </widget>
           </item>
@@ -326,8 +318,8 @@
              <string>Open</string>
             </property>
             <property name="icon">
-             <iconset resource="resource.qrc">
-              <normaloff>:/icons/img/icons/open.png</normaloff>:/icons/img/icons/open.png</iconset>
+             <iconset theme="document-open">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -346,8 +338,8 @@
              <string>Save</string>
             </property>
             <property name="icon">
-             <iconset resource="resource.qrc">
-              <normaloff>:/icons/img/icons/save.png</normaloff>:/icons/img/icons/save.png</iconset>
+             <iconset theme="document-save">
+              <normaloff>.</normaloff>.</iconset>
             </property>
            </widget>
           </item>
@@ -433,7 +425,7 @@
              <number>1</number>
             </property>
             <property name="maximum">
-             <number>99999</number>
+             <number>65535</number>
             </property>
             <property name="value">
              <number>3000</number>
@@ -564,7 +556,11 @@
            </widget>
           </item>
           <item row="11" column="1">
-           <widget class="QSpinBox" name="books_per_page"/>
+           <widget class="QSpinBox" name="books_per_page">
+            <property name="minimum">
+             <number>0</number>
+            </property>
+           </widget>
           </item>
          </layout>
         </widget>
@@ -919,9 +915,7 @@
    </item>
   </layout>
  </widget>
- <resources>
-  <include location="resource.qrc"/>
- </resources>
+ <resources/>
  <connections>
   <connection>
    <sender>buttonBox</sender>

@@ -103,7 +103,6 @@ QList<QByteArray> mobiEdit::ReadExth(QByteArray &rec0, quint32 exth_num)
     while(ecount>0)
     {
         quint32 exth_id=GetInt32(rec0,ebase);
-        //qDebug()<<exth_id;
         if(exth_id==exth_num)
         {
             val<<rec0.mid(ebase+8,GetInt32(rec0,ebase+4)-8);
@@ -156,11 +155,9 @@ QByteArray mobiEdit::DeleteSectionRange(QByteArray &data, quint32 first, quint32
 
 QByteArray mobiEdit::IntsertSectionRange(QByteArray &data, quint32 first, quint32 last,QByteArray &sectiontarget,quint32 targetsec)
 {
-  //  qDebug()<<"renge"<<first<<last;
     QByteArray dataout=sectiontarget;
     for(int idx=(int)last;idx>=(int)first;idx--)
     {
-//        qDebug()<<"b"<<dataout.size();
         dataout=IntsertSection(dataout,targetsec,ReadSection(data,idx));
     }
     return dataout;
@@ -199,14 +196,12 @@ QByteArray mobiEdit::IntsertSection(QByteArray &data, quint32 secno, QByteArray 
     dataout.append(data.mid(UNIQUE_ID_SEED+4,4));
     dataout.append(Int16ToBa(nsec+1));
     quint32 newstart=zerrosecstart+8;
-    //qDebug()<<1<<dataout.size();
     for(quint32 i=0;i<secno;i++)
     {
         quint32 ofs=GetInt32(data,FIRST_PDB_RECORD+i*8)+8;
         dataout.append(Int32ToBa(ofs));
         dataout.append(data.mid(FIRST_PDB_RECORD+4+i*8,4));
     }
-    ///qDebug()<<2<<dataout.size();
     dataout.append(Int32ToBa(secstart+8));
     dataout.append(Int32ToBa(2*secno));
     for(quint32 i=secno;i<nsec;i++)
@@ -215,11 +210,9 @@ QByteArray mobiEdit::IntsertSection(QByteArray &data, quint32 secno, QByteArray 
         dataout.append(Int32ToBa(ofs));
         dataout.append(Int32ToBa(2*(i+1)));
     }
-    //qDebug()<<3<<dataout.size();
     quint32 lpad=newstart-(FIRST_PDB_RECORD+8*(nsec+1));
     if(lpad>0)
         dataout.append(QByteArray(lpad,'\0'));
-    //qDebug()<<4<<lpad<<dataout.size();
     dataout.append(data.mid(zerrosecstart,secstart-zerrosecstart));
     dataout.append(secdata);
     dataout.append(data.mid(secstart));

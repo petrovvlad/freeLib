@@ -8,15 +8,14 @@
 #include <QtWidgets/QTreeWidgetItem>
 #include <QBuffer>
 #include <QMenu>
-#include <QDropEvent>
-#include <QDragEnterEvent>
 #include <QTcpServer>
 #include <QSystemTrayIcon>
 
 #include "helpdialog.h"
-#include "dropform.h"
 #include "opds_server.h"
 #include "common.h"
+#include "options.h"
+#include "coverlabel.h"
 
 namespace Ui {
 class MainWindow;
@@ -42,75 +41,62 @@ private:
     QSystemTrayIcon *trIcon;
     void UpdateBooks();
     void UpdateTags();
-    DropForm *pDropForm;
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
     QMenu TagMenu;
     QObject* current_list_for_tag;
     void SaveLibPosition();
     QList<Stag> tags_pic;
+
     QPixmap GetTag(int id);
-    void update_list_pix(qlonglong id,int list,int tag_id);
+    void update_list_pix(qlonglong id, int list, int tag_id);
     void uncheck_books(QList<qlonglong> list);
     opds_server opds;
     QToolButton *FirstButton;
     QToolButton *btn_Hash;
     void UpdateExportMenu();
-    void DeleteDropForm();
     void FillAuthors();
     void FillSerials();
     void FillGenres();
     void FillListBooks();
     void FillListBooks(QList<uint> listBook, uint idCurrentAuthor);
+    void FillAlphabet(const QString &sAlphabetName);
     bool IsBookInList(const SBook &book);
+    void checkLetter(const QChar cLetter);
 
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
     uint idCurrentGenre_;
     uint idCurrentSerial_;
     uint idCurrentBook_;
-    bool bUseTag_;
-    bool bShowDeleted_;
+    CoverLabel *pCover;
+    enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
 
 protected:
     void showEvent(QShowEvent *ev);
-    void resizeEvent(QResizeEvent * e);
-    void mouseMoveEvent(QMouseEvent *e);
-    //void mouseReleaseEvent(QMouseEvent *e);
-    void leaveEvent(QEvent *e);
-    APP_MODE mode;
     void closeEvent(QCloseEvent *event);
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
-    void FillCheckedBookList(QList<uint> &list, QTreeWidgetItem* item=nullptr, bool send_all=false, bool checked_only=false);
-    void FillCheckedItemsBookList(QList<uint> &list, QTreeWidgetItem* item, bool send_all);
+    QList<uint> listCheckedBooks(bool bCheckedOnly = false);
+    void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, QList<uint> *pList);
 
     void ExportBookListBtn(bool Enable);
-    void dragEnterEvent(QDragEnterEvent *ev);
-    void dragLeaveEvent(QDragLeaveEvent *);
-    void dragMoveEvent(QDragMoveEvent *ev);
-    void proc_path(QString path, QStringList *book_list);
     void FillLibrariesMenu();
-    void SendMail();
-    void SendToDevice();
+    void SendMail(const ExportOptions &exportOptions);
+    void SendToDevice(const ExportOptions &exportOptions);
     void changeEvent(QEvent *event);
-    void ShowHeaderCoulmn(int nColumn,QString sSetting,bool bHide);
+    void ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide);
 private slots:
-    void ShowDropForm();
     void ExportAction();
     void ManageLibrary();
     void CheckBooks();
     void EditBooks();
     void Settings();
-    void searchCanged(QString str);
-    void searchClear();
+    void onSerachAuthorsChanded(const QString& str);
+    void onSerachSeriesChanded(const QString& str);
     void btnSearch();
-    void btnAuthor();
-    void btnSeries();
-    void btnPageSearch();
     void DoSearch();
-    void btnGenres();
     void SelectAuthor();
     void SelectBook();
     void SelectGenre();
@@ -123,30 +109,25 @@ private slots:
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);
-    void MoveToAuthor(qlonglong id=-1,QString FirstLetter="");
-    void MoveToGenre(qlonglong id);
-    void MoveToSeria(qlonglong id=-1,QString FirstLetter="");
+    void MoveToAuthor(uint id, const QString &FirstLetter);
+    void MoveToGenre(uint id);
+    void MoveToSeria(uint id, const QString &FirstLetter);
     void tag_select(int index);
     void set_tag();
-    void ChangingPort(int i);
-    void ChangingLanguage(bool change_language=true);
-    void ReviewLink(QUrl url);
+    void ChangingLanguage();
+    void ReviewLink(const QUrl &url);
     void SelectLibrary();
-    void on_actionSwitch_to_convert_mode_triggered();
-    void on_actionSwitch_to_library_mode_triggered();
-    void on_btnSwitchToLib_clicked();
-    void on_btnPreference_clicked();
+    void onTabWidgetChanged(int index);
+    void onLanguageFilterChanged(int index);
+    void onChangeAlpabet(const QString &sAlphabetName);
 
-    //void on_splitter_splitterMoved(int pos, int index);
 
-    void ChangingTrayIcon(int index=-1, int color=-1);
+    void ChangingTrayIcon(int index, int color);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
-    void dockClicked();
     void MinimizeWindow();
-    void onLanguageCurrentIndexChanged(const QString &arg1);
 
-public slots:
-    void newLibWizard(bool AddLibOnly=true);
+//public slots:
+//    void newLibWizard(bool AddLibOnly=true);
 signals:
     void window_loaded();
 };

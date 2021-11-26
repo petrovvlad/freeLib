@@ -175,7 +175,7 @@
          <widget class="QWidget" name="page_3">
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <property name="spacing">
-            <number>-1</number>
+            <number>6</number>
            </property>
            <property name="leftMargin">
             <number>0</number>
@@ -236,7 +236,7 @@
               <item>
                <layout class="QHBoxLayout" name="horizontalLayout_9">
                 <property name="spacing">
-                 <number>-1</number>
+                 <number>6</number>
                 </property>
                 <item>
                  <widget class="QLineEdit" name="ExportFileName">
@@ -506,15 +506,15 @@
        <item>
         <widget class="QToolBox" name="toolBox">
          <property name="currentIndex">
-          <number>2</number>
+          <number>1</number>
          </property>
          <widget class="QWidget" name="page_2">
           <property name="geometry">
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>664</width>
-            <height>296</height>
+            <width>261</width>
+            <height>332</height>
            </rect>
           </property>
           <attribute name="label">
@@ -676,8 +676,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>386</width>
-            <height>296</height>
+            <width>667</width>
+            <height>304</height>
            </rect>
           </property>
           <attribute name="label">
@@ -967,8 +967,7 @@
                      <string notr="true">...</string>
                     </property>
                     <property name="icon">
-                     <iconset resource="resource.qrc">
-                      <normaloff>:/icons/img/icons/open.png</normaloff>:/icons/img/icons/open.png</iconset>
+                     <iconset theme="document-open"/>
                     </property>
                    </widget>
                   </item>
@@ -1002,8 +1001,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>679</width>
-            <height>252</height>
+            <width>681</width>
+            <height>257</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1090,8 +1089,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>228</width>
-            <height>132</height>
+            <width>231</width>
+            <height>165</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1238,8 +1237,6 @@
   <tabstop>AddFont</tabstop>
   <tabstop>tabWidget</tabstop>
  </tabstops>
- <resources>
-  <include location="resource.qrc"/>
- </resources>
+ <resources/>
  <connections/>
 </ui>

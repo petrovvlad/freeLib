@@ -1,10 +1,13 @@
 #include "fontframe.h"
 #include "ui_fontframe.h"
+
 #include <QDir>
-#include <QFontDatabase>
-#include <QDebug>
-#include "common.h"
 #include <QFileDialog>
+#include <QDebug>
+#include <QStringBuilder>
+
+#include "common.h"
+#include "options.h"
 
 
 typedef struct _tagTT_OFFSET_TABLE{
@@ -72,10 +75,10 @@ typedef struct _tagTT_HEAD_RECORD{
 #define SWAPWORD(x)		MAKEWORD(HIBYTE(x), LOBYTE(x))
 #define SWAPLONG(x)		MAKELONG(SWAPWORD(HIWORD(x)), SWAPWORD(LOWORD(x)))
 
-QString GetFontNameFromFile(QString lpszFilePath)
+QString GetFontNameFromFile(const QString &lpszFilePath)
 {
     QFile f(lpszFilePath);
-    QString csRetVal=QApplication::translate("FontFrame","not found");
+    QString csRetVal = QApplication::translate("FontFrame", "not found");
 
     if(f.open(QFile::ReadOnly))
     {
@@ -92,18 +95,17 @@ QString GetFontNameFromFile(QString lpszFilePath)
         TT_TABLE_DIRECTORY tblDir;
         //quint32 HeadOffset=0;
         quint32 NameOffset=0;
-       // bool bFound = false;
         QString csTemp;
 
         for(int i=0; i< ttOffsetTable.uNumOfTables; i++)
         {
             f.read((char*)&tblDir, sizeof(TT_TABLE_DIRECTORY));
-            csTemp=QString::fromLatin1(tblDir.szTag,4);
-            if(csTemp.toLower()=="name")
+            csTemp=QString::fromLatin1(tblDir.szTag, 4);
+            if(csTemp.toLower() == QLatin1String("name"))
             {
                 tblDir.uLength = SWAPLONG(tblDir.uLength);
                 tblDir.uOffset = SWAPLONG(tblDir.uOffset);
-                NameOffset=tblDir.uOffset;
+                NameOffset = tblDir.uOffset;
             }
             if(NameOffset)
                 break;
@@ -111,7 +113,6 @@ QString GetFontNameFromFile(QString lpszFilePath)
 
         if(NameOffset)
         {
-            //qDebug()<<"name "<<NameOffset;
             f.seek(NameOffset);
             TT_NAME_TABLE_HEADER ttNTHeader;
             f.read((char*)&ttNTHeader, sizeof(TT_NAME_TABLE_HEADER));
@@ -131,7 +132,7 @@ QString GetFontNameFromFile(QString lpszFilePath)
                     f.seek(NameOffset + ttRecord.uStringOffset + ttNTHeader.uStorageOffset);
                     char buf[1024];
                     f.read(buf, ttRecord.uStringLength);
-                    csTemp=QString::fromLatin1(buf,ttRecord.uStringLength);
+                    csTemp = QString::fromLatin1(buf, ttRecord.uStringLength);
                     //csTemp.ReleaseBuffer();
                     if(!csTemp.isEmpty())
                     {
@@ -148,16 +149,23 @@ QString GetFontNameFromFile(QString lpszFilePath)
     return csRetVal;
 }
 
-FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString font_i, QString font_bi, int fontSize, QWidget *parent) :
+FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font_b, const QString &font_i, const QString &font_bi, int fontSize, QWidget *parent) :
     QFrame(parent),
     ui(new Ui::FontFrame)
 {
     ui->setupUi(this);
 
-    for(int i=0;i<tag_list.count();i++)
+    for(int i=0; i<tag_list.count(); i++)
     {
         ui->tag->addItem(tag_list[i].name);
     }
+
+//    QPalette palette = QApplication::style()->standardPalette();
+//    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+//    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->Up->setIcon(style()->standardIcon(QStyle::SP_ArrowUp)/*QIcon::fromTheme(QStringLiteral("go-up"),QIcon(sIconsPath + QStringLiteral("up.svg")))*/);
+    ui->Down->setIcon(style()->standardIcon(QStyle::SP_ArrowDown)/*QIcon::fromTheme(QStringLiteral("go-down"),QIcon(sIconsPath + QStringLiteral("down.svg")))*/);
+    ui->del->setIcon(style()->standardIcon(QStyle::SP_DialogDiscardButton)/*QIcon::fromTheme(QStringLiteral("edit-delete"),QIcon(sIconsPath + QStringLiteral("close.svg")))*/);
 
     connect(ui->Use, &QAbstractButton::toggled, this, &FontFrame::UseChange);
     connect(ui->del, &QAbstractButton::clicked, this, &FontFrame::DelPress);
@@ -169,11 +177,10 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
     connect(ui->font_bi, &QComboBox::currentTextChanged, this ,&FontFrame::FontSelected);
     connect(ui->tag, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &FontFrame::onTagCurrentIndexChanged);
 
-
-    ui->font->addItem("");
-    ui->font_b->addItem("");
-    ui->font_i->addItem("");
-    ui->font_bi->addItem("");
+    ui->font->addItem(QLatin1String(""));
+    ui->font_b->addItem(QLatin1String(""));
+    ui->font_i->addItem(QLatin1String(""));
+    ui->font_bi->addItem(QLatin1String(""));
 
     ui->Use->setChecked(use);
     ui->tag->setCurrentIndex(tag);
@@ -182,109 +189,108 @@ FontFrame::FontFrame(bool use, int tag, QString font, QString font_b, QString fo
         onTagCurrentIndexChanged(tag);
 
 
-    QDir dir(QApplication::applicationDirPath()+"/xsl/fonts");
-    foreach(QString str,dir.entryList(QStringList()<<"*.ttf",QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable,QDir::Name))
+    QDir dir(QApplication::applicationDirPath() + QLatin1String("/xsl/fonts"));
+    foreach(const QString &str, dir.entryList(QStringList() << QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
     {
-        ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
-        ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
-        ui->font_i->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
-        ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
+        ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        ui->font_i->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
     }
-    QString HomeDir="";
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+    QString HomeDir;
+    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
+        HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
-    QSettings  *settings=GetSettings();
-    QString db_path=QFileInfo(settings->value("database_path",HomeDir+"/freeLib/freeLib.sqlite").toString()).absolutePath()+"/fonts";
+    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QLatin1String("/fonts");
     dir.setPath(db_path);
-    foreach(QString str,dir.entryList(QStringList()<<"*.ttf",QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable,QDir::Name))
+    foreach(const QString &str, dir.entryList(QStringList()<< QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
     {
-        ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
-        ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
-        ui->font_i->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
-        ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)),str);
+        ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        ui->font_i->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
     }
 
-    if(font!="..." && !font.isEmpty())
+    if(font != QLatin1String("...") && !font.isEmpty())
     {
-        for(int i=0;i<4;i++)
+        for(int i=0; i<4; i++)
         {
-            bool find=false;
-            QComboBox *font_box=0;
+            bool find = false;
+            QComboBox *font_box = 0;
             QString cur_font;
             switch(i)
             {
             case 0:
                 font_box=ui->font;
-                cur_font=font;
+                cur_font = font;
                 break;
             case 1:
-                font_box=ui->font_b;
-                cur_font=font_b;
+                font_box = ui->font_b;
+                cur_font = font_b;
                 break;
             case 2:
-                font_box=ui->font_i;
-                cur_font=font_i;
+                font_box = ui->font_i;
+                cur_font = font_i;
                 break;
             case 3:
-                font_box=ui->font_bi;
-                cur_font=font_bi;
+                font_box = ui->font_bi;
+                cur_font = font_bi;
                 break;
             }
 
-            for(int i=0;i<font_box->count();i++)
+            for(int i=0; i<font_box->count(); i++)
             {
 
-                if(font_box->itemData(i).toString()==cur_font)
+                if(font_box->itemData(i).toString() == cur_font)
                 {
-                    find=true;
+                    find = true;
                     font_box->setCurrentIndex(i);
                     break;
                 }
             }
             if(!find)
             {
-                QString name=GetFontNameFromFile(cur_font);
+                QString name = GetFontNameFromFile(cur_font);
                 font_box->addItem(name,cur_font);
                 font_box->setCurrentIndex(font_box->count()-1);
             }
         }
     }
-    ui->font->addItem("...");
-    ui->font_b->addItem("...");
-    ui->font_i->addItem("...");
-    ui->font_bi->addItem("...");
-    current_font=ui->font->currentIndex();
-    current_font_b=ui->font_b->currentIndex();
-    current_font_i=ui->font_i->currentIndex();
-    current_font_bi=ui->font_bi->currentIndex();
+    ui->font->addItem(QStringLiteral("..."));
+    ui->font_b->addItem(QStringLiteral("..."));
+    ui->font_i->addItem(QStringLiteral("..."));
+    ui->font_bi->addItem(QStringLiteral("..."));
+    current_font = ui->font->currentIndex();
+    current_font_b = ui->font_b->currentIndex();
+    current_font_i = ui->font_i->currentIndex();
+    current_font_bi = ui->font_bi->currentIndex();
     UseChange(use);
 }
 
-void FontFrame::FontSelected(QString str)
+void FontFrame::FontSelected(const QString &str)
 {
-    QComboBox *font_box=(QComboBox*)sender();
+    QComboBox *font_box = (QComboBox*)sender();
     disconnect(font_box, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
-    if(str=="...")
+    if(str == QLatin1String("..."))
     {
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Select font"),"",tr("Fonts")+" (*.ttf)");
+        QString fileName = QFileDialog::getOpenFileName(this, tr("Select font"), QLatin1String(""), tr("Fonts" )+ QLatin1String(" (*.ttf)"));
         if(!fileName.isEmpty())
         {
-            bool find=false;
-            for(int i=0;i<font_box->count();i++)
+            bool find = false;
+            for(int i=0; i<font_box->count(); i++)
             {
 
-                if(font_box->itemData(i).toString()==fileName)
+                if(font_box->itemData(i).toString() == fileName)
                 {
-                    find=true;
+                    find = true;
                     font_box->setCurrentIndex(i);
                     break;
                 }
             }
             if(!find)
             {
-                QString name=GetFontNameFromFile(fileName);
-                font_box->insertItem(0,name,fileName);
+                QString name = GetFontNameFromFile(fileName);
+                font_box->insertItem(0, name, fileName);
                 font_box->setCurrentIndex(0);
             }
         }
@@ -344,12 +350,12 @@ void FontFrame::DelPress()
 
 void FontFrame::UpPress()
 {
-    emit move_font(this,1);
+    emit move_font(this, 1);
 }
 
 void FontFrame::DownPress()
 {
-    emit move_font(this,-1);
+    emit move_font(this, -1);
 }
 
 int FontFrame::fontSize()

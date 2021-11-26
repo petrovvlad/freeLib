@@ -11,7 +11,11 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QSettings>
+
 #include "fontframe.h"
+#include "common.h"
+#include "options.h"
+
 
 class FileItemDelegate : public QItemDelegate
 {
@@ -28,9 +32,9 @@ public:
         frame->setAttribute(Qt::WA_TranslucentBackground);
         QHBoxLayout *layout=new QHBoxLayout(frame);
         QLineEdit *editor=new QLineEdit(frame);
-        editor->setObjectName("editor");
+        editor->setObjectName(QStringLiteral("editor"));
         QToolButton *button=new QToolButton(frame);
-        button->setText("...");
+        button->setText(QStringLiteral("..."));
         layout->addWidget(editor,1);
         editor->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
         layout->addWidget(button,0);
@@ -42,26 +46,29 @@ public:
 
         return frame;
     }
+
     void setModelData(QWidget * editor, QAbstractItemModel * model, const QModelIndex & index) const
     {
-        QLineEdit *editor_file=editor->findChild<QLineEdit*>("editor");
+        QLineEdit *editor_file = editor->findChild<QLineEdit* > (QStringLiteral("editor"));
         model->setData(index,editor_file->text());
     }
+
     void setEditorData(QWidget * editor, const QModelIndex & index) const
     {
-        QLineEdit *editor_file=editor->findChild<QLineEdit*>("editor");
+        QLineEdit *editor_file = editor->findChild<QLineEdit*>(QStringLiteral("editor"));
         editor_file->setText(index.data().toString());
     }
+
     bool eventFilter(QObject* object, QEvent* event)
     {
-        if(event->type()==QEvent::FocusIn)
+        if(event->type() == QEvent::FocusIn)
         {
-            QLineEdit *editor=object->findChild<QLineEdit*>("editor");
+            QLineEdit *editor = object->findChild<QLineEdit*>(QStringLiteral("editor"));
             editor->setFocus();
         }
-       // qDebug()<<event->type();
         return true;
     }
+
 private slots:
     void editingFinished()
     {
@@ -70,9 +77,9 @@ private slots:
     }
     void SelectFile()
     {
-        QLineEdit *editor_file=sender()->parent()->findChild<QLineEdit*>("editor");
+        QLineEdit *editor_file=sender()->parent()->findChild<QLineEdit*>(QStringLiteral("editor"));
         QFileInfo fi(editor_file->text());
-        QString file_name=QFileDialog::getOpenFileName((QWidget*)sender(),tr("Select application"),fi.absolutePath());
+        QString file_name = QFileDialog::getOpenFileName((QWidget*)sender(), tr("Select application"), fi.absolutePath());
         if(!file_name.isEmpty())
         {
             editor_file->setText(file_name);
@@ -90,12 +97,14 @@ class SettingsDlg : public QDialog
     Q_OBJECT
     
 public:
-    explicit SettingsDlg(QWidget *parent = nullptr);
+    explicit SettingsDlg(QWidget *parent);
     ~SettingsDlg();
-    
+
+    Options options_;
+
 private:
     Ui::SettingsDlg *ui;
-    QSettings settings;
+
     void LoadSettings();
 private slots:
     void btnOK();
@@ -104,13 +113,13 @@ private slots:
     void DelExt();
     void AddApp();
     void DelApp();
-    void ChangePort(int i=-1);
+    void ChangePort(int i);
     void ChangeLanguage();
     void ExportNameChanged();
     void onAddExportClicked();
     void onDelExportClicked();
     void onExportNameCurrentIndexChanged(int index);
-    void onChangeExportFrameTab(int tab_id,int page_id);
+    void onChangeExportFrameTab(int tab_id, int page_id);
     void onDefaultExportClicked();
     void onBtnDefaultSettingsClicked();
     void onTabWidgetCurrentChanged(int index);
@@ -121,16 +130,20 @@ private slots:
     void onHTTPneedPaswordClicked();
     void onBtnSaveExportClicked();
     void onBtnOpenExportClicked();
+    void onChangeAlphabetCombobox(int index);
+    void onOpdsEnable(int state);
     void btnDBPath();
     void btnDirPath();
     void UpdateWebExportList();
+    virtual void reject();
 
 signals:
     void ChangingPort(int i);
     void ChangingLanguage();
-    void ChangingExportFrameTab(int tab_id,int page_id);
+    void ChangeAlphabet(const QString &str);
+    void ChangingExportFrameTab(int tab_id, int page_id);
     void NeedUpdateTools();
-    void ChangingTrayIcon(int index,int color);
+    void ChangingTrayIcon(int index, int color);
 };
 
 #endif // SETTINGSDLG_H

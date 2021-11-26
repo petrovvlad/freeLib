@@ -1,6 +1,7 @@
 [submodule "freeLib/src/quazip"]
 	path = freeLib/src/quazip
 	url = https://github.com/stachenov/quazip.git
-[submodule "SmtpClient-for-Qt"]
+[submodule "freeLib/src/SmtpClient"]
 	path = freeLib/src/SmtpClient
-	url = https://github.com/bluetiger9/SmtpClient-for-Qt
+	url = https://github.com/petrovvlad/SmtpClient-for-Qt.git
+	branch = master

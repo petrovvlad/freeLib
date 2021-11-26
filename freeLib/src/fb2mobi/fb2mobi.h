@@ -8,6 +8,7 @@
 #include "../common.h"
 #include "../library.h"
 #include "hyphenations.h"
+#include "options.h"
 
 struct STOC
 {
@@ -18,9 +19,9 @@ struct STOC
     QString html;
 };
 
-#define VIGNETTE_TITLE_BEFORE   "tb"
-#define VIGNETTE_TITLE_AFTER    "ta"
-#define VIGNETTE_CHAPTER_END    "te"
+#define VIGNETTE_TITLE_BEFORE   QStringLiteral("tb")
+#define VIGNETTE_TITLE_AFTER    QStringLiteral("ta")
+#define VIGNETTE_CHAPTER_END    QStringLiteral("te")
 
 enum CreateCover{cc_no,cc_if_not_exists,cc_always};
 
@@ -28,7 +29,7 @@ struct html_content
 {
     QString file_name;
     QString content;
-    html_content(QString fn)
+    html_content(const QString &fn)
     {
         file_name=fn;
     }
@@ -44,45 +45,44 @@ class fb2mobi:public QObject
 {
     Q_OBJECT
 public:
-    fb2mobi();
-    //QString convert(QString files, bool remove, QString format, QString language);
-    QString convert(QStringList files, bool remove,QString format,SBook& book);
-    QString convert(qlonglong id);
+    fb2mobi(const ExportOptions *pExportOptions, uint idLib);
+    QString convert(QStringList files, uint idBook);
+    QString convert(uint idBook);
     void generate_html(QFile *file);
     //QWebView *pdf;
 private:
     QString GenerateAZW3(QString file);
     QString GenerateMOBI7(QString file);
-    void parse_title(QDomNode elem);
-    void parse_subtitle(QDomNode elem);
-    void parse_epigraph(QDomNode elem);
-    void parse_annotation(QDomNode elem);
-    void parse_section(QDomNode elem);
-    void parse_strong(QDomNode elem);
-    void parse_emphasis(QDomNode elem);
-    void parse_strikethrough(QDomNode elem);
-    void parse_style(QDomNode elem);
-    void parse_a(QDomNode elem);
-    void parse_image(QDomNode elem);
-    void parse_p(QDomNode elem);
-    void parse_poem(QDomNode elem);
-    void parse_stanza(QDomNode elem);
-    void parse_v(QDomNode elem);
-    void parse_cite(QDomNode elem);
-    void parse_emptyline(QDomNode elem);
-    void parse_textauthor(QDomNode elem);
-    void parse_table(QDomNode elem);
-    void parse_code(QDomNode elem);
-    void parse_date(QDomNode elem);
-    void parse_other(QDomNode elem);
+    void parse_title(const QDomNode &elem);
+    void parse_subtitle(const QDomNode &elem);
+    void parse_epigraph(const QDomNode &elem);
+    void parse_annotation(const QDomNode &elem);
+    void parse_section(const QDomNode &elem);
+    void parse_strong(const QDomNode &elem);
+    void parse_emphasis(const QDomNode &elem);
+    void parse_strikethrough(const QDomNode &elem);
+    void parse_style(const QDomNode &elem);
+    void parse_a(const QDomNode &elem);
+    void parse_image(const QDomNode &elem);
+    void parse_p(const QDomNode &elem);
+    void parse_poem(const QDomNode &elem);
+    void parse_stanza(const QDomNode &elem);
+    void parse_v(const QDomNode &elem);
+    void parse_cite(const QDomNode &elem);
+    void parse_emptyline(const QDomNode &elem);
+    void parse_textauthor(const QDomNode &elem);
+    void parse_table(const QDomNode &elem);
+    void parse_code(const QDomNode &elem);
+    void parse_date(const QDomNode &elem);
+    void parse_other(const QDomNode &elem);
 
-    QString save_html(QString str);
+    QString save_html(const QString &str);
 
-    void parse_body(QDomNode elem);
-    void parse_description(QDomNode child);
-    void parse_binary(QDomNode elem);
-    void parse_format(QDomNode elem, QString tag="" , QString css="", QString href="");
-    void parse_span(QString span, QDomNode elem);
+    void parse_body(const QDomNode &elem);
+    void parse_description(const QDomNode &child);
+    void parse_binary(const QDomNode &elem);
+    void parse_format(const QDomNode &elem, QString tag=QLatin1String("") , QString css=QLatin1String(""), QString href=QLatin1String(""));
+    void parse_span(const QString &span, const QDomNode &elem);
 
     void generate_toc();
     void generate_ncx_epub();
@@ -91,11 +91,11 @@ private:
     void generate_opf_epub();
     void generate_mime();
     void generate_container();
-    void parse_note_elem(QDomNode elem);
-    void parse_table_element(QDomNode elem);
+    void parse_note_elem(const QDomNode &elem);
+    void parse_table_element(const QDomNode &elem);
 
-    void get_notes_dict(QString body_names);
-    QString get_vignette(QString level,QString type);
+    void get_notes_dict(const QString &body_names);
+    QString get_vignette(const QString &level, const QString &type);
     QString *buf_current;
     QString buf;
     QString buf_annotation;
@@ -106,13 +106,13 @@ private:
     bool header;
     bool inline_image_mode;
     bool subheader;
-    bool dropcaps;
     QString nodropcaps;
     int current_header_level;
     int current_section_level;
-    bool cut_html;
     QString body_name;
     SBook *pBook;
+    uint idBook_;
+    uint idLib_;
     QString book_cover;
     QString bookseriestitle;
     QString authorstring;
@@ -131,7 +131,6 @@ private:
     QString toctitle;
     int toc_max_level;
     bool dodropcaps;
-    int notes_mode;
     bool parsing_note;
     QStringList notes_bodies;
     QList<QStringList> current_notes;
@@ -146,21 +145,17 @@ private:
 
     QList<STOC> toc;
     QStringList image_list;
-    //QString current_file;
     QString tmp_dir;
 
     hyphenations hyphenator;
-    int hyphenate;
-    int vignette;
-    bool break_after_cupture;
 
     bool join_seria;
     int current_book;
     QString outputFormat;
 
-    void InsertSeriaNumberToCover(QString number, CreateCover create_cover);
+    void InsertSeriaNumberToCover(const QString &number, CreateCover create_cover);
     bool need_end_chapter_vignette;
-    //bool page_load;
+    const ExportOptions *pExportOptions_;
 //private slots:
 //    void OnLoad(bool ok);
 };

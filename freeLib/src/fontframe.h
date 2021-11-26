@@ -12,7 +12,7 @@ class FontFrame : public QFrame
     Q_OBJECT
 
 public:
-    explicit FontFrame(bool use=true, int tag=0, QString font="", QString font_b="", QString font_i="", QString font_bi="",int fontSize=100, QWidget *parent = 0);
+    explicit FontFrame(bool use=true, int tag=0, const QString &font=QLatin1String(""), const QString &font_b=QLatin1String(""), const QString &font_i=QLatin1String(""), const QString &font_bi=QLatin1String(""),int fontSize=100, QWidget *parent = 0);
     ~FontFrame();
     bool use();
     int tag();
@@ -34,12 +34,12 @@ private slots:
     void DelPress();
     void UpPress();
     void DownPress();
-    void FontSelected(QString str);
+    void FontSelected(const QString &str);
     void onTagCurrentIndexChanged(int index);
 
 signals:
     void remove_font(QWidget* widget);
-    void move_font(QWidget* widget,int direction);
+    void move_font(QWidget* widget, int direction);
 };
 
 #endif // FONTFRAME_H

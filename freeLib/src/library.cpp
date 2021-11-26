@@ -1,26 +1,37 @@
-#include <QDomDocument>
-
-#include "common.h"
+#define QT_USE_QSTRINGBUILDER
 #include "library.h"
+
+#include <QDomDocument>
+#include <QStringBuilder>
+#include <QSqlQuery>
+#include <QSqlError>
+#include <QDebug>
+#include <QApplication>
+#include <QStandardPaths>
+#include <QPixmap>
+#include <QDir>
+
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 
-QMap<int,SLib> mLibs;
+QMap<uint,SLib> mLibs;
 QMap <uint,SGenre> mGenre;
+bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
+QString RelativeToAbsolutePath(QString path);
 
 void loadLibrary(uint idLibrary)
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
 
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.setForwardOnly(true);
     SLib& lib = mLibs[idLibrary];
     lib.mSerials.clear();
-    query.prepare("SELECT id, name, favorite FROM seria WHERE id_lib=:id_lib;");
-    //                    0   1     2
-    query.bindValue(":id_lib",idLibrary);
+    query.prepare(QStringLiteral("SELECT id, name, favorite FROM seria WHERE id_lib=:id_lib;"));
+    //                                   0   1     2
+    query.bindValue(QStringLiteral(":id_lib"), idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
@@ -34,9 +45,9 @@ void loadLibrary(uint idLibrary)
 
     t_start = QDateTime::currentMSecsSinceEpoch();
     lib.mAuthors.insert(0,SAuthor());
-    query.prepare("SELECT author.id, name1, name2, name3, author.favorite FROM author WHERE id_lib=:id_lib;");
-    //                    0          1      2      3      4
-    query.bindValue(":id_lib",idLibrary);
+    query.prepare(QStringLiteral("SELECT author.id, name1, name2, name3, author.favorite FROM author WHERE id_lib=:id_lib;"));
+    //                                     0          1      2      3      4
+    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     query.exec();
     while (query.next()) {
         uint idAuthor = query.value(0).toUInt();
@@ -52,9 +63,9 @@ void loadLibrary(uint idLibrary)
 
     lib.mBooks.clear();
     query.setForwardOnly(true);
-    query.prepare("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, favorite FROM book WHERE id_lib=:id_lib;");
-    //                     0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
-    query.bindValue(":id_lib",idLibrary);
+    query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, favorite FROM book WHERE id_lib=:id_lib;"));
+    //                                    0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
+    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
@@ -86,9 +97,9 @@ void loadLibrary(uint idLibrary)
     }
 
     lib.mAuthorBooksLink.clear();
-    query.prepare("SELECT id_book, id_author FROM book_author WHERE id_lib=:id_lib;");
-    //                     0       1
-    query.bindValue(":id_lib",idLibrary);
+    query.prepare(QStringLiteral("SELECT id_book, id_author FROM book_author WHERE id_lib=:id_lib;"));
+    //                                     0       1
+    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
@@ -109,15 +120,15 @@ void loadLibrary(uint idLibrary)
         }
         ++iBook;
     }
-    query.prepare("SELECT id_book, id_janre FROM book_janre WHERE id_lib=:id_lib;");
-    //                     0       1
-    query.bindValue(":id_lib",idLibrary);
+    query.prepare(QStringLiteral("SELECT id_book, id_janre FROM book_janre WHERE id_lib=:id_lib;"));
+    //                                     0       1
+    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idGenre = query.value(1).toUInt();
-        if(idGenre==0) idGenre = 1112; // Прочие/Неотсортированное
+        if(idGenre == 0) idGenre = 1112; // Прочие/Неотсортированное
         if(lib.mBooks.contains(idBook))
             lib.mBooks[idBook].listIdGenres << idGenre;
     }
@@ -129,14 +140,14 @@ void loadLibrary(uint idLibrary)
 
 void loadGenres()
 {
-    if(!db_is_open)
+    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
-    QSqlQuery query(QSqlDatabase::database("libdb"));
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
     mGenre.clear();
-    query.prepare("SELECT id, name, id_parent, sort_index FROM janre;");
-    //                    0   1     2          3
+    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index FROM janre;"));
+    //                                   0   1     2          3
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
@@ -155,32 +166,32 @@ SAuthor::SAuthor()
     nTag = 0;
 }
 
-SAuthor::SAuthor(QString sName)
+SAuthor::SAuthor(const QString &sName)
 {
-    QStringList listNames=sName.split(",");
-    if(listNames.count()>0)
-        sLastName=listNames[0].trimmed();
-    if(listNames.count()>1)
-        sFirstName=listNames[1].trimmed();
-    if(listNames.count()>2)
-        sMiddleName=listNames[2].trimmed();
+    QStringList listNames = sName.split(QStringLiteral(","));
+    if(listNames.count() > 0)
+        sLastName = listNames[0].trimmed();
+    if(listNames.count() > 1)
+        sFirstName = listNames[1].trimmed();
+    if(listNames.count() > 2)
+        sMiddleName = listNames[2].trimmed();
 
 }
 
 QString SAuthor::getName() const
 {
-    QString sAuthorName = QString("%1 %2 %3").arg(sLastName,sFirstName,sMiddleName).trimmed();
+    QString sAuthorName = QStringLiteral("%1 %2 %3").arg(sLastName, sFirstName, sMiddleName).trimmed();
     if(sAuthorName.trimmed().isEmpty())
         sAuthorName = QCoreApplication::translate("MainWindow","unknown author");
     return sAuthorName;
 }
 
-uint SLib::findAuthor(SAuthor &author)
+uint SLib::findAuthor(SAuthor &author) const
 {
     uint idAuthor = 0;
     auto iAuthor = mAuthors.constBegin();
-    while(iAuthor!= mAuthors.constEnd() ){
-        if(author.sFirstName== iAuthor->sFirstName && author.sMiddleName==iAuthor->sMiddleName && author.sLastName==iAuthor->sLastName){
+    while(iAuthor != mAuthors.constEnd() ){
+        if(author.sFirstName == iAuthor->sFirstName && author.sMiddleName == iAuthor->sMiddleName && author.sLastName == iAuthor->sLastName){
             idAuthor = iAuthor.key();
             break;
         }
@@ -189,7 +200,7 @@ uint SLib::findAuthor(SAuthor &author)
     return idAuthor;
 }
 
-uint SLib::findSerial(QString sSerial)
+uint SLib::findSerial(const QString &sSerial) const
 {
     uint idSerial = 0;
     auto iSerial = mSerials.constBegin();
@@ -205,97 +216,37 @@ uint SLib::findSerial(QString sSerial)
 
 void SLib::loadAnnotation(uint idBook)
 {
-    QString sFile,sArchive;
-    QFileInfo fi;
-    QBuffer buffer, buffer_info;
-
+    QBuffer buffer;
+    getBookFile(idBook, &buffer);
     SBook& book = mBooks[idBook];
-    if(book.sArchive.isEmpty()){
-        sFile = QString("%1/%2.%3").arg(path,book.sFile,book.sFormat);
-    }else{
-        sFile = QString("%1.%2").arg(book.sFile,book.sFormat);
-        sArchive = QString("%1/%2").arg(path,book.sArchive.replace(".inp",".zip"));
-    }
 
-    sArchive=sArchive.replace("\\","/");
-    if(sArchive.isEmpty())
-    {
-        QFile book_file(sFile);
-        if(!book_file.open(QFile::ReadOnly))
-        {
-            qDebug()<<("Error open file!")<<" "<<sFile;
-            book.sAnnotation = "<font color=\"red\">" + QCoreApplication::translate("MainWindow","Can't find file: %1").arg(sFile) + "</font>";
-            return;
-        }
-        buffer.setData(book_file.readAll());
-        fi.setFile(book_file);
-        fi.setFile(sFile);
-        QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
-        QFile info_file(fbd);
-        if(info_file.exists())
-        {
-            info_file.open(QFile::ReadOnly);
-            buffer_info.setData(info_file.readAll());
-        }
-    }
-    else
-    {
-        QuaZip uz(sArchive);
-        if (!uz.open(QuaZip::mdUnzip))
-        {
-            qDebug()<<("Error open archive!")<<" "<<sArchive;
-            book.sAnnotation = "<font color=\"red\">" + QCoreApplication::translate("MainWindow","Can't find file: %1").arg(sFile) + "</font>";
-            return;
-        }
-
-        QuaZipFile zip_file(&uz);
-        SetCurrentZipFileName(&uz,sFile);
-        if(!zip_file.open(QIODevice::ReadOnly))
-        {
-            qDebug()<<"Error open file: "<<sFile;
-        }
-        buffer.setData(zip_file.readAll());
-        zip_file.close();
-        fi.setFile(sFile);
-        QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
-
-        if(SetCurrentZipFileName(&uz,fbd))
-        {
-            zip_file.open(QIODevice::ReadOnly);
-            buffer.setData(zip_file.readAll());
-            zip_file.close();
-        }
-
-        fi.setFile(sArchive+"/"+sFile);
-    }
-
-    if(book.sFormat=="epub"){
+    if(book.sFormat == QLatin1String("epub")){
         QuaZip zip(&buffer);
         zip.open(QuaZip::mdUnzip);
         QBuffer info;
-        SetCurrentZipFileName(&zip,"META-INF/container.xml");
+        SetCurrentZipFileName(&zip, QStringLiteral("META-INF/container.xml"));
         QuaZipFile zip_file(&zip);
         zip_file.open(QIODevice::ReadOnly);
         info.setData(zip_file.readAll());
         zip_file.close();
         QDomDocument doc;
         doc.setContent(info.data());
-        QDomNode root=doc.documentElement();
-        bool need_loop=true;
+        QDomNode root = doc.documentElement();
+        bool need_loop = true;
         QString rel_path;
         for(int i=0;i<root.childNodes().count() && need_loop;i++)
         {
-            if(root.childNodes().at(i).nodeName().toLower()=="rootfiles")
+            if(root.childNodes().at(i).nodeName().toLower() == QLatin1String("rootfiles"))
             {
-                QDomNode roots=root.childNodes().at(i);
+                QDomNode roots = root.childNodes().at(i);
                 for(int j=0;j<roots.childNodes().count() && need_loop;j++)
                 {
-                    if(roots.childNodes().at(j).nodeName().toLower()=="rootfile")
+                    if(roots.childNodes().at(j).nodeName().toLower() == QLatin1String("rootfile"))
                     {
-                        QString path=roots.childNodes().at(j).attributes().namedItem("full-path").toAttr().value();
+                        QString path = roots.childNodes().at(j).attributes().namedItem(QStringLiteral("full-path")).toAttr().value();
                         QBuffer opf_buf;
                         QFileInfo fi(path);
-                        rel_path=fi.path();
+                        rel_path = fi.path();
                         SetCurrentZipFileName(&zip,path);
                         zip_file.open(QIODevice::ReadOnly);
                         opf_buf.setData(zip_file.readAll());
@@ -303,10 +254,10 @@ void SLib::loadAnnotation(uint idBook)
 
                         QDomDocument opf;
                         opf.setContent(opf_buf.data());
-                        QDomNode meta=opf.documentElement().namedItem("metadata");
+                        QDomNode meta=opf.documentElement().namedItem(QStringLiteral("metadata"));
                         for(int m=0;m<meta.childNodes().count();m++)
                         {
-                            if(meta.childNodes().at(m).nodeName().right(11)=="description")
+                            if(meta.childNodes().at(m).nodeName().right(11) == QLatin1String("description"))
                             {
                                 QBuffer buff;
                                 buff.open(QIODevice::WriteOnly);
@@ -315,24 +266,24 @@ void SLib::loadAnnotation(uint idBook)
                                 meta.childNodes().at(m).save(ts,0,QDomNode::EncodingFromTextStream);
                                 book.sAnnotation=QString::fromUtf8(buff.data().data());
                             }
-                            else if(meta.childNodes().at(m).nodeName().right(4)=="meta")
+                            else if(meta.childNodes().at(m).nodeName().right(4) == QLatin1String("meta"))
                             {
-                                if(meta.childNodes().at(m).attributes().namedItem("name").toAttr().value()=="cover")
+                                if(meta.childNodes().at(m).attributes().namedItem(QStringLiteral("name")).toAttr().value() == QLatin1String("cover"))
                                 {
-                                    QString cover=meta.childNodes().at(m).attributes().namedItem("content").toAttr().value();
-                                    QDomNode manifest=opf.documentElement().namedItem("manifest");
-                                    for(int man=0;man<manifest.childNodes().count();man++)
+                                    QString cover = meta.childNodes().at(m).attributes().namedItem(QStringLiteral("content")).toAttr().value();
+                                    QDomNode manifest = opf.documentElement().namedItem(QStringLiteral("manifest"));
+                                    for(int man=0 ;man<manifest.childNodes().count(); man++)
                                     {
-                                        if(manifest.childNodes().at(man).attributes().namedItem("id").toAttr().value()==cover)
+                                        if(manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("id")).toAttr().value()==cover)
                                         {
-                                            cover=manifest.childNodes().at(man).attributes().namedItem("href").toAttr().value();
+                                            cover = rel_path + QLatin1String("/") + manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("href")).toAttr().value();
 
-                                            SetCurrentZipFileName(&zip,cover);
+                                            SetCurrentZipFileName(&zip, cover);
                                             zip_file.open(QIODevice::ReadOnly);
                                             QByteArray ba = zip_file.readAll();
                                             zip_file.close();
 
-                                            QString sImgFile = QString("%1/freeLib/%2.jpg")
+                                            QString sImgFile = QStringLiteral("%1/freeLib/%2.jpg")
                                                     .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                                     .arg(idBook);
                                             QFile file(sImgFile);
@@ -341,72 +292,72 @@ void SLib::loadAnnotation(uint idBook)
                                                 file.close();
                                             }
 
-                                            book.sImg=QString("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
+                                            book.sImg = QStringLiteral("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
                                             break;
                                         }
                                     }
                                 }
                             }
                         }
-                        need_loop=false;
+                        need_loop = false;
                     }
                 }
             }
         }
         zip.close();
         info.close();
-    }else if(book.sFormat=="fb2"){
+    }else if(book.sFormat == QLatin1String("fb2")){
         QDomDocument doc;
         doc.setContent(buffer.data());
-        QDomElement title_info=doc.elementsByTagName("title-info").at(0).toElement();
-            QString cover=QString::fromStdString( title_info.elementsByTagName("coverpage").at(0).toElement().elementsByTagName("image").at(0).attributes().namedItem("l:href").toAttr().value().toStdString());
-            if(!cover.isEmpty() && cover.at(0)=="#")
+        QDomElement title_info = doc.elementsByTagName(QStringLiteral("title-info")).at(0).toElement();
+        QString cover  = title_info.elementsByTagName(QStringLiteral("coverpage")).at(0).toElement().elementsByTagName(QStringLiteral("image")).at(0).attributes().namedItem(QStringLiteral("l:href")).toAttr().value();
+        if(!cover.isEmpty() && cover.at(0) == QLatin1String("#"))
+        {
+            QDomNodeList binarys = doc.elementsByTagName(QStringLiteral("binary"));
+            for(int i=0; i<binarys.count(); i++)
             {
-                QDomNodeList binarys=doc.elementsByTagName("binary");
-                for(int i=0;i<binarys.count();i++)
+                if(binarys.at(i).attributes().namedItem(QStringLiteral("id")).toAttr().value() == cover.right(cover.length() - 1))
                 {
-                    if(binarys.at(i).attributes().namedItem("id").toAttr().value()==cover.right(cover.length()-1))
-                    {
-                        QString sImgFile = QString("%1/freeLib/%2.jpg")
-                                .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
-                                .arg(idBook);
-                        QPixmap image;
-                        QByteArray ba;
-                        ba.append(binarys.at(i).toElement().text().toLatin1());
-                        QByteArray ba64 = QByteArray::fromBase64(ba);
-                        image.loadFromData(ba64);
-                        image.save(sImgFile);
-                        book.sImg = QString("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
-                        break;
-                    }
+                    book.sImg = QStringLiteral("%1/freeLib/%2.jpg")
+                            .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
+                            .arg(idBook);
+                    QPixmap image;
+                    QByteArray ba;
+                    ba.append(binarys.at(i).toElement().text().toLatin1());
+                    QByteArray ba64 = QByteArray::fromBase64(ba);
+                    image.loadFromData(ba64);
+                    image.save(book.sImg);
+                    break;
                 }
             }
-            QBuffer buff;
-            buff.open(QIODevice::WriteOnly);
-            QTextStream ts(&buff);
-            ts.setCodec("UTF-8");
-            title_info.elementsByTagName("annotation").at(0).save(ts,0,QDomNode::EncodingFromTextStream);
-            book.sAnnotation=QString::fromUtf8(buff.data().data());
-            book.sAnnotation.replace("<annotation>","",Qt::CaseInsensitive);
-            book.sAnnotation.replace("</annotation>","",Qt::CaseInsensitive);
+        }
+        QBuffer buff;
+        buff.open(QIODevice::WriteOnly);
+        QTextStream ts(&buff);
+        ts.setCodec("UTF-8");
+        title_info.elementsByTagName(QStringLiteral("annotation")).at(0).save(ts, 0, QDomNode::EncodingFromTextStream);
+        book.sAnnotation = QString::fromUtf8(buff.data().data());
+        book.sAnnotation.replace(QLatin1String("<annotation>"), QLatin1String(""), Qt::CaseInsensitive);
+        book.sAnnotation.replace(QLatin1String("</annotation>"), QLatin1String(""), Qt::CaseInsensitive);
     }
 }
 
-QFileInfo SLib::getBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book, bool caption, QDateTime *file_data)
+QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData) const
 {
     QString file,archive;
     QFileInfo fi;
-    SBook &book = mBooks[id_book];
-    //QString LibPath=mLibs[idCurrentLib].path;
-    QString LibPath=RelativeToAbsolutePath(path);
+    const SBook &book = mBooks[idBook];
+    QString LibPath = RelativeToAbsolutePath(path);
     if(book.sArchive.isEmpty()){
-        file = QString("%1/%2.%3").arg(LibPath,book.sFile,book.sFormat);
+        file = QStringLiteral("%1/%2.%3").arg(LibPath, book.sFile, book.sFormat);
     }else{
-        file = QString("%1.%2").arg(book.sFile,book.sFormat);
-        archive = QString("%1/%2").arg(LibPath,book.sArchive.replace(".inp",".zip"));
+        file = QStringLiteral("%1.%2").arg(book.sFile, book.sFormat);
+        QString sArchive = book.sArchive;
+        sArchive.replace(QLatin1String(".inp"), QLatin1String(".zip"));
+        archive = QStringLiteral("%1/%2").arg(LibPath, sArchive);
     }
 
-    archive=archive.replace("\\","/");
+    archive = archive.replace('\\', '/');
     if(archive.isEmpty())
     {
         QFile book_file(file);
@@ -415,19 +366,23 @@ QFileInfo SLib::getBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book,
             qDebug()<<("Error open file!")<<" "<<file;
             return fi;
         }
-        buffer.setData(book_file.readAll());
-        fi.setFile(book_file);
-        if(file_data)
+        if(pBuffer != nullptr)
+            pBuffer->setData(book_file.readAll());
+        if(fileData)
         {
-            *file_data=fi.birthTime();
+            fi.setFile(book_file);
+            *fileData = fi.birthTime();
         }
-        fi.setFile(file);
-        QString fbd=fi.absolutePath()+"/"+fi.completeBaseName()+".fbd";
-        QFile info_file(fbd);
-        if(info_file.exists())
-        {
-            info_file.open(QFile::ReadOnly);
-            buffer_info.setData(info_file.readAll());
+
+        if(pBufferInfo != nullptr){
+            fi.setFile(file);
+            QString fbd = fi.absolutePath() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".fbd");
+            QFile info_file(fbd);
+            if(info_file.exists())
+            {
+                info_file.open(QFile::ReadOnly);
+                pBufferInfo->setData(info_file.readAll());
+            }
         }
     }
     else
@@ -439,13 +394,13 @@ QFileInfo SLib::getBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book,
             return fi;
         }
 
-        if(file_data)
+        if(fileData)
         {
-            SetCurrentZipFileName(&uz,file);
+            SetCurrentZipFileName(&uz, file);
             QuaZipFileInfo64 zip_fi;
             if(uz.getCurrentFileInfo(&zip_fi))
             {
-                *file_data=zip_fi.dateTime;
+                *fileData = zip_fi.dateTime;
             }
         }
         QuaZipFile zip_file(&uz);
@@ -454,27 +409,99 @@ QFileInfo SLib::getBookFile(QBuffer &buffer, QBuffer &buffer_info, uint id_book,
         {
             qDebug()<<"Error open file: "<<file;
         }
-        if(caption)
+        if(pBuffer != nullptr)
         {
-            buffer.setData(zip_file.read(16*1024));
-        }
-        else
-        {
-            buffer.setData(zip_file.readAll());
+            pBuffer->setData(zip_file.readAll());
         }
         zip_file.close();
-        fi.setFile(file);
-        QString fbd=fi.path()+"/"+fi.completeBaseName()+".fbd";
 
-        if(SetCurrentZipFileName(&uz,fbd))
-        {
-            zip_file.open(QIODevice::ReadOnly);
-            buffer.setData(zip_file.readAll());
-            zip_file.close();
+        if(pBufferInfo != nullptr){
+            fi.setFile(file);
+            QString fbd = fi.path() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".fbd");
+            if(SetCurrentZipFileName(&uz, fbd))
+            {
+                zip_file.open(QIODevice::ReadOnly);
+                pBufferInfo->setData(zip_file.readAll());
+                zip_file.close();
+            }
         }
 
-        fi.setFile(archive+"/"+file);
+        fi.setFile(archive + QLatin1String("/") + file);
     }
     return fi;
+}
+
+/*
+ *
+%a - автор книги.
+%b - заголовок книги.
+%s - серия.
+%nx - номер в серии, где x-число знаков.
+%abbrs - аббревиатура серии.
+%nl - фамилия.
+%nm - отчество.
+%nf - имя.
+%li,%fi,%mi - первые буквы фамилии,имени,отчества.
+%f - полный путь к файлу книги с именем файла.
+%fn - имя файла книги без пути и расширения.
+%d - полный путь к файлу книги.
+%app_dir - путь к директории программы.
+
+*/
+
+QString SLib::fillParams(const QString &str, uint idBook) const
+{
+    const SBook& book = mBooks[idBook];
+    QString result = str;
+    QString abbr = QLatin1String("");
+    foreach(const QString &str, mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
+    {
+        if(!str.isEmpty())
+            abbr += str.at(0);
+    }
+    result.replace(QLatin1String("%abbrs"), abbr.toLower());
+    result.replace(QLatin1String("%app_dir"), QApplication::applicationDirPath() + QLatin1String("/"));
+
+    //result.removeOne("%no_point");
+    const SAuthor& sFirstAuthor = mAuthors[book.idFirstAuthor];
+
+    result.replace(QLatin1String("%fi"), sFirstAuthor.sFirstName.left(1) + (sFirstAuthor.sFirstName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
+            replace(QLatin1String("%mi"), sFirstAuthor.sMiddleName.left(1) + (sFirstAuthor.sMiddleName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
+            replace(QLatin1String("%li"), sFirstAuthor.sLastName.left(1) + (sFirstAuthor.sLastName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
+            replace(QLatin1String("%nf"), sFirstAuthor.sFirstName).
+            replace(QLatin1String("%nm"), sFirstAuthor.sMiddleName).
+            replace(QLatin1String("%nl"), sFirstAuthor.sLastName);
+
+    result = result.replace(QLatin1String("%s"), mSerials[book.idSerial].sName)
+            .replace(QLatin1String("%b"), book.sName)
+            .replace(QLatin1String("%a"), sFirstAuthor.getName())
+            .replace(QLatin1String(","), QLatin1String(" ")).trimmed();
+    QString num_in_seria = QString::number(book.numInSerial);
+    if(result.contains(QLatin1String("%n")))
+    {
+        int len = result.midRef(result.indexOf(QLatin1String("%n")) + 2, 1).toInt();
+        QString zerro;
+        if(book.numInSerial == 0)
+            result.replace("%n" + QString::number(len), QLatin1String(""));
+        else
+            result.replace(QLatin1String("%n") + (len>0 ?QString::number(len) :QLatin1String("")),
+                           (len>0 ?zerro.fill(u'0', len-num_in_seria.length()) :QLatin1String("")) + num_in_seria + QLatin1String(" "));
+    }
+    result.replace(QLatin1String("/ "), QLatin1String("/"));
+    result.replace(QLatin1String("/."), QLatin1String("/"));
+    result.replace(QLatin1String("////"), QLatin1String("/"));
+    result.replace(QLatin1String("///"), QLatin1String("/"));
+    result.replace(QLatin1String("//"), QLatin1String("/"));
+    return result;
+}
+
+QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_file) const
+{
+    QString result = str;
+    result.replace(QLatin1String("%fn"), book_file.completeBaseName()).
+           replace(QLatin1String("%f"), book_file.absoluteFilePath()).
+           replace(QLatin1String("%d"), book_file.absoluteDir().path());
+    result = fillParams(result, idBook);
+    return result;
 }
 

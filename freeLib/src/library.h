@@ -4,13 +4,15 @@
 #include <QMultiMap>
 #include <QList>
 #include <QDateTime>
-#include "common.h"
+#include <QFileInfo>
+#include <QBuffer>
+#include <QVariant>
 
 class SAuthor
 {
 public:
     SAuthor();
-    SAuthor(QString sName);
+    SAuthor(const QString &sName);
     QString getName() const;
     int nTag;
     QString sFirstName;
@@ -57,10 +59,14 @@ struct SGenre
 class SLib
 {
 public:
-    uint findAuthor(SAuthor& author);
-    uint findSerial(QString sSerial);
+    uint findAuthor(SAuthor& author) const;
+    uint findSerial(const QString &sSerial) const;
     void loadAnnotation(uint idBook);
-    QFileInfo getBookFile(QBuffer &buffer,QBuffer &buffer_info, uint id_book, bool caption=false, QDateTime *file_data=nullptr);
+    QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr) const;
+    QString fillParams(const QString &str, uint idBook) const;
+    QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file) const;
+
+
     QString name;
     QString path;
     QString sInpx;
@@ -77,10 +83,8 @@ public:
 void loadLibrary(uint idLibrary);
 void loadGenres();
 
-extern bool db_is_open;
-
-extern SLib currentLib;
-extern QMap<int,SLib> mLibs;
-extern QMap <uint,SGenre> mGenre;
+extern uint idCurrentLib;
+extern QMap<uint, SLib> mLibs;
+extern QMap <uint, SGenre> mGenre;
 
 #endif // LIBRARY_H

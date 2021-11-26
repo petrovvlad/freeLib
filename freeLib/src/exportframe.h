@@ -3,7 +3,9 @@
 
 #include <QFrame>
 #include <QSettings>
+
 #include "fontframe.h"
+#include "options.h"
 
 namespace Ui {
 class ExportFrame;
@@ -16,18 +18,18 @@ class ExportFrame : public QFrame
 public:
     explicit ExportFrame(QWidget *parent = 0);
     ~ExportFrame();
-    QStringList Save(QSettings *settings,bool save_passwords=true);
-    void Load(QSettings *settings);
+    QStringList Save(ExportOptions *pExportOptions);
+    void Load(const ExportOptions *pExportOptions);
 signals:
     void ChangeTabIndex(int tab_id,int page_id);
 public slots:
     void SetTabIndex(int tab_id,int page_id);
-    void UpdateToolComboBox(QSettings *settings=0);
+    void UpdateToolComboBox(const QString &sCurrentTool = QLatin1String(""));
 private slots:
     void onRadioDeviceToggled(bool checked);
     void onRadioEmailToggled(bool checked);
-    void onOutputFormatChanged(const QString &arg1);
-    void onConnectionTypeChanged(const QString &arg1);
+    void onOutputFormatChanged(int index);
+    void onConnectionTypeChanged(int index);
     void onTabWidgetCurrentChanged(int);
     void onAddCoverLabelClicked();
     void onCreateCaverAlwaysClicked();
@@ -40,12 +42,11 @@ private slots:
 
     void FontMove(QWidget *font_widget, int direction);
     void RemoveFont(QWidget *font_widget);
-    FontFrame *AddFont(bool use=true, int tag=0, QString font="", QString font_b="", QString font_i="", QString font_bi="", int fontSize=100);
+    FontFrame *AddFont(bool use=true, int tag=0, const QString &font=QLatin1String(""), const QString &font_b=QLatin1String(""), const QString &font_i=QLatin1String(""), const QString &font_bi=QLatin1String(""), int fontSize=100);
     void btnPath();
 
 private:
     Ui::ExportFrame *ui;
-    void LoadDefault();
     void set_userCSS_clicked();
 };
 

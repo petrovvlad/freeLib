@@ -3,8 +3,8 @@
 #include "../common.h"
 #include <QStringList>
 
-#define SOFT_HYPHEN  "&#173;" //&shy;"
-#define CHILD_HYPHEN  "-"
+#define SOFT_HYPHEN  QStringLiteral("&#173;") //&shy;"
+#define CHILD_HYPHEN  QStringLiteral("-")
 //#define SOFT_HYPHEN  "-"
 
 struct pattern_t
@@ -22,8 +22,8 @@ class hyphenations
 {
 public:
     hyphenations();
-    void init(QString language);
-    QString hyphenate_word(QString word, QString separator="-",bool hyphenation_only=false);
+    void init(const QString &language);
+    QString hyphenate_word(QString word, const QString &separator=QStringLiteral("-"),bool hyphenation_only=false);
 private:
     QStringList pattern;
     //QStringList exceptions;
