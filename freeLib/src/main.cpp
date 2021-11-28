@@ -204,13 +204,11 @@ int main(int argc, char *argv[])
 
     if(options.bShowSplash){
         QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(a.devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
-        pixmap.setDevicePixelRatio(a.devicePixelRatio());
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
         painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, PROG_VERSION);
         splash = new QSplashScreen(pixmap);
-        splash->resize(640,400);
 #ifdef Q_OS_LINUX
         splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
 #endif
