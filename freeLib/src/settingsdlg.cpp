@@ -11,6 +11,8 @@
 
 #include "fontframe.h"
 #include "exportframe.h"
+#include "config-freelib.h"
+
 
 
 SettingsDlg::SettingsDlg(QWidget *parent) :
@@ -51,7 +53,9 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->ExportList->setColumnWidth(2, 150);
 
 
-    QStringList dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    QStringList dirContent = QDir(QApplication::applicationDirPath() + QLatin1String("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    if(dirContent.isEmpty())
+        dirContent = QDir(FREELIB_DATA_DIR + QLatin1String("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     ui->Language->clear();
     ui->Language->addItem(QStringLiteral("english"), "en_US");
     ui->Language->setCurrentIndex(0);
@@ -611,6 +615,10 @@ void SettingsDlg::onBtnSaveExportClicked()
             {
                 font_file = db_path + QLatin1String("/") + font_file;
             }
+            else if(QFile::exists(FREELIB_DATA_DIR + QLatin1String("/fonts") + font_file))
+            {
+                font_file = FREELIB_DATA_DIR + QLatin1String("/fonts") + font_file;
+            }
             else
             {
                 if(!QFile::exists(font_file))
@@ -660,6 +668,9 @@ void SettingsDlg::onBtnOpenExportClicked()
                 continue;
             if(QFile::exists(db_path + QLatin1String("/") + fi.fileName()))
                 continue;
+            if(QFile::exists(FREELIB_DATA_DIR + QLatin1String("/fonts/") + fi.fileName()))
+                continue;
+
 
             {
                 QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/") + fi.fileName();

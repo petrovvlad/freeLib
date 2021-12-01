@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "fontframe.h"
 #include "ui_fontframe.h"
 
@@ -8,6 +9,7 @@
 
 #include "common.h"
 #include "options.h"
+#include "config-freelib.h"
 
 
 typedef struct _tagTT_OFFSET_TABLE{
@@ -190,6 +192,9 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
 
 
     QDir dir(QApplication::applicationDirPath() + QLatin1String("/xsl/fonts"));
+    if(!dir.exists()){
+        dir.setPath(FREELIB_DATA_DIR + QLatin1String("/fonts"));
+    }
     foreach(const QString &str, dir.entryList(QStringList() << QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
     {
         ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
@@ -201,8 +206,7 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
-    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QLatin1String("/fonts");
-    dir.setPath(db_path);
+    dir.setPath(QFileInfo(options.sDatabasePath).absolutePath() + QLatin1String("/fonts"));
     foreach(const QString &str, dir.entryList(QStringList()<< QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
     {
         ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);

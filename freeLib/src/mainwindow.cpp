@@ -412,6 +412,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
             btn->setText(sAlphabet.at(i));
             btn->setMaximumSize(QSize(22, 22));
             btn->setMinimumSize(QSize(22, 22));
+            btn->setFont(QFont(QStringLiteral("Noto Sans"), 10));
             btn->setCheckable(true);
             btn->setAutoExclusive(true);
             btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);

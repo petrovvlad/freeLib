@@ -17,6 +17,7 @@
 #include "common.h"
 #include "build_number.h"
 #include "utilites.h"
+#include "config-freelib.h"
 
 uint idCurrentLib;
 QTranslator* translator;
@@ -97,7 +98,11 @@ void SetLocale(const QString &sLocale)
 
     if(translator == nullptr)
         translator = new QTranslator();
-    if(translator->load(QStringLiteral(":/language/language_%1.qm").arg(sLocale)))
+    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.leftRef(2));
+    QString sQmFileFull = QApplication::applicationDirPath() + sQmFile;
+    if(!QFile::exists(sQmFileFull))
+            sQmFileFull = FREELIB_DATA_DIR + sQmFile;
+    if(translator->load(sQmFileFull))
     {
         QApplication::installTranslator(translator);
     }
@@ -204,13 +209,11 @@ int main(int argc, char *argv[])
 
     if(options.bShowSplash){
         QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(a.devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
-        pixmap.setDevicePixelRatio(a.devicePixelRatio());
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
         painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, PROG_VERSION);
         splash = new QSplashScreen(pixmap);
-        splash->resize(640,400);
 #ifdef Q_OS_LINUX
         splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
 #endif

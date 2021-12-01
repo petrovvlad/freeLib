@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "fb2mobi.h"
 
 #include <QProcess>
@@ -10,6 +11,8 @@
 #include "../quazip/quazip/quazipfile.h"
 #include "../mobiEdit/mobiedit.h"
 #include "importthread.h"
+#include "config-freelib.h"
+
 
 fb2mobi::fb2mobi(const ExportOptions *pExportOptions, uint idLib)
 {
@@ -1688,7 +1691,10 @@ QString fb2mobi::convert(QStringList files, uint idBook)
                 (pExportOptions_->sOutputFormat == QLatin1String("MOBI") ||
                  pExportOptions_->sOutputFormat == QLatin1String("AZW3")))
         {
-            QProcess::execute(QApplication::applicationDirPath() + QLatin1String("/xsl/kindlegen"), QStringList() << tmp_dir + QLatin1String("/") + fb2file.fileName());
+            QString sKindlegen = QApplication::applicationDirPath() + QLatin1String("/kindlegen");
+            if(!QFile::exists(sKindlegen))
+                sKindlegen = QStringLiteral("kindlegen");
+            QProcess::execute(sKindlegen, QStringList() << tmp_dir + QLatin1String("/") + fb2file.fileName());
             out_file = tmp_dir + QLatin1String("/") + fb2file.completeBaseName() + QLatin1String(".mobi");
             if(pExportOptions_->sOutputFormat == QLatin1String("AZW3"))
             {
@@ -1732,6 +1738,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QLatin1String("/fonts");
 
+
     QFile css(tmp_dir + QLatin1String("/OEBPS/css/main.css"));
     css.open(QFile::Append);
     int count = pExportOptions_->vFontExportOptions.count();
@@ -1753,6 +1760,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
                     fonts.append(font_file);
                     index = fonts.count()-1;
                     if(QFile::exists(QApplication::applicationDirPath() + QLatin1String("/xsl/fonts/") + font_file))
+
                     {
                         QFile::copy(QApplication::applicationDirPath() + QLatin1String("/xsl/fonts/") + font_file, tmp_dir + QStringLiteral("/OEBPS/fonts/font%1.ttf").arg(index));
                     }
@@ -1761,6 +1769,10 @@ QString fb2mobi::convert(QStringList files, uint idBook)
                         if(QFile::exists(db_path + QLatin1String("/") + font_file))
                         {
                             QFile::copy(db_path + QLatin1String("/") + font_file, tmp_dir + QStringLiteral("/OEBPS/fonts/font%1.ttf").arg(index));
+                        }
+                        else if(QFile::exists(FREELIB_DATA_DIR + QLatin1String("/fonts") + font_file))
+                        {
+                            QFile::copy(FREELIB_DATA_DIR + QLatin1String("/fonts") + font_file, tmp_dir + QStringLiteral("/OEBPS/fonts/font%1.ttf").arg(index));
                         }
                         else
                         {
@@ -1973,7 +1985,10 @@ QString fb2mobi::convert(QStringList files, uint idBook)
             pExportOptions_->sOutputFormat == QLatin1String("AZW3") ||
             pExportOptions_->sOutputFormat == QLatin1String("MOBI7"))
     {
-        QProcess::execute(QApplication::applicationDirPath() + QLatin1String("/xsl/kindlegen"), QStringList() << opf_file);
+        QString sKindlegen = QApplication::applicationDirPath() + QLatin1String("/kindlegen");
+        if(!QFile::exists(sKindlegen))
+            sKindlegen = QStringLiteral("kindlegen");
+        QProcess::execute(sKindlegen, QStringList() << opf_file);
         out_file = tmp_dir + QLatin1String("/OEBPS/book.mobi");
     }
     if(pExportOptions_->sOutputFormat == QLatin1String("AZW3"))
