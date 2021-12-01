@@ -17,6 +17,7 @@
 #include "common.h"
 #include "build_number.h"
 #include "utilites.h"
+#include "config-freelib.h"
 
 uint idCurrentLib;
 QTranslator* translator;
@@ -97,7 +98,11 @@ void SetLocale(const QString &sLocale)
 
     if(translator == nullptr)
         translator = new QTranslator();
-    if(translator->load(QStringLiteral(":/language/language_%1.qm").arg(sLocale)))
+    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.leftRef(2));
+    QString sQmFileFull = QApplication::applicationDirPath() + sQmFile;
+    if(!QFile::exists(sQmFileFull))
+            sQmFileFull = FREELIB_DATA_DIR + sQmFile;
+    if(translator->load(sQmFileFull))
     {
         QApplication::installTranslator(translator);
     }
