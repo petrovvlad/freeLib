@@ -1,0 +1,33 @@
+cmake_minimum_required(VERSION 3.5)
+
+project(freeLib VERSION 6.0 LANGUAGES CXX)
+
+set(CMAKE_AUTOUIC ON)
+set(CMAKE_AUTOMOC ON)
+set(CMAKE_AUTORCC ON)
+
+set(CMAKE_INCLUDE_CURRENT_DIR ON)
+
+set(CMAKE_CXX_STANDARD 11)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+if(UNIX AND NOT APPLE)
+    file(COPY KindleGenLinux/kindlegen DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/freeLib/src)
+    file(COPY freeLib/src/xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
+
+    include(GNUInstallDirs)
+    set(DATA_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/freelib")
+endif()
+
+add_subdirectory(freeLib/src/)
+add_subdirectory(freeLib/data/)
+
+install(PROGRAMS ${CMAKE_CURRENT_BINARY_DIR}/freeLib/src/kindlegen DESTINATION ${CMAKE_INSTALL_BINDIR})
+install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/xsl/fonts DESTINATION ${DATA_INSTALL_DIR})
+set_target_properties(freelib PROPERTIES
+    MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
+    MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
+    MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
+)
+
+
