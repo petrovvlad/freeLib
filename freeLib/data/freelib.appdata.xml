@@ -1,0 +1,25 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<component type="desktop">
+  <id>freelib.desktop</id>
+  <metadata_license>GPL3</metadata_license>
+  <project_license>GPL3</project_license>
+  <name>freelib</name>
+  <summary>freeLib</summary>
+  <description>
+    <p>
+    </p>
+    <p>
+    </p>
+  </description>
+  <screenshots>
+    <screenshot type="default">
+      <caption>freeLib</caption>
+      <image></image>
+    </screenshot>
+  </screenshots>
+  <url type="homepage">https://github.com/petrovvlad/freeLib</url>
+  <project_group>freeLib</project_group>
+  <provides>
+    <binary>freelib</binary>
+  </provides>
+</component> 
