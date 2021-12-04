@@ -1927,8 +1927,14 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     if(pExportOptions_->bAddCoverLabel || pExportOptions_->bCreateCover)
     {
         QString abbr = QLatin1String("");
-        foreach(const QString &str, mLibs[idLib_].mSerials[pBook->idSerial].sName.split(QStringLiteral(" "), Qt::SkipEmptyParts))
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+        foreach(const QString &str, mLibs[idLib_].mSerials[pBook->idSerial].sName.split(' ', Qt::SkipEmptyParts))
             abbr += str.at(0);
+#else
+        foreach(const QString &str, mLibs[idLib_].mSerials[pBook->idSerial].sName.split(' '))
+            if(!str.isEmpty())
+                abbr += str.at(0);
+#endif
         QString title = pExportOptions_->sCoverLabel;
         if(title.isEmpty())
             title = QLatin1String(ExportOptions::sDefaultCoverLabel);
