@@ -1,3 +1,4 @@
+#define QT_USE_QSTRINGBUILDER
 #include "options.h"
 
 #include <QFileInfo>
@@ -298,8 +299,6 @@ void Options::Load(QSettings *pSettings)
         vExportOptions[i].Load(pSettings);
     }
     pSettings->endArray();
-    if(count == 0)
-        setExportDefault();
 }
 
 void Options::Save(QSettings *pSettings)

@@ -200,6 +200,8 @@ int main(int argc, char *argv[])
     QSettings* settings = GetSettings();
     options.Load(settings);
     SetLocale(options.sUiLanguageName);
+    if(options.vExportOptions.isEmpty())
+        options.setExportDefault();
 
     QDir::setCurrent(HomeDir);
     QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());

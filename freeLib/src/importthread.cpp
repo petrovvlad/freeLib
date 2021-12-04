@@ -834,10 +834,18 @@ void ImportThread::process()
             if(!bWoDeleted_ || !deleted){
                 id_book = AddBook(star, name, id_seria, num_in_seria, file, size, id_in_lib, deleted, format, date, language, keys, existingID, folder, tag);
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
                 QStringList Authors = substrings[field_index[_AUTHORS]].split(':', Qt::SkipEmptyParts);
+#else
+                QStringList Authors = substrings[field_index[_AUTHORS]].split(':');
+#endif
                 int author_count = 0;
                 foreach(const QString &sAuthor, Authors)
                 {
+#if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
+                    if(sAuthor.isEmpty())
+                        continue;
+#endif
                     int tag_auth = 0;
                     if(author_count < tag_author.count())
                     {
