@@ -9,7 +9,6 @@ find_package(ZLIB REQUIRED)
 set(PROJECT_SOURCES
         main.cpp
         common.h
-        build_number.h
         mainwindow.cpp      mainwindow.h    mainwindow.ui
         library.cpp         library.h
         addlibrary.cpp      addlibrary.h    addlibrary.ui
