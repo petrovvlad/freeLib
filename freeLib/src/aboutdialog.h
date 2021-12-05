@@ -3,10 +3,6 @@
 
 #include <QDialog>
 
-#define MAJOR_VERSION 6
-#define MINOR_VERSION 0
-#define PROG_VERSION QStringLiteral("v %1.%2.%3").arg(MAJOR_VERSION).arg(MINOR_VERSION).arg(BUILD)
-
 #ifdef Q_OS_WIN
     #define VERSION_FONT    45
 #else

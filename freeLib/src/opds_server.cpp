@@ -8,8 +8,7 @@
 #include <QStringBuilder>
 #include <QDir>
 
-#include "aboutdialog.h"
-#include "build_number.h"
+#include "config-freelib.h"
 #include "fb2mobi/fb2mobi.h"
 
 #define SAVE_INDEX  4
@@ -2197,7 +2196,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
 QString opds_server::WriteSuccess(const QString &contentType, bool isGZip)
 {
     return QLatin1String("HTTP/1.1 200 OK\n"
-            "Server: freeLib ") + PROG_VERSION + QLatin1String("\n"
+            "Server: freeLib ") + QLatin1String(FREELIB_VERSION) + QLatin1String("\n"
             "Content-Type: ") + contentType + QLatin1String("\n"
             "Pragma: no-cache\n"
             "Accept-Ranges: bytes\n") +

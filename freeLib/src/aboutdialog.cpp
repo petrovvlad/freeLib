@@ -1,7 +1,7 @@
 #include "aboutdialog.h"
 #include "ui_aboutdialog.h"
 
-#include "build_number.h"
+#include "config-freelib.h"
 
 
 AboutDialog::AboutDialog(QWidget *parent) :
@@ -10,7 +10,7 @@ AboutDialog::AboutDialog(QWidget *parent) :
 {
     ui->setupUi(this);
     //setFixedSize(400,200);
-    ui->version->setText(PROG_VERSION);
+    ui->version->setText(QStringLiteral(FREELIB_VERSION));
 
     connect(ui->toolButton, &QAbstractButton::clicked, this, &AboutDialog::CloseBtn);
     QPixmap pix(QStringLiteral(":/splash%1.png").arg(devicePixelRatio()>=2 ?QStringLiteral("@2x") :QLatin1String("")));

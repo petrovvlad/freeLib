@@ -15,7 +15,6 @@
 #include "mainwindow.h"
 #include "aboutdialog.h"
 #include "common.h"
-#include "build_number.h"
 #include "utilites.h"
 #include "config-freelib.h"
 
@@ -214,7 +213,7 @@ int main(int argc, char *argv[])
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
-        painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, PROG_VERSION);
+        painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, QStringLiteral(FREELIB_VERSION));
         splash = new QSplashScreen(pixmap);
 #ifdef Q_OS_LINUX
         splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
