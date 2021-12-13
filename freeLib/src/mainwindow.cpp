@@ -1388,26 +1388,28 @@ void MainWindow::FillLibrariesMenu()
     QMenu *lib_menu = new QMenu(this);
     auto i = mLibs.constBegin();
     while(i != mLibs.constEnd()){
-        QAction *action = new QAction(i->name, this);
-        action->setData(i.key());
-        action->setCheckable(true);
-        lib_menu->insertAction(nullptr,action);
-        connect(action, &QAction::triggered, this, &MainWindow::SelectLibrary);
-        action->setChecked(i.key() == idCurrentLib);
+        uint idLib = i.key();
+        if(idLib>0){
+            QAction *action = new QAction(i->name, this);
+            action->setData(idLib);
+            action->setCheckable(true);
+            lib_menu->insertAction(nullptr,action);
+            connect(action, &QAction::triggered, this, &MainWindow::SelectLibrary);
+            action->setChecked(idLib == idCurrentLib);
+        }
         ++i;
     }
-    if(lib_menu->actions().count()>0)
-    {
-        ui->actionLibraries->setMenu(lib_menu);
-        ui->actionLibraries->setEnabled(true);
-    }
+    ui->actionLibraries->setMenu(lib_menu);
+    ui->actionLibraries->setEnabled(lib_menu->actions().count()>0);
 }
 
 void MainWindow::FillAuthors()
 {
+    if(idCurrentLib == 0)
+        return;
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    const bool wasBlocked = ui->AuthorList->blockSignals(true);
+        const bool wasBlocked = ui->AuthorList->blockSignals(true);
     QListWidgetItem *item;
     ui->AuthorList->clear();
     const SLib &currentLib = mLibs[idCurrentLib];
@@ -1451,6 +1453,8 @@ void MainWindow::FillAuthors()
 
 void MainWindow::FillSerials()
 {
+    if(idCurrentLib == 0)
+        return;
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     const bool wasBlocked = ui->SeriaList->blockSignals(true);
     ui->SeriaList->clear();
@@ -1496,6 +1500,8 @@ void MainWindow::FillSerials()
 
 void MainWindow::FillGenres()
 {
+    if(idCurrentLib == 0)
+        return;
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     const bool wasBlocked = ui->GenreList->blockSignals(true);
     ui->GenreList->clear();
@@ -1584,6 +1590,8 @@ void MainWindow::FillListBooks()
 
 void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
 {
+    if(idCurrentLib == 0)
+        return;
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QFont bold_font(ui->Books->font());
     bold_font.setBold(true);

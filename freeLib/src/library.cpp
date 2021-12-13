@@ -21,6 +21,8 @@ QString RelativeToAbsolutePath(QString path);
 
 void loadLibrary(uint idLibrary)
 {
+    if(idLibrary == 0)
+        return;
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
 

@@ -45,7 +45,7 @@ private slots:
     void ExistingLibsChanged();
     void ExportLib();
     void onComboboxLibraryChanged(int index);
-
+    QString UniqueName(const QString &sName);
 
 signals:
     void break_import();
