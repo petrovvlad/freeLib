@@ -30,7 +30,7 @@ AddLibrary::AddLibrary(QWidget *parent) :
     tbInpx->setFocusPolicy(Qt::NoFocus);
     tbInpx->setCursor(Qt::ArrowCursor);
     tbInpx->setText(QStringLiteral("..."));
-    QHBoxLayout* layout=new QHBoxLayout(ui->inpx);
+    QHBoxLayout* layout = new QHBoxLayout(ui->inpx);
     layout->addWidget(tbInpx, 0, Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
@@ -39,7 +39,7 @@ AddLibrary::AddLibrary(QWidget *parent) :
     tbBooksDir->setFocusPolicy(Qt::NoFocus);
     tbBooksDir->setCursor(Qt::ArrowCursor);
     tbBooksDir->setText(QStringLiteral("..."));
-    layout=new QHBoxLayout(ui->BookDir);
+    layout = new QHBoxLayout(ui->BookDir);
     layout->addWidget(tbBooksDir, 0, Qt::AlignRight);
     layout->setSpacing(0);
     layout->setMargin(0);
@@ -75,16 +75,16 @@ AddLibrary::~AddLibrary()
 void AddLibrary::Add_Library()
 {
     idCurrentLib_ = 0;
-    QString sNewName = tr("new");
+    QString sNewName = UniqueName( tr("new") );
     ui->ExistingLibs->blockSignals(true);
-    ui->ExistingLibs->addItem(sNewName,-1);
+    ui->ExistingLibs->addItem(sNewName, 0);
     SLib lib;
     lib.name = sNewName;
     lib.bFirstAuthor = false;
     lib.bWoDeleted = false;
     SaveLibrary(idCurrentLib_, lib);
     ui->ExistingLibs->blockSignals(false);
-    ui->ExistingLibs->setCurrentIndex(ui->ExistingLibs->count()-1);
+    emit ui->ExistingLibs->currentIndexChanged(ui->ExistingLibs->count()-1);
 }
 
 void AddLibrary::LogMessage(const QString &msg)
@@ -140,12 +140,16 @@ void AddLibrary::UpdateLibList()
     auto i = mLibs.constBegin();
     int index = 0;
     while(i != mLibs.constEnd()){
-        ui->ExistingLibs->addItem(i->name, i.key());
-        if(i.key() == idCurrentLib_)
-            ui->ExistingLibs->setCurrentIndex(index);
+        uint idLib = i.key();
+        if(idLib > 0){
+            ui->ExistingLibs->addItem(i->name, idLib);
+            if(idLib == idCurrentLib_)
+                ui->ExistingLibs->setCurrentIndex(index);
+            ++index;
+        }
         ++i;
-        ++index;
     }
+    ui->ExistingLibs->setEnabled(ui->ExistingLibs->count()>0);
     ui->ExistingLibs->blockSignals(block);
 }
 
@@ -276,8 +280,9 @@ void AddLibrary::DeleteLibrary()
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
         ui->ExistingLibs->setCurrentIndex(0);
-        SelectLibrary();
-    }
+    }else
+        idCurrentLib_ = 0;
+    SelectLibrary();
     bLibChanged = true;
     QApplication::restoreOverrideCursor();
 }
@@ -329,7 +334,7 @@ void AddLibrary::ExistingLibsChanged()
 void AddLibrary::ExportLib()
 {
     QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
-    if (dirName != "")
+    if (!dirName.isEmpty())
     {
         ExportDlg ed(this);
         ed.exec(idCurrentLib_, dirName);
@@ -342,6 +347,16 @@ void AddLibrary::onComboboxLibraryChanged(int index)
         idCurrentLib_ = ui->ExistingLibs->itemData(index).toInt();
         SelectLibrary();
     }
+}
+
+QString AddLibrary::UniqueName(const QString &sName)
+{
+    QString sResult = sName;
+    int i = 1;
+    while(ui->ExistingLibs->findText(sResult) != -1){
+        sResult = QStringLiteral("%1 (%2)").arg(sName, QString::number(i++));
+    }
+    return sResult;
 }
 
 

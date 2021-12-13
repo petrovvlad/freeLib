@@ -355,8 +355,8 @@ void SettingsDlg::btnOK()
     }
     QSettings *settings = GetSettings(true);
 
-    options.sUiLanguageName = options.sUiLanguageName;
-    options.sAlphabetName = options.sAlphabetName;
+    options.sUiLanguageName = options_.sUiLanguageName;
+    options.sAlphabetName = options_.sAlphabetName;
     options.sDatabasePath = ui->database_path->text().trimmed();
     options.bShowDeleted = ui->ShowDeleted->isChecked();
     options.bUseTag = ui->use_tag->isChecked();
