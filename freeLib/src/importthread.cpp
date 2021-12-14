@@ -200,7 +200,8 @@ qlonglong ImportThread::AddGenre(qlonglong id_book, QString sGenre, qlonglong id
 {
     qlonglong idGenre = 0;
     sGenre.replace(' ', '_');
-    query->exec(QLatin1String("SELECT id,main_janre FROM janre where keys LIKE '%") + sGenre.toLower() + QLatin1String(";%'"));
+//    query->exec(QLatin1String("SELECT id,main_janre FROM janre where keys LIKE '%") + sGenre.toLower() + QLatin1String(";%'"));
+    query->exec(QLatin1String("SELECT id FROM janre where keys LIKE '%") + sGenre.toLower() + QLatin1String(";%'"));
     if(query->next())
     {
         idGenre = query->value(0).toLongLong();
