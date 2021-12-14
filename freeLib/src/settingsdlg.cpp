@@ -741,13 +741,13 @@ void SettingsDlg::onOpdsEnable(int state)
     ui->httpExport->setEnabled(bOpdsEnable);
     ui->label_2->setEnabled(bOpdsEnable);
     ui->browseDir->setEnabled(bOpdsEnable);
-    ui->dirForBrowsing->setEnabled(bOpdsEnable);
+    ui->dirForBrowsing->setEnabled(bOpdsEnable && ui->browseDir->isChecked());
     ui->label_3->setEnabled(bOpdsEnable);
     ui->HTTP_need_pasword->setEnabled(bOpdsEnable);
-    ui->HTTP_user->setEnabled(bOpdsEnable);
-    ui->p_user->setEnabled(bOpdsEnable);
-    ui->HTTP_password->setEnabled(bOpdsEnable);
-    ui->p_password->setEnabled(bOpdsEnable);
+    ui->HTTP_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
+    ui->p_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
+    ui->HTTP_password->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
+    ui->p_password->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
     ui->srv_covers->setEnabled(bOpdsEnable);
     ui->srv_annotation->setEnabled(bOpdsEnable);
     ui->books_per_page->setEnabled(bOpdsEnable);
