@@ -9,8 +9,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>721</width>
-    <height>718</height>
+    <width>583</width>
+    <height>643</height>
    </rect>
   </property>
   <property name="minimumSize">
@@ -33,21 +33,21 @@
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_3">
    <property name="leftMargin">
-    <number>12</number>
+    <number>9</number>
    </property>
    <property name="topMargin">
-    <number>12</number>
+    <number>9</number>
    </property>
    <property name="rightMargin">
-    <number>12</number>
+    <number>9</number>
    </property>
    <property name="bottomMargin">
-    <number>21</number>
+    <number>9</number>
    </property>
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>2</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab_common">
       <attribute name="title">
@@ -405,6 +405,18 @@
           <property name="formAlignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
           </property>
+          <property name="horizontalSpacing">
+           <number>6</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>6</number>
+          </property>
+          <property name="rightMargin">
+           <number>6</number>
+          </property>
+          <property name="bottomMargin">
+           <number>5</number>
+          </property>
           <item row="0" column="1">
            <widget class="QCheckBox" name="OPDS_enable">
             <property name="text">
@@ -517,15 +529,15 @@
             </property>
            </widget>
           </item>
+          <item row="7" column="1">
+           <widget class="QLineEdit" name="HTTP_user"/>
+          </item>
           <item row="8" column="0">
            <widget class="QLabel" name="p_password">
             <property name="text">
              <string>Password:</string>
             </property>
            </widget>
-          </item>
-          <item row="7" column="1">
-           <widget class="QLineEdit" name="HTTP_user"/>
           </item>
           <item row="8" column="1">
            <widget class="QLineEdit" name="HTTP_password">
@@ -534,17 +546,17 @@
             </property>
            </widget>
           </item>
-          <item row="10" column="1">
-           <widget class="QCheckBox" name="srv_annotation">
-            <property name="text">
-             <string>Show annotation</string>
-            </property>
-           </widget>
-          </item>
           <item row="9" column="1">
            <widget class="QCheckBox" name="srv_covers">
             <property name="text">
              <string>Show covers</string>
+            </property>
+           </widget>
+          </item>
+          <item row="10" column="1">
+           <widget class="QCheckBox" name="srv_annotation">
+            <property name="text">
+             <string>Show annotation</string>
             </property>
            </widget>
           </item>
@@ -577,89 +589,132 @@
           <property name="formAlignment">
            <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
           </property>
-          <item row="0" column="0">
-           <widget class="QLabel" name="pl_2">
-            <property name="text">
-             <string>Proxy type:</string>
+          <property name="horizontalSpacing">
+           <number>0</number>
+          </property>
+          <property name="verticalSpacing">
+           <number>0</number>
+          </property>
+          <property name="leftMargin">
+           <number>0</number>
+          </property>
+          <property name="topMargin">
+           <number>0</number>
+          </property>
+          <property name="rightMargin">
+           <number>0</number>
+          </property>
+          <property name="bottomMargin">
+           <number>0</number>
+          </property>
+          <item row="1" column="0" colspan="2">
+           <layout class="QGridLayout" name="gridLayout">
+            <property name="leftMargin">
+             <number>8</number>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="proxy_type">
-            <item>
-             <property name="text">
-              <string>No proxy</string>
-             </property>
+            <property name="topMargin">
+             <number>8</number>
+            </property>
+            <property name="rightMargin">
+             <number>6</number>
+            </property>
+            <property name="bottomMargin">
+             <number>3</number>
+            </property>
+            <property name="spacing">
+             <number>6</number>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="pl_2">
+              <property name="text">
+               <string>Proxy type:</string>
+              </property>
+             </widget>
             </item>
-            <item>
-             <property name="text">
-              <string notr="true">SOCKS 5</string>
-             </property>
+            <item row="0" column="1">
+             <widget class="QComboBox" name="proxy_type">
+              <item>
+               <property name="text">
+                <string>No proxy</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">SOCKS 5</string>
+               </property>
+              </item>
+              <item>
+               <property name="text">
+                <string notr="true">HTTP</string>
+               </property>
+              </item>
+             </widget>
             </item>
-            <item>
-             <property name="text">
-              <string notr="true">HTTP</string>
-             </property>
+            <item row="1" column="0">
+             <widget class="QLabel" name="pl_1">
+              <property name="text">
+               <string>Host name:</string>
+              </property>
+             </widget>
             </item>
-           </widget>
-          </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="pl_1">
-            <property name="text">
-             <string>Host name:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="1" column="1">
-           <widget class="QLineEdit" name="proxy_host"/>
-          </item>
-          <item row="2" column="0">
-           <widget class="QLabel" name="pl_4">
-            <property name="text">
-             <string>Port:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="2" column="1">
-           <widget class="QSpinBox" name="proxy_port">
-            <property name="minimum">
-             <number>1</number>
-            </property>
-            <property name="maximum">
-             <number>99999</number>
-            </property>
-            <property name="value">
-             <number>8080</number>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="0">
-           <widget class="QLabel" name="pl_5">
-            <property name="text">
-             <string>User name:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="3" column="1">
-           <widget class="QLineEdit" name="proxy_user">
-            <property name="text">
-             <string/>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="0">
-           <widget class="QLabel" name="pl_3">
-            <property name="text">
-             <string>Password:</string>
-            </property>
-           </widget>
-          </item>
-          <item row="4" column="1">
-           <widget class="QLineEdit" name="proxy_password">
-            <property name="echoMode">
-             <enum>QLineEdit::Password</enum>
-            </property>
-           </widget>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="proxy_host"/>
+            </item>
+            <item row="1" column="2">
+             <widget class="QLabel" name="pl_4">
+              <property name="text">
+               <string>Port:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="1" column="3">
+             <widget class="QSpinBox" name="proxy_port">
+              <property name="sizePolicy">
+               <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+                <horstretch>0</horstretch>
+                <verstretch>0</verstretch>
+               </sizepolicy>
+              </property>
+              <property name="minimum">
+               <number>1</number>
+              </property>
+              <property name="maximum">
+               <number>99999</number>
+              </property>
+              <property name="value">
+               <number>8080</number>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="pl_5">
+              <property name="text">
+               <string>User name:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="proxy_user">
+              <property name="text">
+               <string/>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="2">
+             <widget class="QLabel" name="pl_3">
+              <property name="text">
+               <string>Password:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="3">
+             <widget class="QLineEdit" name="proxy_password">
+              <property name="echoMode">
+               <enum>QLineEdit::Password</enum>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
@@ -894,6 +949,9 @@
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout_2">
+     <property name="spacing">
+      <number>6</number>
+     </property>
      <item>
       <widget class="QPushButton" name="btnDefaultSettings">
        <property name="text">
