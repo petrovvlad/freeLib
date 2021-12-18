@@ -129,6 +129,7 @@ void ExportOptions::Load(QSettings *pSettings)
     bAddCoverLabel = pSettings->value(QStringLiteral("addCoverLabel"), false).toBool();
     sCoverLabel = pSettings->value(QStringLiteral("coverLabel")).toString();
     sSendTo = pSettings->value(QStringLiteral("sendTo"), QStringLiteral("device")).toString();
+    sCurrentTool = pSettings->value(QStringLiteral("current_tool")).toString();
     nContentPlacement = pSettings->value(QStringLiteral("content_placement"), 0).toInt();
     int countFonts = pSettings->beginReadArray(QStringLiteral("fonts"));
     vFontExportOptions.resize(countFonts);
