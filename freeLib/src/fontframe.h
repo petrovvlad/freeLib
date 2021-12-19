@@ -15,7 +15,7 @@ public:
     explicit FontFrame(bool use=true, int tag=0, const QString &font=QLatin1String(""), const QString &font_b=QLatin1String(""), const QString &font_i=QLatin1String(""), const QString &font_bi=QLatin1String(""),int fontSize=100, QWidget *parent = 0);
     ~FontFrame();
     bool use();
-    int tag();
+    quint8 tag();
     int fontSize();
     //bool italic();
     //bool bold();
