@@ -90,13 +90,19 @@ file(GLOB QM_FILES "${CMAKE_CURRENT_SOURCE_DIR}/language_*.qm")
 #file(COPY ${QM_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/translations)
 install(FILES ${QM_FILES} DESTINATION ${DATA_INSTALL_DIR}/translations)
 
-foreach( file_i ${QM_FILES})
+if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     add_custom_command(
         TARGET freelib POST_BUILD
-        COMMAND ${CMAKE_COMMAND} -E copy
-                ${file_i}
-                ${CMAKE_CURRENT_BINARY_DIR}/translations/)
-endforeach( file_i )
+        COMMAND ${CMAKE_COMMAND} -E make_directory ${CMAKE_CURRENT_BINARY_DIR}/translations
+        )
+    foreach( file_i ${QM_FILES})
+        add_custom_command(
+            TARGET freelib POST_BUILD
+            COMMAND ${CMAKE_COMMAND} -E copy
+            ${file_i}
+            ${CMAKE_CURRENT_BINARY_DIR}/translations/)
+    endforeach( file_i )
+endif()
 
 target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
