@@ -396,9 +396,9 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
         }
         if(pBuffer != nullptr)
             pBuffer->setData(book_file.readAll());
+        fi.setFile(book_file);
         if(fileData)
         {
-            fi.setFile(book_file);
             *fileData = fi.birthTime();
         }
 
