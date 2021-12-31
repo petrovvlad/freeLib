@@ -1791,7 +1791,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
                 else if(j == 3)
                     set.font_bi = index;
             }
-            int tag_id = fontExportOptions.nTag;
+            quint8 tag_id = fontExportOptions.nTag;
             QString sFontSize = QString::number(fontExportOptions.nFontSize);
             set.tags[tag_list[tag_id].css] = sFontSize;
             bool find = false;

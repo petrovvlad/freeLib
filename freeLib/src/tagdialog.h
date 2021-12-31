@@ -2,6 +2,7 @@
 #define TAGDIALOG_H
 
 #include <QDialog>
+#include <QMap>
 
 
 namespace Ui {
@@ -18,8 +19,13 @@ public:
 
 private:
     Ui::TagDialog *ui;
+    QMap<uint, QIcon> icons_;
+    QList<uint> listIdDeleted_;
+
 private slots:
-    void ok_btn();
+    void btnOk();
+    void onAddRow();
+    void onDeleteRow();
 };
 
 #endif // TAGDIALOG_H

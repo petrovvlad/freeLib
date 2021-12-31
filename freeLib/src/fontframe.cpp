@@ -326,7 +326,8 @@ bool FontFrame::use()
 {
     return ui->Use->isChecked();
 }
-int FontFrame::tag()
+
+quint8 FontFrame::tag()
 {
     return ui->tag->currentIndex();
 }

@@ -18,13 +18,13 @@ struct ToolsOptions
 
 struct FontExportOptions
 {
-    bool bUse;
-    int nTag;
     QString sFont;
     QString sFontB;
     QString sFontI;
     QString sFontBI;
     int nFontSize;
+    bool bUse;
+    quint8 nTag;
 };
 
 struct ExportOptions
@@ -39,50 +39,50 @@ struct ExportOptions
     constexpr const static char* sDefaultCoverLabel = "%abbrs - %n2";
     constexpr const static char* sDefaultBookTitle = "(%abbrs %n2) %b";
     QString sName;
-    bool bDefault;
     QString sCurrentTool;
 
     QString sEmail;
     QString sEmailFrom;
     QString sEmailSubject;
     QString sEmailServer;
-    quint16 nEmailServerPort;
     QString sEmailUser;
     QString sEmailPassword;
-    quint32 nEmailPause;
-    quint8  nEmailConnectionType;
-
-    bool bPostprocessingCopy;
     QString sDevicePath;
-    bool bOriginalFileName;
     QString sExportFileName;
+    QString sUserCSS;
+    QString sOutputFormat;
+    QString sBookSeriesTitle;
+    QString sAuthorSring;
+    QString sCoverLabel;
+    QString sSendTo;
+
+    quint16 nEmailServerPort;
+    quint8 nEmailPause;
+    quint8 nMaxCaptionLevel;
+    quint8 nContentPlacement;
+    quint8 nFootNotes;
+    quint8 nEmailConnectionType;
+    quint8 nHyphenate;
+    quint8 nVignette;
+    bool bDefault;
+    bool bOriginalFileName;
+    bool bPostprocessingCopy;
     bool bDropCaps;
     bool bJoinSeries;
-    int nHyphenate;
-    int nVignette;
     bool bUserCSS;
-    QString sUserCSS;
     bool bSplitFile;
-    QString sOutputFormat;
     bool bBreakAfterCupture;
     bool bAnnotation;
-    int nFootNotes;
     bool bAskPath;
     bool bTransliteration;
     bool bRemovePersonal;
     bool bRepairCover;
     bool bMlToc;
-    int nMaxCaptionLevel;
     bool bSeriaTranslit;
     bool bAuthorTranslit;
-    QString sBookSeriesTitle;
-    QString sAuthorSring;
     bool bCreateCover;
     bool bCreateCoverAlways;
     bool bAddCoverLabel;
-    QString sCoverLabel;
-    QString sSendTo;
-    int nContentPlacement;
     QVector<FontExportOptions> vFontExportOptions;
 };
 
@@ -95,39 +95,37 @@ struct Options
 
     const static ushort nDefaultOpdsPort = 8080;
     const static ushort  nDefaultProxyPort = 8080;
-    bool bShowDeleted;
-    bool bUseTag;
-    bool bShowSplash;
-    bool bStorePosition;
 
     QString sAlphabetName;
     QString sUiLanguageName;
     QString sDatabasePath;
+    QString sOpdsUser;
+    QString sOpdsPassword;
+    QString sProxyHost;
+    QString sProxyUser;
+    QString sProxyPassword;
+    QString sDirForBrowsing;
 
+    int nHttpExport;
+    quint16 nOpdsPort;
+    quint16 nOpdsBooksPerPage;
+    quint16 nProxyPort;
+    quint8 nProxyType;
+
+    qint8 nIconTray;
+    qint8 nTrayColor;
+    bool bShowDeleted;
+    bool bUseTag;
+    bool bShowSplash;
+    bool bStorePosition;
     bool bCloseDlgAfterExport;
     bool bUncheckAfterExport;
     bool bExtendedSymbols;
-
-    QString sOpdsUser;
-    QString sOpdsPassword;
-    quint16 nOpdsPort;
-    quint16 nOpdsBooksPerPage;
+    bool bBrowseDir;
     bool bOpdsEnable;
     bool bOpdsShowCover;
     bool bOpdsShowAnotation;
     bool bOpdsNeedPassword;
-
-    QString sProxyHost;
-    QString sProxyUser;
-    QString sProxyPassword;
-    quint16 nProxyPort;
-    quint8 nProxyType;
-    int nHttpExport;
-    bool bBrowseDir;
-    QString sDirForBrowsing;
-
-    qint8 nIconTray;
-    qint8 nTrayColor;
 
     QHash <QString,QString> applications;
     QHash <QString,ToolsOptions> tools;

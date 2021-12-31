@@ -14,7 +14,7 @@ public:
     SAuthor();
     SAuthor(const QString &sName);
     QString getName() const;
-    int nTag;
+    QList<uint> listIdTags;
     QString sFirstName;
     QString sLastName;
     QString sMiddleName;
@@ -31,6 +31,7 @@ struct SBook
     QString sFormat;
     QList<uint> listIdGenres;
     QList<uint> listIdAuthors;
+    QList<uint> listIdTags;
     uint idInLib;
     QString sFile;
     uint idSerial;
@@ -39,14 +40,13 @@ struct SBook
     uint nSize;
     uchar nStars;
     uchar idLanguage;
-    uchar nTag;
     bool bDeleted;
 };
 
 struct SSerial
 {
     QString sName;
-    uchar nTag;
+    QList<uint> listIdTags;
 };
 
 struct SGenre
@@ -65,6 +65,7 @@ public:
     QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr) const;
     QString fillParams(const QString &str, uint idBook) const;
     QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file) const;
+    void deleteTag(uint idTag);
 
 
     QString name;

@@ -2,7 +2,8 @@
 #set(QT_COMPONENTS Core Network Widgets Gui WebEngineWidgets Sql Xml XmlPatterns LinguistTools)
 set(QT_COMPONENTS Core Network Widgets Gui WebEngineWidgets Sql Xml XmlPatterns)
 
-find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
+#find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
+find_package(QT NAMES Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(ZLIB REQUIRED)
 
@@ -59,11 +60,6 @@ if(NOT QuaZip-Qt5_FOUND)
 endif()
 
 
-file(GLOB QM_FILES "${CMAKE_CURRENT_SOURCE_DIR}/language_*.qm")
-file(COPY ${QM_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/translations)
-install(FILES ${QM_FILES} DESTINATION ${DATA_INSTALL_DIR}/translations)
-#FILE(GLOB TS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.ts")
-#qt5_add_translation(QM_FILES ${TS_FILES})
 
 qt5_add_resources(PROJECT_SOURCES resource.qrc)
 #configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
@@ -85,6 +81,22 @@ else()
         #${CMAKE_CURRENT_BINARY_DIR}/translations.qrc
     )
 endif()
+
+
+#FILE(GLOB TS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.ts")
+#qt5_add_translation(QM_FILES ${TS_FILES})
+
+file(GLOB QM_FILES "${CMAKE_CURRENT_SOURCE_DIR}/language_*.qm")
+#file(COPY ${QM_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/translations)
+install(FILES ${QM_FILES} DESTINATION ${DATA_INSTALL_DIR}/translations)
+
+foreach( file_i ${QM_FILES})
+    add_custom_command(
+        TARGET freelib POST_BUILD
+        COMMAND ${CMAKE_COMMAND} -E copy
+                ${file_i}
+                ${CMAKE_CURRENT_BINARY_DIR}/translations/)
+endforeach( file_i )
 
 target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
@@ -109,3 +121,4 @@ endif()
 if(UNIX AND NOT APPLE)
     install(TARGETS freelib DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif(UNIX AND NOT APPLE)
+

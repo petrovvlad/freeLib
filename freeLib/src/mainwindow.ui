@@ -433,7 +433,6 @@
                  <property name="font">
                   <font>
                    <pointsize>26</pointsize>
-                   <weight>75</weight>
                    <bold>true</bold>
                   </font>
                  </property>
@@ -642,7 +641,7 @@
            <item>
             <widget class="QLabel" name="tag_label">
              <property name="text">
-              <string>Tag:</string>
+              <string>Filter:</string>
              </property>
             </widget>
            </item>
@@ -855,7 +854,7 @@
      <x>0</x>
      <y>0</y>
      <width>1297</width>
-     <height>23</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">
