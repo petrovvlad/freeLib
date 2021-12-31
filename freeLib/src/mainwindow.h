@@ -21,12 +21,6 @@ namespace Ui {
 class MainWindow;
 }
 
-struct Stag
-{
-    QPixmap pm;
-    int id;
-};
-
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -46,10 +40,8 @@ private:
     QMenu TagMenu;
     QObject* current_list_for_tag;
     void SaveLibPosition();
-    QList<Stag> tags_pic;
+    QMap<uint, QIcon> iconsTags_;
 
-    QPixmap GetTag(int id);
-    void update_list_pix(qlonglong id, int list, int tag_id);
     void uncheck_books(QList<qlonglong> list);
     opds_server opds;
     QToolButton *FirstButton;
@@ -63,6 +55,14 @@ private:
     void FillAlphabet(const QString &sAlphabetName);
     bool IsBookInList(const SBook &book);
     void checkLetter(const QChar cLetter);
+    QList<uint> listCheckedBooks(bool bCheckedOnly = false);
+    void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, QList<uint> *pList);
+    QList<QTreeWidgetItem*> checkedItemsBookList(const QTreeWidgetItem *item = nullptr);
+    void setTag(uint idTag, uint id, QList<uint> &listIdTags, QString sTable, bool bSet);
+    void updateIcons();
+    void updateItemIcon(QTreeWidgetItem *item);
+    QIcon getTagIcon(const QList<uint> &listTags);
+
 
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
@@ -78,8 +78,6 @@ protected:
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
-    QList<uint> listCheckedBooks(bool bCheckedOnly = false);
-    void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, QList<uint> *pList);
 
     void ExportBookListBtn(bool Enable);
     void FillLibrariesMenu();
@@ -126,8 +124,6 @@ private slots:
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void MinimizeWindow();
 
-//public slots:
-//    void newLibWizard(bool AddLibOnly=true);
 signals:
     void window_loaded();
 };

@@ -27,17 +27,6 @@
 
 extern QSplashScreen *splash;
 
-QPixmap GetTag(QColor color,int size)
-{
-    QPixmap pixmap(size, size-4);
-    pixmap.fill(Qt::transparent);
-    QPainter paint(&pixmap);
-    paint.setBrush(QBrush(color));
-    QPen pen = QPen(QColor(static_cast<int>(color.red()*0.5), static_cast<int>(color.green()*0.5), static_cast<int>(color.blue()*0.5), static_cast<int>(color.alpha()*0.5)));
-    paint.setPen(pen);
-    paint.drawEllipse(2, 0, size-5, size-5);
-    return pixmap;
-}
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -46,31 +35,6 @@ MainWindow::MainWindow(QWidget *parent) :
     trIcon = nullptr;
     error_quit = false;
     QSettings *settings = GetSettings();
-
-    if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
-    {
-        QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-        //query.exec("CREATE TABLE IF NOT EXISTS params (id INTEGER PRIMARY KEY, name TEXT, value TEXT)");
-        query.exec(QStringLiteral("SELECT value FROM params WHERE name='%1'").arg(QStringLiteral("version")));
-        int version=0;
-        if(query.next())
-        {
-            version = query.value(0).toInt();
-        }
-        if(version<6){
-            splash->hide();
-            if(QMessageBox::question(nullptr,tr("Database"),tr("This version needs new database version. All your old books data will be lost. Continue?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::Yes)
-            {
-                if(!openDB(QStringLiteral("libdb"), false, true))
-                    error_quit = true;
-            }
-            else
-            {
-                error_quit = true;
-            }
-        }
-    }
-
 
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
@@ -111,7 +75,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->s_genre->setModel(MyProxySortModel);
     MyProxySortModel->setDynamicSortFilter(false);
 
-
     StarsDelegate* delegate = new StarsDelegate(this);
     ui->Books->setItemDelegateForColumn(3, delegate);
 
@@ -143,8 +106,8 @@ MainWindow::MainWindow(QWidget *parent) :
     loadLibrary(idCurrentLib);
     UpdateBooks();
 
-    FillAuthors();
-    FillSerials();
+//    FillAuthors();
+//    FillSerials();
     FillGenres();
 
     connect(ui->searchAuthor, &QLineEdit::textChanged, this, &MainWindow::onSerachAuthorsChanded);
@@ -251,66 +214,138 @@ void MainWindow::showEvent(QShowEvent *ev)
     QMainWindow::showEvent(ev);
 }
 
-QPixmap MainWindow::GetTag(int id)
-{
-    foreach(const Stag &tag, tags_pic)
-    {
-        if(tag.id == id)
-            return tag.pm;
-    }
-    return QPixmap();
-}
-
 void MainWindow::UpdateTags()
 {
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QSettings *settings = GetSettings();
+    QPalette palette = QApplication::style()->standardPalette();
+    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
 
     QButtonGroup *group = new QButtonGroup(this);
     group->setExclusive(true);
+
+    iconsTags_.clear();
+    QString sMultiTagsIcon = QLatin1String(":/img/icons/") +(darkTheme ?QLatin1String("dark/") :QLatin1String("light/")) + QStringLiteral("multitags.svg");
+    iconsTags_[0] = QIcon(sMultiTagsIcon);
+    QMap<uint, QIcon> icons;
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    query.exec(QStringLiteral("SELECT id, light_theme, dark_theme FROM icon"));
+    while(query.next())
+    {
+        QPixmap pixIcon;
+        uint idIcon = query.value(0).toUInt();
+        QByteArray baLightIcon = query.value(1).toByteArray();
+        QByteArray baDarkIcon = query.value(2).toByteArray();
+        if(darkTheme){
+            if(baDarkIcon.isEmpty())
+                pixIcon.loadFromData(baLightIcon);
+            else
+                pixIcon.loadFromData(baDarkIcon);
+        }else
+            pixIcon.loadFromData(baLightIcon);
+        icons[idIcon] = pixIcon;
+    }
+
     const bool wasBlocked = ui->TagFilter->blockSignals(true);
 
-    int size = static_cast<int>(ui->TagFilter->style()->pixelMetric(QStyle::PM_SmallIconSize) * devicePixelRatio());
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.exec(QStringLiteral("SELECT color,name,id from favorite"));
+    query.exec(QStringLiteral("SELECT id,name,id_icon FROM tag"));
+    //                                0  1    2
     ui->TagFilter->clear();
     int con=1;
     ui->TagFilter->addItem(QStringLiteral("*"), 0);
     TagMenu.clear();
-    QAction *ac = new QAction(tr("no tag"), &TagMenu);
-    ac->setData(0);
-    connect(ac, &QAction::triggered, this, &MainWindow::set_tag);
-    TagMenu.addAction(ac);
-    tags_pic.clear();
-    QPixmap pix = ::GetTag(QColor(0,0,0,0), size);
-    pix.setDevicePixelRatio(devicePixelRatio());
-    Stag new_tag = {pix, 0};
-    tags_pic<<new_tag;
     ui->TagFilter->setVisible(options.bUseTag);
     ui->tag_label->setVisible(options.bUseTag);
 
     while(query.next())
     {
-        ui->TagFilter->addItem(query.value(1).toString().trimmed(), query.value(2).toInt());
+        uint idTag = query.value(0).toUInt();
+        QString sTagName = query.value(1).toString().trimmed();
+        bool bLatin1 = true;
+        for(int i=0; i<sTagName.length(); i++){
+            if(sTagName.at(i).unicode()>127){
+                bLatin1 = false;
+                break;
+            }
+        }
+        if(bLatin1)
+            sTagName = TagDialog::tr(sTagName.toLatin1().data());
+        ui->TagFilter->addItem(sTagName, idTag);
         if(settings->value(QStringLiteral("current_tag")).toInt() == ui->TagFilter->count()-1 && options.bUseTag)
             ui->TagFilter->setCurrentIndex(ui->TagFilter->count()-1);
-        pix= ::GetTag(QColor(query.value(0).toString().trimmed()),size);
-        Stag new_tag = {pix, query.value(2).toInt()};
-        tags_pic<<new_tag;
-        ui->TagFilter->setItemData(con, pix, Qt::DecorationRole);//Добавляем изображение цвета в комбо
-        con++;
-        QAction *ac = new QAction(pix, query.value(1).toString().trimmed(), &TagMenu);
-        ac->setData(query.value(2).toString());
+        QAction *ac;
+        uint idIcon = query.value(2).toUInt();
+        QIcon &iconTag = icons[idIcon];
+        ui->TagFilter->setItemIcon(con, iconTag);
+        ac = new QAction(iconTag, sTagName, &TagMenu);
+        ac->setCheckable(true);
+        iconsTags_[idTag] = iconTag;
+        ac->setData(idTag);
         connect(ac, &QAction::triggered, this, &MainWindow::set_tag);
         TagMenu.addAction(ac);
+        con++;
     }
+
+    updateIcons();
 
     ui->TagFilter->addItem(tr("setup ..."), -1);
     ui->TagFilter->blockSignals(wasBlocked);
 
     QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::updateIcons()
+{
+    for(int i=0; i<ui->SeriaList->count(); i++){
+        auto item = ui->SeriaList->item(i);
+        uint idSerial = item->data(Qt::UserRole).toUInt();
+        item->setIcon(getTagIcon(mLibs[idCurrentLib].mSerials[idSerial].listIdTags));
+    }
+    for(int i=0; i<ui->AuthorList->count(); i++){
+        auto item = ui->AuthorList->item(i);
+        uint idAuthor = item->data(Qt::UserRole).toUInt();
+        item->setIcon(getTagIcon(mLibs[idCurrentLib].mAuthors[idAuthor].listIdTags));
+    }
+    for(int i=0; i<ui->Books->topLevelItemCount(); i++){
+        auto item1 = ui->Books->topLevelItem(i);
+        updateItemIcon(item1);
+        for(int j=0; j<item1->childCount(); j++){
+            auto item2 = item1->child(j);
+            updateItemIcon(item2);
+                for(int k=0; k<item2->childCount(); k++){
+                    auto item3 = item2->child(k);
+                    updateItemIcon(item3);
+                }
+        }
+    }
+}
+
+void MainWindow::updateItemIcon(QTreeWidgetItem *item)
+{
+    uint id = item->data(0, Qt::UserRole).toUInt();
+    switch(item->type()){
+    case ITEM_TYPE_BOOK:
+        item->setIcon(0, getTagIcon(mLibs[idCurrentLib].mBooks[id].listIdTags));
+        break;
+    case ITEM_TYPE_SERIA:
+        item->setIcon(0, getTagIcon(mLibs[idCurrentLib].mSerials[id].listIdTags));
+        break;
+    case ITEM_TYPE_AUTHOR:
+        item->setIcon(0, getTagIcon(mLibs[idCurrentLib].mAuthors[id].listIdTags));
+        break;
+    }
+}
+
+QIcon MainWindow::getTagIcon(const QList<uint> &listTags)
+{
+    int size = listTags.size();
+    if(size == 0)
+        return QIcon();
+    if(size == 1)
+        return iconsTags_[listTags.first()];
+    return iconsTags_[0];
 }
 
 MainWindow::~MainWindow()
@@ -341,48 +376,6 @@ void MainWindow::ReviewLink(const QUrl &url)
     else if(sPath.startsWith(QLatin1String("seria_")))
     {
         MoveToSeria(sPath.right(sPath.length()-7).toLongLong(), sPath.mid(6,1).toUpper());
-    }
-}
-
-void MainWindow::update_list_pix(qlonglong id, int list,int tag_id)
-{
-    switch(list)
-    {
-    case 1: //авторы
-        for(int i=0; i<ui->AuthorList->count(); i++)
-        {
-            if(ui->AuthorList->item(i)->data(Qt::UserRole).toLongLong() == id)
-            {
-                ui->AuthorList->item(i)->setIcon(GetTag(tag_id));
-            }
-        }
-        break;
-    case 2: //серии
-        for(int i=0; i<ui->SeriaList->count(); i++)
-        {
-            if(ui->SeriaList->item(i)->data(Qt::UserRole).toLongLong() == id)
-            {
-                ui->SeriaList->item(i)->setIcon(GetTag(tag_id));
-            }
-        }
-
-        break;
-    }
-    for(int i=0; i<ui->Books->topLevelItemCount(); i++)
-    {
-        if(list == 1)
-        {
-            if(ui->Books->topLevelItem(i)->data(0, Qt::UserRole).toLongLong() == id)
-                ui->Books->topLevelItem(i)->setIcon(0, GetTag(tag_id));
-        }
-        else
-        {
-            for(int j=0; j<ui->Books->topLevelItem(i)->childCount(); j++)
-            {
-                if(ui->Books->topLevelItem(i)->child(j)->data(0, Qt::UserRole).toLongLong() == id)
-                    ui->Books->topLevelItem(i)->child(j)->setIcon(0, GetTag(tag_id));
-            }
-        }
     }
 }
 
@@ -464,66 +457,68 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
 
 void MainWindow::set_tag()
 {
-    uchar tag_id = static_cast<uchar>(qobject_cast<QAction*>(QObject::sender())->data().toInt());
+    uint idTag = qobject_cast<QAction*>(QObject::sender())->data().toUInt();
+    bool bSet = qobject_cast<QAction*>(QObject::sender())->isChecked();
     uint id;
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
     if(current_list_for_tag == ui->Books)
     {
-        QTreeWidgetItem* item = ui->Books->selectedItems().at(0);
-        id=item->data(0, Qt::UserRole).toUInt();
-        switch (item->type()) {
-        case ITEM_TYPE_BOOK:
-            item->setIcon(0,GetTag(tag_id));
-            query.prepare(QStringLiteral("UPDATE book set favorite=:favorite where id=:id"));
-            query.bindValue(QStringLiteral(":favorite"), tag_id);
-            query.bindValue(QStringLiteral(":id"), id);
-            query.exec();
-            mLibs[idCurrentLib].mBooks[id].nTag = tag_id;
-            break;
+        auto listItems = checkedItemsBookList();
+        if(listItems.isEmpty())
+            listItems = ui->Books->selectedItems();
+        for(int iItem=0; iItem<listItems.size(); iItem++){
+            QTreeWidgetItem* item = listItems.at(iItem);
+            id = item->data(0, Qt::UserRole).toUInt();
+            switch (item->type()) {
+            case ITEM_TYPE_BOOK:
+                setTag(idTag, id, mLibs[idCurrentLib].mBooks[id].listIdTags, QStringLiteral("book"), bSet);
+                break;
 
-        case ITEM_TYPE_SERIA:
-            update_list_pix(id,2,tag_id);
-            query.prepare(QStringLiteral("UPDATE seria set favorite=:favorite where id=:id"));
-            query.bindValue(QStringLiteral(":favorite"), tag_id);
-            query.bindValue(QStringLiteral(":id"), id);
-            query.exec();
-            mLibs[idCurrentLib].mSerials[id].nTag = tag_id;
-            break;
+            case ITEM_TYPE_SERIA:
+                setTag(idTag, id, mLibs[idCurrentLib].mSerials[id].listIdTags, QStringLiteral("seria"), bSet);
 
-        case ITEM_TYPE_AUTHOR:
-            update_list_pix(id,1,tag_id);
-            query.prepare(QStringLiteral("UPDATE author set favorite=:favorite where id=:id"));
-            query.bindValue(QStringLiteral(":favorite"), tag_id);
-            query.bindValue(QStringLiteral(":id"), id);
-            query.exec();
-            mLibs[idCurrentLib].mAuthors[id].nTag = tag_id;
-            break;
+                break;
 
-        default:
-            break;
+            case ITEM_TYPE_AUTHOR:
+                setTag(idTag, id, mLibs[idCurrentLib].mAuthors[id].listIdTags, QStringLiteral("author"), bSet);
+
+                break;
+
+            default:
+                break;
+            }
         }
     }
     else if(current_list_for_tag == ui->AuthorList)
     {
-        id=ui->AuthorList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        update_list_pix(id, 1, tag_id);
-        query.prepare(QStringLiteral("UPDATE author set favorite=:favorite where id=:id"));
-        query.bindValue(QStringLiteral(":favorite"), tag_id);
-        query.bindValue(QStringLiteral(":id"), id);
-        query.exec();
-        mLibs[idCurrentLib].mAuthors[id].nTag = tag_id;
+        id = ui->AuthorList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
+        setTag(idTag, id, mLibs[idCurrentLib].mAuthors[id].listIdTags, QStringLiteral("author"), bSet);
     }
     else if(current_list_for_tag == ui->SeriaList)
     {
-        id=ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        update_list_pix(id, 2, tag_id);
-        query.prepare(QStringLiteral("UPDATE seria set favorite=:favorite where id=:id"));
-        query.bindValue(QStringLiteral(":favorite"), tag_id);
-        query.bindValue(QStringLiteral(":id"), id);
-        query.exec();
-        mLibs[idCurrentLib].mSerials[id].nTag = tag_id;
+        id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
+        setTag(idTag, id, mLibs[idCurrentLib].mSerials[id].listIdTags, QStringLiteral("seria"), bSet);
     }
+    updateIcons();
+}
+
+void MainWindow::setTag(uint idTag, uint id, QList<uint> &listIdTags,  QString sTable, bool bSet)
+{
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    QString sQuery;
+    QIcon icon;
+    if(bSet){
+        listIdTags << idTag;
+        sQuery = QStringLiteral("INSERT INTO %1_tag (id_%1,id_tag) VALUES(%2,%3)").
+                arg(sTable, QString::number(id), QString::number(idTag));
+        icon = iconsTags_[idTag];
+    }else{
+        int index = listIdTags.indexOf(idTag);
+        listIdTags.removeAt(index);
+        sQuery = QStringLiteral("DELETE FROM %1_tag WHERE (id_%1=%2) AND (id_tag=%3)").
+                arg(sTable, QString::number(id), QString::number(idTag));
+    }
+    query.exec(sQuery);
 }
 
 void MainWindow::tag_select(int index)
@@ -541,10 +536,10 @@ void MainWindow::tag_select(int index)
     else if(index >= 0)
     {
         settings->setValue(QStringLiteral("current_tag"), index);
-        FillListBooks();
         FillAuthors();
         FillSerials();
         FillGenres();
+        FillListBooks();
     }
 }
 
@@ -659,6 +654,24 @@ void MainWindow::FillCheckedItemsBookList(const QTreeWidgetItem* item, bool send
             }
         }
     }
+}
+
+QList<QTreeWidgetItem*> MainWindow::checkedItemsBookList(const QTreeWidgetItem *item)
+{
+    QList<QTreeWidgetItem*> listItems;
+    QTreeWidgetItem* current;
+    int count = item ?item->childCount() :ui->Books->topLevelItemCount();
+    for(int i=0; i < count; i++)
+    {
+        current = item ?item->child(i) :ui->Books->topLevelItem(i);
+        if(current->childCount()>0)
+        {
+            listItems << checkedItemsBookList(current);
+        }
+        if(current->checkState(0) == Qt::Checked)
+            listItems << current;
+    }
+    return listItems;
 }
 
 void MainWindow::uncheck_books(QList<qlonglong> list)
@@ -1135,6 +1148,7 @@ void MainWindow::ManageLibrary()
         }
         setWindowTitle(AppName + ((idCurrentLib==0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
         FillLibrariesMenu();
+        FillGenres();
     }
 }
 
@@ -1263,8 +1277,64 @@ void MainWindow::ContextMenu(QPoint point)
     }
     if(menu.actions().count() > 0)
         menu.addSeparator();
-    if(options.bUseTag)
+    if(options.bUseTag){
+        if(QObject::sender() == ui->Books){
+            QMap<uint,uint> countTags;
+            auto listItems  = checkedItemsBookList();
+            if(listItems.isEmpty())
+                listItems = ui->Books->selectedItems();
+            QList<uint> listTags;
+            for(int iItem=0; iItem<listItems.size(); iItem++){
+                auto &item = listItems.at(iItem);
+                uint id=item->data(0, Qt::UserRole).toUInt();
+                switch(item->type()){
+                case ITEM_TYPE_BOOK:
+                    listTags = mLibs[idCurrentLib].mBooks[id].listIdTags;
+                    break;
+                case ITEM_TYPE_SERIA:
+                    listTags = mLibs[idCurrentLib].mSerials[id].listIdTags;
+                    break;
+                case ITEM_TYPE_AUTHOR:
+                    listTags = mLibs[idCurrentLib].mAuthors[id].listIdTags;
+                }
+                for(int iTag=0; iTag<listTags.size(); iTag++){
+                    uint idTag = listTags.at(iTag);
+                    if(countTags.contains(idTag))
+                            countTags[idTag] = 1;
+                    else
+                        countTags[idTag]++;
+                }
+            }
+            const auto &actions = TagMenu.actions();
+            for(int iAction=0; iAction<actions.size(); iAction++){
+                uint idTag = actions.at(iAction)->data().toUInt();
+                if(!countTags.contains(idTag))
+                    actions.at(iAction)->setChecked(false);
+                else
+                    actions.at(iAction)->setChecked(true);
+            }
+        }
+
+        if(QObject::sender() == ui->AuthorList){
+            const auto &actions = TagMenu.actions();
+            for(int iAction=0; iAction<actions.size(); iAction++){
+                uint idTag = actions.at(iAction)->data().toUInt();
+                uint idAuthor = ui->AuthorList->itemAt(point)->data(Qt::UserRole).toUInt();
+                actions.at(iAction)->setChecked(mLibs[idCurrentLib].mAuthors[idAuthor].listIdTags.contains(idTag));
+            }
+        }
+
+        if(QObject::sender() == ui->SeriaList){
+            const auto &actions = TagMenu.actions();
+            for(int iAction=0; iAction<actions.size(); iAction++){
+                uint idTag = actions.at(iAction)->data().toUInt();
+                uint idSerial = ui->SeriaList->itemAt(point)->data(Qt::UserRole).toUInt();
+                actions.at(iAction)->setChecked(mLibs[idCurrentLib].mSerials[idSerial].listIdTags.contains(idTag));
+            }
+        }
+
         menu.addActions(TagMenu.actions());
+    }
     if(menu.actions().count() > 0)
         menu.exec(QCursor::pos());
 }
@@ -1409,19 +1479,19 @@ void MainWindow::FillAuthors()
         return;
     qint64 t_start = QDateTime::currentMSecsSinceEpoch();
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        const bool wasBlocked = ui->AuthorList->blockSignals(true);
+    const bool wasBlocked = ui->AuthorList->blockSignals(true);
     QListWidgetItem *item;
     ui->AuthorList->clear();
     const SLib &currentLib = mLibs[idCurrentLib];
     QListWidgetItem *selectedItem = nullptr;
     QString sSearch = ui->searchAuthor->text();
-    auto i = currentLib.mAuthors.constBegin();
+    auto iAuthor = currentLib.mAuthors.constBegin();
 
-    while(i!=currentLib.mAuthors.constEnd()){
+    while(iAuthor != currentLib.mAuthors.constEnd()){
         if(sSearch == QLatin1String("*") || (sSearch == QLatin1String("#") &&
-          !i->getName().left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) || i->getName().startsWith(sSearch,Qt::CaseInsensitive))
+          !iAuthor->getName().left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) || iAuthor->getName().startsWith(sSearch,Qt::CaseInsensitive))
         {
-            QList<uint> booksId = currentLib.mAuthorBooksLink.values(i.key());
+            QList<uint> booksId = currentLib.mAuthorBooksLink.values(iAuthor.key());
             int count =0;
             foreach( uint idBook, booksId) {
                 const SBook &book = currentLib.mBooks[idBook];
@@ -1429,18 +1499,18 @@ void MainWindow::FillAuthors()
                     count++;
             }
             if(count>0){
-                item=new QListWidgetItem(QStringLiteral("%1 (%2)").arg(i->getName()).arg(count));
-                item->setData(Qt::UserRole,i.key());
+                item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(iAuthor->getName()).arg(count));
+                item->setData(Qt::UserRole,iAuthor.key());
                 if(options.bUseTag)
-                    item->setIcon(GetTag(i->nTag));
+                    item->setIcon(getTagIcon(iAuthor->listIdTags));
                 ui->AuthorList->addItem(item);
-                if(idCurrentAuthor_ == i.key()){
+                if(idCurrentAuthor_ == iAuthor.key()){
                     item->setSelected(true);
                     selectedItem = item;
                 }
             }
         }
-        ++i;
+        ++iAuthor;
     }
     if(selectedItem != nullptr)
         ui->AuthorList->scrollToItem(selectedItem);
@@ -1483,7 +1553,7 @@ void MainWindow::FillSerials()
         item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(lib.mSerials[iSerial.key()].sName).arg(iSerial.value()));
         item->setData(Qt::UserRole,iSerial.key());
         if(options.bUseTag)
-            item->setIcon(GetTag(lib.mSerials[iSerial.key()].nTag));
+            item->setIcon(getTagIcon(lib.mSerials[iSerial.key()].listIdTags));
         ui->SeriaList->addItem(item);
         if(iSerial.key() == idCurrentSerial_)
         {
@@ -1629,8 +1699,9 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                 item_author->setData(0, Qt::UserRole, idAuthor);
                 item_author->setData(3, Qt::UserRole, -1);
 
-                if(options.bUseTag)
-                    item_author->setIcon(0, GetTag(lib.mAuthors[idAuthor].nTag));
+                if(options.bUseTag){
+                    item_author->setIcon(0, getTagIcon(lib.mAuthors[idAuthor].listIdTags));
+                }
                 mAuthors[idAuthor] = item_author;
             }else
                 item_author = mAuthors[idAuthor];
@@ -1653,10 +1724,9 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                     item_seria->setData(0, Qt::UserRole, idSerial);
                     item_seria->setData(3, Qt::UserRole, -1);
                     if(options.bUseTag)
-                        item_seria->setIcon(0, GetTag(lib.mSerials[idSerial].nTag));
+                        item_seria->setIcon(0, getTagIcon(lib.mSerials[idSerial].listIdTags));
 
                     mSerias.insert(idSerial, item_seria);
-
                 }
                 item_book = new TreeBookItem(item_seria, ITEM_TYPE_BOOK);
             }else
@@ -1664,8 +1734,9 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
 
             item_book->setCheckState(0, Qt::Unchecked);
             item_book->setData(0, Qt::UserRole, idBook);
-            if(options.bUseTag)
-                item_book->setIcon(0, GetTag(book.nTag));
+            if(options.bUseTag){
+                item_book->setIcon(0, getTagIcon(book.listIdTags));
+            }
 
             item_book->setText(0,book.sName);
             if(book.numInSerial>0){
@@ -1713,14 +1784,14 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
 
 bool MainWindow::IsBookInList(const SBook &book)
 {
-    int current_tag = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt();
-    uint idSerial=book.idSerial;
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
+    uint idSerial = book.idSerial;
 
     return (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.idLanguage) &&
             (options.bShowDeleted || !book.bDeleted) &&
-            (!options.bUseTag || current_tag == 0 || current_tag == book.nTag ||
-            (idSerial>0 && mLibs[idCurrentLib].mSerials[idSerial].nTag == current_tag) ||
-            (mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].nTag == current_tag));
+            (!options.bUseTag || idTagFilter == 0 || book.listIdTags.contains(idTagFilter) ||
+            (idSerial>0 && mLibs[idCurrentLib].mSerials[idSerial].listIdTags.contains(idTagFilter)) ||
+            (mLibs[idCurrentLib].mAuthors[book.idFirstAuthor].listIdTags.contains(idTagFilter)));
 }
 
 void MainWindow::UpdateExportMenu()

@@ -1,27 +1,82 @@
 #include "tagdialog.h"
 #include "ui_tagdialog.h"
 
+#include <QComboBox>
+#include <QMessageBox>
+#include <QSqlError>
+#include <QDebug>
+#include <algorithm>
+
 #include "common.h"
+#include "library.h"
 
 TagDialog::TagDialog(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::TagDialog)
 {
     ui->setupUi(this);
-    int size =ui->listWidget->style()->pixelMetric(QStyle::PM_SmallIconSize);
+
+    ui->tableWidget->setColumnWidth(0,140);
+    ui->tableWidget->setColumnWidth(1,30);
+
+    QPalette palette = QApplication::style()->standardPalette();
+    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.exec(QStringLiteral("SELECT color,name,id from favorite"));
-    ui->listWidget->clear();
-    int con=1;
+    query.exec(QStringLiteral("SELECT id, light_theme, dark_theme FROM icon"));
     while(query.next())
     {
+        QPixmap pixIcon;
+        uint idIcon = query.value(0).toUInt();
+        QByteArray baLightIcon = query.value(1).toByteArray();
+        QByteArray baDarkIcon = query.value(2).toByteArray();
+        if(darkTheme){
+            if(baDarkIcon.isEmpty())
+                pixIcon.loadFromData(baLightIcon);
+            else
+                pixIcon.loadFromData(baDarkIcon);
+        }else
+            pixIcon.loadFromData(baLightIcon);
+        icons_[idIcon] = pixIcon;
+    }
 
-        QListWidgetItem *item=new QListWidgetItem(GetTag(QColor(query.value(0).toString().trimmed()),size),query.value(1).toString().trimmed(),ui->listWidget);
-        item->setFlags(item->flags() | Qt::ItemIsEditable);
-        item->setData(Qt::UserRole,query.value(2).toString());
+    query.exec(QStringLiteral("SELECT id,name,id_icon FROM tag"));
+    //                                0  1    2
+    int con = 0;
+    while(query.next())
+    {
+        int index = 0;
+        uint idTag = query.value(0).toUInt();
+        uint idIcon = query.value(2).toUInt();
+        QString sName = query.value(1).toString().trimmed();
+        bool bLatin1 = true;
+        for(int i=0; i<sName.length(); i++){
+            if(sName.at(i).unicode()>127){
+                bLatin1 = false;
+                break;
+            }
+        }
+        if(bLatin1)
+            sName = tr(sName.toLatin1().data());
+        QTableWidgetItem *itemName = new QTableWidgetItem(sName);
+        itemName->setData(Qt::UserRole, idTag);
+        ui->tableWidget->insertRow(ui->tableWidget->rowCount());
+        ui->tableWidget->setItem(con, 0, itemName);
+        QComboBox *combo = new QComboBox(ui->tableWidget);
+        auto iIcon = icons_.constBegin();
+        while(iIcon != icons_.constEnd()){
+            combo->insertItem(index, iIcon.value(), QLatin1String(""), iIcon.key());
+            if(iIcon.key() == idIcon)
+                combo->setCurrentIndex(index);
+            ++iIcon;
+            index++;
+        }
+        ui->tableWidget->setCellWidget(con, 1, combo);
         con++;
     }
-    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &TagDialog::ok_btn);
+    connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &TagDialog::btnOk);
+    connect(ui->pushButtonAddRow, &QPushButton::clicked, this, &TagDialog::onAddRow);
+    connect(ui->pushButtonDelRow, &QPushButton::clicked, this, &TagDialog::onDeleteRow);
 }
 
 TagDialog::~TagDialog()
@@ -29,12 +84,88 @@ TagDialog::~TagDialog()
     delete ui;
 }
 
-void TagDialog::ok_btn()
+void TagDialog::btnOk()
 {
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    for(int i=0; i<ui->listWidget->count(); i++)
+    for(int i=0; i<listIdDeleted_.size(); i++){
+        uint id = listIdDeleted_.at(i);
+        auto iLib = mLibs.begin();
+        while(iLib != mLibs.end()){
+            iLib->deleteTag(id);
+            ++iLib;
+        }
+    }
+    uint maxId = 0;
+    for(int i=0; i<ui->tableWidget->rowCount(); i++)
+        maxId = std::max(maxId, ui->tableWidget->item(i,0)->data(Qt::UserRole).toUInt());
+    for(int i=0; i<ui->tableWidget->rowCount(); i++)
     {
-        query.exec(QStringLiteral("UPDATE favorite SET name='%1' WHERE id=%2").
-                   arg(ui->listWidget->item(i)->text(),ui->listWidget->item(i)->data(Qt::UserRole).toString()));
+        uint id = ui->tableWidget->item(i,0)->data(Qt::UserRole).toUInt();
+        if(id == 0){
+            id = ++maxId;
+            query.prepare(QStringLiteral("INSERT INTO tag (id,name,id_icon) VALUES(:id, :name,:id_icon) "));
+        }else{
+            query.prepare(QStringLiteral("UPDATE tag SET name=:name, id_icon=:id_icon WHERE id=:id"));
+        }
+        query.bindValue(QStringLiteral(":id"), id);
+        query.bindValue(QStringLiteral(":name"), ui->tableWidget->item(i,0)->text().trimmed());
+        QVariant idIcon = qobject_cast<QComboBox*>(ui->tableWidget->cellWidget(i, 1))->currentData();
+        query.bindValue(QStringLiteral(":id_icon"), idIcon);
+        if(!query.exec())
+            qDebug() << query.lastError().text();
     }
 }
+
+void TagDialog::onAddRow()
+{
+    int newRow = ui->tableWidget->rowCount();
+    ui->tableWidget->insertRow(newRow);
+    QTableWidgetItem *itemName = new QTableWidgetItem(tr("Tag") + QString::number(newRow));
+    ui->tableWidget->setItem(newRow, 0, itemName);
+
+    QComboBox *combo = new QComboBox(ui->tableWidget);
+    int index = 0;
+    auto iIcon = icons_.constBegin();
+    while(iIcon != icons_.constEnd()){
+        combo->insertItem(index, iIcon.value(), QLatin1String(""), iIcon.key());
+        ++iIcon;
+        index++;
+    }
+    combo->setCurrentIndex(0);
+    ui->tableWidget->setCellWidget(newRow, 1, combo);
+}
+
+void TagDialog::onDeleteRow()
+{
+    int index = ui->tableWidget->currentRow();
+    if(index>=0){
+        QTableWidgetItem *item = ui->tableWidget->item(index, 0);
+        uint id = item->data(Qt::UserRole).toUInt();
+        QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+        query.prepare(QStringLiteral("SELECT COUNT(id_tag) cnt FROM book_tag WHERE id_tag=:id_tag"));
+        query.bindValue(QStringLiteral(":id_tag"), id);
+        query.exec();
+        query.first();
+        uint nCount = query.value(0).toUInt();
+        if(nCount == 0){
+            query.prepare(QStringLiteral("SELECT COUNT(id_tag) cnt FROM author_tag WHERE id_tag=:id_tag"));
+            query.bindValue(QStringLiteral(":id_tag"), id);
+            query.exec();
+            query.first();
+            nCount = query.value(0).toUInt();
+        }
+        if(nCount == 0){
+            query.prepare(QStringLiteral("SELECT COUNT(id_tag) cnt FROM seria_tag WHERE id_tag=:id_tag"));
+            query.bindValue(QStringLiteral(":id_tag"), id);
+            query.exec();
+            query.first();
+            nCount = query.value(0).toUInt();
+        }
+
+        if(nCount ==0 || QMessageBox::question(nullptr,tr("Tags"),tr("This tag is used. Do you want to delete this tag anyway?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::Yes){
+            ui->tableWidget->removeRow(index);
+            listIdDeleted_ << id;
+        }
+    }
+}
+

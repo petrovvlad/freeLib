@@ -57,6 +57,8 @@
         <file>xsl/opds/home.png</file>
         <file>xsl/opds/icon_256x256.png</file>
         <file>xsl/opds/splash_opera.png</file>
+        <file>img/icons/dark/multitags.svg</file>
+        <file>img/icons/light/multitags.svg</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>

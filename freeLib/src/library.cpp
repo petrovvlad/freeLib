@@ -31,8 +31,8 @@ void loadLibrary(uint idLibrary)
     query.setForwardOnly(true);
     SLib& lib = mLibs[idLibrary];
     lib.mSerials.clear();
-    query.prepare(QStringLiteral("SELECT id, name, favorite FROM seria WHERE id_lib=:id_lib;"));
-    //                                   0   1     2
+    query.prepare(QStringLiteral("SELECT id, name FROM seria WHERE id_lib=:id_lib;"));
+    //                                   0   1
     query.bindValue(QStringLiteral(":id_lib"), idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
@@ -40,33 +40,51 @@ void loadLibrary(uint idLibrary)
         uint idSerial = query.value(0).toUInt();
         QString sName = query.value(1).toString();
         lib.mSerials[idSerial].sName = sName;
-        lib.mSerials[idSerial].nTag = static_cast<uchar>(query.value(2).toUInt());
+    }
+    query.prepare(QStringLiteral("SELECT seria_tag.id_seria, seria_tag.id_tag FROM seria_tag INNER JOIN seria ON seria.id = seria_tag.id_seria WHERE seria.id_lib = :id_lib"));
+    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        uint idSeria = query.value(0).toUInt();
+        uint idTag = query.value(1).toUInt();
+        if(lib.mSerials.contains(idSeria))
+            lib.mSerials[idSeria].listIdTags << idTag;
     }
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
     qDebug()<< "loadSeria " << t_end-t_start << "msec";
 
     t_start = QDateTime::currentMSecsSinceEpoch();
     lib.mAuthors.insert(0,SAuthor());
-    query.prepare(QStringLiteral("SELECT author.id, name1, name2, name3, author.favorite FROM author WHERE id_lib=:id_lib;"));
-    //                                     0          1      2      3      4
+    query.prepare(QStringLiteral("SELECT author.id, name1, name2, name3 FROM author WHERE id_lib=:id_lib;"));
+    //                                     0          1      2      3
     query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     query.exec();
     while (query.next()) {
         uint idAuthor = query.value(0).toUInt();
-        int nTag = query.value(4).toInt();
         SAuthor &author = lib.mAuthors[idAuthor];
         author.sFirstName = query.value(2).toString().trimmed();;
         author.sLastName = query.value(1).toString().trimmed();;
         author.sMiddleName = query.value(3).toString().trimmed();;
-        lib.mAuthors[idAuthor].nTag = nTag;
     }
+    query.prepare(QStringLiteral("SELECT author_tag.id_author, author_tag.id_tag FROM author_tag INNER JOIN author ON author.id = author_tag.id_author WHERE author.id_lib = :id_lib"));
+    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        uint idAuthor = query.value(0).toUInt();
+        uint idTag = query.value(1).toUInt();
+        if(lib.mAuthors.contains(idAuthor))
+            lib.mAuthors[idAuthor].listIdTags << idTag;
+    }
+
     t_end = QDateTime::currentMSecsSinceEpoch();
     qDebug()<< "loadAuthor " << t_end-t_start << "msec";
 
     lib.mBooks.clear();
     query.setForwardOnly(true);
-    query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, favorite FROM book WHERE id_lib=:id_lib;"));
-    //                                    0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
+    query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id FROM book WHERE id_lib=:id_lib;"));
+    //                                    0  1     2     3         4             5         6     7     8        9     10      11        12       13
     query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
@@ -95,7 +113,6 @@ void loadLibrary(uint idLibrary)
         book.idInLib = query.value(11).toUInt();
         book.sArchive = query.value(12).toString();
         book.idFirstAuthor = query.value(13).toUInt();
-        book.nTag = qvariant_cast<uchar>(query.value(14));
     }
 
     lib.mAuthorBooksLink.clear();
@@ -122,8 +139,8 @@ void loadLibrary(uint idLibrary)
         }
         ++iBook;
     }
-    query.prepare(QStringLiteral("SELECT id_book, id_janre FROM book_janre WHERE id_lib=:id_lib;"));
-    //                                     0       1
+    query.prepare(QStringLiteral("SELECT id_book, id_genre FROM book_genre WHERE id_lib=:id_lib;"));
+    //                                   0        1
     query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
@@ -133,6 +150,16 @@ void loadLibrary(uint idLibrary)
         if(idGenre == 0) idGenre = 1112; // Прочие/Неотсортированное
         if(lib.mBooks.contains(idBook))
             lib.mBooks[idBook].listIdGenres << idGenre;
+    }
+    query.prepare(QStringLiteral("SELECT book_tag.id_book, book_tag.id_tag FROM book_tag INNER JOIN book ON book.id = book_tag.id_book WHERE book.id_lib = :id_lib"));
+    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    while (query.next()) {
+        uint idBook = query.value(0).toUInt();
+        uint idTag = query.value(1).toUInt();
+        if(lib.mBooks.contains(idBook))
+            lib.mBooks[idBook].listIdTags << idTag;
     }
     lib.bLoaded = true;
 
@@ -148,7 +175,7 @@ void loadGenres()
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
     mGenre.clear();
-    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index FROM janre;"));
+    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index FROM genre;"));
     //                                   0   1     2          3
     if(!query.exec())
         qDebug() << query.lastError().text();
@@ -165,7 +192,6 @@ void loadGenres()
 
 SAuthor::SAuthor()
 {
-    nTag = 0;
 }
 
 SAuthor::SAuthor(const QString &sName)
@@ -505,5 +531,29 @@ QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_
            replace(QLatin1String("%d"), book_file.absoluteDir().path());
     result = fillParams(result, idBook);
     return result;
+}
+
+void SLib::deleteTag(uint idTag)
+{
+    auto iBook = mBooks.begin();
+    while(iBook != mBooks.end()){
+        iBook->listIdTags.removeOne(idTag);
+        ++iBook;
+    }
+    auto iSerial = mSerials.begin();
+    while(iSerial != mSerials.end()){
+        iSerial->listIdTags.removeOne(idTag);
+        ++iSerial;
+    }
+    auto iAuthor = mAuthors.begin();
+    while(iAuthor != mAuthors.end()){
+        iAuthor->listIdTags.removeOne(idTag);
+        ++iAuthor;
+    }
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    query.exec(QStringLiteral("DELETE FROM book_tag WHERE id_tag=%1").arg(idTag));
+    query.exec(QStringLiteral("DELETE FROM seria_tag WHERE id_tag=%1").arg(idTag));
+    query.exec(QStringLiteral("DELETE FROM author_tag WHERE id_tag=%1").arg(idTag));
+    query.exec(QStringLiteral("DELETE FROM tag WHERE id=%1").arg(idTag));
 }
 

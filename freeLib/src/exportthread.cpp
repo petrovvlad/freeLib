@@ -426,12 +426,14 @@ void ExportThread::export_lib()
     if(!openDB(QStringLiteral("ExpThrdDb"), true, false))
         return;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("ExpThrdDb")));
-    if(!query.exec(QStringLiteral("SELECT book.id,author.id,janre.id,book.name,star,num_in_seria,book.language,file,size,deleted,date,format,book.keys,archive,date,book.id_inlib, "
-               "book.favorite,seria.name,seria.favorite,janre.main_janre||':',author.favorite,author.name1||','||author.name2||','||author.name3||':' "
+    if(!query.exec(QStringLiteral("SELECT book.id,author.id,genre.id,book.name,star,num_in_seria,book.language,file,size,deleted,date,format,book.keys,archive,date,book.id_inlib, "
+                                  //      0       1         2        3         4    5            6             7    8    9       10   11     12        13      14   15
+               "seria.name,genre.keys,author.name1||','||author.name2||','||author.name3||':' "
+//              16          17         18
                "FROM book_author "
                "JOIN book on book.id=book_author.id_book "
-               "LEFT JOIN book_janre ON book_janre.id_book=book.id "
-               "LEFT JOIN janre ON janre.id=book_janre.id_janre "
+               "LEFT JOIN book_genre ON book_genre.id_book=book.id "
+               "LEFT JOIN genre ON genre.id=book_genre.id_genre "
                "LEFT JOIN seria ON seria.id=book.id_seria "
                "JOIN author ON author.id=book_author.id_author "
                "WHERE book_author.id_lib=%1 "
@@ -504,14 +506,17 @@ void ExportThread::export_lib()
         if(loop_enable)
         {
             lastbookid = query.value(0).toLongLong();
-            authors += query.value(21).toString().trimmed();
-            janres += query.value(19).toString().trimmed();
-            fav_authors += (query.value(20).toString().trimmed() + QLatin1String(":"));
+            authors += query.value(18).toString().trimmed();
+            QString sGenre = query.value(17).toString().trimmed();
+            int nSemicolonPos = sGenre.indexOf(';');
+            sGenre.truncate(nSemicolonPos);
+            janres += sGenre + QLatin1String(":");
+            //fav_authors += (query.value(20).toString().trimmed() + QLatin1String(":"));
             buf = (QStringLiteral("%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8\4%9").arg
                         (
                             authors,                                //AUTHOR
                             query.value(3).toString().trimmed(),    //TITLE
-                            query.value(17).toString().trimmed(),   //SERIES
+                            query.value(16).toString().trimmed(),   //SERIES
                             query.value(5).toString().trimmed(),    //SERNO
                             janres,                                 //GENRE
                             query.value(15).toString().trimmed(),   //LIBID
@@ -528,13 +533,13 @@ void ExportThread::export_lib()
                             query.value(9).toBool()?"1":"",         //DEL
                             query.value(12).toString().trimmed(),   //KEYWORDS
                             ""                                      //CRC32
-                        )+
+                        )/*+
                         QStringLiteral("\4%1\4%2\4%3\r\n").arg
                         (
                              query.value(16).toString().trimmed(),  //FAV_BOOK
                              fav_authors,                           //FAV_AUTHOR
                              query.value(18).toString().trimmed()   //FAV_SERIES
-                        )
+                        )*/
                         );
         }
     }

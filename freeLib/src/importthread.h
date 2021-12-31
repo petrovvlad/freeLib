@@ -46,12 +46,11 @@ private:
     long existingID;
     QSqlQuery *query;
     qlonglong AddSeria(const QString &str, qlonglong libID, int tag);
-    qlonglong AddAuthor(const QString &str, qlonglong libID, qlonglong id_book, bool first_author, const QString &language, int tag);
-    qlonglong addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, const QString &language, int tag);
-    qlonglong AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
+    qlonglong addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, int tag);
+    uint AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
                  int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, int tag);
 
-    qlonglong AddGenre(qlonglong id_book, QString sGenre, qlonglong id_lib, const QString &language);
+    qlonglong AddGenre(qlonglong idBook, QString sGenre, qlonglong id_lib);
 
 };
 
