@@ -62,9 +62,9 @@ public:
     uint findAuthor(SAuthor& author) const;
     uint findSerial(const QString &sSerial) const;
     void loadAnnotation(uint idBook);
-    QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr) const;
-    QString fillParams(const QString &str, uint idBook) const;
-    QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file) const;
+    QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr);
+    QString fillParams(const QString &str, uint idBook);
+    QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file);
     void deleteTag(uint idTag);
 
 
@@ -74,10 +74,10 @@ public:
     bool bFirstAuthor;
     bool bWoDeleted;
     bool bLoaded = false;
-    QHash<uint,SAuthor> mAuthors;
-    QMultiHash<uint,uint> mAuthorBooksLink;
-    QHash<uint,SBook> mBooks;
-    QHash<uint,SSerial> mSerials;
+    QHash<uint, SAuthor> mAuthors;
+    QMultiHash<uint, uint> mAuthorBooksLink;
+    QHash<uint, SBook> mBooks;
+    QHash<uint, SSerial> mSerials;
     QVector<QString> vLaguages;
 };
 

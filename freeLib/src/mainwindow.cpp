@@ -853,7 +853,7 @@ void MainWindow::StartSearch()
     uint idGenre = ui->s_genre->currentData().toUInt();
     int idLanguage = ui->findLanguage->currentData().toInt();
 
-    const SLib& lib = mLibs[idCurrentLib];
+    SLib& lib = mLibs[idCurrentLib];
     QList<uint> listBooks;
     int nCount = 0;
     auto iBook = lib.mBooks.constBegin();
@@ -928,7 +928,7 @@ void MainWindow::SelectGenre()
     QTreeWidgetItem* cur_item = ui->GenreList->selectedItems()[0];
     uint idGenre = cur_item->data(0, Qt::UserRole).toUInt();
     QList<uint> listBooks;
-    const SLib& lib = mLibs[idCurrentLib];
+    SLib& lib = mLibs[idCurrentLib];
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
@@ -961,7 +961,7 @@ void MainWindow::SelectSeria()
     QListWidgetItem* cur_item = ui->SeriaList->selectedItems().at(0);
     uint idSerial = cur_item->data(Qt::UserRole).toUInt();
     QList<uint> listBooks;
-    const SLib& lib = mLibs[idCurrentLib];
+    SLib& lib = mLibs[idCurrentLib];
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if(iBook->idSerial == idSerial && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
@@ -1018,7 +1018,7 @@ void MainWindow::SelectBook()
     uint idBook = item->data(0,Qt::UserRole).toUInt();
     idCurrentBook_ = idBook;
     SLib& lib = mLibs[idCurrentLib];
-    const SBook &book = lib.mBooks[idBook];
+    SBook &book = lib.mBooks[idBook];
     ui->btnOpenBook->setEnabled(true);
     QDateTime book_date;
     QFileInfo fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
@@ -1482,7 +1482,7 @@ void MainWindow::FillAuthors()
     const bool wasBlocked = ui->AuthorList->blockSignals(true);
     QListWidgetItem *item;
     ui->AuthorList->clear();
-    const SLib &currentLib = mLibs[idCurrentLib];
+    SLib &currentLib = mLibs[idCurrentLib];
     QListWidgetItem *selectedItem = nullptr;
     QString sSearch = ui->searchAuthor->text();
     auto iAuthor = currentLib.mAuthors.constBegin();
@@ -1494,13 +1494,13 @@ void MainWindow::FillAuthors()
             QList<uint> booksId = currentLib.mAuthorBooksLink.values(iAuthor.key());
             int count =0;
             foreach( uint idBook, booksId) {
-                const SBook &book = currentLib.mBooks[idBook];
+                SBook &book = currentLib.mBooks[idBook];
                 if(IsBookInList(book))
                     count++;
             }
             if(count>0){
                 item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(iAuthor->getName()).arg(count));
-                item->setData(Qt::UserRole,iAuthor.key());
+                item->setData(Qt::UserRole, iAuthor.key());
                 if(options.bUseTag)
                     item->setIcon(getTagIcon(iAuthor->listIdTags));
                 ui->AuthorList->addItem(item);
@@ -1537,7 +1537,7 @@ void MainWindow::FillSerials()
     while(iBook != lib.mBooks.constEnd()){
         if(IsBookInList(*iBook) && (sSearch == QLatin1String("*") || (sSearch == QLatin1String("#") &&
            !lib.mSerials[iBook->idSerial].sName.left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) ||
-           lib.mSerials[iBook->idSerial].sName.startsWith(sSearch,Qt::CaseInsensitive)))
+           lib.mSerials[iBook->idSerial].sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
             if(mCounts.contains(iBook->idSerial))
                 mCounts[iBook->idSerial]++;
@@ -1551,7 +1551,7 @@ void MainWindow::FillSerials()
     auto iSerial = mCounts.constBegin();
     while(iSerial != mCounts.constEnd()){
         item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(lib.mSerials[iSerial.key()].sName).arg(iSerial.value()));
-        item->setData(Qt::UserRole,iSerial.key());
+        item->setData(Qt::UserRole, iSerial.key());
         if(options.bUseTag)
             item->setIcon(getTagIcon(lib.mSerials[iSerial.key()].listIdTags));
         ui->SeriaList->addItem(item);
@@ -1581,7 +1581,7 @@ void MainWindow::FillGenres()
     bold_font.setBold(true);
 
     QMap<uint,uint> mCounts;
-    const SLib& lib = mLibs[idCurrentLib];
+    SLib& lib = mLibs[idCurrentLib];
 
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
@@ -1677,10 +1677,10 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
 
     const bool wasBlocked = ui->Books->blockSignals(true);
     ui->Books->clear();
-    const SLib &lib = mLibs[idCurrentLib];
+    SLib &lib = mLibs[idCurrentLib];
 
     foreach( uint idBook, listBook) {
-        const SBook &book = lib.mBooks[idBook];
+        SBook &book = lib.mBooks[idBook];
         if(IsBookInList(book))
         {
             uint idSerial = book.idSerial;
