@@ -6,3 +6,5 @@
 *.user
 *.directory
 .idea
+.vs
+cmake-build-*
