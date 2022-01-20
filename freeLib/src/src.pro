@@ -12,6 +12,7 @@ TARGET = freeLib
 TEMPLATE = app
 
 LIBS += -lz
+INCLUDEPATH += $$[QT_INSTALL_HEADERS]/QtZlib
 
 #LIBS += -lcrypto -lssl
 #LIBS += /opt/local/lib/libssl.a
