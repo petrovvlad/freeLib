@@ -1,0 +1,9 @@
+Package: freelib
+Version: 6.0.18
+Section: education
+Architecture: amd64
+Priority: optional
+Depends: qtbase5, qtwebengine5, libqt5xmlpatterns5, libquazip5, libc6, fonts-paratype
+Maintainer: DragonZX <dragonzx@soclan.ru>
+Description: Free OpenSource library platform
+ Simple client for LibRusEc + Flibusta
