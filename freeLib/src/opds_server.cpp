@@ -1404,6 +1404,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             {
                 if(iIndex.trimmed().isEmpty() /*|| iIndex[0] == '\0'*/)
                     continue;
+                if(iIndex == QStringLiteral("\0"))
+                    continue;
                 if(opds)
                 {
 
