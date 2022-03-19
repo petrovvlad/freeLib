@@ -38,5 +38,3 @@ mkdir freeLib/build && cd freeLib/build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DQUAZIP_STATIC:BOOL=ON .. && cmake --build .
 sudo make install
 ```
-
-sudo apt-get install libqt5sql5-sqlite
