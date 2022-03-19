@@ -370,11 +370,11 @@ void SLib::loadAnnotation(uint idBook)
     }
 }
 
-QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData) const
+QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData)
 {
     QString file,archive;
     QFileInfo fi;
-    const SBook &book = mBooks[idBook];
+    SBook &book = mBooks[idBook];
     QString LibPath = RelativeToAbsolutePath(path);
     if(book.sArchive.isEmpty()){
         file = QStringLiteral("%1/%2.%3").arg(LibPath, book.sFile, book.sFormat);
@@ -477,9 +477,9 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
 
 */
 
-QString SLib::fillParams(const QString &str, uint idBook) const
+QString SLib::fillParams(const QString &str, uint idBook)
 {
-    const SBook& book = mBooks[idBook];
+    SBook& book = mBooks[idBook];
     QString result = str;
     QString abbr = QLatin1String("");
     foreach(const QString &str, mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
@@ -523,7 +523,7 @@ QString SLib::fillParams(const QString &str, uint idBook) const
     return result;
 }
 
-QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_file) const
+QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_file)
 {
     QString result = str;
     result.replace(QLatin1String("%fn"), book_file.completeBaseName()).

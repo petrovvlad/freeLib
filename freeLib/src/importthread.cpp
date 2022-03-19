@@ -203,7 +203,7 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     doc.setContent(ba);
     QDomElement title_info = doc.elementsByTagName(QStringLiteral("title-info")).at(0).toElement();
     QString sTitle = title_info.elementsByTagName(QStringLiteral("book-title")).at(0).toElement().text();
-    QString sLanguage = title_info.elementsByTagName(QStringLiteral("lang")).at(0).toElement().text();
+    QString sLanguage = title_info.elementsByTagName(QStringLiteral("lang")).at(0).toElement().text().left(2);
     QString sSeria = title_info.elementsByTagName(QStringLiteral("sequence")).at(0).attributes().namedItem(QStringLiteral("name")).toAttr().value().trimmed();
     uint numInSerial = title_info.elementsByTagName(QStringLiteral("sequence")).at(0).attributes().namedItem(QStringLiteral("number")).toAttr().value().trimmed().toUInt();
 
@@ -313,7 +313,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
                         }
                         else if(meta.childNodes().at(m).nodeName().right(8) == QLatin1String("language"))
                         {
-                            sLanguage = meta.childNodes().at(m).toElement().text().trimmed();
+                            sLanguage = meta.childNodes().at(m).toElement().text().trimmed().left(2);
                         }
                         else if(meta.childNodes().at(m).nodeName().right(7) == QLatin1String("creator"))
                         {
@@ -737,7 +737,7 @@ void ImportThread::process()
             QString language;
             if(substrings.count() > field_index[_LANGUAGE])
             {
-                language = substrings[field_index[_LANGUAGE]].trimmed();
+                language = substrings[field_index[_LANGUAGE]].trimmed().left(2);
             }
             qlonglong star = 0;
             if(substrings.count() > field_index[_STAR] && field_index[_STAR] >= 0)
