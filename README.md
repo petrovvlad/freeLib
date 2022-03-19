@@ -16,13 +16,18 @@ freeLib - каталогизатор для библиотек LibRusEc и Flibu
 * Настройка форматирования книг (шрифты, буквица, заголовки, переносы, сноски)
 * Чтение книг с помощью внешних приложений. Можно назначить отдельную программу для каждого формата.
 
-#### Сборка и установка из исходников в Ubuntu
+#### Сборка и установка из исходников в Ubuntu (а также Debian (тестировалось на Armbian 22.02.1))
 
 Установить необходимые компоненты:
 ```
 sudo apt update
 sudo apt-get install git cmake build-essential qtbase5-dev qtwebengine5-dev libqt5xmlpatterns5-dev libquazip5-dev
 ```
+Для Debian (Armbian) может потребоваться также:
+```
+sudo apt-get install libqt5sql5-sqlite
+```
+
 Скачать исходники программы:
 ```
 git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
@@ -33,3 +38,5 @@ mkdir freeLib/build && cd freeLib/build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DQUAZIP_STATIC:BOOL=ON .. && cmake --build .
 sudo make install
 ```
+
+sudo apt-get install libqt5sql5-sqlite
