@@ -19,6 +19,7 @@
 #include "common.h"
 #include "utilites.h"
 #include "config-freelib.h"
+#include "opds_server.h"
 
 uint idCurrentLib;
 QTranslator* translator;
@@ -28,6 +29,7 @@ QSettings *global_settings = nullptr;
 QCommandLineParser CMDparser;
 QSplashScreen *splash;
 Options options;
+opds_server *pOpds;
 
 bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
 {
@@ -186,8 +188,11 @@ int main(int argc, char *argv[])
     a.setOrganizationName(QStringLiteral("freeLib"));
     a.setApplicationName(QStringLiteral("freeLib"));
 
+    CMDparser.addHelpOption();
+    CMDparser.addVersionOption();
     QCommandLineOption trayOption(QStringLiteral("tray"), QStringLiteral("minimize to tray on start"));
     CMDparser.addOption(trayOption);
+    CMDparser.addOption({QStringLiteral("server"), QStringLiteral("start server")});
     CMDparser.process(a);
 
     QString HomeDir;
@@ -204,13 +209,15 @@ int main(int argc, char *argv[])
     if(options.vExportOptions.isEmpty())
         options.setExportDefault();
 
+    bool bServer = CMDparser.isSet(QStringLiteral("server"));
+
     QDir::setCurrent(HomeDir);
     QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
     QDir dirTmp(sDirTmp);
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
 
-    if(options.bShowSplash){
+    if(!bServer && options.bShowSplash){
         QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(a.devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
@@ -280,21 +287,32 @@ int main(int argc, char *argv[])
     a.processEvents();
     setProxy();
     UpdateLibs();
-    MainWindow w;
+    MainWindow *pMainWindow = nullptr;
+
+    pOpds = new opds_server;
+    if(bServer){
+        loadGenres();
+        loadLibrary(idCurrentLib);
+        pOpds->server_run();
+    }else{
+
+        pMainWindow = new MainWindow;
 #ifdef Q_OS_OSX
-  //  w.setWindowFlags(w.windowFlags() & ~Qt::WindowFullscreenButtonHint);
+        //  w.setWindowFlags(w.windowFlags() & ~Qt::WindowFullscreenButtonHint);
 #endif
 
-    if(!w.error_quit)
-    {
-        if(!CMDparser.isSet(QStringLiteral("tray")) && options.nIconTray != 2)
-            w.show();
+        if(!pMainWindow->error_quit)
+        {
+            if(!CMDparser.isSet(QStringLiteral("tray")) && options.nIconTray != 2)
+                pMainWindow->show();
+        }
+        else{
+            return 1;
+        }
+        if(options.bShowSplash)
+            splash->finish(pMainWindow);
     }
-    else{
-        return 1;
-    }
-    if(options.bShowSplash)
-        splash->finish(&w);
+
     int result = a.exec();
     if(global_settings)
     {
@@ -302,5 +320,8 @@ int main(int argc, char *argv[])
         delete global_settings;
     }
 
+    if(pMainWindow)
+        delete pMainWindow;
+    delete pOpds;
     return result;
 }

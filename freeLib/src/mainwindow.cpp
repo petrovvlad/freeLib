@@ -24,9 +24,10 @@
 #include "library.h"
 #include "starsdelegate.h"
 #include "utilites.h"
+#include "opds_server.h"
 
 extern QSplashScreen *splash;
-
+extern opds_server *pOpds;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -183,7 +184,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->header()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->Books->header(), &QWidget::customContextMenuRequested, this, &MainWindow::HeaderContextMenu);
 
-    opds.server_run();
+    pOpds->server_run();
     FillLibrariesMenu();
     UpdateExportMenu();
 
@@ -600,7 +601,7 @@ void MainWindow::Settings()
            options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || options.sOpdsUser != pDlg->options_.sOpdsUser ||
            options.sOpdsPassword != pDlg->options_.sOpdsPassword)
         {
-            opds.server_run();
+            pOpds->server_run();
         }
         UpdateExportMenu();
         resizeEvent(nullptr);
