@@ -1402,7 +1402,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             }
             foreach(const QString &iIndex, listKeys)
             {
-                if(iIndex.trimmed().isEmpty() /*|| iIndex[0] == '\0'*/)
+                if(iIndex.trimmed().isEmpty() || iIndex[0] == '\0')
                     continue;
                 if(opds)
                 {
