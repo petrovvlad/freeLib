@@ -738,7 +738,8 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
                 feed.appendChild(entry);
                 AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
                 AddTextNode(QStringLiteral("id"), QStringLiteral("tag:book:%1").arg(idBook), entry);
-                AddTextNode(QStringLiteral("title"), book.sName + (book.idSerial == 0 ?QString() :QLatin1String(" (") + lib.mSerials[book.idSerial].sName + QLatin1String(")")), entry);
+                QString sSerial = book.idSerial == 0 ?QString() :lib.mSerials[book.idSerial].sName;
+                AddTextNode(QStringLiteral("title"), book.sName + (sSerial.isEmpty() ?QString() :QLatin1String(" (") + sSerial + QLatin1String(")")), entry);
                 foreach(uint idAuthor, book.listIdAuthors){
                     QDomElement author = doc.createElement(QStringLiteral("author"));
                     entry.appendChild(author);
@@ -882,8 +883,10 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
                     el.setAttribute(QStringLiteral("href"), QStringLiteral("/author/%1").arg(book.idFirstAuthor) +
                                     (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
                 }
-                QDomElement el = AddTextNode(QStringLiteral("div"), book.sName + (book.idSerial==0 ?QString()
-                                 :(QLatin1String(" (") + lib.mSerials[book.idSerial].sName + QLatin1String("[") + QString::number(book.numInSerial) + QLatin1String("])"))), entry);
+
+                QString sSerial = book.idSerial == 0 ?QString() :lib.mSerials[book.idSerial].sName;
+                QDomElement el = AddTextNode(QStringLiteral("div"), book.sName + (sSerial.isEmpty() ?QString()
+                                 :(QLatin1String(" (") + sSerial + QLatin1String("[") + QString::number(book.numInSerial) + QLatin1String("])"))), entry);
                 el.setAttribute(QStringLiteral("class"), QStringLiteral("book"));
                 QDomElement br = doc.createElement(QStringLiteral("br"));
                 entry.appendChild(br);
@@ -1402,7 +1405,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             }
             foreach(const QString &iIndex, listKeys)
             {
-                if(iIndex.trimmed().isEmpty() /*|| iIndex[0] == '\0'*/)
+                if(iIndex.trimmed().isEmpty() || iIndex[0] == '\0')
                     continue;
                 if(opds)
                 {
