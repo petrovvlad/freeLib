@@ -964,10 +964,11 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     {
                         auto iSerial = lib.mSerials.constBegin();
                         while(iSerial != lib.mSerials.constEnd()){
-                            if(iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            if(setSerials.contains(iIndex) ?iSerial.value().sName.toLower() == iIndex.toLower()
+                                    :iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                             {
                                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/sequencebooks/") + QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key())))
-                                                + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
+                                                + (session.isEmpty() && mCount[iIndex]<30 ?QString() :QLatin1String("?session=") + session));
                                 break;
                             }
                             ++iSerial;
@@ -1003,7 +1004,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     {
                         auto iSerial = lib.mSerials.constBegin();
                         while(iSerial != lib.mSerials.constEnd()){
-                            if(iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
+                            if(setSerials.contains(iIndex) ?iSerial.value().sName.toLower() == iIndex.toLower()
+                                                           :iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                             {
                                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/sequencebooks/") + QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iSerial.key()))) +
                                                 (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
@@ -1016,7 +1018,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     else
                     {
                         el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/sequencesindex/") + QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData()) +
-                                        (setSerials.contains(iIndex) ?QLatin1String("/books") :QLatin1String("")) + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
+                                        (setSerials.contains(iIndex) && mCount[iIndex]<30 ?QLatin1String("/books") :QLatin1String("")) + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
 
                     }
                     current_column++;
@@ -1257,13 +1259,14 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     QDomElement el = AddTextNode(QStringLiteral("content"), QString::number(mCount[iIndex]) + QLatin1String(" ") + tr("authors beginning with") +
                                                  QLatin1String(" '") + iIndex + QLatin1String("'"), entry);
                     el.setAttribute(QStringLiteral("type"), QStringLiteral("text"));
-                    el=AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
+                    el = AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
                     if(mCount[iIndex] == 1)
                     {
                         iAuthor = lib.mAuthors.constBegin();
                         while(iAuthor != lib.mAuthors.constEnd())
                         {
-                            if(iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
+                            if(setAuthors.contains(iIndex) ?iAuthor.value().getName().toLower() == iIndex.toLower()
+                                    :iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
                             {
                                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/author/") + QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key()))) +
                                                 (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
@@ -1275,7 +1278,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     else
                     {
                         el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/authorsindex/") + QString::fromLatin1(QUrl::toPercentEncoding(iIndex).constData()) +
-                                        (setAuthors.contains(iIndex) ?QStringLiteral("/books") :QString()) + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
+                                        (setAuthors.contains(iIndex) && mCount[iIndex]<30 ?QStringLiteral("/books") :QString()) + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
 
                     }
                     el.setAttribute(QStringLiteral("type"), QStringLiteral("application/atom+xml;profile=opds-catalog"));
@@ -1301,10 +1304,11 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                         iAuthor = lib.mAuthors.constBegin();
                         while(iAuthor != lib.mAuthors.constEnd())
                         {
-                            if(iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
+                            if(setAuthors.contains(iIndex) ?iAuthor.value().getName().toLower() == iIndex.toLower()
+                                    :iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
                             {
                                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/author/") + QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iAuthor.key()))) +
-                                                (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
+                                                (session.isEmpty() && mCount[iIndex]<30 ?QString() :QLatin1String("?session=") + session));
                                 break;
                             }
                             ++iAuthor;
