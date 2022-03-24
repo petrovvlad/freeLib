@@ -28,6 +28,7 @@
 
 extern QSplashScreen *splash;
 extern opds_server *pOpds;
+extern bool bTray;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1942,7 +1943,7 @@ void MainWindow::onTabWidgetChanged(int index)
 
 void MainWindow::ChangingTrayIcon(int index, int color)
 {
-    if(CMDparser.isSet(QStringLiteral("tray")))
+    if(bTray)
         index = 2;
     if(index == 0)
     {
