@@ -1,4 +1,5 @@
 #define QT_USE_QSTRINGBUILDER
+#include <iostream>
 #include <QApplication>
 #include <QDesktopWidget>
 #include <QNetworkProxy>
@@ -26,7 +27,7 @@ QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
 QSettings *global_settings = nullptr;
-QCommandLineParser CMDparser;
+bool bTray;
 QSplashScreen *splash;
 Options options;
 opds_server *pOpds;
@@ -172,6 +173,27 @@ void UpdateLibs()
 int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(resource);
+    bool bServer = false;
+    bTray = false;
+    for(int i=1; i<argc; i++){
+        if(!strcmp(argv[i], "--server") || !strcmp(argv[i], "-s")){
+            bServer = true;
+        }else
+        if(!strcmp(argv[i], "--tray")){
+            bTray = true;
+        }else
+        if(!strcmp(argv[i], "--version") || !strcmp(argv[i], "-v")){
+            std::cout << " freelib " << FREELIB_VERSION << "\n";
+            return 0;
+        }
+        if(!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")){
+            std::cout << "freelib [options]\n"
+                         "\t--tray\t\tminimize to tray on start\n"
+                         "-s,\t--server\tstart server\n"
+                         "-v,\t--version\tfreeLib version\n";
+            return 0;
+        }
+    }
 
 #ifdef Q_OS_MACX
     if ( QSysInfo::MacintoshVersion > QSysInfo::MV_10_8 )
@@ -181,19 +203,17 @@ int main(int argc, char *argv[])
         //QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
     }
 #endif
+    QCoreApplication *a;
+    if(bServer)
+        a = new QCoreApplication(argc, argv);
+    else{
+        a = new QApplication(argc, argv);
+        static_cast<QApplication*>(a)->setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
+        a->setAttribute(Qt::AA_UseHighDpiPixmaps);
+    }
 
-    QApplication a(argc, argv);
-    a.setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
-
-    a.setOrganizationName(QStringLiteral("freeLib"));
-    a.setApplicationName(QStringLiteral("freeLib"));
-
-    CMDparser.addHelpOption();
-    CMDparser.addVersionOption();
-    QCommandLineOption trayOption(QStringLiteral("tray"), QStringLiteral("minimize to tray on start"));
-    CMDparser.addOption(trayOption);
-    CMDparser.addOption({QStringLiteral("server"), QStringLiteral("start server")});
-    CMDparser.process(a);
+    a->setOrganizationName(QStringLiteral("freeLib"));
+    a->setApplicationName(QStringLiteral("freeLib"));
 
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
@@ -201,15 +221,12 @@ int main(int argc, char *argv[])
 
     translator = nullptr;
     translator_qt = nullptr;
-    a.setAttribute(Qt::AA_UseHighDpiPixmaps);
 
     QSettings* settings = GetSettings();
     options.Load(settings);
     SetLocale(options.sUiLanguageName);
     if(options.vExportOptions.isEmpty())
         options.setExportDefault();
-
-    bool bServer = CMDparser.isSet(QStringLiteral("server"));
 
     QDir::setCurrent(HomeDir);
     QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
@@ -218,7 +235,7 @@ int main(int argc, char *argv[])
         dirTmp.mkpath(sDirTmp);
 
     if(!bServer && options.bShowSplash){
-        QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(a.devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
+        QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a)->devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
@@ -284,7 +301,7 @@ int main(int argc, char *argv[])
         }
     }
 
-    a.processEvents();
+    a->processEvents();
     setProxy();
     UpdateLibs();
     MainWindow *pMainWindow = nullptr;
@@ -303,7 +320,7 @@ int main(int argc, char *argv[])
 
         if(!pMainWindow->error_quit)
         {
-            if(!CMDparser.isSet(QStringLiteral("tray")) && options.nIconTray != 2)
+            if(!bTray && options.nIconTray != 2)
                 pMainWindow->show();
         }
         else{
@@ -313,7 +330,7 @@ int main(int argc, char *argv[])
             splash->finish(pMainWindow);
     }
 
-    int result = a.exec();
+    int result = a->exec();
     if(global_settings)
     {
         global_settings->sync();
@@ -323,5 +340,6 @@ int main(int argc, char *argv[])
     if(pMainWindow)
         delete pMainWindow;
     delete pOpds;
+    delete a;
     return result;
 }
