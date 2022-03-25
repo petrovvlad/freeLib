@@ -175,6 +175,8 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(resource);
     bool bServer = false;
     bTray = false;
+    QCoreApplication *a;
+
     for(int i=1; i<argc; i++){
         if(!strcmp(argv[i], "--server") || !strcmp(argv[i], "-s")){
             bServer = true;
@@ -190,9 +192,32 @@ int main(int argc, char *argv[])
             std::cout << "freelib [options]\n"
                          "\t--tray\t\tminimize to tray on start\n"
                          "-s,\t--server\tstart server\n"
-                         "-v,\t--version\tfreeLib version\n";
+                         "-v,\t--version\tверсия freeLib\n"
+                         "\t--lib list\tсписок библиотек\n";
             return 0;
         }
+        if(!strcmp(argv[i], "--lib")){
+            a = new QCoreApplication(argc, argv);
+            a->setOrganizationName(QStringLiteral("freeLib"));
+            a->setApplicationName(QStringLiteral("freeLib"));
+            openDB(QStringLiteral("libdb"), true, false);
+            UpdateLibs();
+
+            if(++i < argc){
+                if(!strcmp(argv[i], "list")){
+                    std::cout << "id\tlibrary\n"
+                                 "----------------------------------------------------------\n";
+                    auto iLib = mLibs.constBegin();
+                    while(iLib != mLibs.constEnd()){
+                        std::cout << iLib.key() << "\t" << iLib->name.toStdString() << "\n";
+                        ++iLib;
+                    }
+                }
+            }
+            delete a;
+            return 0;
+        }
+
     }
 
 #ifdef Q_OS_MACX
@@ -203,7 +228,6 @@ int main(int argc, char *argv[])
         //QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
     }
 #endif
-    QCoreApplication *a;
     if(bServer)
         a = new QCoreApplication(argc, argv);
     else{
@@ -304,6 +328,7 @@ int main(int argc, char *argv[])
     a->processEvents();
     setProxy();
     UpdateLibs();
+
     MainWindow *pMainWindow = nullptr;
 
     pOpds = new opds_server;
