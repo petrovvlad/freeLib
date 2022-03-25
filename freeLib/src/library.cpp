@@ -310,16 +310,14 @@ void SLib::loadAnnotation(uint idBook)
                                             QByteArray ba = zip_file.readAll();
                                             zip_file.close();
 
-                                            QString sImgFile = QStringLiteral("%1/freeLib/%2.jpg")
+                                            book.sImg = QStringLiteral("%1/freeLib/%2.jpg")
                                                     .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                                     .arg(idBook);
-                                            QFile file(sImgFile);
-                                            if(file.open(QFile::WriteOnly)){
-                                                file.write(ba);
-                                                file.close();
+                                            QFile fileImage(book.sImg);
+                                            if(fileImage.open(QFile::WriteOnly)){
+                                                fileImage.write(ba);
+                                                fileImage.close();
                                             }
-
-                                            book.sImg = QStringLiteral("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
                                             break;
                                         }
                                     }
