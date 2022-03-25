@@ -8,7 +8,6 @@
 #include <QDebug>
 #include <QApplication>
 #include <QStandardPaths>
-#include <QPixmap>
 #include <QDir>
 
 #include "quazip/quazip/quazip.h"
@@ -267,7 +266,7 @@ void SLib::loadAnnotation(uint idBook)
             if(root.childNodes().at(i).nodeName().toLower() == QLatin1String("rootfiles"))
             {
                 QDomNode roots = root.childNodes().at(i);
-                for(int j=0;j<roots.childNodes().count() && need_loop;j++)
+                for(int j=0; j<roots.childNodes().count() && need_loop; j++)
                 {
                     if(roots.childNodes().at(j).nodeName().toLower() == QLatin1String("rootfile"))
                     {
@@ -282,8 +281,8 @@ void SLib::loadAnnotation(uint idBook)
 
                         QDomDocument opf;
                         opf.setContent(opf_buf.data());
-                        QDomNode meta=opf.documentElement().namedItem(QStringLiteral("metadata"));
-                        for(int m=0;m<meta.childNodes().count();m++)
+                        QDomNode meta = opf.documentElement().namedItem(QStringLiteral("metadata"));
+                        for(int m=0; m<meta.childNodes().count(); m++)
                         {
                             if(meta.childNodes().at(m).nodeName().right(11) == QLatin1String("description"))
                             {
@@ -292,7 +291,7 @@ void SLib::loadAnnotation(uint idBook)
                                 QTextStream ts(&buff);
                                 ts.setCodec("UTF-8");
                                 meta.childNodes().at(m).save(ts,0,QDomNode::EncodingFromTextStream);
-                                book.sAnnotation=QString::fromUtf8(buff.data().data());
+                                book.sAnnotation = QString::fromUtf8(buff.data().data());
                             }
                             else if(meta.childNodes().at(m).nodeName().right(4) == QLatin1String("meta"))
                             {
@@ -300,7 +299,7 @@ void SLib::loadAnnotation(uint idBook)
                                 {
                                     QString cover = meta.childNodes().at(m).attributes().namedItem(QStringLiteral("content")).toAttr().value();
                                     QDomNode manifest = opf.documentElement().namedItem(QStringLiteral("manifest"));
-                                    for(int man=0 ;man<manifest.childNodes().count(); man++)
+                                    for(int man=0; man<manifest.childNodes().count(); man++)
                                     {
                                         if(manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("id")).toAttr().value()==cover)
                                         {
@@ -311,16 +310,14 @@ void SLib::loadAnnotation(uint idBook)
                                             QByteArray ba = zip_file.readAll();
                                             zip_file.close();
 
-                                            QString sImgFile = QStringLiteral("%1/freeLib/%2.jpg")
+                                            book.sImg = QStringLiteral("%1/freeLib/%2.jpg")
                                                     .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                                                     .arg(idBook);
-                                            QFile file(sImgFile);
-                                            if(file.open(QFile::WriteOnly)){
-                                                file.write(ba);
-                                                file.close();
+                                            QFile fileImage(book.sImg);
+                                            if(fileImage.open(QFile::WriteOnly)){
+                                                fileImage.write(ba);
+                                                fileImage.close();
                                             }
-
-                                            book.sImg = QStringLiteral("<td valign=top align=right><img src=\"file:%1\"></td>").arg(sImgFile);
                                             break;
                                         }
                                     }
@@ -349,12 +346,14 @@ void SLib::loadAnnotation(uint idBook)
                     book.sImg = QStringLiteral("%1/freeLib/%2.jpg")
                             .arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst())
                             .arg(idBook);
-                    QPixmap image;
-                    QByteArray ba;
-                    ba.append(binarys.at(i).toElement().text().toLatin1());
-                    QByteArray ba64 = QByteArray::fromBase64(ba);
-                    image.loadFromData(ba64);
-                    image.save(book.sImg);
+                    QByteArray ba64;
+                    ba64.append(binarys.at(i).toElement().text().toLatin1());
+                    QByteArray ba = QByteArray::fromBase64(ba64);
+                    QFile fileImage(book.sImg);
+                    if(fileImage.open(QIODevice::ReadWrite)){
+                        fileImage.write(ba);
+                        fileImage.close();
+                    }
                     break;
                 }
             }
