@@ -549,7 +549,6 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
     int id_lib = idCurrentLib;
     QString lib_url = QStringLiteral("/http");
     qDebug()<<"url:"<<url;
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     bool opds = false;
     params.clear();
     if(strings.count() > 1)
@@ -1498,7 +1497,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         if(opds)
         {
             QDomElement feed = doc_header(session);
-            AddTextNode(QStringLiteral("id"), QLatin1String("tag:author:") + query.value(0).toString(),feed);
+            AddTextNode(QStringLiteral("id"), QLatin1String("tag:author:") + sIdAuthor/*query.value(0).toString()*/,feed);
             AddTextNode(QStringLiteral("title"), tr("Books by") + QLatin1String(" ") + sAuthor,feed);
             AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), feed);
             AddTextNode(QStringLiteral("icon"),QLatin1String("/icon_256x256.png") +(session.isEmpty()?QString():QLatin1String("?session=") + session), feed);
