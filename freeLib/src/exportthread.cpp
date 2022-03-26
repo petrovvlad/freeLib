@@ -253,10 +253,10 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
         if(!tool_path.isEmpty())
         {
             QFileInfo fi_tmp(book_file_name);
-            QString arg = tool_arg;
             QString ex = lib.fillParams(tool_path, idBook, fi_tmp);
-            arg = lib.fillParams(arg, idBook, fi_tmp);
-            listArg << arg;
+            QStringList listArg = tool_arg.split(QStringLiteral(" "));
+            for(int i = 0; i != listArg.size(); ++i)
+                listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
             if(!tool_ext.isEmpty())
             {
                 book_file_name = tool_ext;
