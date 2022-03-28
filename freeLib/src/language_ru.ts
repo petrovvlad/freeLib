@@ -13,7 +13,7 @@
     </message>
 </context>
 <context>
-    <name>AddLibrary</name>
+    <name>LibrariesDlg</name>
     <message>
         <source>Add/Edit library</source>
         <translation>Добавить/обновить библиотеку</translation>

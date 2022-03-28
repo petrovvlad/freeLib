@@ -1,6 +1,6 @@
 #define QT_USE_QSTRINGBUILDER
-#include "addlibrary.h"
-#include "ui_addlibrary.h"
+#include "librariesdlg.h"
+#include "ui_librariesdlg.h"
 
 #include <QToolButton>
 #include <QStringBuilder>
@@ -19,9 +19,9 @@
 bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
 QSettings* GetSettings(bool reopen=false);
 
-AddLibrary::AddLibrary(QWidget *parent) :
-    QDialog(parent,Qt::Dialog|Qt::WindowSystemMenuHint),
-    ui(new Ui::AddLibrary)
+LibrariesDlg::LibrariesDlg(QWidget *parent) :
+    QDialog(parent),
+    ui(new Ui::LibrariesDlg)
 {
     bLibChanged = false;
     ui->setupUi(this);
@@ -54,25 +54,25 @@ AddLibrary::AddLibrary(QWidget *parent) :
     idCurrentLib_ = idCurrentLib;
     UpdateLibList();
 
-    connect(tbInpx, &QAbstractButton::clicked, this, &AddLibrary::InputINPX);
-    connect(tbBooksDir, &QAbstractButton::clicked, this, &AddLibrary::SelectBooksDir);
+    connect(tbInpx, &QAbstractButton::clicked, this, &LibrariesDlg::InputINPX);
+    connect(tbBooksDir, &QAbstractButton::clicked, this, &LibrariesDlg::SelectBooksDir);
     connect(ui->btnUpdate, &QPushButton::clicked, this, [=](){this->StartImport();});
-    connect(ui->btnExport, &QAbstractButton::clicked, this, &AddLibrary::ExportLib);
+    connect(ui->btnExport, &QAbstractButton::clicked, this, &LibrariesDlg::ExportLib);
     connect(ui->ExistingLibs, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [=](int index){this->onComboboxLibraryChanged(index);});
-    connect(ui->Del, &QAbstractButton::clicked, this, &AddLibrary::DeleteLibrary);
-    connect(ui->Add, &QAbstractButton::clicked, this, &AddLibrary::Add_Library);
-    connect(ui->ExistingLibs->lineEdit(), &QLineEdit::editingFinished, this, &AddLibrary::ExistingLibsChanged);
+    connect(ui->Del, &QAbstractButton::clicked, this, &LibrariesDlg::DeleteLibrary);
+    connect(ui->Add, &QAbstractButton::clicked, this, &LibrariesDlg::Add_Library);
+    connect(ui->ExistingLibs->lineEdit(), &QLineEdit::editingFinished, this, &LibrariesDlg::ExistingLibsChanged);
     ui->add_new->setChecked(true);
 
     SelectLibrary();
 }
 
-AddLibrary::~AddLibrary()
+LibrariesDlg::~LibrariesDlg()
 {
     delete ui;
 }
 
-void AddLibrary::Add_Library()
+void LibrariesDlg::Add_Library()
 {
     idCurrentLib_ = 0;
     QString sNewName = UniqueName( tr("new") );
@@ -87,7 +87,7 @@ void AddLibrary::Add_Library()
     emit ui->ExistingLibs->currentIndexChanged(ui->ExistingLibs->count()-1);
 }
 
-void AddLibrary::LogMessage(const QString &msg)
+void LibrariesDlg::LogMessage(const QString &msg)
 {
     while(ui->Log->count() > 100)
         delete ui->Log->takeItem(0);
@@ -95,7 +95,7 @@ void AddLibrary::LogMessage(const QString &msg)
     ui->Log->setCurrentRow(ui->Log->count()-1);
 }
 
-void AddLibrary::InputINPX()
+void LibrariesDlg::InputINPX()
 {
     QDir::setCurrent(QFileInfo(ui->inpx->text()).absolutePath());
     QString fileName = QFileDialog::getOpenFileName(this, tr("Add library"),QLatin1String(""), tr("Library") + QLatin1String(" (*.inpx)"));
@@ -122,7 +122,7 @@ void AddLibrary::InputINPX()
     }
 }
 
-void AddLibrary::SelectBooksDir()
+void LibrariesDlg::SelectBooksDir()
 {
     QDir::setCurrent(ui->BookDir->text());
     QString dir = QFileDialog :: getExistingDirectory(this, tr("Select books directory"));
@@ -130,7 +130,7 @@ void AddLibrary::SelectBooksDir()
         ui->BookDir->setText(dir);
 }
 
-void AddLibrary::UpdateLibList()
+void LibrariesDlg::UpdateLibList()
 
 {
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
@@ -153,7 +153,7 @@ void AddLibrary::UpdateLibList()
     ui->ExistingLibs->blockSignals(block);
 }
 
-void AddLibrary::StartImport()
+void LibrariesDlg::StartImport()
 {
     SLib lib;
     lib.name = ui->ExistingLibs->currentText().trimmed();
@@ -164,7 +164,7 @@ void AddLibrary::StartImport()
     StartImport(lib);
 }
 
-void AddLibrary::StartImport(SLib &Lib)
+void LibrariesDlg::StartImport(SLib &Lib)
 {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
@@ -186,17 +186,17 @@ void AddLibrary::StartImport(SLib &Lib)
     imp_tr->start(Lib.sInpx, Lib.name, Lib.path, idCurrentLib_, update_type, false,
                   Lib.bFirstAuthor&&Lib.sInpx.isEmpty(), Lib.bWoDeleted);
     imp_tr->moveToThread(thread);
-    connect(imp_tr, &ImportThread::Message, this, &AddLibrary::LogMessage);
+    connect(imp_tr, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
     connect(thread, &QThread::started, imp_tr, &ImportThread::process);
     connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
     connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-    connect(imp_tr, &ImportThread::End, this, &AddLibrary::EndUpdate);
-    connect(this, &AddLibrary::break_import, imp_tr, &ImportThread::break_import);
+    connect(imp_tr, &ImportThread::End, this, &LibrariesDlg::EndUpdate);
+    connect(this, &LibrariesDlg::break_import, imp_tr, &ImportThread::break_import);
 
     thread->start();
 }
 
-void AddLibrary::AddNewLibrary(SLib &lib)
+void LibrariesDlg::AddNewLibrary(SLib &lib)
 {
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
     {
@@ -207,7 +207,7 @@ void AddLibrary::AddNewLibrary(SLib &lib)
     exec();
 }
 
-void AddLibrary::SelectLibrary()
+void LibrariesDlg::SelectLibrary()
 {
     QString dir,inpx;
     bool firstAuthor = false;
@@ -235,7 +235,7 @@ void AddLibrary::SelectLibrary()
     settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
 }
 
-void AddLibrary::SaveLibrary(uint idLib, const SLib &Lib)
+void LibrariesDlg::SaveLibrary(uint idLib, const SLib &Lib)
 {
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     uint idSaveLib;
@@ -264,7 +264,7 @@ void AddLibrary::SaveLibrary(uint idLib, const SLib &Lib)
     bLibChanged = true;
 }
 
-void AddLibrary::DeleteLibrary()
+void LibrariesDlg::DeleteLibrary()
 {
     if(idCurrentLib_ == 0)
         return;
@@ -287,7 +287,7 @@ void AddLibrary::DeleteLibrary()
     QApplication::restoreOverrideCursor();
 }
 
-void AddLibrary::EndUpdate()
+void LibrariesDlg::EndUpdate()
 {
     LogMessage(tr("Ending"));
     ui->btnUpdate->setDisabled(false);
@@ -305,12 +305,12 @@ void AddLibrary::EndUpdate()
 
 }
 
-void AddLibrary::terminateImport()
+void LibrariesDlg::terminateImport()
 {
     emit break_import();
 }
 
-void AddLibrary::reject()
+void LibrariesDlg::reject()
 {
     if (ui->btnCancel->text() == tr("Close"))
     {
@@ -326,12 +326,12 @@ void AddLibrary::reject()
     }
 }
 
-void AddLibrary::ExistingLibsChanged()
+void LibrariesDlg::ExistingLibsChanged()
 {
     ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(),ui->ExistingLibs->lineEdit()->text());
 }
 
-void AddLibrary::ExportLib()
+void LibrariesDlg::ExportLib()
 {
     QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
     if (!dirName.isEmpty())
@@ -341,7 +341,7 @@ void AddLibrary::ExportLib()
     }
 }
 
-void AddLibrary::onComboboxLibraryChanged(int index)
+void LibrariesDlg::onComboboxLibraryChanged(int index)
 {
     if(index>=0){
         idCurrentLib_ = ui->ExistingLibs->itemData(index).toInt();
@@ -349,7 +349,7 @@ void AddLibrary::onComboboxLibraryChanged(int index)
     }
 }
 
-QString AddLibrary::UniqueName(const QString &sName)
+QString LibrariesDlg::UniqueName(const QString &sName)
 {
     QString sResult = sName;
     int i = 1;
