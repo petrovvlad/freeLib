@@ -12,7 +12,7 @@ QString RelativeToAbsolutePath(QString path)
 {
     if(QDir(path).isRelative() && path.indexOf(QLatin1String("%"))<0 && !path.startsWith(QLatin1String("mtp:/")))
     {
-        return QApplication::applicationDirPath() + QLatin1String("/") + path;
+        return QApplication::applicationDirPath() + QStringLiteral("/") + path;
     }
     return path;
 }
@@ -33,7 +33,7 @@ bool openDB(const QString &sName, bool create, bool replace)
     else
     {
         sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-        db_file = sAppDir + QLatin1String("/freeLib.sqlite");
+        db_file = sAppDir + QStringLiteral("/freeLib.sqlite");
         options.sDatabasePath = db_file;
         settings.setValue(QStringLiteral("database_path"), db_file);
     }
@@ -72,6 +72,6 @@ bool openDB(const QString &sName, bool create, bool replace)
         qDebug() << ("Error connect! ")<<db_file;
         return false;
     }
-    qDebug()<<"Open DB OK. "<<db_file;
+    //qDebug()<<"Open DB OK. "<<db_file;
     return true;
 }
