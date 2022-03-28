@@ -257,12 +257,13 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
             QStringList listArg = tool_arg.split(QStringLiteral(" "));
             for(int i = 0; i != listArg.size(); ++i)
                 listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
-            if(!tool_ext.isEmpty())
-            {
-                book_file_name = tool_ext;
-                book_file_name = lib.fillParams(book_file_name, idBook, fi_tmp);
-                listArg << book_file_name;
-            }
+              //Колонка «имя выходного файла» временно спрятана
+//            if(!tool_ext.isEmpty())
+//            {
+//                book_file_name = tool_ext;
+//                book_file_name = lib.fillParams(book_file_name, idBook, fi_tmp);
+//                listArg << book_file_name;
+//            }
             qDebug()<<ex<<listArg;
             QProcess::execute(ex, listArg);
         }
