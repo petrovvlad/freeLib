@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
- <class>AddLibrary</class>
- <widget class="QDialog" name="AddLibrary">
+ <class>LibrariesDlg</class>
+ <widget class="QDialog" name="LibrariesDlg">
   <property name="windowModality">
    <enum>Qt::WindowModal</enum>
   </property>
@@ -283,7 +283,7 @@
   <connection>
    <sender>btnCancel</sender>
    <signal>clicked()</signal>
-   <receiver>AddLibrary</receiver>
+   <receiver>LibrariesDlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">

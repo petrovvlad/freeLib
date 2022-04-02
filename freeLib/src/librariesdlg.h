@@ -1,5 +1,5 @@
-#ifndef ADDLIBRARY_H
-#define ADDLIBRARY_H
+#ifndef LIBRARIESDLG_H
+#define LIBRARIESDLG_H
 
 #include <QDialog>
 
@@ -7,16 +7,16 @@
 #include "library.h"
 
 namespace Ui {
-class AddLibrary;
+class LibrariesDlg;
 }
 
-class AddLibrary : public QDialog
+class LibrariesDlg : public QDialog
 {
     Q_OBJECT
 
 public:
-    explicit AddLibrary(QWidget *parent = 0);
-    ~AddLibrary();
+    explicit LibrariesDlg(QWidget *parent = 0);
+    ~LibrariesDlg();
     //int exec();
     void AddNewLibrary(SLib &lib);
     void StartImport(SLib &Lib);
@@ -26,7 +26,7 @@ private:
     void UpdateLibList();
     void SaveLibrary(uint idLib, const SLib &Lib);
 
-    Ui::AddLibrary *ui;
+    Ui::LibrariesDlg *ui;
     ImportThread *imp_tr;
     QThread *thread;
     uint idCurrentLib_;
@@ -51,4 +51,4 @@ signals:
     void break_import();
 };
 
-#endif // ADDLIBRARY_H
+#endif // LIBRARIESDLG_H

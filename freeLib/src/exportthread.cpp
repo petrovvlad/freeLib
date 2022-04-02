@@ -257,12 +257,13 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
             QStringList listArg = tool_arg.split(QStringLiteral(" "));
             for(int i = 0; i != listArg.size(); ++i)
                 listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
-            if(!tool_ext.isEmpty())
-            {
-                book_file_name = tool_ext;
-                book_file_name = lib.fillParams(book_file_name, idBook, fi_tmp);
-                listArg << book_file_name;
-            }
+              //Колонка «имя выходного файла» временно спрятана
+//            if(!tool_ext.isEmpty())
+//            {
+//                book_file_name = tool_ext;
+//                book_file_name = lib.fillParams(book_file_name, idBook, fi_tmp);
+//                listArg << book_file_name;
+//            }
             qDebug()<<ex<<listArg;
             QProcess::execute(ex, listArg);
         }
@@ -423,7 +424,7 @@ void ExportThread::process()
 
 void ExportThread::export_lib()
 {
-    if(!openDB(QStringLiteral("ExpThrdDb"), true, false))
+    if(!openDB(QStringLiteral("ExpThrdDb")))
         return;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("ExpThrdDb")));
     if(!query.exec(QStringLiteral("SELECT book.id,author.id,genre.id,book.name,star,num_in_seria,book.language,file,size,deleted,date,format,book.keys,archive,date,book.id_inlib, "

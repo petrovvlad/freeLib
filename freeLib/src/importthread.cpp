@@ -13,27 +13,10 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "options.h"
+#include "utilites.h"
 
 QString RelativeToAbsolutePath(QString path);
 bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
-
-void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
-{
-    QSqlQuery query(dbase);
-    if(delete_only)
-    {
-        query.exec(QLatin1String("update book set deleted=1 where id_lib=") + QString::number(id_lib));
-    }
-    else
-    {
-        query.exec(QLatin1String("delete from book where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from author where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from seria where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from book_author where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from book_genre where id_lib=") + QString::number(id_lib));
-        query.exec(QStringLiteral("VACUUM"));
-    }
-}
 
 ImportThread::ImportThread(QObject *parent) :
     QObject(parent)

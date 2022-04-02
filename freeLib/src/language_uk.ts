@@ -18,26 +18,26 @@
     </message>
 </context>
 <context>
-    <name>AddLibrary</name>
+    <name>LibrariesDlg</name>
     <message>
-        <location filename="addlibrary.ui" line="17"/>
+        <location filename="librariesdlg.ui" line="17"/>
         <source>Add/Edit library</source>
         <translation>Додати/Редагувати бібліотеку</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="60"/>
+        <location filename="librariesdlg.ui" line="60"/>
         <source>Library name:</source>
         <oldsource>Library name</oldsource>
         <translation>Назва бібліотеки:</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="138"/>
+        <location filename="librariesdlg.ui" line="138"/>
         <source>INPX file (optionally):</source>
         <oldsource>INPX file:</oldsource>
         <translation type="unfinished">INPX файл:</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="43"/>
+        <location filename="librariesdlg.ui" line="43"/>
         <source>Books dir:</source>
         <oldsource>Books dir</oldsource>
         <translation>Тека з книгами:</translation>
@@ -47,58 +47,58 @@
         <translation type="vanished">Оновити існуючу</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="67"/>
+        <location filename="librariesdlg.ui" line="67"/>
         <source>OPDS server</source>
         <translation>OPDS сервер</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="131"/>
+        <location filename="librariesdlg.ui" line="131"/>
         <source>HTTP server</source>
         <translation>HTTP сервер</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="89"/>
+        <location filename="librariesdlg.ui" line="89"/>
         <source>Add new library</source>
         <translation>Додати нову бібліотеку</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="109"/>
+        <location filename="librariesdlg.ui" line="109"/>
         <source>Delete current library</source>
         <translation>Вилучити поточну бібліотеку</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="160"/>
+        <location filename="librariesdlg.ui" line="160"/>
         <source>Update type</source>
         <translation>Метод оновлення</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="166"/>
+        <location filename="librariesdlg.ui" line="166"/>
         <source>Add new</source>
         <translation>Додати нову</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="173"/>
+        <location filename="librariesdlg.ui" line="173"/>
         <source>Delete old and add new</source>
         <translation>Вилучити неіснуючі і додати нові</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="180"/>
+        <location filename="librariesdlg.ui" line="180"/>
         <source>Recreate library</source>
         <translation>Перестворити бібліотеку</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="196"/>
+        <location filename="librariesdlg.ui" line="196"/>
         <source>import first author only</source>
         <translation>імпортувати лише першого автора</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="203"/>
+        <location filename="librariesdlg.ui" line="203"/>
         <source>don`t add deleted books</source>
         <oldsource>don`t add deleted</oldsource>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="238"/>
+        <location filename="librariesdlg.ui" line="238"/>
         <source>Export</source>
         <translation>Експорт</translation>
     </message>
@@ -107,60 +107,60 @@
         <translation type="vanished">Вилучити</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="251"/>
+        <location filename="librariesdlg.ui" line="251"/>
         <source>Update</source>
         <translation>Оновити</translation>
     </message>
     <message>
-        <location filename="addlibrary.ui" line="270"/>
-        <location filename="addlibrary.cpp" line="272"/>
-        <location filename="addlibrary.cpp" line="295"/>
+        <location filename="librariesdlg.ui" line="270"/>
+        <location filename="librariesdlg.cpp" line="272"/>
+        <location filename="librariesdlg.cpp" line="295"/>
         <source>Close</source>
         <translation>Закрити</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="86"/>
-        <location filename="addlibrary.cpp" line="237"/>
+        <location filename="librariesdlg.cpp" line="86"/>
+        <location filename="librariesdlg.cpp" line="237"/>
         <source>Add library</source>
         <translation>Додати бібліотеку</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="86"/>
+        <location filename="librariesdlg.cpp" line="86"/>
         <source>Library</source>
         <translation>Бібліотеки</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="118"/>
+        <location filename="librariesdlg.cpp" line="118"/>
         <source>Select books directory</source>
         <translation>Тека з книгами</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="62"/>
+        <location filename="librariesdlg.cpp" line="62"/>
         <source>new</source>
         <translation>нова</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="151"/>
+        <location filename="librariesdlg.cpp" line="151"/>
         <source>Break</source>
         <translation>Перервати</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="250"/>
+        <location filename="librariesdlg.cpp" line="250"/>
         <source>Update library</source>
         <translation>Оновлення бібліотеки</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="259"/>
+        <location filename="librariesdlg.cpp" line="259"/>
         <source>Delete library</source>
         <translation>Вилучення бібліотеки</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="269"/>
+        <location filename="librariesdlg.cpp" line="269"/>
         <source>Ending</source>
         <translation>Кінець</translation>
     </message>
     <message>
-        <location filename="addlibrary.cpp" line="313"/>
+        <location filename="librariesdlg.cpp" line="313"/>
         <source>Select destination directory</source>
         <translation type="unfinished"></translation>
     </message>

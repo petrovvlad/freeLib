@@ -12,7 +12,7 @@ set(PROJECT_SOURCES
         common.h
         mainwindow.cpp      mainwindow.h    mainwindow.ui
         library.cpp         library.h
-        addlibrary.cpp      addlibrary.h    addlibrary.ui
+        librariesdlg.cpp    librariesdlg.h  librariesdlg.ui
         settingsdlg.cpp     settingsdlg.h   settingsdlg.ui
         exportframe.cpp     exportframe.h   exportframe.ui
         fontframe.cpp       fontframe.h     fontframe.ui

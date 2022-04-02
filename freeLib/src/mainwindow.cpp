@@ -12,7 +12,7 @@
 #include "quazip/quazip/quazip.h"
 #include "SmtpClient/src/smtpclient.h"
 
-#include "addlibrary.h"
+#include "librariesdlg.h"
 #include "settingsdlg.h"
 #include "exportdlg.h"
 #include "exportthread.h"
@@ -1134,7 +1134,7 @@ void MainWindow::UpdateBooks()
 void MainWindow::ManageLibrary()
 {
     SaveLibPosition();
-    AddLibrary al(this);
+    LibrariesDlg al(this);
     al.exec();
     if(al.bLibChanged){
         loadLibrary(idCurrentLib);
