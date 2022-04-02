@@ -424,7 +424,7 @@ void ExportThread::process()
 
 void ExportThread::export_lib()
 {
-    if(!openDB(QStringLiteral("ExpThrdDb"), true, false))
+    if(!openDB(QStringLiteral("ExpThrdDb")))
         return;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("ExpThrdDb")));
     if(!query.exec(QStringLiteral("SELECT book.id,author.id,genre.id,book.name,star,num_in_seria,book.language,file,size,deleted,date,format,book.keys,archive,date,book.id_inlib, "

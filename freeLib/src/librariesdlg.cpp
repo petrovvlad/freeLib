@@ -200,7 +200,7 @@ void LibrariesDlg::AddNewLibrary(SLib &lib)
 {
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
     {
-        openDB(QStringLiteral("libdb"), true, false);
+        openDB(QStringLiteral("libdb"));
     }
     idCurrentLib_ = 0;
     StartImport(lib);
@@ -269,13 +269,14 @@ void LibrariesDlg::DeleteLibrary()
     if(idCurrentLib_ == 0)
         return;
 
-    if(QMessageBox::question(this,tr("Delete library"),tr("Delete library")+" \""+ui->ExistingLibs->currentText()+"\"",QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
+    if(QMessageBox::question(this,tr("Delete library"),tr("Delete library ")+"\""+ui->ExistingLibs->currentText()+"\"?",QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    ClearLib(QSqlDatabase::database(QStringLiteral("libdb")), idCurrentLib_, false);
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(idCurrentLib_));
+    if(!query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
+        qDebug()<<query.lastError().databaseText();
+    query.exec(QStringLiteral("VACUUM"));
     mLibs.remove(idCurrentLib_);
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
