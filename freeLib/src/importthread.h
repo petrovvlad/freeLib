@@ -11,9 +11,6 @@
 #define UT_NEW 12
 
 
-void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only);
-
-
 class ImportThread : public QObject
 {
     Q_OBJECT

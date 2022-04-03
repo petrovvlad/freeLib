@@ -148,7 +148,8 @@ void UpdateLibs()
         QSettings *settings = GetSettings();
         idCurrentLib = settings->value(QStringLiteral("LibID"), 0).toInt();
         QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-        query.exec(QStringLiteral("SELECT id,name,path,inpx,firstauthor, woDeleted FROM lib ORDER BY name"));
+        query.exec(QStringLiteral("SELECT id,name,path,inpx,version,firstauthor,woDeleted FROM lib ORDER BY name"));
+        //                                0  1    2    3    4       5           6
         mLibs.clear();
         while(query.next())
         {
@@ -156,8 +157,9 @@ void UpdateLibs()
             mLibs[idLib].name = query.value(1).toString().trimmed();
             mLibs[idLib].path = query.value(2).toString().trimmed();
             mLibs[idLib].sInpx = query.value(3).toString().trimmed();
-            mLibs[idLib].bFirstAuthor = query.value(4).toBool();
-            mLibs[idLib].bWoDeleted = query.value(5).toBool();
+            mLibs[idLib].sVersion = query.value(4).toString().trimmed();
+            mLibs[idLib].bFirstAuthor = query.value(5).toBool();
+            mLibs[idLib].bWoDeleted = query.value(6).toBool();
         }
         if(mLibs.empty())
             idCurrentLib = 0;
