@@ -779,7 +779,9 @@ void ImportThread::process()
                             tag_auth = tag_author[author_count].trimmed().toInt();
                     }
                     QString sAuthorLow = sAuthor.toLower();
-                    if(format == QLatin1String("fb2") && sAuthorLow.contains(QStringLiteral("автор")) && (sAuthorLow.contains(QStringLiteral("неизвестен")) || sAuthorLow.contains(QStringLiteral("неизвестный"))))
+                    bool bUnkownAuthor = (sAuthorLow.contains(QStringLiteral("автор")) && (sAuthorLow.contains(QStringLiteral("неизвестен")) || sAuthorLow.contains(QStringLiteral("неизвестный"))))
+                                      || sAuthorLow == QStringLiteral("неизвестно");
+                    if(format == QLatin1String("fb2") && Authors.size()==1 && bUnkownAuthor)
                     {
                         QString sFile, sArchive;
                         QBuffer buffer;
@@ -810,16 +812,18 @@ void ImportThread::process()
                             author.sLastName = listAuthor.at(i).toElement().elementsByTagName(QStringLiteral("last-name")).at(0).toElement().text();
                             author.sMiddleName = listAuthor.at(i).toElement().elementsByTagName(QStringLiteral("middle-name")).at(0).toElement().text();
                             sAuthorLow = author.getName().toLower();
-                            if(!sAuthorLow.contains(QStringLiteral("неизвестен")) && !sAuthorLow.contains(QStringLiteral("неизвестный"))){
+                            if(!sAuthorLow.contains(QStringLiteral("неизвест")) && !sAuthorLow.isEmpty()){
                                 //QString sAuthor = QString("%1,%2,%3").arg(lastname,firstname,middlename);
                                 addAuthor(author, existingID, id_book, author_count == 0, tag_auth);
                                 author_count++;
                             }
                         }
                     }else{
-                        SAuthor author(sAuthor);
-                        addAuthor(author, existingID, id_book, author_count == 0, tag_auth);
-                        author_count++;
+                        if(!bUnkownAuthor){
+                            SAuthor author(sAuthor);
+                            addAuthor(author, existingID, id_book, author_count == 0, tag_auth);
+                            author_count++;
+                        }
                     }
                 }
 
