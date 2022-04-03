@@ -71,6 +71,7 @@ public:
     QString name;
     QString path;
     QString sInpx;
+    QString sVersion;
     bool bFirstAuthor;
     bool bWoDeleted;
     bool bLoaded = false;

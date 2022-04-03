@@ -110,6 +110,15 @@ bool openDB(const QString &sName)
         query.exec(QStringLiteral("CREATE TABLE seria_tag (id_seria INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_seria) REFERENCES seria (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE);"));
         query.exec(QStringLiteral("CREATE TABLE author_tag (id_author INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_author) REFERENCES author (id) ON DELETE CASCADE);"));
     }
+    if(nMinorVersion < 3){
+        query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
+        query.exec(QStringLiteral("CREATE TABLE sqlitestudio_temp_table AS SELECT * FROM lib;"));
+        query.exec(QStringLiteral("DROP TABLE lib;"));
+        query.exec(QStringLiteral("CREATE TABLE lib (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT, path TEXT, inpx TEXT, version TEXT, firstAuthor BOOL, woDeleted BOOL);"));
+        query.exec(QStringLiteral("INSERT INTO lib (id, name, path, inpx, firstAuthor, woDeleted) SELECT id, name, path, inpx, firstAuthor, woDeleted FROM sqlitestudio_temp_table;"));
+        query.exec(QStringLiteral("DROP TABLE sqlitestudio_temp_table;"));
+        query.exec(QStringLiteral("INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 3)"));
+    }
     if(nMinorVersion < 2){
         query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
         query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM author;"));
@@ -147,7 +156,6 @@ bool openDB(const QString &sName)
         query.exec(QStringLiteral("DROP TABLE temp_table;"));
         query.exec(QStringLiteral("CREATE INDEX seria_id ON seria (\"id\" ASC);"));
         query.exec(QStringLiteral("CREATE INDEX seria_name ON seria (\"name\" ASC, \"id_lib\" ASC);"));
-        query.exec(QStringLiteral("INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 2)"));
     }
     if(nMinorVersion == 1){
         query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
