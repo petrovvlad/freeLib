@@ -156,6 +156,8 @@ void LibrariesDlg::UpdateLibList()
 void LibrariesDlg::StartImport()
 {
     SLib lib;
+    if(idCurrentLib > 0)
+        lib = mLibs[idCurrentLib_];
     lib.name = ui->ExistingLibs->currentText().trimmed();
     lib.sInpx = ui->inpx->text().trimmed();
     lib.path = ui->BookDir->text().trimmed();
@@ -168,7 +170,7 @@ void LibrariesDlg::StartImport(SLib &Lib)
 {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
-    int update_type = (ui->add_new->isChecked() ?UT_NEW:ui->del_old->isChecked() ?UT_DEL_AND_NEW:UT_FULL);
+    uchar update_type = (ui->add_new->isChecked() ?UT_NEW:ui->del_old->isChecked() ?UT_DEL_AND_NEW:UT_FULL);
     SaveLibrary(idCurrentLib_,Lib);
     ui->btnUpdate->setDisabled(true);
     ui->BookDir->setDisabled(true);
@@ -183,8 +185,7 @@ void LibrariesDlg::StartImport(SLib &Lib)
 
     thread = new QThread;
     imp_tr = new ImportThread();
-    imp_tr->start(Lib.sInpx, Lib.name, Lib.path, idCurrentLib_, update_type, false,
-                  Lib.bFirstAuthor&&Lib.sInpx.isEmpty(), Lib.bWoDeleted);
+    imp_tr->start(idCurrentLib_, Lib, update_type, Lib.bFirstAuthor && Lib.sInpx.isEmpty());
     imp_tr->moveToThread(thread);
     connect(imp_tr, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
     connect(thread, &QThread::started, imp_tr, &ImportThread::process);
@@ -281,6 +282,7 @@ void LibrariesDlg::DeleteLibrary()
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
         ui->ExistingLibs->setCurrentIndex(0);
+        idCurrentLib_ = ui->ExistingLibs->itemData(0).toInt();
     }else
         idCurrentLib_ = 0;
     SelectLibrary();
