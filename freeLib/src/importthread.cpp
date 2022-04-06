@@ -141,40 +141,48 @@ qlonglong ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong id_
     return id;
 }
 
-void ImportThread::start(const QString &fileName, const QString &name, const QString &path, long ID, int update_type, bool save_only, bool firstAuthor, bool bWoDeleted)
+void ImportThread::start(uint id_, const SLib &lib, uchar update_type, bool save_only)
 {
-    sInpxFile_ = RelativeToAbsolutePath(fileName);
+    sInpxFile_ = RelativeToAbsolutePath(lib.sInpx);
     if(!QFileInfo::exists(sInpxFile_) || !QFileInfo(sInpxFile_).isFile())
     {
-        sInpxFile_ = fileName;
+        sInpxFile_ = lib.sInpx;
     }
-    _path = RelativeToAbsolutePath(path);
-    _name = name;
-    _update_type = update_type;
-    nIdLib_ = ID;
+    sPath_ = RelativeToAbsolutePath(lib.path);
+    sName_ = lib.name;
+    nUpdateType_ = update_type;
+    idLib_ = id_;
     loop = true;
     _save_only = save_only;
-    _firstAuthorOnly = firstAuthor;
-    bWoDeleted_ = bWoDeleted;
+    bFirstAuthorOnly = lib.bFirstAuthor;
+    bWoDeleted_ = lib.bWoDeleted;
+    if(nUpdateType_ == UT_NEW){
+       auto iBook = lib.mBooks.constBegin();
+       while(iBook != lib.mBooks.constEnd()){
+           listIdBookInLib_ << iBook->idInLib;
+           ++iBook;
+       }
+
+    }
 }
 
 void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_name, qint32 file_size)
 {
     if(arh_name.isEmpty())
     {
-        file_name = file_name.right(file_name.length()-_path.length());
+        file_name = file_name.right(file_name.length() - sPath_.length());
         if(!file_name.isEmpty() && (file_name.at(0) == '/' || file_name.at(0) == '\\'))
                 file_name = file_name.right(file_name.length()-1);
     }
     else
     {
-        arh_name = arh_name.right(arh_name.length()-_path.length());
+        arh_name = arh_name.right(arh_name.length() - sPath_.length());
         if(!arh_name.isEmpty() && (arh_name.at(0) == '/' || arh_name.at(0) == '\\'))
                 arh_name = arh_name.right(arh_name.length()-1);
     }
     QFileInfo fi(file_name);
     file_name = file_name.left(file_name.length()-fi.suffix().length()-1);
-    query->exec(QStringLiteral("SELECT id FROM book where id_lib=%1 and file='%2' and archive='%3'").arg(QString::number(nIdLib_), file_name, arh_name));
+    query->exec(QStringLiteral("SELECT id FROM book where id_lib=%1 and file='%2' and archive='%3'").arg(QString::number(idLib_), file_name, arh_name));
     if(query->next()) //если книга найдена, то просто снимаем пометку удаления
     {
         query->exec(QLatin1String("update book set deleted=0 where id=") + query->value(0).toString());
@@ -209,38 +217,38 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     QDomElement publish_info = doc.elementsByTagName(QStringLiteral("publish-info")).at(0).toElement();
     QString sIsbn = publish_info.elementsByTagName(QStringLiteral("isbn")).at(0).toElement().text();
 
-    qlonglong id_seria = AddSeria(sSeria, nIdLib_, 0);
+    qlonglong id_seria = AddSeria(sSeria, idLib_, 0);
     qlonglong id_book = AddBook(0, sTitle, id_seria, numInSerial, file_name, (file_size == 0 ?ba.size() :file_size), 0, false, fi.suffix(), QDate::currentDate(),
-                                sLanguage, QLatin1String(""), nIdLib_, arh_name, 0);
+                                sLanguage, QLatin1String(""), idLib_, arh_name, 0);
 
     bool first_author = true;
     foreach(const SAuthor &author, listAuthors)
     {
-        addAuthor(author, nIdLib_, id_book, first_author, 0);
+        addAuthor(author, idLib_, id_book, first_author, 0);
         first_author = false;
-        if(_firstAuthorOnly)
+        if(bFirstAuthorOnly)
             break;
     }
     foreach(const auto sGenre, listGenres)
-        AddGenre(id_book, sGenre, nIdLib_);
+        AddGenre(id_book, sGenre, idLib_);
 }
 
 void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh_name, qint32 file_size)
 {
     if(arh_name.isEmpty())
     {
-        file_name = file_name.right(file_name.length() - _path.length());
+        file_name = file_name.right(file_name.length() - sPath_.length());
         if(file_name.at(0) == '/' || file_name.at(0) == '\\')
                 file_name=file_name.right(file_name.length()-1);
     }
     else
     {
-        arh_name = arh_name.right(arh_name.length() - _path.length());
+        arh_name = arh_name.right(arh_name.length() - sPath_.length());
         if(arh_name.at(0) == '/' || arh_name.at(0) == '\\')
                 arh_name=arh_name.right(arh_name.length()-1);
     }
     file_name = file_name.left(file_name.length()-5);
-    query->exec(QStringLiteral("SELECT id FROM book where id_lib=%1 and file='%2' and archive='%3'").arg(QString::number(nIdLib_), file_name, arh_name));
+    query->exec(QStringLiteral("SELECT id FROM book where id_lib=%1 and file='%2' and archive='%3'").arg(QString::number(idLib_), file_name, arh_name));
     if(query->next()) //если книга найдена, то просто снимаем пометку удаления
     {
         query->exec(QStringLiteral("update book set deleted=0 where id=") + query->value(0).toString());
@@ -330,16 +338,16 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
     }
 
     qlonglong id_book = AddBook(0, sTitle, 0, 0, file_name, (file_size == 0 ?ba.size() :file_size), 0, false, QStringLiteral("epub"), QDate::currentDate(),
-                                sLanguage, QLatin1String(""), nIdLib_, arh_name, 0);
+                                sLanguage, QLatin1String(""), idLib_, arh_name, 0);
 
     bool first_author = true;
     foreach(const SAuthor &author, listAuthors)
     {
-        addAuthor(author, nIdLib_, id_book, first_author, 0);
+        addAuthor(author, idLib_, id_book, first_author, 0);
         first_author = false;
     }
     foreach(const auto sGenre, listGenres)
-        AddGenre(id_book, sGenre, nIdLib_);
+        AddGenre(id_book, sGenre, idLib_);
 }
 
 void ImportThread::importFB2_main(const QString &path)
@@ -395,10 +403,10 @@ void ImportThread::importFB2(const QString &path, int &count)
             }
             else if(iter->suffix().toLower() == QLatin1String("zip"))
             {
-                if(_update_type == UT_NEW)
+                if(nUpdateType_ == UT_NEW)
                 {
                     emit Message(iter->fileName());
-                    QString arh_name = file_name.right(file_name.length() - _path.length());
+                    QString arh_name = file_name.right(file_name.length() - sPath_.length());
                     if(arh_name.at(0) == '/' || arh_name.at(0) == '\\')
                             arh_name=arh_name.right(arh_name.length()-1);
                     query->exec(QStringLiteral("SELECT * FROM book where archive='%1' LIMIT 1").arg(arh_name));
@@ -482,7 +490,7 @@ void ImportThread::process()
         emit End();
         return;
     }
-    if(_name.isEmpty())
+    if(sName_.isEmpty())
     {
         emit Message(tr("Empty library name"));
         emit End();
@@ -500,24 +508,24 @@ void ImportThread::process()
 
     query = new QSqlQuery(dbase);
 
-    switch(_update_type)
+    switch(nUpdateType_)
     {
     case UT_FULL:
-        ClearLib(dbase, nIdLib_, false);
+        ClearLib(dbase, idLib_, false);
         break;
     case UT_DEL_AND_NEW:
-        ClearLib(dbase, nIdLib_, true);
+        ClearLib(dbase, idLib_, true);
         break;
     }
 
     if(sInpxFile_.isEmpty())
     {
-        importFB2_main(_path);
+        importFB2_main(sPath_);
         query->exec(QStringLiteral("drop table if exists tmp;"));
-        query->exec(QStringLiteral("create table tmp as select id from book where id_lib=%1 and deleted=1;").arg(QString::number(nIdLib_)));
-        query->exec(QStringLiteral("delete from book where id_lib=%1 and id in (select id from tmp);").arg(QString::number(nIdLib_)));
-        query->exec(QStringLiteral("delete from book_genre where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(nIdLib_)));
-        query->exec(QStringLiteral("delete from book_author where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(nIdLib_)));
+        query->exec(QStringLiteral("create table tmp as select id from book where id_lib=%1 and deleted=1;").arg(QString::number(idLib_)));
+        query->exec(QStringLiteral("delete from book where id_lib=%1 and id in (select id from tmp);").arg(QString::number(idLib_)));
+        query->exec(QStringLiteral("delete from book_genre where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(idLib_)));
+        query->exec(QStringLiteral("delete from book_author where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(idLib_)));
         query->exec(QStringLiteral("drop table if exists tmp;"));
         query->exec(QStringLiteral("VACUUM"));
         emit End();
@@ -540,7 +548,7 @@ void ImportThread::process()
         outbuff.setData(zip_file.readAll());
         zip_file.close();
         QString sVersion = QString::fromUtf8(outbuff.data());
-        if(!query->exec(QStringLiteral("UPDATE lib SET version=") + sVersion + QStringLiteral(" WHERE id=") + QString::number(nIdLib_)))
+        if(!query->exec(QStringLiteral("UPDATE lib SET version=") + sVersion + QStringLiteral(" WHERE id=") + QString::number(idLib_)))
             qDebug() << query->lastError().text();
     }
 
@@ -659,9 +667,9 @@ void ImportThread::process()
         if(str.right(3).toUpper() != QLatin1String("INP"))
             continue;
         emit Message(str);
-        if(_update_type == UT_NEW)
+        if(nUpdateType_ == UT_NEW)
         {
-            query->exec(QStringLiteral("SELECT * FROM book where archive='%1' and id_lib=%2 LIMIT 1").arg(str, QString::number(nIdLib_)));
+            query->exec(QStringLiteral("SELECT * FROM book WHERE archive='%1' AND id_lib=%2 LIMIT 1").arg(str, QString::number(idLib_)));
             if(query->next())
                 continue;
         }
@@ -713,6 +721,8 @@ void ImportThread::process()
             if(substrings.count() > field_index[_ID_IN_LIB])
             {
                 id_in_lib = substrings[field_index[_ID_IN_LIB]].trimmed().toInt();
+                if(nUpdateType_ == UT_NEW && listIdBookInLib_.contains(id_in_lib))
+                    continue;
             }
             bool deleted = 0;
             if(substrings.count()>field_index[_DELETED])
@@ -767,11 +777,11 @@ void ImportThread::process()
             }
             qlonglong id_seria = 0;
             if(!Seria.isEmpty())
-                id_seria = AddSeria(Seria,nIdLib_,tag_seria);
+                id_seria = AddSeria(Seria,idLib_,tag_seria);
 
             qlonglong id_book;
             if(!bWoDeleted_ || !deleted){
-                id_book = AddBook(star, name, id_seria, num_in_seria, file, size, id_in_lib, deleted, format, date, language, keys, nIdLib_, folder, tag);
+                id_book = AddBook(star, name, id_seria, num_in_seria, file, size, id_in_lib, deleted, format, date, language, keys, idLib_, folder, tag);
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
                 QStringList Authors = substrings[field_index[_AUTHORS]].split(':', Qt::SkipEmptyParts);
@@ -799,7 +809,7 @@ void ImportThread::process()
                         QString sFile, sArchive;
                         QBuffer buffer;
                         sFile = QStringLiteral("%1.%2").arg(file, format);
-                        sArchive = QStringLiteral("%1/%2").arg(_path, folder.replace(QLatin1String(".inp"), QLatin1String(".zip")));
+                        sArchive = QStringLiteral("%1/%2").arg(sPath_, folder.replace(QLatin1String(".inp"), QLatin1String(".zip")));
                         if(archiveFile.getZipName() != sArchive){
                             archiveFile.close();
                             archiveFile.setZipName(sArchive);
@@ -827,14 +837,14 @@ void ImportThread::process()
                             sAuthorLow = author.getName().toLower();
                             if(!sAuthorLow.contains(QStringLiteral("неизвест")) && !sAuthorLow.isEmpty()){
                                 //QString sAuthor = QString("%1,%2,%3").arg(lastname,firstname,middlename);
-                                addAuthor(author, nIdLib_, id_book, author_count == 0, tag_auth);
+                                addAuthor(author, idLib_, id_book, author_count == 0, tag_auth);
                                 author_count++;
                             }
                         }
                     }else{
                         if(!bUnkownAuthor){
                             SAuthor author(sAuthor);
-                            addAuthor(author, nIdLib_, id_book, author_count == 0, tag_auth);
+                            addAuthor(author, idLib_, id_book, author_count == 0, tag_auth);
                             author_count++;
                         }
                     }
@@ -848,7 +858,7 @@ void ImportThread::process()
                     {
                         if(!first && janre.trimmed().isEmpty())
                             continue;
-                        AddGenre(id_book, janre.trimmed(), nIdLib_);
+                        AddGenre(id_book, janre.trimmed(), idLib_);
                         first = false;
                     }
                 }
