@@ -282,6 +282,7 @@ void LibrariesDlg::DeleteLibrary()
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
         ui->ExistingLibs->setCurrentIndex(0);
+        idCurrentLib_ = ui->ExistingLibs->itemData(0).toInt();
     }else
         idCurrentLib_ = 0;
     SelectLibrary();
