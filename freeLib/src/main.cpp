@@ -244,6 +244,7 @@ int main(int argc, char *argv[])
                         std::cout << "Library:\t" << mLibs[nId].name.toStdString() << "\n";
                         std::cout << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n";
                         std::cout << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n";
+                        std::cout << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n";
                     }
                 }
                 if(!strcmp(argv[i], "delete") && nId>0){
