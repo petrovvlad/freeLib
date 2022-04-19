@@ -211,13 +211,15 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
        }
        outbuff.setData(book_file.readAll());
        book_file.close();
-       MimeText text;
+       MimeText *pText = new MimeText;
        QString onlyFileName = QFileInfo(book_file_name).fileName();
-       text.setText(onlyFileName);
-       msg.addPart(&text);
+       pText->setText(onlyFileName);
+       msg.addPart(pText);
        msg.addPart(new MimeAttachment(outbuff.data(), onlyFileName));
        smtp.connectToHost();
+       smtp.waitForReadyConnected();
        smtp.login(pExportOptions_->sEmailUser, pExportOptions_->sEmailPassword);
+       smtp.waitForAuthenticated();
        smtp.sendMail(msg);
        if(!smtp.waitForMailSent())
        {

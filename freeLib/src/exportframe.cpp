@@ -8,39 +8,6 @@
 #include <QMessageBox>
 #include <QTextStream>
 
-
-static const quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
-QString encodeStr(const QString& str)
-{
-    QByteArray arr(str.toUtf8());
-    quint32 index=0;
-    for(int i =0; i<arr.size(); i++)
-    {
-        arr[i] = arr[i] ^ key[index];
-        index++;
-        if(index >= sizeof(key) / sizeof(quint32))
-            index = 0;
-    }
-
-    return QLatin1String("#-#") + QString::fromLatin1(arr.toBase64());
-}
-
-QString decodeStr(const QString &str)
-{
-    if(str.left(3) != QLatin1String("#-#"))
-        return str;
-    QByteArray arr = QByteArray::fromBase64(str.mid(3).toLatin1());
-    quint32 index = 0;
-    for(int i =0; i<arr.size(); i++)
-    {
-        arr[i] = arr[i] ^ key[index];
-        index++;
-        if(index >= sizeof(key) / sizeof(quint32))
-            index = 0;
-    }
-    return QString::fromUtf8(arr);
-}
-
 ExportFrame::ExportFrame(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::ExportFrame)
@@ -119,7 +86,7 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
     ui->Server->setText(pExportOptions->sEmailServer);
     ui->Port->setText(QString::number(pExportOptions->nEmailServerPort));
     ui->User->setText(pExportOptions->sEmailUser);
-    ui->Password->setText(decodeStr(pExportOptions->sEmailPassword));
+    ui->Password->setText(pExportOptions->sEmailPassword);
     ui->PostprocessingCopy->setChecked(pExportOptions->bPostprocessingCopy);
     ui->Path->setText(pExportOptions->sDevicePath);
     ui->originalFileName->setChecked(pExportOptions->bOriginalFileName);
@@ -186,11 +153,12 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
 QStringList ExportFrame::Save(ExportOptions *pExportOptions)
 {
     pExportOptions->sEmailFrom = ui->from_email->text().trimmed();
+    pExportOptions->sEmail = ui->Email->text().trimmed();
     pExportOptions->sEmailSubject = ui->mail_subject->text().trimmed();
     pExportOptions->sEmailServer = ui->Server->text().trimmed();
     pExportOptions->nEmailServerPort = ui->Port->text().trimmed().toUInt();
     pExportOptions->sEmailUser = ui->User->text().trimmed();
-    pExportOptions->sEmailPassword = encodeStr(ui->Password->text());
+    pExportOptions->sEmailPassword = ui->Password->text();
     pExportOptions->bPostprocessingCopy = ui->PostprocessingCopy->isChecked();
     pExportOptions->sDevicePath = ui->Path->text().trimmed();
     pExportOptions->nEmailPause = ui->PauseMail->value();
