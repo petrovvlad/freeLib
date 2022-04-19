@@ -12,7 +12,6 @@
 #include <QSystemTrayIcon>
 
 #include "helpdialog.h"
-#include "opds_server.h"
 #include "common.h"
 #include "options.h"
 #include "coverlabel.h"
@@ -43,7 +42,6 @@ private:
     QMap<uint, QIcon> iconsTags_;
 
     void uncheck_books(QList<qlonglong> list);
-    opds_server opds;
     QToolButton *FirstButton;
     QToolButton *btn_Hash;
     void UpdateExportMenu();

@@ -51,6 +51,8 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->ExportList->setColumnWidth(0, 100);
     ui->ExportList->setColumnWidth(1, 250);
     ui->ExportList->setColumnWidth(2, 150);
+    //Колонка «имя выходного файла» временно спрятана
+    ui->ExportList->hideColumn(3);
 
 
     QStringList dirContent = QDir(QApplication::applicationDirPath() + QLatin1String("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);

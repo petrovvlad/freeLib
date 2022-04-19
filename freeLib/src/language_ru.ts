@@ -13,7 +13,7 @@
     </message>
 </context>
 <context>
-    <name>AddLibrary</name>
+    <name>LibrariesDlg</name>
     <message>
         <source>Add/Edit library</source>
         <translation>Добавить/обновить библиотеку</translation>
@@ -49,6 +49,11 @@
         <source>Delete current library</source>
         <translation>Удалить текущую библиотеку</translation>
     </message>
+        <message>
+        <source>Delete library </source>
+        <translation>Удалить библиотеку </translation>
+    </message>
+
     <message>
         <source>Update type</source>
         <translation>Способ обновления</translation>

@@ -211,13 +211,15 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
        }
        outbuff.setData(book_file.readAll());
        book_file.close();
-       MimeText text;
+       MimeText *pText = new MimeText;
        QString onlyFileName = QFileInfo(book_file_name).fileName();
-       text.setText(onlyFileName);
-       msg.addPart(&text);
+       pText->setText(onlyFileName);
+       msg.addPart(pText);
        msg.addPart(new MimeAttachment(outbuff.data(), onlyFileName));
        smtp.connectToHost();
+       smtp.waitForReadyConnected();
        smtp.login(pExportOptions_->sEmailUser, pExportOptions_->sEmailPassword);
+       smtp.waitForAuthenticated();
        smtp.sendMail(msg);
        if(!smtp.waitForMailSent())
        {
@@ -253,16 +255,17 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
         if(!tool_path.isEmpty())
         {
             QFileInfo fi_tmp(book_file_name);
-            QString arg = tool_arg;
             QString ex = lib.fillParams(tool_path, idBook, fi_tmp);
-            arg = lib.fillParams(arg, idBook, fi_tmp);
-            listArg << arg;
-            if(!tool_ext.isEmpty())
-            {
-                book_file_name = tool_ext;
-                book_file_name = lib.fillParams(book_file_name, idBook, fi_tmp);
-                listArg << book_file_name;
-            }
+            QStringList listArg = tool_arg.split(QStringLiteral(" "));
+            for(int i = 0; i != listArg.size(); ++i)
+                listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
+              //Колонка «имя выходного файла» временно спрятана
+//            if(!tool_ext.isEmpty())
+//            {
+//                book_file_name = tool_ext;
+//                book_file_name = lib.fillParams(book_file_name, idBook, fi_tmp);
+//                listArg << book_file_name;
+//            }
             qDebug()<<ex<<listArg;
             QProcess::execute(ex, listArg);
         }
@@ -423,7 +426,7 @@ void ExportThread::process()
 
 void ExportThread::export_lib()
 {
-    if(!openDB(QStringLiteral("ExpThrdDb"), true, false))
+    if(!openDB(QStringLiteral("ExpThrdDb")))
         return;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("ExpThrdDb")));
     if(!query.exec(QStringLiteral("SELECT book.id,author.id,genre.id,book.name,star,num_in_seria,book.language,file,size,deleted,date,format,book.keys,archive,date,book.id_inlib, "
