@@ -4,6 +4,38 @@
 #include <QFileInfo>
 #include <QStringBuilder>
 
+static const quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
+QString encodeStr(const QString& str)
+{
+    QByteArray arr(str.toUtf8());
+    quint32 index=0;
+    for(int i =0; i<arr.size(); i++)
+    {
+        arr[i] = arr[i] ^ key[index];
+        index++;
+        if(index >= sizeof(key) / sizeof(quint32))
+            index = 0;
+    }
+
+    return QLatin1String("#-#") + QString::fromLatin1(arr.toBase64());
+}
+
+QString decodeStr(const QString &str)
+{
+    if(str.left(3) != QLatin1String("#-#"))
+        return str;
+    QByteArray arr = QByteArray::fromBase64(str.mid(3).toLatin1());
+    quint32 index = 0;
+    for(int i =0; i<arr.size(); i++)
+    {
+        arr[i] = arr[i] ^ key[index];
+        index++;
+        if(index >= sizeof(key) / sizeof(quint32))
+            index = 0;
+    }
+    return QString::fromUtf8(arr);
+}
+
 void ExportOptions::Save(QSettings *pSettings, bool bSavePasswords)
 {
     pSettings->setValue(QStringLiteral("ExportName"), sName);
@@ -16,7 +48,7 @@ void ExportOptions::Save(QSettings *pSettings, bool bSavePasswords)
         pSettings->setValue(QStringLiteral("EmailServer"), sEmailServer);
         pSettings->setValue(QStringLiteral("EmailPort"), nEmailServerPort);
         pSettings->setValue(QStringLiteral("EmailUser"), sEmailUser);
-        pSettings->setValue(QStringLiteral("EmailPassword"), sEmailPassword);
+        pSettings->setValue(QStringLiteral("EmailPassword"), encodeStr(sEmailPassword));
         pSettings->setValue(QStringLiteral("PostprocessingCopy"), bPostprocessingCopy);
         pSettings->setValue(QStringLiteral("DevicePath"), sDevicePath);
         pSettings->setValue(QStringLiteral("PauseMail"), nEmailPause);
@@ -96,7 +128,7 @@ void ExportOptions::Load(QSettings *pSettings)
     sEmailServer = pSettings->value(QStringLiteral("EmailServer")).toString();
     nEmailServerPort = pSettings->value(QStringLiteral("EmailPort"), 25).toUInt();
     sEmailUser = pSettings->value(QStringLiteral("EmailUser")).toString();
-    sEmailPassword =  pSettings->value(QStringLiteral("EmailPassword")).toString();
+    sEmailPassword =  decodeStr(pSettings->value(QStringLiteral("EmailPassword")).toString());
     bPostprocessingCopy = pSettings->value(QStringLiteral("PostprocessingCopy"), false).toBool();
     sDevicePath = pSettings->value(QStringLiteral("DevicePath"),HomeDir).toString();
     bOriginalFileName = pSettings->value(QStringLiteral("originalFileName"), false).toBool();
