@@ -30,6 +30,6 @@ git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
 Собрать  и установить:
 ```
 mkdir freeLib/build && cd freeLib/build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr -DQUAZIP_STATIC:BOOL=ON .. && cmake --build .
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build . -j2
 sudo make install
 ```
