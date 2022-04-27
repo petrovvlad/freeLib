@@ -38,8 +38,6 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
         SBook& bookOther = mLibs[idCurrentLib].mBooks[other.data(0, Qt::UserRole).toUInt()];
         switch(sortColumn){
         case 0:  //Название книги
-            if(bookThis.idSerial > 0 && bookOther.idSerial)
-                return bookThis.numInSerial < bookOther.numInSerial;
             return collator.compare(text(0), other.text(0)) < 0;
         case 1: //Номер в серии
             return bookThis.numInSerial < bookOther.numInSerial;
