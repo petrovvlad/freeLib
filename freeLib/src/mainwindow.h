@@ -68,6 +68,7 @@ private:
     uint idCurrentSerial_;
     uint idCurrentBook_;
     CoverLabel *pCover;
+    bool bTreeView_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
 
 protected:
@@ -116,7 +117,8 @@ private slots:
     void onTabWidgetChanged(int index);
     void onLanguageFilterChanged(int index);
     void onChangeAlpabet(const QString &sAlphabetName);
-
+    void onTreeView();
+    void onListView();
 
     void ChangingTrayIcon(int index, int color);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);

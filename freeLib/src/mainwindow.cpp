@@ -36,10 +36,15 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     trIcon = nullptr;
     error_quit = false;
+
     QSettings *settings = GetSettings();
 
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
+    bTreeView_ = true;
+    ui->btnTreeView->setChecked(bTreeView_);
+    ui->btnListView->setChecked(!bTreeView_);;
+
     ui->tabWidget->setCurrentIndex(0);
     ui->Books->setColumnWidth(0,400);
     ui->Books->setColumnWidth(1,50);
@@ -122,6 +127,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionCheck_uncheck, &QAction::triggered, this, &MainWindow::CheckBooks);
     connect(ui->btnCheck, &QAbstractButton::clicked, this, &MainWindow::CheckBooks);
     connect(ui->btnEdit, &QAbstractButton::clicked, this, &MainWindow::EditBooks);
+    connect(ui->btnTreeView, &QAbstractButton::clicked, this, &MainWindow::onTreeView);
+    connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
@@ -1685,54 +1692,57 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
         SBook &book = lib.mBooks[idBook];
         if(IsBookInList(book))
         {
-            uint idSerial = book.idSerial;
-            uint idAuthor;
-            if(idCurrentAuthor > 0)
-                idAuthor = idCurrentAuthor;
-            else{
-                idAuthor = book.idFirstAuthor;
-            }
-            if(!mAuthors.contains(idAuthor)){
-                item_author = new TreeBookItem(ui->Books, ITEM_TYPE_AUTHOR);
-                item_author->setText(0, lib.mAuthors[idAuthor].getName());
-                item_author->setExpanded(true);
-                item_author->setFont(0, bold_font);
-                item_author->setCheckState(0, Qt::Unchecked);
-                item_author->setData(0, Qt::UserRole, idAuthor);
-                item_author->setData(3, Qt::UserRole, -1);
-
-                if(options.bUseTag){
-                    item_author->setIcon(0, getTagIcon(lib.mAuthors[idAuthor].listIdTags));
+            if(bTreeView_){
+                uint idSerial = book.idSerial;
+                uint idAuthor;
+                if(idCurrentAuthor > 0)
+                    idAuthor = idCurrentAuthor;
+                else{
+                    idAuthor = book.idFirstAuthor;
                 }
-                mAuthors[idAuthor] = item_author;
+                if(!mAuthors.contains(idAuthor)){
+                    item_author = new TreeBookItem(ui->Books, ITEM_TYPE_AUTHOR);
+                    item_author->setText(0, lib.mAuthors[idAuthor].getName());
+                    item_author->setExpanded(true);
+                    item_author->setFont(0, bold_font);
+                    item_author->setCheckState(0, Qt::Unchecked);
+                    item_author->setData(0, Qt::UserRole, idAuthor);
+                    item_author->setData(3, Qt::UserRole, -1);
+
+                    if(options.bUseTag){
+                        item_author->setIcon(0, getTagIcon(lib.mAuthors[idAuthor].listIdTags));
+                    }
+                    mAuthors[idAuthor] = item_author;
+                }else
+                    item_author = mAuthors[idAuthor];
+
+                if(idSerial>0){
+                    auto iSerial = mSerias.constFind(idSerial);
+                    while(iSerial != mSerias.constEnd()){
+                        item_seria = iSerial.value();
+                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor)
+                            break;
+                        ++iSerial;
+                    }
+                    if(iSerial == mSerias.constEnd()){
+                        item_seria = new TreeBookItem(mAuthors[idAuthor], ITEM_TYPE_SERIA);
+                        item_seria->setText(0, lib.mSerials[idSerial].sName);
+                        item_author->addChild(item_seria);
+                        item_seria->setExpanded(true);
+                        item_seria->setFont(0, bold_font);
+                        item_seria->setCheckState(0, Qt::Unchecked);
+                        item_seria->setData(0, Qt::UserRole, idSerial);
+                        item_seria->setData(3, Qt::UserRole, -1);
+                        if(options.bUseTag)
+                            item_seria->setIcon(0, getTagIcon(lib.mSerials[idSerial].listIdTags));
+
+                        mSerias.insert(idSerial, item_seria);
+                    }
+                    item_book = new TreeBookItem(item_seria, ITEM_TYPE_BOOK);
+                }else
+                    item_book = new TreeBookItem(item_author, ITEM_TYPE_BOOK);
             }else
-                item_author = mAuthors[idAuthor];
-
-            if(idSerial>0){
-                auto iSerial = mSerias.constFind(idSerial);
-                while(iSerial != mSerias.constEnd()){
-                    item_seria = iSerial.value();
-                    if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor)
-                        break;
-                    ++iSerial;
-                }
-                if(iSerial == mSerias.constEnd()){
-                    item_seria = new TreeBookItem(mAuthors[idAuthor], ITEM_TYPE_SERIA);
-                    item_seria->setText(0, lib.mSerials[idSerial].sName);
-                    item_author->addChild(item_seria);
-                    item_seria->setExpanded(true);
-                    item_seria->setFont(0, bold_font);
-                    item_seria->setCheckState(0, Qt::Unchecked);
-                    item_seria->setData(0, Qt::UserRole, idSerial);
-                    item_seria->setData(3, Qt::UserRole, -1);
-                    if(options.bUseTag)
-                        item_seria->setIcon(0, getTagIcon(lib.mSerials[idSerial].listIdTags));
-
-                    mSerias.insert(idSerial, item_seria);
-                }
-                item_book = new TreeBookItem(item_seria, ITEM_TYPE_BOOK);
-            }else
-                item_book = new TreeBookItem(item_author, ITEM_TYPE_BOOK);
+                item_book = new TreeBookItem(ui->Books, ITEM_TYPE_BOOK);
 
             item_book->setCheckState(0, Qt::Unchecked);
             item_book->setData(0, Qt::UserRole, idBook);
@@ -1895,6 +1905,26 @@ void MainWindow::onChangeAlpabet(const QString &sAlphabetName)
     }
     FillAlphabet(sAlphabetName);
     FirstButton->click();
+}
+
+void MainWindow::onTreeView()
+{
+    ui->btnTreeView->setChecked(true);
+    ui->btnListView->setChecked(false);
+    if(!bTreeView_){
+        bTreeView_ = true;
+        FillListBooks();
+    }
+}
+
+void MainWindow::onListView()
+{
+    ui->btnTreeView->setChecked(false);
+    ui->btnListView->setChecked(true);
+    if(bTreeView_){
+        bTreeView_ = false;
+        FillListBooks();
+    }
 }
 
 void MainWindow::onTabWidgetChanged(int index)
