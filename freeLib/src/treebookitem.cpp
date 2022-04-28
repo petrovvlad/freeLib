@@ -39,17 +39,27 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
         switch(sortColumn){
         case 0:  //Название книги
             return collator.compare(text(0), other.text(0)) < 0;
-        case 1: //Номер в серии
+        case 1: //Автор
+            return collator.compare(mLibs[idCurrentLib].mAuthors[bookThis.listIdAuthors.first()].getName(),
+                    mLibs[idCurrentLib].mAuthors[bookOther.listIdAuthors.first()].getName()) < 0;
+        case 2: //Серия
+            if(bookThis.idSerial == 0 && bookOther.idSerial != 0)
+                return true;
+            if(bookThis.idSerial != 0 && bookOther.idSerial == 0)
+                return false;
+            return collator.compare(mLibs[idCurrentLib].mSerials[bookThis.idSerial].sName,
+                    mLibs[idCurrentLib].mSerials[bookOther.idSerial].sName) < 0;
+        case 3: //Номер в серии
             return bookThis.numInSerial < bookOther.numInSerial;
-        case 2: //Размер
+        case 4: //Размер
             return bookThis.nSize < bookOther.nSize;
-        case 3: //рейтинг
+        case 5: //рейтинг
             return bookThis.nStars < bookOther.nStars;
-        case 4: //дата добавления
+        case 6: //дата добавления
             return bookThis.date < bookOther.date;
-        case 5: //Жанр
+        case 7: //Жанр
             return collator.compare(mGenre[bookThis.listIdGenres.first()].sName, mGenre[bookOther.listIdGenres.first()].sName) < 0;
-        case 6: //Язык
+        case 8: //Язык
             return mLibs[idCurrentLib].vLaguages[bookThis.idLanguage] < mLibs[idCurrentLib].vLaguages[bookOther.idLanguage];
         }
 

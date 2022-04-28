@@ -69,6 +69,8 @@ private:
     uint idCurrentBook_;
     CoverLabel *pCover;
     bool bTreeView_;
+    QByteArray aHeadersTree_;
+    QByteArray aHeadersList_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
 
 protected:

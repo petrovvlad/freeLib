@@ -485,7 +485,7 @@
           <property name="frameShadow">
            <enum>QFrame::Raised</enum>
           </property>
-          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
+          <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
            <property name="spacing">
             <number>3</number>
            </property>
@@ -579,6 +579,22 @@
                <normaloff>.</normaloff>.</iconset>
              </property>
             </widget>
+           </item>
+           <item>
+            <spacer name="horizontalSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeType">
+              <enum>QSizePolicy::Maximum</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>10</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
            </item>
            <item>
             <widget class="QToolButton" name="btnTreeView">
@@ -813,6 +829,16 @@
               </column>
               <column>
                <property name="text">
+                <string>Author</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
+                <string>Serial</string>
+               </property>
+              </column>
+              <column>
+               <property name="text">
                 <string>No.</string>
                </property>
                <property name="textAlignment">
@@ -888,7 +914,7 @@
      <x>0</x>
      <y>0</y>
      <width>1297</width>
-     <height>23</height>
+     <height>25</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">
