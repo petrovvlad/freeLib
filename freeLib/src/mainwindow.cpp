@@ -70,14 +70,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QPalette palette = QApplication::style()->standardPalette();
     bool darkTheme = palette.color(QPalette::Window).lightness()<127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"),QIcon(sIconsPath + QLatin1String("streamline.svg"))));
+    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
     ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
     ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QLatin1String("pen.svg"))));
-    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"),QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
+    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
     ui->btnLibrary->setIcon(QIcon(sIconsPath + QLatin1String("library.svg")));
-    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"),QIcon(sIconsPath + QLatin1String("settings.svg"))));
-    ui->btnTreeView->setIcon(QIcon::fromTheme(QStringLiteral("view-list-tree"), QIcon(sIconsPath + QLatin1String("view-tree.svg"))));
-    ui->btnListView->setIcon(QIcon::fromTheme(QStringLiteral("view-list-details"), QIcon(sIconsPath + QLatin1String("view-list.svg"))));
+    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"), QIcon(sIconsPath + QLatin1String("settings.svg"))));
+    ui->btnTreeView->setIcon(QIcon(sIconsPath + QLatin1String("view-tree.svg")));
+    ui->btnListView->setIcon(QIcon(sIconsPath + QLatin1String("view-list.svg")));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
