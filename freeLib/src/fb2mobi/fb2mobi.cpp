@@ -94,7 +94,7 @@ void fb2mobi::parse_description(const QDomNode &elem)
     if(join_seria)
     {
         pBook->sName = mLibs[idLib_].mSerials[pBook->idSerial].sName;
-        pBook->idSerial = 0;
+        //pBook->idSerial = 0;
     }
     book_author = authorstring;
     book_author = mLibs[idLib_].fillParams(book_author, idBook_);
@@ -147,12 +147,12 @@ void fb2mobi::parse_description(const QDomNode &elem)
          }
          else if(elem.childNodes().at(e).toElement().tagName() == QLatin1String("publish-info"))
          {
-             QDomNode ti=elem.childNodes().at(e);
+             QDomNode ti = elem.childNodes().at(e);
              for(int t=0; t<ti.childNodes().count(); t++)
              {
                  if(ti.childNodes().at(t).toElement().tagName() == QLatin1String("isbn"))
                  {
-                    isbn=ti.childNodes().at(t).toElement().toElement().text().trimmed().replace(QLatin1String("-"), QLatin1String(""));
+                    isbn = ti.childNodes().at(t).toElement().toElement().text().trimmed().replace(QLatin1String("-"), QLatin1String(""));
                  }
              }
          }
@@ -162,7 +162,7 @@ void fb2mobi::parse_description(const QDomNode &elem)
 
 void fb2mobi::parse_binary(const QDomNode &elem)
 {
-    QString filename=elem.attributes().namedItem(QStringLiteral("id")).toAttr().value();
+    QString filename = elem.attributes().namedItem(QStringLiteral("id")).toAttr().value();
     if(!filename.isEmpty())
     {
         QFileInfo fi(filename);
