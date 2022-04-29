@@ -76,8 +76,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"),QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
     ui->btnLibrary->setIcon(QIcon(sIconsPath + QLatin1String("library.svg")));
     ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"),QIcon(sIconsPath + QLatin1String("settings.svg"))));
-    ui->btnTreeView->setIcon(QIcon::fromTheme(QStringLiteral("view-list-tree"), QIcon(sIconsPath + QLatin1String("view-list-tree.svg"))));
-    ui->btnTreeView->setIcon(QIcon::fromTheme(QStringLiteral("view-list-tree"), QIcon(sIconsPath + QLatin1String("view-list-tree.svg"))));
+    ui->btnTreeView->setIcon(QIcon::fromTheme(QStringLiteral("view-list-tree"), QIcon(sIconsPath + QLatin1String("view-tree.svg"))));
+    ui->btnListView->setIcon(QIcon::fromTheme(QStringLiteral("view-list-details"), QIcon(sIconsPath + QLatin1String("view-list.svg"))));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
