@@ -722,6 +722,14 @@
         <translation>№</translation>
     </message>
     <message>
+        <source>Author</source>
+        <translation>Автор</translation>
+    </message>
+    <message>
+        <source>Serial</source>
+        <translation>Серия</translation>
+    </message>
+    <message>
         <source>About</source>
         <translation>О программе</translation>
     </message>

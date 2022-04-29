@@ -36,18 +36,24 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     trIcon = nullptr;
     error_quit = false;
+
     QSettings *settings = GetSettings();
 
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
+    bTreeView_ = true;
+    bTreeView_ = settings->value(QStringLiteral("TreeView"), true).toBool();
+    ui->btnTreeView->setChecked(bTreeView_);
+    ui->btnListView->setChecked(!bTreeView_);;
+
     ui->tabWidget->setCurrentIndex(0);
     ui->Books->setColumnWidth(0,400);
-    ui->Books->setColumnWidth(1,50);
-    ui->Books->setColumnWidth(2,100);
-    ui->Books->setColumnWidth(3,90);
-    ui->Books->setColumnWidth(4,120);
-    ui->Books->setColumnWidth(5,250);
-    ui->Books->setColumnWidth(6,50);
+    ui->Books->setColumnWidth(3,50);
+    ui->Books->setColumnWidth(4,100);
+    ui->Books->setColumnWidth(5,90);
+    ui->Books->setColumnWidth(6,120);
+    ui->Books->setColumnWidth(7,250);
+    ui->Books->setColumnWidth(8,50);
 
     pCover = new CoverLabel(this);
     ui->horizontalLayout_3->addWidget(pCover);
@@ -64,12 +70,14 @@ MainWindow::MainWindow(QWidget *parent) :
     QPalette palette = QApplication::style()->standardPalette();
     bool darkTheme = palette.color(QPalette::Window).lightness()<127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"),QIcon(sIconsPath + QLatin1String("streamline.svg"))));
+    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
     ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
     ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QLatin1String("pen.svg"))));
-    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"),QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
+    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
     ui->btnLibrary->setIcon(QIcon(sIconsPath + QLatin1String("library.svg")));
-    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"),QIcon(sIconsPath + QLatin1String("settings.svg"))));
+    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"), QIcon(sIconsPath + QLatin1String("settings.svg"))));
+    ui->btnTreeView->setIcon(QIcon(sIconsPath + QLatin1String("view-tree.svg")));
+    ui->btnListView->setIcon(QIcon(sIconsPath + QLatin1String("view-list.svg")));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
@@ -78,7 +86,7 @@ MainWindow::MainWindow(QWidget *parent) :
     MyProxySortModel->setDynamicSortFilter(false);
 
     StarsDelegate* delegate = new StarsDelegate(this);
-    ui->Books->setItemDelegateForColumn(3, delegate);
+    ui->Books->setItemDelegateForColumn(5, delegate);
 
     idCurrentLanguage_ = -1;
 
@@ -122,6 +130,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionCheck_uncheck, &QAction::triggered, this, &MainWindow::CheckBooks);
     connect(ui->btnCheck, &QAbstractButton::clicked, this, &MainWindow::CheckBooks);
     connect(ui->btnEdit, &QAbstractButton::clicked, this, &MainWindow::EditBooks);
+    connect(ui->btnTreeView, &QAbstractButton::clicked, this, &MainWindow::onTreeView);
+    connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
     connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
@@ -197,18 +207,22 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
 
     settings->beginGroup(QStringLiteral("Columns"));
-    ui->Books->setColumnHidden(0, !settings->value(QStringLiteral("ShowName"), true).toBool());
-    ui->Books->setColumnHidden(1, !settings->value(QStringLiteral("ShowNumber"), true).toBool());
-    ui->Books->setColumnHidden(2, !settings->value(QStringLiteral("ShowSize"), true).toBool());
-    ui->Books->setColumnHidden(3, !settings->value(QStringLiteral("ShowMark"), true).toBool());
-    ui->Books->setColumnHidden(4, !settings->value(QStringLiteral("ShowImportDate") , true).toBool());
-    ui->Books->setColumnHidden(5, !settings->value(QStringLiteral("ShowGenre"), true).toBool());
-    ui->Books->setColumnHidden(6 ,!settings->value(QStringLiteral("ShowLanguage"), false).toBool());
-    QVariant varHeaders = settings->value(QStringLiteral("headers"));
-    if(varHeaders.type() == QVariant::ByteArray){
-        ui->Books->header()->restoreState(varHeaders.toByteArray());
+    QVariant varHeaders = settings->value(QStringLiteral("headersTree"));
+    if(varHeaders.type() == QVariant::ByteArray)
+        aHeadersTree_ = varHeaders.toByteArray();
+    else{
+        ui->Books->setColumnHidden(1, true);
+        ui->Books->setColumnHidden(2, true);
     }
+    varHeaders = settings->value(QStringLiteral("headersList"));
+    if(varHeaders.type() == QVariant::ByteArray)
+        aHeadersList_ = varHeaders.toByteArray();
     settings->endGroup();
+    if(bTreeView_)
+        ui->Books->header()->restoreState(aHeadersTree_);
+    else
+        ui->Books->header()->restoreState(aHeadersList_);
+    ui->Books->header()->setSortIndicatorShown(true);
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
@@ -569,7 +583,13 @@ void MainWindow::closeEvent(QCloseEvent *event)
         SaveLibPosition();
     QSettings *settings = GetSettings();
     settings->beginGroup(QStringLiteral("Columns"));
-    settings->setValue(QStringLiteral("headers"), ui->Books->header()->saveState());
+    if(bTreeView_){
+        settings->setValue(QStringLiteral("headersTree"), ui->Books->header()->saveState());
+        settings->setValue(QStringLiteral("headersList"), aHeadersList_);
+    }else{
+        settings->setValue(QStringLiteral("headersTree"), aHeadersTree_);
+        settings->setValue(QStringLiteral("headersList"), ui->Books->header()->saveState());
+    }
     settings->endGroup();
 
     settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
@@ -1044,9 +1064,10 @@ void MainWindow::SelectBook()
     }
 
     QString seria;
-    QTreeWidgetItem *parent = item->parent();
-    if(parent->type() == ITEM_TYPE_SERIA) //если это серия
-        seria = QStringLiteral("<a href=seria_%3%1>%2</a>").arg(QString::number(parent->data(0, Qt::UserRole).toLongLong()), parent->text(0), parent->text(0).left(1).toUpper());
+    if(book.idSerial > 0){
+        seria = QStringLiteral("<a href=seria_%3%1>%2</a>").arg(QString::number(book.idSerial),
+                lib.mSerials[book.idSerial].sName, lib.mSerials[book.idSerial].sName.at(0).toUpper());
+    }
 
     QString sAuthors;
     foreach (auto idAuthor, book.listIdAuthors)
@@ -1346,46 +1367,58 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     QMenu menu;
     QAction *action;
 
-    action=new QAction(tr("Name"), this);
+    action = new QAction(tr("Name"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(0));
     connect(action, &QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(0, !action->isChecked());});
     menu.addAction(action);
 
-    action=new QAction(tr("No."), this);
+    action = new QAction(tr("Author"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(1));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(1, QStringLiteral("ShowName"), !action->isChecked());});
+    connect(action, &QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(1, !action->isChecked());});
     menu.addAction(action);
 
-    action=new QAction(tr("Size"), this);
+    action = new QAction(tr("Serial"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(2));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(2, QStringLiteral("ShowSize"), !action->isChecked());});
+    connect(action, &QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(2, !action->isChecked());});
     menu.addAction(action);
 
-    action=new QAction(tr("Mark"), this);
+    action = new QAction(tr("No."), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(3));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(3, QStringLiteral("ShowMark"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(3, QStringLiteral("ShowName"), !action->isChecked());});
     menu.addAction(action);
 
-    action=new QAction(tr("Import date"), this);
+    action = new QAction(tr("Size"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(4));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(4, QStringLiteral("ShowImportDate"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(4, QStringLiteral("ShowSize"), !action->isChecked());});
     menu.addAction(action);
 
-    action=new QAction(tr("Genre"), this);
+    action = new QAction(tr("Mark"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(5));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(5, QStringLiteral("ShowGenre"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(5, QStringLiteral("ShowMark"), !action->isChecked());});
     menu.addAction(action);
 
-    action=new QAction(tr("Language"), this);
+    action = new QAction(tr("Import date"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(6));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(6, QStringLiteral("ShowLanguage"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(6, QStringLiteral("ShowImportDate"), !action->isChecked());});
+    menu.addAction(action);
+
+    action = new QAction(tr("Genre"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(7));
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(7, QStringLiteral("ShowGenre"), !action->isChecked());});
+    menu.addAction(action);
+
+    action = new QAction(tr("Language"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(8));
+    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(8, QStringLiteral("ShowLanguage"), !action->isChecked());});
     menu.addAction(action);
 
     menu.exec(QCursor::pos());
@@ -1685,54 +1718,59 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
         SBook &book = lib.mBooks[idBook];
         if(IsBookInList(book))
         {
-            uint idSerial = book.idSerial;
             uint idAuthor;
+            QString sAuthor;
             if(idCurrentAuthor > 0)
                 idAuthor = idCurrentAuthor;
-            else{
+            else
                 idAuthor = book.idFirstAuthor;
-            }
-            if(!mAuthors.contains(idAuthor)){
-                item_author = new TreeBookItem(ui->Books, ITEM_TYPE_AUTHOR);
-                item_author->setText(0, lib.mAuthors[idAuthor].getName());
-                item_author->setExpanded(true);
-                item_author->setFont(0, bold_font);
-                item_author->setCheckState(0, Qt::Unchecked);
-                item_author->setData(0, Qt::UserRole, idAuthor);
-                item_author->setData(3, Qt::UserRole, -1);
+            sAuthor = lib.mAuthors[idAuthor].getName();
 
-                if(options.bUseTag){
-                    item_author->setIcon(0, getTagIcon(lib.mAuthors[idAuthor].listIdTags));
-                }
-                mAuthors[idAuthor] = item_author;
+            uint idSerial = book.idSerial;
+            if(bTreeView_){
+                if(!mAuthors.contains(idAuthor)){
+                    item_author = new TreeBookItem(ui->Books, ITEM_TYPE_AUTHOR);
+                    item_author->setText(0, sAuthor);
+                    item_author->setExpanded(true);
+                    item_author->setFont(0, bold_font);
+                    item_author->setCheckState(0, Qt::Unchecked);
+                    item_author->setData(0, Qt::UserRole, idAuthor);
+                    item_author->setData(3, Qt::UserRole, -1);
+
+                    if(options.bUseTag){
+                        item_author->setIcon(0, getTagIcon(lib.mAuthors[idAuthor].listIdTags));
+                    }
+                    mAuthors[idAuthor] = item_author;
+                }else
+                    item_author = mAuthors[idAuthor];
+
+                if(idSerial>0){
+                    auto iSerial = mSerias.constFind(idSerial);
+                    while(iSerial != mSerias.constEnd()){
+                        item_seria = iSerial.value();
+                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor)
+                            break;
+                        ++iSerial;
+                    }
+                    if(iSerial == mSerias.constEnd()){
+                        item_seria = new TreeBookItem(mAuthors[idAuthor], ITEM_TYPE_SERIA);
+                        item_seria->setText(0, lib.mSerials[idSerial].sName);
+                        item_author->addChild(item_seria);
+                        item_seria->setExpanded(true);
+                        item_seria->setFont(0, bold_font);
+                        item_seria->setCheckState(0, Qt::Unchecked);
+                        item_seria->setData(0, Qt::UserRole, idSerial);
+                        item_seria->setData(3, Qt::UserRole, -1);
+                        if(options.bUseTag)
+                            item_seria->setIcon(0, getTagIcon(lib.mSerials[idSerial].listIdTags));
+
+                        mSerias.insert(idSerial, item_seria);
+                    }
+                    item_book = new TreeBookItem(item_seria, ITEM_TYPE_BOOK);
+                }else
+                    item_book = new TreeBookItem(item_author, ITEM_TYPE_BOOK);
             }else
-                item_author = mAuthors[idAuthor];
-
-            if(idSerial>0){
-                auto iSerial = mSerias.constFind(idSerial);
-                while(iSerial != mSerias.constEnd()){
-                    item_seria = iSerial.value();
-                    if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor)
-                        break;
-                    ++iSerial;
-                }
-                if(iSerial == mSerias.constEnd()){
-                    item_seria = new TreeBookItem(mAuthors[idAuthor], ITEM_TYPE_SERIA);
-                    item_seria->setText(0, lib.mSerials[idSerial].sName);
-                    item_author->addChild(item_seria);
-                    item_seria->setExpanded(true);
-                    item_seria->setFont(0, bold_font);
-                    item_seria->setCheckState(0, Qt::Unchecked);
-                    item_seria->setData(0, Qt::UserRole, idSerial);
-                    item_seria->setData(3, Qt::UserRole, -1);
-                    if(options.bUseTag)
-                        item_seria->setIcon(0, getTagIcon(lib.mSerials[idSerial].listIdTags));
-
-                    mSerias.insert(idSerial, item_seria);
-                }
-                item_book = new TreeBookItem(item_seria, ITEM_TYPE_BOOK);
-            }else
-                item_book = new TreeBookItem(item_author, ITEM_TYPE_BOOK);
+                item_book = new TreeBookItem(ui->Books, ITEM_TYPE_BOOK);
 
             item_book->setCheckState(0, Qt::Unchecked);
             item_book->setData(0, Qt::UserRole, idBook);
@@ -1741,25 +1779,32 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
             }
 
             item_book->setText(0,book.sName);
+
+            item_book->setText(1, sAuthor);
+
+            if(idSerial > 0)
+                item_book->setText(2, lib.mSerials[idSerial].sName);
+
             if(book.numInSerial>0){
-                item_book->setText(1, QString::number(book.numInSerial));
-                item_book->setTextAlignment(1, Qt::AlignRight|Qt::AlignVCenter);
+                item_book->setText(3, QString::number(book.numInSerial));
+                item_book->setTextAlignment(3, Qt::AlignRight|Qt::AlignVCenter);
             }
 
-            if(book.nSize>0)
-                item_book->setText(2, locale.formattedDataSize(book.nSize, 1, QLocale::DataSizeTraditionalFormat));
-            item_book->setTextAlignment(2, Qt::AlignRight|Qt::AlignVCenter);
+            if(book.nSize>0){
+                item_book->setText(4, locale.formattedDataSize(book.nSize, 1, QLocale::DataSizeTraditionalFormat));
+                item_book->setTextAlignment(4, Qt::AlignRight|Qt::AlignVCenter);
+            }
 
-            item_book->setData(3, Qt::UserRole, book.nStars);
+            item_book->setData(5, Qt::UserRole, book.nStars);
 
-            item_book->setText(4, book.date.toString(QStringLiteral("dd.MM.yyyy")));
-            item_book->setTextAlignment(4, Qt::AlignCenter);
-
-            item_book->setText(5, mGenre[book.listIdGenres.first()].sName);
-            item_book->setTextAlignment(5, Qt::AlignLeft|Qt::AlignVCenter);
-
-            item_book->setText(6, lib.vLaguages[book.idLanguage]);
+            item_book->setText(6, book.date.toString(QStringLiteral("dd.MM.yyyy")));
             item_book->setTextAlignment(6, Qt::AlignCenter);
+
+            item_book->setText(7, mGenre[book.listIdGenres.first()].sName);
+            item_book->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
+
+            item_book->setText(8, lib.vLaguages[book.idLanguage]);
+            item_book->setTextAlignment(8, Qt::AlignCenter);
 
             if(book.bDeleted)
             {
@@ -1895,6 +1940,36 @@ void MainWindow::onChangeAlpabet(const QString &sAlphabetName)
     }
     FillAlphabet(sAlphabetName);
     FirstButton->click();
+}
+
+void MainWindow::onTreeView()
+{
+    ui->btnTreeView->setChecked(true);
+    ui->btnListView->setChecked(false);
+    if(!bTreeView_){
+        bTreeView_ = true;
+        FillListBooks();
+        QSettings *settings = GetSettings();
+        settings->setValue(QStringLiteral("TreeView"), true);
+        aHeadersList_ = ui->Books->header()->saveState();
+        ui->Books->header()->restoreState(aHeadersTree_);
+        ui->Books->header()->setSortIndicatorShown(true);
+    }
+}
+
+void MainWindow::onListView()
+{
+    ui->btnTreeView->setChecked(false);
+    ui->btnListView->setChecked(true);
+    if(bTreeView_){
+        bTreeView_ = false;
+        FillListBooks();
+        QSettings *settings = GetSettings();
+        settings->setValue(QStringLiteral("TreeView"), false);
+        aHeadersTree_ = ui->Books->header()->saveState();
+        ui->Books->header()->restoreState(aHeadersList_);
+        ui->Books->header()->setSortIndicatorShown(true);
+    }
 }
 
 void MainWindow::onTabWidgetChanged(int index)

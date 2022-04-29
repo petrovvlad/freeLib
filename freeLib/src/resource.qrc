@@ -59,6 +59,10 @@
         <file>xsl/opds/splash_opera.png</file>
         <file>img/icons/dark/multitags.svg</file>
         <file>img/icons/light/multitags.svg</file>
+        <file>img/icons/dark/view-list.svg</file>
+        <file>img/icons/dark/view-tree.svg</file>
+        <file>img/icons/light/view-list.svg</file>
+        <file>img/icons/light/view-tree.svg</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>

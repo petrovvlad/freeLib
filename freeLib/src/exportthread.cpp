@@ -331,8 +331,7 @@ void ExportThread::export_books()
     }
 
     QList<QList<uint> > books_group;
-    uint current_seria_id = 01;
-    bool need_group_series=
+    bool bNeedGroupSeries =
             (pExportOptions_->sOutputFormat == QLatin1String("EPUB") || pExportOptions_->sOutputFormat == QLatin1String("MOBI") ||
              pExportOptions_->sOutputFormat == QLatin1String("AZW3") || pExportOptions_->sOutputFormat == QLatin1String("MOBI7")) &&
             pExportOptions_->bJoinSeries;
@@ -340,12 +339,24 @@ void ExportThread::export_books()
     foreach(uint idBook, book_list)
     {
         SBook &book = mLibs[idCurrentLib].mBooks[idBook];
+        if(bNeedGroupSeries && book.idSerial != 0){
+            auto iBookGroup = books_group.begin();
+            while(iBookGroup != books_group.end()){
+                if(mLibs[idCurrentLib].mBooks[iBookGroup->first()].idSerial == book.idSerial)
+                    break;
+                ++iBookGroup;
+            }
+            if(iBookGroup != books_group.end())
+                *iBookGroup << idBook;
+            else{
+                books_group << QList<uint>();
+                books_group.last() << idBook;
+            }
 
-        if(current_seria_id != book.idSerial || !need_group_series || book.idSerial == 0){
+        }else{
             books_group << QList<uint>();
+            books_group.last() << idBook;
         }
-        current_seria_id = book.idSerial;
-        books_group.last() << idBook;
     }
 
     uint count = 0;
