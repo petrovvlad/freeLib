@@ -642,7 +642,7 @@ QList<uint> MainWindow::listCheckedBooks(bool bCheckedOnly)
                 FillCheckedItemsBookList(ui->Books->selectedItems()[0], true, &listBooks);
             else
             {
-                if(ui->Books->selectedItems()[0]->parent())
+                if(ui->Books->selectedItems()[0]->type() == ITEM_TYPE_BOOK)
                 {
                     uint idBook = ui->Books->selectedItems()[0]->data(0, Qt::UserRole).toUInt();
                     listBooks << idBook;
@@ -668,7 +668,7 @@ void MainWindow::FillCheckedItemsBookList(const QTreeWidgetItem* item, bool send
         {
             if(current->checkState(0) == Qt::Checked || send_all)
             {
-                if(current->parent())
+                if(current->type() == ITEM_TYPE_BOOK)
                 {
                     uint id_book = current->data(0, Qt::UserRole).toUInt();
                     *pList << id_book;
