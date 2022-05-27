@@ -879,12 +879,48 @@ void MainWindow::StartSearch()
     QList<uint> listBooks;
     int nCount = 0;
     auto iBook = lib.mBooks.constBegin();
+    QList<uint> listPosFound;
     while(iBook != lib.mBooks.constEnd()){
+        bool bMatchAuthor = false;
+        if(!sAuthor.isEmpty()){
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+            QStringList listAuthor1 = sAuthor.split(' ', Qt::SkipEmptyParts);
+#else
+            QStringList listAuthor1 = sAuthor.split(' ');
+#endif
+            for(auto iAuthor = 0; iAuthor<iBook->listIdAuthors.size(); iAuthor++){
+                listPosFound.clear();
+                QStringList listAuthor2 = lib.mAuthors[iBook->listIdAuthors[iAuthor]].getName().split(' ');
+                bool bMatch = true;
+                for(auto i1=0; i1<listAuthor1.size(); i1++){
+                    int i2 = 0;
+                    while(i2 < listAuthor2.size()){
+                        if(QString::compare(listAuthor1.at(i1), listAuthor2.at(i2), Qt::CaseInsensitive) == 0){
+                            if(!listPosFound.contains(i2)){
+                                listPosFound << i2;
+                                break;
+                            }
+                        }
+                        ++i2;
+                    }
+                    if(i2 == listAuthor2.size()){
+                        bMatch = false;
+                        break;
+                    }
+                }
+                if(bMatch){
+                    bMatchAuthor = true;
+                    break;
+                }
+            }
+        }else
+            bMatchAuthor = true;
+
         if((options.bShowDeleted || !iBook->bDeleted)&&
                 iBook->date>= dateFrom && iBook->date <= dateTo &&
-                (sAuthor.isEmpty() || lib.mAuthors[iBook->idFirstAuthor].getName().contains(sAuthor,Qt::CaseInsensitive)) &&
-                (sName.isEmpty() || iBook->sName.contains(sName,Qt::CaseInsensitive)) &&
-                (sSeria.isEmpty() || (iBook->idSerial>0 && lib.mSerials[iBook->idSerial].sName.contains(sSeria,Qt::CaseInsensitive))) &&
+                bMatchAuthor &&
+                (sName.isEmpty() || iBook->sName.contains(sName, Qt::CaseInsensitive)) &&
+                (sSeria.isEmpty() || (iBook->idSerial>0 && lib.mSerials[iBook->idSerial].sName.contains(sSeria, Qt::CaseInsensitive))) &&
                 (idLanguage == -1 ||(iBook->idLanguage == idLanguage)))
         {
             if(idGenre == 0){
