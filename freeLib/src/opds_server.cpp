@@ -365,7 +365,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
             AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
             AddTextNode(QStringLiteral("id"), QStringLiteral("tag:root"), entry);
             AddTextNode(QStringLiteral("title"), tr("Previous page"), entry);
-            QDomElement el=AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
+            QDomElement el = AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
             el.setAttribute(QStringLiteral("href"), lib_url + current_url + QStringLiteral("?page=%1").arg(nPage-1) + parameters);
             el.setAttribute(QStringLiteral("type"), QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
@@ -704,8 +704,19 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
 
             QDomElement entry;
             QDomElement el;
-            if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+            if(options.bBrowseDir)
             {
+                entry = doc.createElement(QStringLiteral("entry"));
+                feed.appendChild(entry);
+                AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
+                AddTextNode(QStringLiteral("id"), QStringLiteral("tag:root:genre"), entry);
+                AddTextNode(QStringLiteral("title"), tr("Browse directory"), entry);
+                el = AddTextNode(QStringLiteral("content"), tr("Finding books by directory"), entry);
+                el.setAttribute(QStringLiteral("type"), QStringLiteral("text"));
+                el=AddTextNode(QStringLiteral("link"), QLatin1String(""),entry);
+                el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/directory") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
+                el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
+            }else{
                 entry = doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
                 AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
@@ -717,7 +728,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/authorsindex") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
                 el.setAttribute(QStringLiteral("type"), QStringLiteral("application/atom+xml;profile=opds-catalog"));
 
-                entry=doc.createElement(QStringLiteral("entry"));
+                entry = doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
                 AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
                 AddTextNode(QStringLiteral("id"), QStringLiteral("tag:root:sequences"), entry);
@@ -739,19 +750,6 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/genres") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
                 el.setAttribute(QStringLiteral("type"), QStringLiteral("application/atom+xml;profile=opds-catalog"));
             }
-            if(options.bBrowseDir)
-            {
-                entry = doc.createElement(QStringLiteral("entry"));
-                feed.appendChild(entry);
-                AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate),entry);
-                AddTextNode(QStringLiteral("id"), QStringLiteral("tag:root:genre"), entry);
-                AddTextNode(QStringLiteral("title"), tr("Browse directory"), entry);
-                el=AddTextNode(QStringLiteral("content"), tr("Finding books by directory"), entry);
-                el.setAttribute(QStringLiteral("type"), QStringLiteral("text"));
-                el=AddTextNode(QStringLiteral("link"), QLatin1String(""),entry);
-                el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/directory") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
-                el.setAttribute(QStringLiteral("type"),QStringLiteral("application/atom+xml;profile=opds-catalog"));
-            }
 
             ts<<WriteSuccess(QStringLiteral("application/atom+xml;charset=utf-8"));
             ts<<doc.toString();
@@ -763,8 +761,13 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             QDomElement div = doc.createElement(QStringLiteral("DIV"));
             feed.appendChild(div);
             QDomElement el;
-            if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+            if(options.bBrowseDir)
             {
+                div = doc.createElement(QStringLiteral("DIV"));
+                feed.appendChild(div);
+                el = AddTextNode(QStringLiteral("A"), tr("Browse directory"), div);
+                el.setAttribute(QStringLiteral("href"), lib_url + u"/directory" + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
+            }else{
                 el = AddTextNode(QStringLiteral("A"), tr("Finding books by authors"), div);
                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/authorsindex") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
                 div = doc.createElement(QStringLiteral("DIV"));
@@ -775,16 +778,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 feed.appendChild(div);
                 el = AddTextNode(QStringLiteral("A"), tr("Finding books by genre"), div);
                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/genres") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
-            }
-            if(options.bBrowseDir)
-            {
-                div = doc.createElement(QStringLiteral("DIV"));
-                feed.appendChild(div);
-                el = AddTextNode(QStringLiteral("A"), tr("Browse directory"), div);
-                el.setAttribute(QStringLiteral("href"), lib_url + u"/directory" + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
-            }
-            if(QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
-            {
+
                 QDomElement hr = doc.createElement(QStringLiteral("HR"));
                 hr.setAttribute(QStringLiteral("size"), QStringLiteral("3"));
                 hr.setAttribute(QStringLiteral("color"), QStringLiteral("black"));
@@ -818,37 +812,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 el.setAttribute(QStringLiteral("type"), QStringLiteral("submit"));
                 el.setAttribute(QStringLiteral("value"), tr("Find"));
                 div.appendChild(el);
-/*
-                hr=doc.createElement("HR");
-                hr.setAttribute("size","3");
-                hr.setAttribute("color","black");
-                feed.appendChild(hr);
-
-                form=doc.createElement("FORM");
-                form.setAttribute("method","post");
-                form.setAttribute("enctype","multipart/form-data");
-                form.setAttribute("action","convert");
-                feed.appendChild(form);
-
-                div=doc.createElement("DIV");
-                //div.setAttribute("class","book");
-                form.appendChild(div);
-                el=AddTextNode("div",tr("Convert book: "),div);
-                el.setAttribute("class","book");
-                div.appendChild(el);
-
-                el=doc.createElement("INPUT");
-                el.setAttribute("type","file");
-                el.setAttribute("name","book");
-                div.appendChild(el);
-
-                el=doc.createElement("INPUT");
-                el.setAttribute("type","submit");
-                el.setAttribute("value",tr("Send"));
-                div.appendChild(el);
-*/
             }
-
 
             ts << "<!DOCTYPE html>";
             doc.namedItem(QStringLiteral("HTML")).save(ts, SAVE_INDEX);
