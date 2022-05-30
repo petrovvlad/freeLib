@@ -1,7 +1,6 @@
 #define QT_USE_QSTRINGBUILDER
 #include "exportthread.h"
 
-#include <QXmlQuery>
 #include <QApplication>
 #include <QTextStream>
 #include <QTimer>
@@ -10,7 +9,7 @@
 #include <QFileInfo>
 #include <QDir>
 #include <QSqlError>
-
+#include <QSqlQuery>
 
 #include "SmtpClient/src/smtpclient.h"
 #include "SmtpClient/src/mimeattachment.h"

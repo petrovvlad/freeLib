@@ -1,8 +1,6 @@
 ﻿configure_file(config-freelib.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-freelib.h)
-#set(QT_COMPONENTS Core Network Widgets Gui WebEngineWidgets Sql Xml XmlPatterns LinguistTools)
-set(QT_COMPONENTS Core Network Widgets Gui WebEngineWidgets Sql Xml XmlPatterns)
+set(QT_COMPONENTS Core Network Widgets Gui WebEngineWidgets Sql Xml)
 
-#find_package(QT NAMES Qt6 Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(QT NAMES Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(ZLIB REQUIRED)
@@ -110,7 +108,6 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::WebEngineWidgets
     Qt${QT_VERSION_MAJOR}::Xml
-    Qt${QT_VERSION_MAJOR}::XmlPatterns
     QuaZip::QuaZip)
 
 

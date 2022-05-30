@@ -6,6 +6,7 @@
 #include <QSqlError>
 #include <QDebug>
 #include <algorithm>
+#include <QSqlQuery>
 
 #include "common.h"
 #include "library.h"
