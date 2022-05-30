@@ -1,4 +1,5 @@
 ﻿configure_file(config-freelib.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-freelib.h)
+configure_file(git-info.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/git-info.h)
 set(QT_COMPONENTS Core Network Widgets Gui WebEngineWidgets Sql Xml)
 
 find_package(QT NAMES Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)

@@ -15,6 +15,20 @@ set(CMAKE_INCLUDE_CURRENT_DIR ON)
 set(CMAKE_CXX_STANDARD 11)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
+# Retrieve git HEAD revision hash
+set(GIT_HEAD_OVERRIDE "" CACHE STRING "Manually set the Git HEAD hash when missing (eg, when no .git folder exists)")
+execute_process(COMMAND git rev-parse --short=7 HEAD
+        WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+        OUTPUT_VARIABLE GIT_HEAD
+        ERROR_QUIET)
+string(STRIP "${GIT_HEAD}" GIT_HEAD)
+if(GIT_HEAD STREQUAL "" AND NOT GIT_HEAD_OVERRIDE STREQUAL "")
+    string(SUBSTRING "${GIT_HEAD_OVERRIDE}" 0 7 GIT_HEAD)
+elseif(EXISTS ${CMAKE_SOURCE_DIR}/.gitrev)
+    file(READ ${CMAKE_SOURCE_DIR}/.gitrev GIT_HEAD)
+endif()
+message(STATUS "Found Git HEAD Revision: ${GIT_HEAD}\n")
+
 if(UNIX AND NOT APPLE)
     file(COPY KindleGenLinux/kindlegen DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/freeLib/src)
     file(COPY freeLib/src/xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)

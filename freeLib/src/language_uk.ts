@@ -9,12 +9,44 @@
         <translation>Про програму</translation>
     </message>
     <message>
-        <source>Donate</source>
-        <translation type="vanished">Підтримати</translation>
-    </message>
-    <message>
         <source>OK</source>
         <translation type="vanished">Гаразд</translation>
+    </message>
+    <message>
+        <source>Debug Info</source>
+        <translation>Зневаджувальна інформація</translation>
+    </message>
+    <message>
+        <source>Report bugs at: &lt;a href=&quot;https://github.com/petrovvlad/freeLib/issues&quot; style=&quot;text-decoration: underline;&quot;&gt;https://github.com&lt;/a&gt;</source>
+        <translation>Повідомляйте про вади на: &lt;a href=&quot;https://github.com/petrovvlad/freeLib/issues&quot; style=&quot;text-decoration: underline;&quot;&gt;https://github.com&lt;/a&gt;</translation>
+    </message>
+    <message>
+        <source>freeLib is distributed under the terms of the GNU General Public License (GPL) version 3.</source>
+        <translation>freeLib розповсюджується на умовах Загальної публічної ліцензії GNU (GPL) версії 3.</translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation>Версія %1</translation>
+    </message>
+     <message>
+        <source>Revision: %1</source>
+        <translation>Ревізія: %1</translation>
+    </message>
+    <message>
+        <source>Debugging mode is disabled.</source>
+        <translation>Режим зневадження вимкнено.</translation>
+    </message>
+    <message>
+        <source>Debugging mode is enabled.</source>
+        <translation>Режим зневадження ввімкнено.</translation>
+    </message>
+    <message>
+        <source>Operating system: %1
+CPU architecture: %2
+Kernel: %3 %4</source>
+        <translation>Операційна система: %1
+Архітектура ЦП: %2
+Ядро: %3 %4</translation>
     </message>
 </context>
 <context>
