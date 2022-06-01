@@ -21,7 +21,7 @@ freeLib - каталогизатор для библиотек LibRusEc и Flibu
 Установить необходимые компоненты:
 ```
 sudo apt update
-sudo apt-get install git cmake build-essential qtbase5-dev qtwebengine5-dev libqt5sql5-sqlite libquazip5-dev
+sudo apt-get install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev
 ```
 Скачать исходники программы:
 ```

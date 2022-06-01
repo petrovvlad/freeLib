@@ -2,6 +2,7 @@
 #define HELPDIALOG_H
 
 #include <QDialog>
+#include <QTextBrowser>
 
 namespace Ui {
 class HelpDialog;
@@ -17,6 +18,7 @@ public:
     
 private:
     Ui::HelpDialog *ui;
+    void loadPage(QTextBrowser* textBrowser, const QString& sFileName);
 };
 
 #endif // HELPDIALOG_H

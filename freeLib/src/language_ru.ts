@@ -608,9 +608,21 @@ Kernel: %3 %4</source>
         <translation>Справка</translation>
     </message>
     <message>
-        <source>about:blank</source>
-        <translation type="unfinished"></translation>
+        <source>About</source>
+        <translation>О прграмме</translation>
     </message>
+    <message>
+        <source>ChangeLog</source>
+        <translation>История версий</translation>
+    </message>
+    <message>
+        <source>Parametrs</source>
+        <translation>Описание параметров</translation>
+    </message>
+    <message>
+        <source>Command Line Parametrs</source>
+        <translation>Пaраметры командной строки</translation>
+    </message>    
 </context>
 <context>
     <name>ImportThread</name>
