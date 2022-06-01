@@ -2,31 +2,18 @@
 #include "ui_aboutdialog.h"
 
 #include "config-freelib.h"
+#include "git-info.h"
 
 
 AboutDialog::AboutDialog(QWidget *parent) :
-    QDialog(parent,Qt::Window | Qt::FramelessWindowHint),
+    QDialog(parent),
     ui(new Ui::AboutDialog)
 {
     ui->setupUi(this);
-    //setFixedSize(400,200);
-    ui->version->setText(QStringLiteral(FREELIB_VERSION));
 
-    connect(ui->toolButton, &QAbstractButton::clicked, this, &AboutDialog::CloseBtn);
-    QPixmap pix(QStringLiteral(":/splash%1.png").arg(devicePixelRatio()>=2 ?QStringLiteral("@2x") :QLatin1String("")));
-    pix.setDevicePixelRatio(devicePixelRatio());
-    ui->label->setPixmap(pix);
-    pix.load(QStringLiteral(":/icons/img/icons/close%1.png").arg(devicePixelRatio()>=2 ?QStringLiteral("@2x"): QLatin1String("")));
-    QFont f(ui->version->font());
-    f.setPointSize(VERSION_FONT);
-    ui->version->setFont(f);
-  //  QIcon icon(pix);
-   // pix.setDevicePixelRatio(app->devicePixelRatio());
-   // QIcon icon;
-   // icon.addFile(":/icons/img/icons/close@2x.png");
-   // icon.addFile(":/icons/img/icons/close.png");
-   // ui->toolButton->setIconSize(QSize(32,32));
-   // ui->toolButton->setIcon(icon);
+    ui->nameLabel->setText(ui->nameLabel->text().replace(QStringLiteral("${VERSION}"), QStringLiteral(FREELIB_VERSION)));
+    ui->debugInfo->setText(debugInfo());
+    connect(ui->buttonBox, &QDialogButtonBox::rejected, this, &AboutDialog::close);
 }
 
 AboutDialog::~AboutDialog()
@@ -34,8 +21,35 @@ AboutDialog::~AboutDialog()
     delete ui;
 }
 
-void AboutDialog::CloseBtn()
+QString AboutDialog::debugInfo()
 {
-    accept();
-    //close();
+    QString debugInfo = QStringLiteral("freeLib - ");
+    debugInfo.append(tr("Version %1").arg(QStringLiteral(FREELIB_VERSION)).append(QStringLiteral("\n")));
+
+    QString commitHash = QStringLiteral(GIT_HEAD);;
+    if (!commitHash.isEmpty()) {
+        debugInfo.append(tr("Revision: %1").arg(commitHash.left(7)).append("\n"));
+    }
+
+    // Qt related debugging information.
+    debugInfo.append("\n");
+    debugInfo.append("Qt ").append(QString::fromLocal8Bit(qVersion())).append("\n");
+#ifdef QT_NO_DEBUG
+    debugInfo.append(tr("Debugging mode is disabled.").append("\n"));
+#else
+    debugInfo.append(tr("Debugging mode is enabled.").append("\n"));
+#endif
+    debugInfo.append("\n");
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 4, 0)
+    debugInfo.append(tr("Operating system: %1\nCPU architecture: %2\nKernel: %3 %4")
+                         .arg(QSysInfo::prettyProductName(),
+                              QSysInfo::currentCpuArchitecture(),
+                              QSysInfo::kernelType(),
+                              QSysInfo::kernelVersion()));
+
+    debugInfo.append("\n\n");
+#endif
+
+    return debugInfo;
 }

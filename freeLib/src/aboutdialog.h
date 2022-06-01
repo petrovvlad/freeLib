@@ -27,8 +27,7 @@ public:
     
 private:
     Ui::AboutDialog *ui;
-private slots:
-    void CloseBtn();
+    QString debugInfo();
 };
 
 #endif // ABOUTDIALOG_H

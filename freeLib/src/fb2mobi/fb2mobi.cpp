@@ -1,11 +1,12 @@
+#include "QtWebEngineWidgets/qwebenginepage.h"
 #define QT_USE_QSTRINGBUILDER
 #include "fb2mobi.h"
 
 #include <QProcess>
 #include <QUuid>
 #include <QPainter>
-#include <QWebEnginePage>
 #include <QDir>
+#include <QDebug>
 
 #include "../quazip/quazip/quazip.h"
 #include "../quazip/quazip/quazipfile.h"
@@ -2042,23 +2043,23 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     else if(pExportOptions_->sOutputFormat == QLatin1String("PDF"))
     {
 
-        QWebEnginePage* pdf = new QWebEnginePage();
-         QEventLoop loop;
-        connect(pdf,&QWebEnginePage::loadFinished,&loop,&QEventLoop::quit);
-        qDebug()<<QUrl::fromLocalFile(tmp_dir + QLatin1String("/OEBPS/") + html_files[0].file_name);
-        pdf->load(QUrl::fromLocalFile(tmp_dir + QLatin1String("/OEBPS/") + html_files[0].file_name));
-        loop.exec();
-        //qDebug()<<pdf->mainFrame()->toHtml();
-        //QPrinter printer;
-        //printer.setPageSize(QPrinter::A4);
-        out_file = tmp_dir + QLatin1String("/book.pdf");
-        QFile::remove(out_file);
-        //printer.setOutputFileName(out_file);
-        //printer.setOutputFormat(QPrinter::NativeFormat);
-        //pdf->print(&printer);
-        pdf->printToPdf(out_file);
-        qDebug()<<out_file<<html_files[0].file_name;
-        delete pdf;
+//        QWebEnginePage* pdf = new QWebEnginePage();
+//         QEventLoop loop;
+//        connect(pdf,&QWebEnginePage::loadFinished,&loop,&QEventLoop::quit);
+//        qDebug()<<QUrl::fromLocalFile(tmp_dir + QLatin1String("/OEBPS/") + html_files[0].file_name);
+//        pdf->load(QUrl::fromLocalFile(tmp_dir + QLatin1String("/OEBPS/") + html_files[0].file_name));
+//        loop.exec();
+//        //qDebug()<<pdf->mainFrame()->toHtml();
+//        //QPrinter printer;
+//        //printer.setPageSize(QPrinter::A4);
+//        out_file = tmp_dir + QLatin1String("/book.pdf");
+//        QFile::remove(out_file);
+//        //printer.setOutputFileName(out_file);
+//        //printer.setOutputFormat(QPrinter::NativeFormat);
+//        //pdf->print(&printer);
+//        pdf->printToPdf(out_file);
+//        qDebug()<<out_file<<html_files[0].file_name;
+//        delete pdf;
     }
     return out_file;
 }

@@ -4,12 +4,45 @@
 <context>
     <name>AboutDialog</name>
     <message>
+        <location filename="aboutdialog.ui" line="17"/>
         <source>About</source>
         <translation>О программе</translation>
     </message>
     <message>
-        <source>Donate</source>
-        <translation type="vanished">Поддержка проекта</translation>
+        <source>Debug Info</source>
+        <translation>Отладочная информация</translation>
+    </message>
+    <message>
+        <source>Report bugs at: &lt;a href=&quot;https://github.com/petrovvlad/freeLib/issues&quot; style=&quot;text-decoration: underline;&quot;&gt;https://github.com&lt;/a&gt;</source>
+        <translation>Сообщить об &lt;a href=&quot;https://github.com/petrovvlad/freeLib/issues&quot; style=&quot;text-decoration: underline;&quot;&gt;ошибках&lt;/a&gt;</translation>
+    </message>
+    <message>
+        <source>freeLib is distributed under the terms of the GNU General Public License (GPL) version 3.</source>
+        <translation>freeLib распространяется на условиях универсальной общедоступной лицензии GNU (GPL) версии 3.</translation>
+    </message>
+    <message>
+        <source>Version %1</source>
+        <translation>Версия %1</translation>
+    </message>
+     <message>
+        <source>Revision: %1</source>
+        <translation>Ревизия: %1</translation>
+    </message>
+    <message>
+        <source>Debugging mode is disabled.</source>
+        <translation>Режим отладки выключен.</translation>
+    </message>
+    <message>
+        <source>Debugging mode is enabled.</source>
+        <translation>Режим отладки включен.</translation>
+    </message>
+    <message>
+        <source>Operating system: %1
+CPU architecture: %2
+Kernel: %3 %4</source>
+        <translation>Операционная система: %1
+Архитектура ЦП: %2
+Ядро: %3 %4</translation>
     </message>
 </context>
 <context>
@@ -49,11 +82,10 @@
         <source>Delete current library</source>
         <translation>Удалить текущую библиотеку</translation>
     </message>
-        <message>
+    <message>
         <source>Delete library </source>
         <translation>Удалить библиотеку </translation>
     </message>
-
     <message>
         <source>Update type</source>
         <translation>Способ обновления</translation>
@@ -576,9 +608,21 @@
         <translation>Справка</translation>
     </message>
     <message>
-        <source>about:blank</source>
-        <translation type="unfinished"></translation>
+        <source>About</source>
+        <translation>О прграмме</translation>
     </message>
+    <message>
+        <source>ChangeLog</source>
+        <translation>История версий</translation>
+    </message>
+    <message>
+        <source>Parametrs</source>
+        <translation>Описание параметров</translation>
+    </message>
+    <message>
+        <source>Command Line Parametrs</source>
+        <translation>Пaраметры командной строки</translation>
+    </message>    
 </context>
 <context>
     <name>ImportThread</name>
