@@ -28,5 +28,17 @@ void HelpDialog::loadPage(QTextBrowser *textBrowser, const QString &sFileName)
     QString sHelpFile = QApplication::applicationDirPath() + QLatin1String("/Help/") + sFileName;
     if(!QFile::exists(sHelpFile))
         sHelpFile = FREELIB_DATA_DIR + QLatin1String("/help/") + sFileName;
-    textBrowser->setSource(sHelpFile, QTextDocument::MarkdownResource);
+    QFile file(sHelpFile);
+    if (file.open(QIODevice::ReadOnly | QIODevice::Text))
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+        textBrowser->setMarkdown(file.readAll());
+#else
+        QString sText = QStringLiteral("<meta charset=\"utf-8\">\n") + file.readAll();
+        sText.replace(QStringLiteral("  \n"), QStringLiteral("<br>"));
+        sText.replace(QStringLiteral("\n\n"), QStringLiteral("<br>"));
+        sText.replace(QStringLiteral("><b>"), QStringLiteral("&nbsp;&nbsp;&nbsp;&nbsp;<b>"));
+        textBrowser->setHtml(sText);
+#endif
+    }
 }
