@@ -47,9 +47,6 @@
            <bold>false</bold>
           </font>
          </property>
-         <property name="markdown">
-          <string notr="true"/>
-         </property>
          <property name="html">
           <string></string>
          </property>
@@ -72,9 +69,6 @@
            <pointsize>11</pointsize>
            <bold>false</bold>
           </font>
-         </property>
-         <property name="markdown">
-          <string notr="true"/>
          </property>
          <property name="html">
           <string></string>
@@ -103,9 +97,6 @@
            <pointsize>11</pointsize>
           </font>
          </property>
-         <property name="markdown">
-          <string notr="true"/>
-         </property>
          <property name="searchPaths">
           <stringlist notr="true"/>
          </property>
@@ -125,9 +116,6 @@
            <pointsize>11</pointsize>
            <bold>false</bold>
           </font>
-         </property>
-         <property name="markdown">
-          <string notr="true"/>
          </property>
          <property name="searchPaths">
           <stringlist notr="true"/>
