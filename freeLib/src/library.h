@@ -29,11 +29,11 @@ struct SBook
     QString sIsbn;
     QDate date;
     QString sFormat;
+    QString sFile;
     QList<uint> listIdGenres;
     QList<uint> listIdAuthors;
     QList<uint> listIdTags;
     uint idInLib;
-    QString sFile;
     uint idSerial;
     uint idFirstAuthor;
     uint numInSerial;
@@ -66,7 +66,6 @@ public:
     QString fillParams(const QString &str, uint idBook);
     QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file);
     void deleteTag(uint idTag);
-
 
     QString name;
     QString path;
