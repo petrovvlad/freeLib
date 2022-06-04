@@ -19,12 +19,12 @@ public:
     ~LibrariesDlg();
     //int exec();
     void AddNewLibrary(SLib &lib);
-    void StartImport(SLib &Lib);
+    void StartImport(const SLib &lib);
     bool bLibChanged;
     
 private:
     void UpdateLibList();
-    void SaveLibrary(uint idLib, const SLib &Lib);
+    void SaveLibrary(const SLib &lib);
 
     Ui::LibrariesDlg *ui;
     ImportThread *imp_tr;
