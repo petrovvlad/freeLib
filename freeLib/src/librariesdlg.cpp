@@ -155,7 +155,7 @@ void LibrariesDlg::UpdateLibList()
 void LibrariesDlg::StartImport()
 {
     SLib *lib;
-    if(idCurrentLib != 0)
+    if(idCurrentLib_ != 0)
         lib = &mLibs[idCurrentLib_];
     else
         lib = new SLib;
