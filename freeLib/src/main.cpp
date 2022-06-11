@@ -12,6 +12,7 @@
 #include <QDir>
 #include <QMessageBox>
 #include <QSqlError>
+#include <QThread>
 
 #include "quazip/quazip/quazip.h"
 
@@ -21,6 +22,7 @@
 #include "utilites.h"
 #include "config-freelib.h"
 #include "opds_server.h"
+#include "importthread.h"
 
 uint idCurrentLib;
 QTranslator* translator;
@@ -193,29 +195,32 @@ int main(int argc, char *argv[])
             return 0;
         }
         if(!strcmp(argv[i], "--help") || !strcmp(argv[i], "-h")){
-            std::cout << "freelib [парамаетр][команда][опции]\n"
+            std::cout << "freelib [парамаетр [команда [опции]]]\n"
                          "параметры:\n"
                          "\t--tray\t\tminimize to tray on start\n"
                          "-s,\t--server\tstart server\n"
                          "-v,\t--version\tверсия freeLib\n"
-                         "\t--lib \n"
+                         "\t--lib\t\tдействия с библиотеками\n"
                          "команды:\n"
-                         "\tlist\t\tсписок библиотек\n"
-                         "\tinfo -id\tинформация о библиотеке\n"
-                         "\tdelete -id\tудалить библиотеку\n"
+                         "\tlist\t\t\tсписок библиотек\n"
+                         "\tinfo -id ID_LIB\t\tинформация о библиотеке\n"
+                         "\tupdate -id ID_LIB\tобновить библиотеку\n"
+                         "\tdelete -id ID_LIB\tудалить библиотеку\n"
                          "опции:\n"
-                         "\t-id\tid библиотеки\n";
+                         "\t-id ID_LIB\tid библиотеки\n";
             return 0;
         }
         if(!strcmp(argv[i], "--lib")){
             a = new QCoreApplication(argc, argv);
             a->setOrganizationName(QStringLiteral("freeLib"));
             a->setApplicationName(QStringLiteral("freeLib"));
-            openDB(QStringLiteral("libdb"));
-            UpdateLibs();
 
             QSettings* settings = GetSettings();
             options.Load(settings);
+
+            openDB(QStringLiteral("libdb"));
+            UpdateLibs();
+
             SetLocale(options.sUiLanguageName);
 
             uint nId = 0;
@@ -239,28 +244,51 @@ int main(int argc, char *argv[])
                         ++iLib;
                     }
                 }else
-                if(!strcmp(argv[i], "info") && nId>0){
                     if(mLibs.contains(nId)){
-                        std::cout << "Library:\t" << mLibs[nId].name.toStdString() << "\n";
-                        std::cout << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n";
-                        std::cout << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n";
-                        std::cout << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n";
-                    }
-                }
-                if(!strcmp(argv[i], "delete") && nId>0){
-                    if(mLibs.contains(nId)){
-                        char a;
-                        std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
-                                  << "\"" << mLibs[nId].name.toStdString() << "\"? (y/N)";
-                        std::cin.get(a);
-                        if(a == 'y'){
-                            QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-                            query.exec(QStringLiteral("PRAGMA foreign_keys = ON;"));
-                            query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(nId));
-                            query.exec(QStringLiteral("VACUUM"));
+                        if(!strcmp(argv[i], "info") && nId>0){
+                            std::cout << "Library:\t" << mLibs[nId].name.toStdString() << "\n";
+                            std::cout << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n";
+                            std::cout << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n";
+                            std::cout << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n";
+                        }else
+                            if(!strcmp(argv[i], "update") && nId>0){
+                                auto thread = new QThread;
+                                auto imp_tr = new ImportThread();
+                                const SLib &lib = mLibs[nId];
+
+                                imp_tr->start(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
+                                imp_tr->moveToThread(thread);
+                                QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
+                                {
+                                    std::cout << msg.toStdString() << std::endl;
+                                });
+                                QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
+                                QObject::connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
+                                QObject::connect(imp_tr, &ImportThread::End, []()
+                                {
+                                    std::cout << QApplication::translate("LibrariesDlg", "Ending").toStdString() << "\n";
+                                });
+                                thread->start();
+                                while(!thread->wait(500)){
+                                    QCoreApplication::processEvents();
+                                }
+                                thread->deleteLater();
+                                imp_tr->deleteLater();
+                            }
+                        if(!strcmp(argv[i], "delete") && nId>0){
+                            //                    if(mLibs.contains(nId)){
+                            char a;
+                            std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
+                                      << "\"" << mLibs[nId].name.toStdString() << "\"? (y/N)";
+                            std::cin.get(a);
+                            if(a == 'y'){
+                                QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+                                query.exec(QStringLiteral("PRAGMA foreign_keys = ON;"));
+                                query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(nId));
+                                query.exec(QStringLiteral("VACUUM"));
+                            }
                         }
                     }
-                }
             }
             delete a;
             return 0;
