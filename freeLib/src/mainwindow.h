@@ -88,6 +88,7 @@ protected:
 private slots:
     void ExportAction();
     void ManageLibrary();
+    void onStatistics();
     void CheckBooks();
     void EditBooks();
     void Settings();

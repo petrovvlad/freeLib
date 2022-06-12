@@ -931,6 +931,7 @@
     </property>
     <addaction name="actionLibraries"/>
     <addaction name="actionAddLibrary"/>
+    <addaction name="actionStatistics"/>
     <addaction name="actionCheck_uncheck"/>
     <addaction name="separator"/>
     <addaction name="separator"/>
@@ -1035,6 +1036,11 @@
    </property>
    <property name="shortcut">
     <string notr="true">Ctrl+W</string>
+   </property>
+  </action>
+  <action name="actionStatistics">
+   <property name="text">
+    <string>Statistics</string>
    </property>
   </action>
  </widget>

@@ -4,7 +4,6 @@
 <context>
     <name>AboutDialog</name>
     <message>
-        <location filename="aboutdialog.ui" line="17"/>
         <source>About</source>
         <translation>О программе</translation>
     </message>
@@ -24,7 +23,7 @@
         <source>Version %1</source>
         <translation>Версия %1</translation>
     </message>
-     <message>
+    <message>
         <source>Revision: %1</source>
         <translation>Ревизия: %1</translation>
     </message>
@@ -46,186 +45,18 @@ Kernel: %3 %4</source>
     </message>
 </context>
 <context>
-    <name>LibrariesDlg</name>
-    <message>
-        <source>Add/Edit library</source>
-        <translation>Добавить/обновить библиотеку</translation>
-    </message>
-    <message>
-        <source>Library name:</source>
-        <oldsource>Library name</oldsource>
-        <translation>Название библиотеки:</translation>
-    </message>
-    <message>
-        <source>INPX file (optionally):</source>
-        <oldsource>INPX file:</oldsource>
-        <translation>INPX файл (необязательно):</translation>
-    </message>
-    <message>
-        <source>Books dir:</source>
-        <oldsource>Books dir</oldsource>
-        <translation>Директория с книгами:</translation>
-    </message>
-    <message>
-        <source>OPDS server</source>
-        <translation>OPDS сервер</translation>
-    </message>
-    <message>
-        <source>HTTP server</source>
-        <translation>HTTP сервер</translation>
-    </message>
-    <message>
-        <source>Add new library</source>
-        <translation>Добавить библиотеку</translation>
-    </message>
-    <message>
-        <source>Delete current library</source>
-        <translation>Удалить текущую библиотеку</translation>
-    </message>
-    <message>
-        <source>Delete library </source>
-        <translation>Удалить библиотеку </translation>
-    </message>
-    <message>
-        <source>Update type</source>
-        <translation>Способ обновления</translation>
-    </message>
-    <message>
-        <source>Add new</source>
-        <translation>Добавить новые книги</translation>
-    </message>
-    <message>
-        <source>Delete old and add new</source>
-        <translation>Удалить несуществующие и добавить новые книги</translation>
-    </message>
-    <message>
-        <source>Recreate library</source>
-        <translation>Пересоздать библиотеку</translation>
-    </message>
-    <message>
-        <source>import first author only</source>
-        <oldsource>Authors import</oldsource>
-        <translation>импортировать только первого автора</translation>
-    </message>
-    <message>
-        <source>don`t add deleted books</source>
-        <oldsource>don`t add deleted</oldsource>
-        <translation>не добавлять удаленные книги</translation>
-    </message>
-    <message>
-        <source>Export</source>
-        <translation>Экспорт</translation>
-    </message>
-    <message>
-        <source>Name composition</source>
-        <translation type="vanished">Состав имени</translation>
-    </message>
-    <message>
-        <source>surname</source>
-        <translation type="vanished">фамилия</translation>
-    </message>
-    <message>
-        <source>name</source>
-        <translation type="vanished">имя</translation>
-    </message>
-    <message>
-        <source>patronymic</source>
-        <translation type="vanished">отчество</translation>
-    </message>
-    <message>
-        <source>Update</source>
-        <translation>Обновить</translation>
-    </message>
-    <message>
-        <source>Close</source>
-        <translation>Закрыть</translation>
-    </message>
-    <message>
-        <source>Add library</source>
-        <translation>Добавить библиотеку</translation>
-    </message>
-    <message>
-        <source>Library</source>
-        <translation>Библиотеки</translation>
-    </message>
-    <message>
-        <source>Select books directory</source>
-        <translation>Директория с книгами</translation>
-    </message>
-    <message>
-        <source>new</source>
-        <translation>новая</translation>
-    </message>
-    <message>
-        <source>Break</source>
-        <translation>Прервать</translation>
-    </message>
-    <message>
-        <source>Update library</source>
-        <translation>Обновление библиотеки</translation>
-    </message>
-    <message>
-        <source>Delete library</source>
-        <translation>Удаление библиотеки</translation>
-    </message>
-    <message>
-        <source>Ending</source>
-        <translation>Конец</translation>
-    </message>
-    <message>
-        <source>Select destination directory</source>
-        <translation>Выберите директорию</translation>
-    </message>
-</context>
-<context>
     <name>BookEditDlg</name>
     <message>
         <source>Authors</source>
-        <translation type="unfinished">Авторы</translation>
+        <translation type="obsolete">Авторы</translation>
     </message>
     <message>
         <source>Annotation</source>
-        <translation type="unfinished">Аннотация</translation>
+        <translation type="obsolete">Аннотация</translation>
     </message>
     <message>
         <source>Language</source>
-        <translation type="unfinished">Язык</translation>
-    </message>
-    <message>
-        <source>Dialog</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Caption</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Seria</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Secondname</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Firstname</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Middlename</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>...</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Ganres</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Cover</source>
-        <translation type="unfinished"></translation>
+        <translation type="obsolete">Язык</translation>
     </message>
 </context>
 <context>
@@ -255,10 +86,6 @@ Kernel: %3 %4</source>
         <source>Close</source>
         <oldsource>Colse</oldsource>
         <translation>Закрыть</translation>
-    </message>
-    <message>
-        <source>TextLabel</source>
-        <translation type="unfinished"></translation>
     </message>
 </context>
 <context>
@@ -412,7 +239,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Insert content at the beginning of the book</source>
-        <translation type="vanished">Содержание в начале книги</translation>
+        <translation>Содержание в начале книги</translation>
     </message>
     <message>
         <source>Maximum caption level:</source>
@@ -546,10 +373,6 @@ Kernel: %3 %4</source>
         <source>Are you sure you want to load default CSS?</source>
         <translation>Вы уверены, что хотите заменить пользовательский CSS на оригинальный?</translation>
     </message>
-    <message>
-        <source>00000</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>FileItemDelegate</name>
@@ -582,11 +405,11 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>italic</source>
-        <translation type="vanished">курсив</translation>
+        <translation>курсив</translation>
     </message>
     <message>
         <source>bold</source>
-        <translation type="vanished">жирный</translation>
+        <translation>жирный</translation>
     </message>
     <message>
         <source>not found</source>
@@ -622,7 +445,7 @@ Kernel: %3 %4</source>
     <message>
         <source>Command Line Parametrs</source>
         <translation>Пaраметры командной строки</translation>
-    </message>    
+    </message>
 </context>
 <context>
     <name>ImportThread</name>
@@ -651,63 +474,195 @@ Kernel: %3 %4</source>
     <name>LibWizard</name>
     <message>
         <source>Library wizard</source>
-        <translation type="vanished">Помощник создания библиотеки</translation>
+        <translation>Помощник создания библиотеки</translation>
     </message>
     <message>
         <source>Application mode</source>
-        <translation type="vanished">Режим работы</translation>
+        <translation>Режим работы</translation>
     </message>
     <message>
         <source>library mode</source>
         <oldsource>libarry mode</oldsource>
-        <translation type="vanished">режим библиотеки</translation>
+        <translation>режим библиотеки</translation>
     </message>
     <message>
         <source>converter mode</source>
-        <translation type="vanished">режим конвертера</translation>
+        <translation>режим конвертера</translation>
     </message>
     <message>
         <source>Select book&apos;s directory:</source>
         <oldsource>Select book&apos;s directory</oldsource>
-        <translation type="vanished">Выберите директорию с книгами:</translation>
+        <translation>Выберите директорию с книгами:</translation>
     </message>
     <message>
         <source>Select INPX file (optionally):</source>
         <oldsource>Select INPX file:</oldsource>
-        <translation type="vanished">Выберите INPX файл (необязательно):</translation>
+        <translation>Выберите INPX файл (необязательно):</translation>
     </message>
     <message>
         <source>Set library name:</source>
         <oldsource>Set library name</oldsource>
-        <translation type="vanished">Задайте имя для библиотеки:</translation>
+        <translation>Задайте имя для библиотеки:</translation>
     </message>
     <message>
         <source>Book&apos;s directory:</source>
-        <translation type="vanished">Директория с книгами:</translation>
+        <translation>Директория с книгами:</translation>
     </message>
     <message>
         <source>INPX file:</source>
-        <translation type="vanished">INPX файл:</translation>
+        <translation>INPX файл:</translation>
     </message>
     <message>
         <source>Library name:</source>
-        <translation type="vanished">Название библиотеки:</translation>
+        <translation>Название библиотеки:</translation>
     </message>
     <message>
         <source>Update library</source>
-        <translation type="vanished">Обновить библиотеку</translation>
+        <translation>Обновить библиотеку</translation>
     </message>
     <message>
         <source>Add library</source>
-        <translation type="vanished">Добавить библиотеку</translation>
+        <translation>Добавить библиотеку</translation>
     </message>
     <message>
         <source>Library</source>
-        <translation type="vanished">Библиотеки</translation>
+        <translation>Библиотеки</translation>
     </message>
     <message>
         <source>Select books directory</source>
-        <translation type="vanished">Директория с книгами</translation>
+        <translation>Директория с книгами</translation>
+    </message>
+</context>
+<context>
+    <name>LibrariesDlg</name>
+    <message>
+        <source>Add/Edit library</source>
+        <translation>Добавить/обновить библиотеку</translation>
+    </message>
+    <message>
+        <source>Library name:</source>
+        <oldsource>Library name</oldsource>
+        <translation>Название библиотеки:</translation>
+    </message>
+    <message>
+        <source>INPX file (optionally):</source>
+        <oldsource>INPX file:</oldsource>
+        <translation>INPX файл (необязательно):</translation>
+    </message>
+    <message>
+        <source>Books dir:</source>
+        <oldsource>Books dir</oldsource>
+        <translation>Директория с книгами:</translation>
+    </message>
+    <message>
+        <source>OPDS server</source>
+        <translation>OPDS сервер</translation>
+    </message>
+    <message>
+        <source>HTTP server</source>
+        <translation>HTTP сервер</translation>
+    </message>
+    <message>
+        <source>Add new library</source>
+        <translation>Добавить библиотеку</translation>
+    </message>
+    <message>
+        <source>Delete current library</source>
+        <translation>Удалить текущую библиотеку</translation>
+    </message>
+    <message>
+        <source>Delete library </source>
+        <translation>Удалить библиотеку </translation>
+    </message>
+    <message>
+        <source>Update type</source>
+        <translation>Способ обновления</translation>
+    </message>
+    <message>
+        <source>Add new</source>
+        <translation>Добавить новые книги</translation>
+    </message>
+    <message>
+        <source>Delete old and add new</source>
+        <translation>Удалить несуществующие и добавить новые книги</translation>
+    </message>
+    <message>
+        <source>Recreate library</source>
+        <translation>Пересоздать библиотеку</translation>
+    </message>
+    <message>
+        <source>import first author only</source>
+        <oldsource>Authors import</oldsource>
+        <translation>импортировать только первого автора</translation>
+    </message>
+    <message>
+        <source>don`t add deleted books</source>
+        <oldsource>don`t add deleted</oldsource>
+        <translation>не добавлять удаленные книги</translation>
+    </message>
+    <message>
+        <source>Export</source>
+        <translation>Экспорт</translation>
+    </message>
+    <message>
+        <source>Name composition</source>
+        <translation>Состав имени</translation>
+    </message>
+    <message>
+        <source>surname</source>
+        <translation>фамилия</translation>
+    </message>
+    <message>
+        <source>name</source>
+        <translation>имя</translation>
+    </message>
+    <message>
+        <source>patronymic</source>
+        <translation>отчество</translation>
+    </message>
+    <message>
+        <source>Update</source>
+        <translation>Обновить</translation>
+    </message>
+    <message>
+        <source>Close</source>
+        <translation>Закрыть</translation>
+    </message>
+    <message>
+        <source>Add library</source>
+        <translation>Добавить библиотеку</translation>
+    </message>
+    <message>
+        <source>Library</source>
+        <translation>Библиотеки</translation>
+    </message>
+    <message>
+        <source>Select books directory</source>
+        <translation>Директория с книгами</translation>
+    </message>
+    <message>
+        <source>new</source>
+        <translation>новая</translation>
+    </message>
+    <message>
+        <source>Break</source>
+        <translation>Прервать</translation>
+    </message>
+    <message>
+        <source>Update library</source>
+        <translation>Обновление библиотеки</translation>
+    </message>
+    <message>
+        <source>Delete library</source>
+        <translation>Удаление библиотеки</translation>
+    </message>
+    <message>
+        <source>Ending</source>
+        <translation>Конец</translation>
+    </message>
+    <message>
+        <source>Select destination directory</source>
+        <translation>Выберите директорию</translation>
     </message>
 </context>
 <context>
@@ -728,7 +683,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>B</source>
-        <translation type="vanished">Б</translation>
+        <translation>Б</translation>
     </message>
     <message>
         <source>Language:</source>
@@ -751,15 +706,19 @@ Kernel: %3 %4</source>
     <message>
         <source>Tag:</source>
         <oldsource>Tag</oldsource>
-        <translation type="vanished">Тег:</translation>
+        <translation>Тег:</translation>
     </message>
     <message>
         <source>Library</source>
         <translation>Библиотека</translation>
     </message>
     <message>
+        <source>Statistics</source>
+        <translation>Статистика</translation>
+    </message>
+    <message>
         <source>Preference</source>
-        <translation type="vanished">Настройки</translation>
+        <translation>Настройки</translation>
     </message>
     <message>
         <source>No.</source>
@@ -791,7 +750,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Donate</source>
-        <translation type="vanished">Поддержка проекта</translation>
+        <translation>Поддержка проекта</translation>
     </message>
     <message>
         <source>Minimize window</source>
@@ -812,7 +771,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Name:</source>
-        <translation type="vanished">Имя:</translation>
+        <translation>Имя:</translation>
     </message>
     <message>
         <source>Genre:</source>
@@ -899,7 +858,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Updating</source>
-        <translation type="vanished">Обновление данных</translation>
+        <translation>Обновление данных</translation>
     </message>
     <message>
         <source>Preferences</source>
@@ -911,7 +870,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Drop files for convert!</source>
-        <translation type="vanished">Перетащите файлы для конвертации!</translation>
+        <translation>Перетащите файлы для конвертации!</translation>
     </message>
     <message>
         <source>Help</source>
@@ -927,7 +886,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>no tag</source>
-        <translation type="vanished">без тега</translation>
+        <translation>без тега</translation>
     </message>
     <message>
         <source>setup ...</source>
@@ -939,7 +898,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>This version need new database version. All you old books data will be lost. Continue?</source>
-        <translation type="vanished">Текущая версия программы нуждается в новой версии базы данных.
+        <translation>Текущая версия программы нуждается в новой версии базы данных.
 Вся информация о библиотеках будет удалена.
 Продолжить?</translation>
     </message>
@@ -951,27 +910,27 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Can&apos;t find file: %1</source>
-        <translation type="vanished">Файл не найден: %1</translation>
+        <translation>Файл не найден: %1</translation>
     </message>
     <message>
         <source>kB</source>
-        <translation type="vanished">кБ</translation>
+        <translation>кБ</translation>
     </message>
     <message>
         <source>MB</source>
-        <translation type="vanished">МБ</translation>
+        <translation>МБ</translation>
     </message>
     <message>
         <source>GB</source>
-        <translation type="vanished">ГБ</translation>
+        <translation>ГБ</translation>
     </message>
     <message>
         <source>TB</source>
-        <translation type="vanished">ТБ</translation>
+        <translation>ТБ</translation>
     </message>
     <message>
         <source>PB</source>
-        <translation type="vanished">ПБ</translation>
+        <translation>ПБ</translation>
     </message>
     <message>
         <source>unknown author</source>
@@ -979,7 +938,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Select destination directory</source>
-        <translation type="vanished">Выберите директорию</translation>
+        <translation>Выберите директорию</translation>
     </message>
     <message>
         <source>Save as</source>
@@ -991,23 +950,15 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Books</source>
-        <translation type="vanished">Книги</translation>
+        <translation>Книги</translation>
     </message>
     <message>
         <source>Book`s files</source>
-        <translation type="vanished">Файлы книг</translation>
-    </message>
-    <message>
-        <source>dd.MM.yyyy</source>
-        <translation type="unfinished"></translation>
-    </message>
-    <message>
-        <source>Edit matadata</source>
-        <translation type="unfinished"></translation>
+        <translation>Файлы книг</translation>
     </message>
     <message>
         <source>Filter:</source>
-        <translation type="unfinished">Фильтр:</translation>
+        <translation type="obsolete">Фильтр:</translation>
     </message>
 </context>
 <context>
@@ -1017,6 +968,35 @@ Kernel: %3 %4</source>
         <oldsource>Send as</oldsource>
         <translation>Сохранить как</translation>
     </message>
+</context>
+<context>
+    <name>SatisticsDialog</name>
+    <message>
+        <location filename="satisticsdialog.ui" line="14"/>
+        <source>Statistic</source>
+        <translation>Статистика библиотеки</translation>
+    </message>
+    <message>
+        <source>Library name</source>
+        <translation>Название библиотеки</translation>
+    </message>
+    <message>
+        <source>Version</source>
+        <translation>Версия</translation>
+    </message>
+    <message>
+        <source>Book count</source>
+        <translation>Количество книг</translation>
+    </message>
+    <message>
+        <source>Author count</source>
+        <translation>Количество авторов</translation>
+    </message>
+    <message>
+        <source>Seria count</source>
+        <translation>Количество серий</translation>
+    </message>
+    
 </context>
 <context>
     <name>SettingsDlg</name>
@@ -1080,11 +1060,11 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>hide</source>
-        <translation type="vanished">скрывать</translation>
+        <translation>скрывать</translation>
     </message>
     <message>
         <source>show</source>
-        <translation type="vanished">показывать</translation>
+        <translation>показывать</translation>
     </message>
     <message>
         <source>minimize to tray</source>
@@ -1096,7 +1076,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>color</source>
-        <translation type="vanished">цвет</translation>
+        <translation>цвет</translation>
     </message>
     <message>
         <source>colored</source>
@@ -1226,11 +1206,11 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Use relative paths</source>
-        <translation type="vanished">Использовать относительные пути</translation>
+        <translation>Использовать относительные пути</translation>
     </message>
     <message>
         <source>Name:</source>
-        <translation type="vanished">Имя:</translation>
+        <translation>Имя:</translation>
     </message>
     <message>
         <source>Default</source>
@@ -1304,12 +1284,12 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Text</source>
-        <translation type="vanished">Текст</translation>
+        <translation>Текст</translation>
     </message>
     <message>
         <source>Paragraphs</source>
         <oldsource>Paragraph</oldsource>
-        <translation type="vanished">Параграфы</translation>
+        <translation>Параграфы</translation>
     </message>
     <message>
         <source>Top level captions</source>
@@ -1442,10 +1422,6 @@ Kernel: %3 %4</source>
         <source>Read</source>
         <translation>Прочитано</translation>
     </message>
-    <message>
-        <source>This tag is used. Do you want to delete this tag anyway?</source>
-        <translation type="unfinished"></translation>
-    </message>
 </context>
 <context>
     <name>fb2mobi</name>
@@ -1532,7 +1508,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>sequence beginig with</source>
-        <translation type="vanished">серий начинающихся с</translation>
+        <translation>серий начинающихся с</translation>
     </message>
     <message>
         <source>Books of genre</source>
@@ -1541,7 +1517,7 @@ Kernel: %3 %4</source>
     <message>
         <source>authors beginig with</source>
         <oldsource> authors beginig with </oldsource>
-        <translation type="vanished">авторов на</translation>
+        <translation>авторов на</translation>
     </message>
     <message>
         <source>books</source>
@@ -1554,11 +1530,11 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Convert book: </source>
-        <translation type="vanished">Конвертировать книгу:</translation>
+        <translation>Конвертировать книгу:</translation>
     </message>
     <message>
         <source>Send</source>
-        <translation type="vanished">Отправить</translation>
+        <translation>Отправить</translation>
     </message>
     <message>
         <source>series beginning with</source>
