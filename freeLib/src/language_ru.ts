@@ -970,9 +970,9 @@ Kernel: %3 %4</source>
     </message>
 </context>
 <context>
-    <name>SatisticsDialog</name>
+    <name>StatisticsDialog</name>
     <message>
-        <location filename="satisticsdialog.ui" line="14"/>
+        <location filename="statisticsdialog.ui" line="14"/>
         <source>Statistic</source>
         <translation>Статистика библиотеки</translation>
     </message>
@@ -995,8 +995,7 @@ Kernel: %3 %4</source>
     <message>
         <source>Seria count</source>
         <translation>Количество серий</translation>
-    </message>
-    
+    </message>    
 </context>
 <context>
     <name>SettingsDlg</name>
