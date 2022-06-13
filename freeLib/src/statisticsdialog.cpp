@@ -21,9 +21,19 @@ StatisticsDialog::StatisticsDialog(QWidget *parent) :
                            "<tr><td>%9</td><td>%10</td></tr>"
                            "</table>").arg(
                 tr("Library name"), lib.name,
-                tr("Version"), lib.sVersion,
+                tr("Version"), lib.sVersion
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+                ,
+#else
+                ).arg(
+#endif
                 tr("Book count"), locale.toString(lib.mBooks.count()),
-                tr("Author count"), locale.toString(lib.mAuthors.count()),
+                tr("Author count"), locale.toString(lib.mAuthors.count())
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+                ,
+#else
+                ).arg(
+#endif
                 tr("Seria count"), locale.toString(lib.mSerials.count()));
     ui->textEdit->setText(sText);
 }
