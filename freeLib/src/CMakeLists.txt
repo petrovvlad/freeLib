@@ -20,6 +20,7 @@ set(PROJECT_SOURCES
         helpdialog.cpp      helpdialog.h    helpdialog.ui
         tagdialog.cpp       tagdialog.h     tagdialog.ui
         bookeditdlg.cpp     bookeditdlg.h   bookeditdlg.ui
+        statisticsdialog.h  statisticsdialog.cpp statisticsdialog.ui
         importthread.cpp    importthread.h
         exportthread.cpp    exportthread.h
         opds_server.cpp     opds_server.h

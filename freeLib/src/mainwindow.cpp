@@ -25,6 +25,7 @@
 #include "starsdelegate.h"
 #include "utilites.h"
 #include "opds_server.h"
+#include "statisticsdialog.h"
 
 extern QSplashScreen *splash;
 extern opds_server *pOpds;
@@ -123,6 +124,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->searchAuthor, &QLineEdit::textChanged, this, &MainWindow::onSerachAuthorsChanded);
     connect(ui->searchSeries, &QLineEdit::textChanged, this, &MainWindow::onSerachSeriesChanded);
     connect(ui->actionAddLibrary, &QAction::triggered, this, &MainWindow::ManageLibrary);
+    connect(ui->actionStatistics, &QAction::triggered, this, &MainWindow::onStatistics);
     connect(ui->btnLibrary, &QAbstractButton::clicked, this, &MainWindow::ManageLibrary);
     connect(ui->btnOpenBook, &QAbstractButton::clicked, this, &MainWindow::BookDblClick);
     connect(ui->btnOption, &QAbstractButton::clicked, this, &MainWindow::Settings);
@@ -706,7 +708,7 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
     foreach (qlonglong id, list)
     {
         for(int i=0; i<ui->Books->topLevelItemCount(); i++)
-            items<<ui->Books->topLevelItem(i);
+            items << ui->Books->topLevelItem(i);
         do
         {
             if(items[0]->childCount() > 0)
@@ -716,8 +718,8 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
             }
             else
             {
-                if(items[0]->data(0,Qt::UserRole).toLongLong() == id && items[0]->checkState(0) == Qt::Checked)
-                    items[0]->setCheckState(0,Qt::Unchecked);
+                if(items[0]->data(0, Qt::UserRole).toLongLong() == id && items[0]->checkState(0) == Qt::Checked)
+                    items[0]->setCheckState(0, Qt::Unchecked);
             }
             items.removeAt(0);
         }while(items.count() > 0);
@@ -1211,6 +1213,12 @@ void MainWindow::ManageLibrary()
     }
 }
 
+void MainWindow::onStatistics()
+{
+    StatisticsDialog dlg;
+    dlg.exec();
+}
+
 void MainWindow::btnSearch()
 {
     QToolButton *button = qobject_cast<QToolButton*>(sender());
@@ -1309,7 +1317,7 @@ void MainWindow::onSerachSeriesChanded(const QString &str)
 void MainWindow::HelpDlg()
 {
     if(pHelpDlg == nullptr)
-        pHelpDlg=new HelpDialog();
+        pHelpDlg = new HelpDialog();
     pHelpDlg->show();
 }
 

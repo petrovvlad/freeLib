@@ -50,7 +50,6 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     ui->Add->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QLatin1String("plus.svg"))));
     ui->Del->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QLatin1String("minus.svg"))));
 
-
     idCurrentLib_ = idCurrentLib;
     UpdateLibList();
 
@@ -82,7 +81,7 @@ void LibrariesDlg::Add_Library()
     lib.name = sNewName;
     lib.bFirstAuthor = false;
     lib.bWoDeleted = false;
-    SaveLibrary(idCurrentLib_, lib);
+    SaveLibrary(lib);
     ui->ExistingLibs->blockSignals(false);
     emit ui->ExistingLibs->currentIndexChanged(ui->ExistingLibs->count()-1);
 }
@@ -155,23 +154,27 @@ void LibrariesDlg::UpdateLibList()
 
 void LibrariesDlg::StartImport()
 {
-    SLib lib;
-    if(idCurrentLib > 0)
-        lib = mLibs[idCurrentLib_];
-    lib.name = ui->ExistingLibs->currentText().trimmed();
-    lib.sInpx = ui->inpx->text().trimmed();
-    lib.path = ui->BookDir->text().trimmed();
-    lib.bFirstAuthor = ui->firstAuthorOnly->isChecked();
-    lib.bWoDeleted = ui->checkwoDeleted->isChecked();
-    StartImport(lib);
+    SLib *lib;
+    if(idCurrentLib_ != 0)
+        lib = &mLibs[idCurrentLib_];
+    else
+        lib = new SLib;
+    lib->name = ui->ExistingLibs->currentText().trimmed();
+    lib->sInpx = ui->inpx->text().trimmed();
+    lib->path = ui->BookDir->text().trimmed();
+    lib->bFirstAuthor = ui->firstAuthorOnly->isChecked();
+    lib->bWoDeleted = ui->checkwoDeleted->isChecked();
+    StartImport(*lib);
+    if(lib != &mLibs[idCurrentLib_])
+        delete lib;
 }
 
-void LibrariesDlg::StartImport(SLib &Lib)
+void LibrariesDlg::StartImport(const SLib &lib)
 {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
-    uchar update_type = (ui->add_new->isChecked() ?UT_NEW:ui->del_old->isChecked() ?UT_DEL_AND_NEW:UT_FULL);
-    SaveLibrary(idCurrentLib_,Lib);
+    uchar update_type = (ui->add_new->isChecked() ?UT_NEW :ui->del_old->isChecked() ?UT_DEL_AND_NEW :UT_FULL);
+    SaveLibrary(lib);
     ui->btnUpdate->setDisabled(true);
     ui->BookDir->setDisabled(true);
     ui->inpx->setDisabled(true);
@@ -185,7 +188,7 @@ void LibrariesDlg::StartImport(SLib &Lib)
 
     thread = new QThread;
     imp_tr = new ImportThread();
-    imp_tr->start(idCurrentLib_, Lib, update_type, Lib.bFirstAuthor && Lib.sInpx.isEmpty());
+    imp_tr->start(idCurrentLib_, lib, update_type, lib.bFirstAuthor && lib.sInpx.isEmpty());
     imp_tr->moveToThread(thread);
     connect(imp_tr, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
     connect(thread, &QThread::started, imp_tr, &ImportThread::process);
@@ -236,31 +239,35 @@ void LibrariesDlg::SelectLibrary()
     settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
 }
 
-void LibrariesDlg::SaveLibrary(uint idLib, const SLib &Lib)
+void LibrariesDlg::SaveLibrary(const SLib &lib)
 {
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    uint idSaveLib;
-    if(idLib == 0)
+    if(idCurrentLib_ == 0)
     {
         LogMessage(tr("Add library"));
-        bool result = query.exec(QStringLiteral("INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)").arg(Lib.name,Lib.path,Lib.sInpx,Lib.bFirstAuthor?"1":"0",Lib.bWoDeleted?"1":"0"));
+        bool result = query.exec(QStringLiteral("INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)")
+                                 .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?"1" :"0", lib.bWoDeleted ?"1" :"0"));
         if(!result)
             qDebug()<<query.lastError().databaseText();
-        idSaveLib = query.lastInsertId().toInt();
+        idCurrentLib_ = query.lastInsertId().toInt();
         QSettings* settings = GetSettings();
-        settings->setValue(QStringLiteral("LibID"), idLib);
+        settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
+        SLib &newLib = mLibs[idCurrentLib_];
+        newLib.name = lib.name;
+        newLib.path = lib.path;
+        newLib.sInpx = lib.sInpx;
+        newLib.bFirstAuthor = lib.bFirstAuthor;
+        newLib.bWoDeleted = lib.bWoDeleted;
     }
     else
     {
         LogMessage(tr("Update library"));
         bool result = query.exec(QStringLiteral("UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6")
-                                 .arg(Lib.name, Lib.path, Lib.sInpx, Lib.bFirstAuthor ?QStringLiteral("1"): QStringLiteral("0"), Lib.bWoDeleted ? QStringLiteral("1"): QStringLiteral("0")).arg(idLib));
+                                 .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?QStringLiteral("1"): QStringLiteral("0"), lib.bWoDeleted ? QStringLiteral("1"): QStringLiteral("0")).arg(idCurrentLib_));
         if(!result)
             qDebug()<<query.lastError().databaseText();
-        idSaveLib = idLib;
     }
-    mLibs[idSaveLib] = Lib;
-    idCurrentLib_ = idSaveLib;
+
     UpdateLibList();
     bLibChanged = true;
 }
@@ -270,7 +277,7 @@ void LibrariesDlg::DeleteLibrary()
     if(idCurrentLib_ == 0)
         return;
 
-    if(QMessageBox::question(this,tr("Delete library"),tr("Delete library ")+"\""+ui->ExistingLibs->currentText()+"\"?",QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
+    if(QMessageBox::question(this, tr("Delete library"), tr("Delete library ") +"\"" + ui->ExistingLibs->currentText() + "\"?", QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -305,7 +312,6 @@ void LibrariesDlg::EndUpdate()
     ui->checkwoDeleted->setDisabled(false);
     bLibChanged = true;
     QApplication::restoreOverrideCursor();
-
 }
 
 void LibrariesDlg::terminateImport()
@@ -346,7 +352,7 @@ void LibrariesDlg::ExportLib()
 
 void LibrariesDlg::onComboboxLibraryChanged(int index)
 {
-    if(index>=0){
+    if(index >= 0){
         idCurrentLib_ = ui->ExistingLibs->itemData(index).toInt();
         SelectLibrary();
     }
