@@ -556,3 +556,26 @@ void SLib::deleteTag(uint idTag)
     query.exec(QStringLiteral("DELETE FROM tag WHERE id=%1").arg(idTag));
 }
 
+QString SLib::nameFromInpx(QString sInpx)
+{
+    QString sName;
+    if(!sInpx.isEmpty()){
+        QuaZip uz(sInpx);
+        if(!uz.open(QuaZip::mdUnzip))
+        {
+            qDebug()<<"Error open INPX file: " << sInpx;
+            //return sName;
+        } else
+        if(SetCurrentZipFileName(&uz, QStringLiteral("COLLECTION.INFO")))
+        {
+            QBuffer outbuff;
+            QuaZipFile zip_file(&uz);
+            zip_file.open(QIODevice::ReadOnly);
+            outbuff.setData(zip_file.readAll());
+            zip_file.close();
+            sName = QString::fromUtf8(outbuff.data().left(outbuff.data().indexOf('\n')));
+        }
+    }
+    return sName;
+}
+
