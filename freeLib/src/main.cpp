@@ -287,6 +287,8 @@ int main(int argc, char *argv[])
                         std::cout << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n";
                         std::cout << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n";
                         std::cout << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n";
+                        std::cout << QApplication::translate("LibrariesDlg", "OPDS server").toStdString() << ":\thttp://localhost:" << options.nOpdsPort << "/opds_" << nId << "\n";
+                        std::cout << QApplication::translate("LibrariesDlg", "HTTP server").toStdString() << ":\thttp://localhost:"  << options.nOpdsPort << "/http_" << nId << "\n";
                     }else if(!strcmp(argv[i], "update") && nId>0){
                         auto thread = new QThread;
                         auto imp_tr = new ImportThread();
