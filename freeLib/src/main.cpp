@@ -329,7 +329,6 @@ int main(int argc, char *argv[])
             delete a;
             return 0;
         }
-
     }
 
 #ifdef Q_OS_MACX
@@ -340,9 +339,10 @@ int main(int argc, char *argv[])
         //QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
     }
 #endif
-    if(bServer)
-        a = new QCoreApplication(argc, argv);
-    else{
+    if(bServer){
+        setenv("QT_QPA_PLATFORM", "offscreen", 1);
+        a = new QGuiApplication(argc, argv);
+    }else{
         a = new QApplication(argc, argv);
         static_cast<QApplication*>(a)->setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
         a->setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -393,6 +393,7 @@ int main(int argc, char *argv[])
     if(bServer){
         loadGenres();
         loadLibrary(idCurrentLib);
+        options.bOpdsEnable = true;
         pOpds->server_run();
     }else{
 
