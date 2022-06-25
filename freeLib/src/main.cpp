@@ -174,6 +174,21 @@ void UpdateLibs()
     }
 }
 
+QString parseOption(int argc, char* argv[], const char* option)
+{
+    QString sRet;
+    if(argc >= 2){
+        for(int j=0; j+1<argc; j++){
+            if(!strcmp(argv[j], option)){
+                sRet = QString::fromUtf8(argv[j+1]);
+                break;
+            }
+        }
+    }
+    return sRet;
+}
+
+
 int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(resource);
@@ -206,8 +221,11 @@ int main(int argc, char *argv[])
                          "\tinfo -id ID_LIB\t\tинформация о библиотеке\n"
                          "\tupdate -id ID_LIB\tобновить библиотеку\n"
                          "\tdelete -id ID_LIB\tудалить библиотеку\n"
+                         "\tadd -p DIR_LIB -inpx INPX\tдобавить библиотеку"
                          "опции:\n"
-                         "\t-id ID_LIB\tid библиотеки\n";
+                         "\t-id ID_LIB\tid библиотеки\n"
+                         "\t-p DIR_LIB\tпуть к файлам библиотеки"
+                         "\t-inpx INPX\t .inpx файл";
             return 0;
         }
         if(!strcmp(argv[i], "--lib")){
@@ -224,15 +242,8 @@ int main(int argc, char *argv[])
             SetLocale(options.sUiLanguageName);
 
             uint nId = 0;
-            if(i+2 < argc){
-                for(int j=i+1; j+1<argc; j++){
-                    if(!strcmp(argv[j], "-id")){
-                        int id{std::atoi(argv[j+1])};
-                        if(id>0)
-                            nId = id;
-                    }
-                }
-            }
+            QString sId = parseOption(argc - i, &argv[i+1], "-id");
+            nId = sId.toUInt();
 
             if(++i < argc){
                 if(!strcmp(argv[i], "list")){
@@ -243,57 +254,81 @@ int main(int argc, char *argv[])
                         std::cout << iLib.key() << "\t" << iLib->name.toStdString() << "\n";
                         ++iLib;
                     }
-                }else
-                    if(mLibs.contains(nId)){
-                        if(!strcmp(argv[i], "info") && nId>0){
-                            std::cout << "Library:\t" << mLibs[nId].name.toStdString() << "\n";
-                            std::cout << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n";
-                            std::cout << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n";
-                            std::cout << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n";
-                        }else
-                            if(!strcmp(argv[i], "update") && nId>0){
-                                auto thread = new QThread;
-                                auto imp_tr = new ImportThread();
-                                const SLib &lib = mLibs[nId];
+                }else if(!strcmp(argv[i], "add")){
+                    QString sPath = parseOption(argc-(i+1), &argv[i+1], "-p");
+                    if(sPath.isEmpty()){
+                        std::cout << "Не указан путь к библиотеке\n";
+                    }else{
+                        QString sInpx = parseOption(argc-(i+1), &argv[i+1], "-inpx");
+                        QString sName = parseOption(argc-(i+1), &argv[i+1], "-n");
+                        if(sName.isEmpty()){
+                            sName = sInpx.isEmpty() ? QApplication::translate("LibrariesDlg", "new") : SLib::nameFromInpx(sInpx);
+                            if(sName.isEmpty())
+                                std::cout << "Enter librarry name:";
+                            else
+                                std::cout << "Enter librarry name (" << sName.toStdString() << "):";
+                            char newName[1024];
+                            std::cin.get(newName, sizeof(newName));
+                            QString sNewName = QString::fromUtf8(newName);
+                            if(!sNewName.isEmpty())
+                                sName = sNewName;
+                        }
 
-                                imp_tr->start(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
-                                imp_tr->moveToThread(thread);
-                                QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
-                                {
-                                    std::cout << msg.toStdString() << std::endl;
-                                });
-                                QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
-                                QObject::connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
-                                QObject::connect(imp_tr, &ImportThread::End, []()
-                                {
-                                    std::cout << QApplication::translate("LibrariesDlg", "Ending").toStdString() << "\n";
-                                });
-                                thread->start();
-                                while(!thread->wait(500)){
-                                    QCoreApplication::processEvents();
-                                }
-                                thread->deleteLater();
-                                imp_tr->deleteLater();
-                            }
-                        if(!strcmp(argv[i], "delete") && nId>0){
-                            //                    if(mLibs.contains(nId)){
-                            char a;
-                            std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
-                                      << "\"" << mLibs[nId].name.toStdString() << "\"? (y/N)";
-                            std::cin.get(a);
-                            if(a == 'y'){
-                                QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-                                query.exec(QStringLiteral("PRAGMA foreign_keys = ON;"));
-                                query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(nId));
-                                query.exec(QStringLiteral("VACUUM"));
-                            }
+                        QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+                        bool result = query.exec(QStringLiteral("INSERT INTO lib(name,path,inpx) values('%1','%2','%3')")
+                                                 .arg(sName, sPath, sInpx));
+                        if(!result)
+                            std::cout << query.lastError().databaseText().toStdString();
+                    }
+
+                }else if(mLibs.contains(nId)){
+                    if(!strcmp(argv[i], "info") && nId>0){
+                        std::cout << "Library:\t" << mLibs[nId].name.toStdString() << "\n";
+                        std::cout << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n";
+                        std::cout << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n";
+                        std::cout << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n";
+                        std::cout << QApplication::translate("LibrariesDlg", "OPDS server").toStdString() << ":\thttp://localhost:" << options.nOpdsPort << "/opds_" << nId << "\n";
+                        std::cout << QApplication::translate("LibrariesDlg", "HTTP server").toStdString() << ":\thttp://localhost:"  << options.nOpdsPort << "/http_" << nId << "\n";
+                    }else if(!strcmp(argv[i], "update") && nId>0){
+                        auto thread = new QThread;
+                        auto imp_tr = new ImportThread();
+                        const SLib &lib = mLibs[nId];
+
+                        imp_tr->start(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
+                        imp_tr->moveToThread(thread);
+                        QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
+                        {
+                            std::cout << msg.toStdString() << std::endl;
+                        });
+                        QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
+                        QObject::connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
+                        QObject::connect(imp_tr, &ImportThread::End, []()
+                        {
+                            std::cout << QApplication::translate("LibrariesDlg", "Ending").toStdString() << "\n";
+                        });
+                        thread->start();
+                        while(!thread->wait(500)){
+                            QCoreApplication::processEvents();
+                        }
+                        thread->deleteLater();
+                        imp_tr->deleteLater();
+                    }else if(!strcmp(argv[i], "delete") && nId>0){
+                        char a;
+                        std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
+                                  << "\"" << mLibs[nId].name.toStdString() << "\"? (y/N)";
+                        std::cin.get(a);
+                        if(a == 'y'){
+                            QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+                            query.exec(QStringLiteral("PRAGMA foreign_keys = ON;"));
+                            query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(nId));
+                            query.exec(QStringLiteral("VACUUM"));
                         }
                     }
+                }
             }
             delete a;
             return 0;
         }
-
     }
 
 #ifdef Q_OS_MACX
@@ -304,9 +339,10 @@ int main(int argc, char *argv[])
         //QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
     }
 #endif
-    if(bServer)
-        a = new QCoreApplication(argc, argv);
-    else{
+    if(bServer){
+        setenv("QT_QPA_PLATFORM", "offscreen", 1);
+        a = new QGuiApplication(argc, argv);
+    }else{
         a = new QApplication(argc, argv);
         static_cast<QApplication*>(a)->setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
         a->setAttribute(Qt::AA_UseHighDpiPixmaps);
@@ -357,6 +393,7 @@ int main(int argc, char *argv[])
     if(bServer){
         loadGenres();
         loadLibrary(idCurrentLib);
+        options.bOpdsEnable = true;
         pOpds->server_run();
     }else{
 

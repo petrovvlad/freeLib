@@ -102,22 +102,9 @@ void LibrariesDlg::InputINPX()
     {
         ui->inpx->setText(fileName);
         ui->BookDir->setText(QFileInfo(fileName).absolutePath());
-        QuaZip uz(fileName);
-        if(!uz.open(QuaZip::mdUnzip))
-        {
-            qDebug()<<"Error open INPX file: "<<fileName;
-            return;
-        }
-        if(SetCurrentZipFileName(&uz, QStringLiteral("COLLECTION.INFO")))
-        {
-            QBuffer outbuff;
-            QuaZipFile zip_file(&uz);
-            zip_file.open(QIODevice::ReadOnly);
-            outbuff.setData(zip_file.readAll());
-            zip_file.close();
-            QString sLib = QString::fromUtf8(outbuff.data().left(outbuff.data().indexOf('\n')));
+        QString sLib = SLib::nameFromInpx(fileName);
+        if(!sLib.isEmpty())
             ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), sLib);
-        }
     }
 }
 
