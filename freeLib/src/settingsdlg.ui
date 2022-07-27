@@ -188,9 +188,6 @@
        </item>
        <item>
         <widget class="QCheckBox" name="settings_to_file">
-         <property name="enabled">
-          <bool>false</bool>
-         </property>
          <property name="text">
           <string>Save settings in application folder</string>
          </property>
