@@ -221,11 +221,12 @@ int main(int argc, char *argv[])
                          "\tinfo -id ID_LIB\t\tинформация о библиотеке\n"
                          "\tupdate -id ID_LIB\tобновить библиотеку\n"
                          "\tdelete -id ID_LIB\tудалить библиотеку\n"
-                         "\tadd -p DIR_LIB -inpx INPX\tдобавить библиотеку"
+                         "\tadd -p DIR_LIB -inpx INPX\tдобавить библиотеку\n"
+                         "\tset -id ID_LIB -p DIR_LIB -inpx INPX\tзадать путь к файлам библиотеки и .inpx файлу\n"
                          "опции:\n"
                          "\t-id ID_LIB\tid библиотеки\n"
-                         "\t-p DIR_LIB\tпуть к файлам библиотеки"
-                         "\t-inpx INPX\t .inpx файл";
+                         "\t-p DIR_LIB\tпуть к файлам библиотеки\n"
+                         "\t-inpx INPX\t.inpx файл\n";
             return 0;
         }
         if(!strcmp(argv[i], "--lib")){
@@ -278,7 +279,7 @@ int main(int argc, char *argv[])
                         bool result = query.exec(QStringLiteral("INSERT INTO lib(name,path,inpx) values('%1','%2','%3')")
                                                  .arg(sName, sPath, sInpx));
                         if(!result)
-                            std::cout << query.lastError().databaseText().toStdString();
+                            std::cout << query.lastError().databaseText().toStdString() << "\n";
                     }
 
                 }else if(mLibs.contains(nId)){
@@ -322,6 +323,22 @@ int main(int argc, char *argv[])
                             query.exec(QStringLiteral("PRAGMA foreign_keys = ON;"));
                             query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(nId));
                             query.exec(QStringLiteral("VACUUM"));
+                        }
+                    }else if(!strcmp(argv[i], "set") && nId>0){
+                        QString sPath = parseOption(argc-(i+1), &argv[i+1], "-p");
+                        QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+                        if(!sPath.isEmpty()){
+                            bool result = query.exec(QStringLiteral("UPDATE lib SET path = '%1' WHERE id='%2'")
+                                                     .arg(sPath, QString::number(nId)));
+                            if(!result)
+                                std::cout << query.lastError().databaseText().toStdString() << "\n";
+                        }
+                        QString sInpx = parseOption(argc-(i+1), &argv[i+1], "-inpx");
+                        if(!sInpx.isEmpty()){
+                            bool result = query.exec(QStringLiteral("UPDATE lib SET inpx = '%1' WHERE id='%2'")
+                                                     .arg(sInpx, QString::number(nId)));
+                            if(!result)
+                                std::cout << query.lastError().databaseText().toStdString() << "\n";
                         }
                     }
                 }
