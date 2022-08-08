@@ -194,19 +194,23 @@ QString parseOption(int argc, char* argv[], const char* option)
 void cmdhelp(){
 
 std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]\n"
-                         "Options:\n"
-                         "-t,\t--tray\t\tMinimize to tray on start\n"
-                         "-s,\t--server\tStart server\n"
-                         "-v,\t--version\tShow version and exit\n"
-                         "\t--lib-ls\tShow libraries\n"
-                         "\t--lib-db [path]\tSet database path\n"
-                         "\t--lib-in [id]\tLibrary information\n"
-                         "\t--lib-sp\tSet paths for a library\n"
-			 "\t\t-id [id]\n\t\t-inpx [inpx path]\n\t\t-path [library directory]\n"
-                         "\t--lib-ad\tAdd library\n"
-			 "\t\t-name [name]\n\t\t-inpx [inpx path]\n\t\t-path [library directory]\n"
-                         "\t--lib-dl [id]\tDelete library\n"
-                         "\t--lib-up\tUpdate libraries\n"
+             "Options:\n"
+             "-t,\t--tray\t\tMinimize to tray on start\n"
+             "-s,\t--server\tStart server\n"
+             "-v,\t--version\tShow version and exit\n"
+             "\t--lib-ls\tShow libraries\n"
+             "\t--lib-db [path]\tSet database path\n"
+             "\t--lib-in [id]\tLibrary information\n"
+             "\t--lib-sp\tSet paths for a library\n"
+                    "\t\t-id [id]\n"
+                    "\t\t-inpx [inpx path]\n"
+                    "\t\t-path [library directory]\n"
+             "\t--lib-ad\tAdd library\n"
+                    "\t\t-name [name]\n"
+                    "\t\t-inpx [inpx path]\n"
+                    "\t\t-path [library directory]\n"
+             "\t--lib-dl [id]\tDelete library\n"
+             "\t--lib-up [id]\tUpdate library\n"
 			 ;
 }
 
@@ -272,8 +276,6 @@ int main(int argc, char *argv[])
                         std::cout << iLib.key() << "\t" << iLib->name.toStdString() << "\n";
                         ++iLib;
                     }
-                    delete a;
-                    return 0;
                 }
 
                 // Set database path
@@ -317,14 +319,9 @@ int main(int argc, char *argv[])
                                 << ":\thttp://localhost:" << options.nOpdsPort << "/opds_" << nId << "\n"
                                 << QApplication::translate("LibrariesDlg", "HTTP server").toStdString()
                                 << ":\thttp://localhost:"  << options.nOpdsPort << "/http_" << nId << "\n";
-
-
-                        delete a;
-                        return 0;
                     }
                     else{
-
-                        std::cout << "Library not found!\n\n";
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
                     }
                 }
 
@@ -332,62 +329,66 @@ int main(int argc, char *argv[])
                 // Set library path
                 if(cmdparam == QLatin1String("--lib-sp")){
                     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-                    QString nId2 = parseOption(argc-(i), &argv[i], "-id");
+                    QString sId = parseOption(argc-(i), &argv[i], "-id");
+                    nId = sId.toUInt();
+                    if(mLibs.contains(nId)){
 
-                    QString inpxPath = parseOption(argc-(i), &argv[i], "-inpx");
-                    inpxPath=QFileInfo{inpxPath}.absoluteFilePath();
-                    QString libPath = parseOption(argc-(i), &argv[i], "-path");
-                    libPath=QFileInfo{libPath}.absoluteFilePath();
+                        QString inpxPath = parseOption(argc-(i), &argv[i], "-inpx");
+                        inpxPath = QFileInfo{inpxPath}.absoluteFilePath();
+                        QString libPath = parseOption(argc-(i), &argv[i], "-path");
+                        libPath = QFileInfo{libPath}.absoluteFilePath();
 
-                    if(!libPath.isEmpty() && !nId2.isEmpty()) {
+                        if(!libPath.isEmpty() && !sId.isEmpty()) {
 
-                        std::cout <<  "Updating paths for library: " << nId2.toStdString() + "\n";
-                        if ( QFile::exists(libPath)){
-                            bool result = query.exec(QStringLiteral("UPDATE lib SET path = '%1' WHERE id='%2'")
-                                                     .arg(libPath, QString::number(nId2.toUInt())));
-                            if(!result)
-                                std::cout << query.lastError().databaseText().toStdString() << "\n";
-                            else{
-                                std::cout <<libPath.toStdString() + " - Ok! \n";
+                            std::cout <<  "Updating paths for library: " << sId.toStdString() + "\n";
+                            if ( QFile::exists(libPath)){
+                                bool result = query.exec(QStringLiteral("UPDATE lib SET path = '%1' WHERE id='%2'")
+                                                         .arg(libPath, sId));
+                                if(!result)
+                                    std::cout << query.lastError().databaseText().toStdString() << "\n";
+                                else{
+                                    std::cout <<libPath.toStdString() + " - Ok! \n";
+                                }
+                            }
+                            else {
+                                std::cout << "The lib path " + libPath.toStdString() + " does not exist\n";
+                            }
+
+                            if ( QFile::exists(inpxPath)){
+                                bool result = query.exec(QStringLiteral("UPDATE lib SET inpx = '%1' WHERE id='%2'")
+                                                         .arg(libPath, sId));
+                                if(!result)
+                                    std::cout << query.lastError().databaseText().toStdString() << "\n";
+                                else{
+                                    std::cout <<inpxPath.toStdString() + " - Ok! \n";
+                                }
+                            }
+                            else {
+                                std::cout << "The inpx path " + inpxPath.toStdString() + " does not exist\n";
                             }
                         }
-                        else {
-                            std::cout << "The lib path " + libPath.toStdString() + " does not exist\n";
+                        else{
+                            cmdhelp();
                         }
-
-                        if ( QFile::exists(inpxPath)){
-                            bool result = query.exec(QStringLiteral("UPDATE lib SET inpx = '%1' WHERE id='%2'")
-                                                     .arg(libPath, QString::number(nId2.toUInt())));
-                            if(!result)
-                                std::cout << query.lastError().databaseText().toStdString() << "\n";
-                            else{
-                                std::cout <<inpxPath.toStdString() + " - Ok! \n";
-                            }
-                        }
-                        else {
-                            std::cout << "The inpx path " + inpxPath.toStdString() + " does not exist\n";
-                        }
-                    }
-                    else{
-                        cmdhelp();
-                    }
+                    }else
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
                 }
 
                 // Add library
                 if(cmdparam == QLatin1String("--lib-ad")){
                     QString sPath = parseOption(argc-(i), &argv[i], "-path");
-                    sPath=QFileInfo{sPath}.absoluteFilePath();
+                    sPath = QFileInfo{sPath}.absoluteFilePath();
                     QString sInpx = parseOption(argc-(i), &argv[i], "-inpx");
-                    sInpx=QFileInfo{sInpx}.absoluteFilePath();
+                    sInpx = QFileInfo{sInpx}.absoluteFilePath();
                     QString sName = parseOption(argc-(i), &argv[i], "-name");
 
                     if ( QFile::exists(sPath)){
                         if(sName.isEmpty()){
                             sName = sInpx.isEmpty() ? QApplication::translate("LibrariesDlg", "new") : SLib::nameFromInpx(sInpx);
                             if(sName.isEmpty())
-                                std::cout << "Enter librarry name:";
+                                std::cout <<  QApplication::translate("main", "Enter librarry name").toStdString() << ":";
                             else
-                                std::cout << "Enter librarry name (" << sName.toStdString() << "):";
+                                std::cout << QApplication::translate("main", "Enter librarry name").toStdString() << " (" << sName.toStdString() << "):";
                             char newName[1024];
                             std::cin.get(newName, sizeof(newName));
                             QString sNewName = QString::fromUtf8(newName);
@@ -409,8 +410,6 @@ int main(int argc, char *argv[])
                         std::cout << "\nThe lib path " + sPath.toStdString() + " does not exist\n\n";
                         cmdhelp();
                     }
-                    delete a;
-                    return 0;
                 }
 
 
@@ -431,40 +430,43 @@ int main(int argc, char *argv[])
                         }
                     }
                     else{
-                        std::cout << "Library not found!\n\n";
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
                     }
-                    delete a;
-                    return 0;
                 }
-
-
 
 
                 // Update libraries
                 if(cmdparam == QLatin1String("--lib-up")){
-                    auto thread = new QThread;
-                    auto imp_tr = new ImportThread();
-                    const SLib &lib = mLibs[nId];
+                    nId = (parseOption(argc-(i), &argv[i], "--lib-up")).toUInt();
 
-                    imp_tr->start(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
-                    imp_tr->moveToThread(thread);
-                    QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
-                    {
-                        std::cout << msg.toStdString() << std::endl;
-                    });
-                    QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
-                    QObject::connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
-                    QObject::connect(imp_tr, &ImportThread::End, []()
-                    {
-                        std::cout << QApplication::translate("LibrariesDlg", "Ending").toStdString() << "\n";
-                    });
-                    thread->start();
-                    while(!thread->wait(500)){
-                        QCoreApplication::processEvents();
+                    if(mLibs.contains(nId)){
+                        auto thread = new QThread;
+                        auto imp_tr = new ImportThread();
+                        const SLib &lib = mLibs[nId];
+
+                        imp_tr->start(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
+                        imp_tr->moveToThread(thread);
+                        QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
+                        {
+                            std::cout << msg.toStdString() << std::endl;
+                        });
+                        QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
+                        QObject::connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
+                        QObject::connect(imp_tr, &ImportThread::End, []()
+                        {
+                            std::cout << QApplication::translate("LibrariesDlg", "Ending").toStdString() << "\n";
+                        });
+                        thread->start();
+                        while(!thread->wait(500)){
+                            QCoreApplication::processEvents();
+                        }
+                        thread->deleteLater();
+                        imp_tr->deleteLater();
+
                     }
-                    thread->deleteLater();
-                    imp_tr->deleteLater();
-
+                    else{
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
+                    }
                 }
                 delete a;
                 return 0;
