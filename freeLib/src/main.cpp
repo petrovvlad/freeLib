@@ -194,19 +194,23 @@ QString parseOption(int argc, char* argv[], const char* option)
 void cmdhelp(){
 
 std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]\n"
-                         "Options:\n"
-                         "-t,\t--tray\t\tMinimize to tray on start\n"
-                         "-s,\t--server\tStart server\n"
-                         "-v,\t--version\tShow version and exit\n"
-                         "\t--lib-ls\tShow libraries\n"
-                         "\t--lib-db [path]\tSet database path\n"
-                         "\t--lib-in [id]\tLibrary information\n"
-                         "\t--lib-sp\tSet paths for a library\n"
-			 "\t\t-id [id]\n\t\t-inpx [inpx path]\n\t\t-path [library directory]\n"
-                         "\t--lib-ad\tAdd library\n"
-			 "\t\t-name [name]\n\t\t-inpx [inpx path]\n\t\t-path [library directory]\n"
-                         "\t--lib-dl [id]\tDelete library\n"
-                         "\t--lib-up\tUpdate libraries\n"
+             "Options:\n"
+             "-t,\t--tray\t\tMinimize to tray on start\n"
+             "-s,\t--server\tStart server\n"
+             "-v,\t--version\tShow version and exit\n"
+             "\t--lib-ls\tShow libraries\n"
+             "\t--lib-db [path]\tSet database path\n"
+             "\t--lib-in [id]\tLibrary information\n"
+             "\t--lib-sp\tSet paths for a library\n"
+                    "\t\t-id [id]\n"
+                    "\t\t-inpx [inpx path]\n"
+                    "\t\t-path [library directory]\n"
+             "\t--lib-ad\tAdd library\n"
+                    "\t\t-name [name]\n"
+                    "\t\t-inpx [inpx path]\n"
+                    "\t\t-path [library directory]\n"
+             "\t--lib-dl [id]\tDelete library\n"
+             "\t--lib-up [id]\tUpdate library\n"
 			 ;
 }
 
@@ -223,169 +227,168 @@ int main(int argc, char *argv[])
     // Check if any cmd parameter has been passed
     if (argc > 1) {
 
-     for(int i=1; i<argc; i++){
+        for(int i=1; i<argc; i++){
 
-        cmdparam=argv[i];
-        
-	if (cmdparam=="--help" || cmdparam=="-h"){
-            cmdhelp();
-            return 0;
-        }
+            cmdparam = argv[i];
 
-        if (cmdparam=="--server" || cmdparam=="-s"){
-            bServer = true;
-        }else
+            if (cmdparam == QLatin1String("--help") || cmdparam == QLatin1String("-h")){
+                cmdhelp();
+                return 0;
+            }
 
-        if (cmdparam=="--tray" || cmdparam=="-t"){
-            bTray = true;
-        }else
-        
-        if (cmdparam=="--version" || cmdparam=="-v"){
-            std::cout << "freelib " << FREELIB_VERSION << "\n";
-            return 0;
-        }
-	
-	// Edit libraries
-        if (cmdparam.contains("--lib")){
-            a = new QCoreApplication(argc, argv);
-            a->setOrganizationName(QStringLiteral("freeLib"));
-            a->setApplicationName(QStringLiteral("freeLib"));
+            if (cmdparam == QLatin1String("--server") || cmdparam == QLatin1String("-s")){
+                bServer = true;
+            }else
 
-            QSettings* settings = GetSettings();
-            options.Load(settings);
+                if (cmdparam == QLatin1String("--tray") || cmdparam == QLatin1String("-t")){
+                    bTray = true;
+                }else
 
+                    if (cmdparam == QLatin1String("--version") || cmdparam == QLatin1String("-v")){
+                        std::cout << "freelib " << FREELIB_VERSION << "\n";
+                        return 0;
+                    }
 
-            openDB(QStringLiteral("libdb"));
-            UpdateLibs();
+            // Edit libraries
+            if (cmdparam.contains(QLatin1String("--lib"))){
+                a = new QCoreApplication(argc, argv);
+                a->setOrganizationName(QStringLiteral("freeLib"));
+                a->setApplicationName(QStringLiteral("freeLib"));
+
+                QSettings* settings = GetSettings();
+                options.Load(settings);
 
 
-            SetLocale(options.sUiLanguageName);
+                openDB(QStringLiteral("libdb"));
+                UpdateLibs();
 
-	    uint nId = 0;
-            
-	        // List libraries
-                if(cmdparam=="--lib-ls"){
+
+                SetLocale(options.sUiLanguageName);
+
+                uint nId = 0;
+
+                // List libraries
+                if(cmdparam == QLatin1String("--lib-ls")){
                     std::cout << "id\tlibrary\n"
                                  "----------------------------------------------------------\n";
                     auto iLib = mLibs.constBegin();
                     while(iLib != mLibs.constEnd()){
                         std::cout << iLib.key() << "\t" << iLib->name.toStdString() << "\n";
                         ++iLib;
-		    }
-		return 0;
-		}
+                    }
+                }
 
-		// Set database path
-                if(cmdparam=="--lib-db"){
-		QString sDbpath = parseOption(argc-(i), &argv[i], "--lib-db");
-		sDbpath=QFileInfo{sDbpath}.absoluteFilePath();
-		if(!sDbpath.isEmpty()){
+                // Set database path
+                if(cmdparam == QLatin1String("--lib-db")){
+                    QString sDbpath = parseOption(argc-(i), &argv[i], "--lib-db");
+                    sDbpath = QFileInfo{sDbpath}.absoluteFilePath();
+                    if(!sDbpath.isEmpty()){
 
-		  if (QFile::exists(sDbpath)) {
-		       options.sDatabasePath = sDbpath;
-		       settings->setValue(QStringLiteral("database_path"), options.sDatabasePath);
-		       std::cout <<  options.sDatabasePath.toStdString() + " - Ok! \n";
-		     }
-		  else{
-			  std::cout << "The path "+  sDbpath.toStdString() + " does not exist! \n";
-		  }
+                        if (QFile::exists(sDbpath)) {
+                            options.sDatabasePath = sDbpath;
+                            settings->setValue(QStringLiteral("database_path"), options.sDatabasePath);
+                            std::cout <<  options.sDatabasePath.toStdString() + " - Ok! \n";
+                        }
+                        else{
+                            std::cout << "The path " + sDbpath.toStdString() + " does not exist! \n";
+                        }
 
-		   if(global_settings)
-			{
-			   global_settings->sync();
-			   delete global_settings;
-			}
-		}
+                        if(global_settings)
+                        {
+                            global_settings->sync();
+                            delete global_settings;
+                        }
+                    }
 
-		else{
-			cmdhelp();
-		}
-		}
+                    else{
+                        cmdhelp();
+                    }
+                }
 
-		// Get library information
-                if(cmdparam=="--lib-in"){
-                nId = (parseOption(argc-(i), &argv[i], "--lib-in")).toUInt();
-                if(mLibs.contains(nId)){
-                    
-                         std::cout 
-			 << "Library:\t" << mLibs[nId].name.toStdString() << "\n"
-                         << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n"
-                         << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n"
-                         << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n"
-                         << QApplication::translate("LibrariesDlg", "OPDS server").toStdString() 
-			 << ":\thttp://localhost:" << options.nOpdsPort << "/opds_" << nId << "\n"
-                         << QApplication::translate("LibrariesDlg", "HTTP server").toStdString() 
-			 << ":\thttp://localhost:"  << options.nOpdsPort << "/http_" << nId << "\n";
-		    
+                // Get library information
+                if(cmdparam == QLatin1String("--lib-in")){
+                    nId = (parseOption(argc-(i), &argv[i], "--lib-in")).toUInt();
+                    if(mLibs.contains(nId)){
 
-                return 0;
-		}
-		else{
-
-                        std::cout << "Library not found!\n\n";
-		}
+                        std::cout
+                                << "Library:\t" << mLibs[nId].name.toStdString() << "\n"
+                                << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n"
+                                << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n"
+                                << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n"
+                                << QApplication::translate("LibrariesDlg", "OPDS server").toStdString()
+                                << ":\thttp://localhost:" << options.nOpdsPort << "/opds_" << nId << "\n"
+                                << QApplication::translate("LibrariesDlg", "HTTP server").toStdString()
+                                << ":\thttp://localhost:"  << options.nOpdsPort << "/http_" << nId << "\n";
+                    }
+                    else{
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
+                    }
                 }
 
 
-	        // Set library path
-                if(cmdparam=="--lib-sp"){
-                        QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-                        QString nId2 = parseOption(argc-(i), &argv[i], "-id");
+                // Set library path
+                if(cmdparam == QLatin1String("--lib-sp")){
+                    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+                    QString sId = parseOption(argc-(i), &argv[i], "-id");
+                    nId = sId.toUInt();
+                    if(mLibs.contains(nId)){
 
                         QString inpxPath = parseOption(argc-(i), &argv[i], "-inpx");
-			inpxPath=QFileInfo{inpxPath}.absoluteFilePath();
+                        inpxPath = QFileInfo{inpxPath}.absoluteFilePath();
                         QString libPath = parseOption(argc-(i), &argv[i], "-path");
-			libPath=QFileInfo{libPath}.absoluteFilePath();
+                        libPath = QFileInfo{libPath}.absoluteFilePath();
 
-                        if(!libPath.isEmpty() && !nId2.isEmpty()) {
-                                
-                                std::cout <<  "Updating paths for library: " << nId2.toStdString() + "\n";
-				if ( QFile::exists(libPath)){
-                                     bool result = query.exec(QStringLiteral("UPDATE lib SET path = '%1' WHERE id='%2'")
-                                                     .arg(libPath, QString::number(nId2.toUInt())));
-                                     if(!result)
-                                           std::cout << query.lastError().databaseText().toStdString() << "\n";
-			             else{
-                                           std::cout <<libPath.toStdString() + " - Ok! \n";
-			                 }
+                        if(!libPath.isEmpty() && !sId.isEmpty()) {
+
+                            std::cout <<  "Updating paths for library: " << sId.toStdString() + "\n";
+                            if ( QFile::exists(libPath)){
+                                bool result = query.exec(QStringLiteral("UPDATE lib SET path = '%1' WHERE id='%2'")
+                                                         .arg(libPath, sId));
+                                if(!result)
+                                    std::cout << query.lastError().databaseText().toStdString() << "\n";
+                                else{
+                                    std::cout <<libPath.toStdString() + " - Ok! \n";
                                 }
-			        else {
-				   std::cout << "The lib path " + libPath.toStdString() + " does not exist\n";
-			        }
+                            }
+                            else {
+                                std::cout << "The lib path " + libPath.toStdString() + " does not exist\n";
+                            }
 
-                                if ( QFile::exists(inpxPath)){
-                                     bool result = query.exec(QStringLiteral("UPDATE lib SET inpx = '%1' WHERE id='%2'")
-                                                     .arg(libPath, QString::number(nId2.toUInt())));
-                                     if(!result)
-                                           std::cout << query.lastError().databaseText().toStdString() << "\n";
-			             else{
-                                           std::cout <<inpxPath.toStdString() + " - Ok! \n";
-			                 }
+                            if ( QFile::exists(inpxPath)){
+                                bool result = query.exec(QStringLiteral("UPDATE lib SET inpx = '%1' WHERE id='%2'")
+                                                         .arg(libPath, sId));
+                                if(!result)
+                                    std::cout << query.lastError().databaseText().toStdString() << "\n";
+                                else{
+                                    std::cout <<inpxPath.toStdString() + " - Ok! \n";
                                 }
-			        else {
-				   std::cout << "The inpx path " + inpxPath.toStdString() + " does not exist\n";
-			        }
-			}
-			else{
-				cmdhelp();
-			}
-		}
+                            }
+                            else {
+                                std::cout << "The inpx path " + inpxPath.toStdString() + " does not exist\n";
+                            }
+                        }
+                        else{
+                            cmdhelp();
+                        }
+                    }else
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
+                }
 
-                 // Add library
-                 if(cmdparam=="--lib-ad"){
+                // Add library
+                if(cmdparam == QLatin1String("--lib-ad")){
                     QString sPath = parseOption(argc-(i), &argv[i], "-path");
-                    sPath=QFileInfo{sPath}.absoluteFilePath();
+                    sPath = QFileInfo{sPath}.absoluteFilePath();
                     QString sInpx = parseOption(argc-(i), &argv[i], "-inpx");
-                    sInpx=QFileInfo{sInpx}.absoluteFilePath();
+                    sInpx = QFileInfo{sInpx}.absoluteFilePath();
                     QString sName = parseOption(argc-(i), &argv[i], "-name");
 
                     if ( QFile::exists(sPath)){
                         if(sName.isEmpty()){
                             sName = sInpx.isEmpty() ? QApplication::translate("LibrariesDlg", "new") : SLib::nameFromInpx(sInpx);
                             if(sName.isEmpty())
-                                std::cout << "Enter librarry name:";
+                                std::cout <<  QApplication::translate("main", "Enter librarry name").toStdString() << ":";
                             else
-                                std::cout << "Enter librarry name (" << sName.toStdString() << "):";
+                                std::cout << QApplication::translate("main", "Enter librarry name").toStdString() << " (" << sName.toStdString() << "):";
                             char newName[1024];
                             std::cin.get(newName, sizeof(newName));
                             QString sNewName = QString::fromUtf8(newName);
@@ -398,24 +401,23 @@ int main(int argc, char *argv[])
                                                  .arg(sName, sPath, sInpx));
                         if(!result){
                             std::cout << query.lastError().databaseText().toStdString() << "\n";
-			}
-			else{
-				 std::cout << "Name: \t" << sName.toStdString() << "\tPath: \t" << sPath.toStdString() << "\t - Ok!\n";
-			}
-		    }
-		    else{
-                            std::cout << "\nThe lib path " + sPath.toStdString() + " does not exist\n\n";
-			    cmdhelp();
-		    }
-                     return 0;
+                        }
+                        else{
+                            std::cout << "Name: \t" << sName.toStdString() << "\tPath: \t" << sPath.toStdString() << "\t - Ok!\n";
+                        }
                     }
+                    else{
+                        std::cout << "\nThe lib path " + sPath.toStdString() + " does not exist\n\n";
+                        cmdhelp();
+                    }
+                }
 
 
-                    // Delete library
-                    if(cmdparam=="--lib-dl"){
+                // Delete library
+                if(cmdparam == QLatin1String("--lib-dl")){
 
-                     nId = (parseOption(argc-(i), &argv[i], "--lib-dl")).toUInt();
-                     if(mLibs.contains(nId)){
+                    nId = (parseOption(argc-(i), &argv[i], "--lib-dl")).toUInt();
+                    if(mLibs.contains(nId)){
                         char a;
                         std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
                                   << "\"" << mLibs[nId].name.toStdString() << "\"? (y/N)";
@@ -426,18 +428,18 @@ int main(int argc, char *argv[])
                             query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(nId));
                             query.exec(QStringLiteral("VACUUM"));
                         }
-		    }
-		     else{
-                        std::cout << "Library not found!\n\n";
-		     }
-                        return 0;
-		    }
+                    }
+                    else{
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
+                    }
+                }
 
 
+                // Update libraries
+                if(cmdparam == QLatin1String("--lib-up")){
+                    nId = (parseOption(argc-(i), &argv[i], "--lib-up")).toUInt();
 
-
-                   // Update libraries
-                   if(cmdparam=="--lib-up"){
+                    if(mLibs.contains(nId)){
                         auto thread = new QThread;
                         auto imp_tr = new ImportThread();
                         const SLib &lib = mLibs[nId];
@@ -461,11 +463,15 @@ int main(int argc, char *argv[])
                         thread->deleteLater();
                         imp_tr->deleteLater();
 
-		   }
-            delete a;
-            return 0;
+                    }
+                    else{
+                        std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
+                    }
+                }
+                delete a;
+                return 0;
+            }
         }
-    }
     }
 
 #ifdef Q_OS_MACX
@@ -517,8 +523,10 @@ int main(int argc, char *argv[])
         splash->show();
     }
 
-    if(!openDB(QStringLiteral("libdb")))
+    if(!openDB(QStringLiteral("libdb"))){
+        delete a;
         return 1;
+    }
 
     a->processEvents();
     setProxy();
