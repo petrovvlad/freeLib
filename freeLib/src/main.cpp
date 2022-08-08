@@ -319,6 +319,7 @@ int main(int argc, char *argv[])
                                 << ":\thttp://localhost:"  << options.nOpdsPort << "/http_" << nId << "\n";
 
 
+                        delete a;
                         return 0;
                     }
                     else{
