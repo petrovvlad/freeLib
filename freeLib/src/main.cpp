@@ -227,26 +227,26 @@ int main(int argc, char *argv[])
 
             cmdparam = argv[i];
 
-            if (cmdparam=="--help" || cmdparam=="-h"){
+            if (cmdparam == QLatin1String("--help") || cmdparam == QLatin1String("-h")){
                 cmdhelp();
                 return 0;
             }
 
-            if (cmdparam=="--server" || cmdparam=="-s"){
+            if (cmdparam == QLatin1String("--server") || cmdparam == QLatin1String("-s")){
                 bServer = true;
             }else
 
-                if (cmdparam=="--tray" || cmdparam=="-t"){
+                if (cmdparam == QLatin1String("--tray") || cmdparam == QLatin1String("-t")){
                     bTray = true;
                 }else
 
-                    if (cmdparam=="--version" || cmdparam=="-v"){
+                    if (cmdparam == QLatin1String("--version") || cmdparam == QLatin1String("-v")){
                         std::cout << "freelib " << FREELIB_VERSION << "\n";
                         return 0;
                     }
 
             // Edit libraries
-            if (cmdparam.contains("--lib")){
+            if (cmdparam.contains(QLatin1String("--lib"))){
                 a = new QCoreApplication(argc, argv);
                 a->setOrganizationName(QStringLiteral("freeLib"));
                 a->setApplicationName(QStringLiteral("freeLib"));
@@ -264,7 +264,7 @@ int main(int argc, char *argv[])
                 uint nId = 0;
 
                 // List libraries
-                if(cmdparam=="--lib-ls"){
+                if(cmdparam == QLatin1String("--lib-ls")){
                     std::cout << "id\tlibrary\n"
                                  "----------------------------------------------------------\n";
                     auto iLib = mLibs.constBegin();
@@ -277,9 +277,9 @@ int main(int argc, char *argv[])
                 }
 
                 // Set database path
-                if(cmdparam=="--lib-db"){
+                if(cmdparam == QLatin1String("--lib-db")){
                     QString sDbpath = parseOption(argc-(i), &argv[i], "--lib-db");
-                    sDbpath=QFileInfo{sDbpath}.absoluteFilePath();
+                    sDbpath = QFileInfo{sDbpath}.absoluteFilePath();
                     if(!sDbpath.isEmpty()){
 
                         if (QFile::exists(sDbpath)) {
@@ -288,7 +288,7 @@ int main(int argc, char *argv[])
                             std::cout <<  options.sDatabasePath.toStdString() + " - Ok! \n";
                         }
                         else{
-                            std::cout << "The path "+  sDbpath.toStdString() + " does not exist! \n";
+                            std::cout << "The path " + sDbpath.toStdString() + " does not exist! \n";
                         }
 
                         if(global_settings)
@@ -304,7 +304,7 @@ int main(int argc, char *argv[])
                 }
 
                 // Get library information
-                if(cmdparam=="--lib-in"){
+                if(cmdparam == QLatin1String("--lib-in")){
                     nId = (parseOption(argc-(i), &argv[i], "--lib-in")).toUInt();
                     if(mLibs.contains(nId)){
 
@@ -329,7 +329,7 @@ int main(int argc, char *argv[])
 
 
                 // Set library path
-                if(cmdparam=="--lib-sp"){
+                if(cmdparam == QLatin1String("--lib-sp")){
                     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
                     QString nId2 = parseOption(argc-(i), &argv[i], "-id");
 
@@ -373,7 +373,7 @@ int main(int argc, char *argv[])
                 }
 
                 // Add library
-                if(cmdparam=="--lib-ad"){
+                if(cmdparam == QLatin1String("--lib-ad")){
                     QString sPath = parseOption(argc-(i), &argv[i], "-path");
                     sPath=QFileInfo{sPath}.absoluteFilePath();
                     QString sInpx = parseOption(argc-(i), &argv[i], "-inpx");
@@ -414,7 +414,7 @@ int main(int argc, char *argv[])
 
 
                 // Delete library
-                if(cmdparam=="--lib-dl"){
+                if(cmdparam == QLatin1String("--lib-dl")){
 
                     nId = (parseOption(argc-(i), &argv[i], "--lib-dl")).toUInt();
                     if(mLibs.contains(nId)){
@@ -440,7 +440,7 @@ int main(int argc, char *argv[])
 
 
                 // Update libraries
-                if(cmdparam=="--lib-up"){
+                if(cmdparam == QLatin1String("--lib-up")){
                     auto thread = new QThread;
                     auto imp_tr = new ImportThread();
                     const SLib &lib = mLibs[nId];
