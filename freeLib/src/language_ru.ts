@@ -1565,4 +1565,16 @@ Kernel: %3 %4</source>
         <translation>Книги по алфавиту</translation>
     </message>
 </context>
+<context>
+    <name>main</name>
+    <message>
+        <source>Library not found!</source>
+        <translation>Библиотека не найдена!</translation>
+    </message>
+    <message>
+        <source>Enter librarry name</source>
+        <translation>Введите имя библиотеки</translation>
+    </message>
+    
+</context>
 </TS>
