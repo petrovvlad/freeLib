@@ -5,5 +5,5 @@ if(UNIX AND NOT APPLE AND NOT HAIKU)
             FILES_MATCHING PATTERN "freelib*.png" PATTERN "freelib*.svg"
             PATTERN "status" EXCLUDE PATTERN "actions" EXCLUDE PATTERN "categories" EXCLUDE)
 
-     install(FILES freelib.appdata.xml DESTINATION share/metainfo COMPONENT freelib)
+     install(FILES freelib.appdata.xml DESTINATION ${CMAKE_INSTALL_DATADIR}/metainfo COMPONENT freelib)
 endif(UNIX AND NOT APPLE AND NOT HAIKU)
