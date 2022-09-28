@@ -1175,7 +1175,7 @@ void MainWindow::SelectBook()
             replace(QLatin1String("#series#"), seria).
             replace(QLatin1String("#file_path#"), arh.filePath()).
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-            replace(QLatin1String("#file_size#"), size>0 ?locale.(size, 1, QLocale::DataSizeTraditionalFormat) : QLatin1String("")).
+            replace(QLatin1String("#file_size#"), size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : QLatin1String("")).
 #else
             replace(QLatin1String("#file_size#"), size>0 ?sizeToString(size) : QLatin1String("")).
 #endif
