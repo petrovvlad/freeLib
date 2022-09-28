@@ -398,7 +398,11 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
         fi.setFile(book_file);
         if(fileData)
         {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
             *fileData = fi.birthTime();
+#else
+            *fileData = fi.created();
+#endif
         }
 
         if(pBufferInfo != nullptr){
