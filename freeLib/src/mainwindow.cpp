@@ -27,6 +27,31 @@
 #include "opds_server.h"
 #include "statisticsdialog.h"
 
+#if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
+QString sizeToString(uint size)
+{
+    QStringList mem;
+    mem <<QCoreApplication::translate("MainWindow","B")<<QCoreApplication::translate("MainWindow","kB")<<QCoreApplication::translate("MainWindow","MB")<<QCoreApplication::translate("MainWindow","GB")<<QCoreApplication::translate("MainWindow","TB")<<QCoreApplication::translate("MainWindow","PB");
+    uint rest=0;
+    int mem_i=0;
+
+    while(size>1024)
+    {
+        mem_i++;
+        if(mem_i==mem.count())
+        {
+            mem_i--;
+            break;
+        }
+        rest=size%1024;
+        size=size/1024;
+     }
+    double size_d = (float)size + (float)rest / 1024.0;
+    return QString("%L1 %2").arg(size_d,0,'f',mem_i>0?1:0).arg(mem[mem_i]);
+}
+#endif
+
+
 extern QSplashScreen *splash;
 extern opds_server *pOpds;
 extern bool bTray;
@@ -1149,7 +1174,11 @@ void MainWindow::SelectBook()
             replace(QLatin1String("#genre#"), sGenres).
             replace(QLatin1String("#series#"), seria).
             replace(QLatin1String("#file_path#"), arh.filePath()).
-            replace(QLatin1String("#file_size#"), size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : QLatin1String("")).
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+            replace(QLatin1String("#file_size#"), size>0 ?locale.(size, 1, QLocale::DataSizeTraditionalFormat) : QLatin1String("")).
+#else
+            replace(QLatin1String("#file_size#"), size>0 ?sizeToString(size) : QLatin1String("")).
+#endif
             replace(QLatin1String("#file_data#"), book_date.toString(QStringLiteral("dd.MM.yyyy hh:mm:ss"))).
             replace(QLatin1String("#file_name#"), fi.fileName()).
             replace(QLatin1String("#infobcolor"), colorBInfo.name());
@@ -1835,7 +1864,12 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
             }
 
             if(book.nSize>0){
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
                 item_book->setText(4, locale.formattedDataSize(book.nSize, 1, QLocale::DataSizeTraditionalFormat));
+#else
+                item_book->setText(4, sizeToString(book.nSize));
+
+#endif
                 item_book->setTextAlignment(4, Qt::AlignRight|Qt::AlignVCenter);
             }
 
