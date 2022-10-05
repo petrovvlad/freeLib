@@ -766,7 +766,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 div = doc.createElement(QStringLiteral("DIV"));
                 feed.appendChild(div);
                 el = AddTextNode(QStringLiteral("A"), tr("Browse directory"), div);
-                el.setAttribute(QStringLiteral("href"), lib_url + u"/directory" + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
+                el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/directory") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
             }else{
                 el = AddTextNode(QStringLiteral("A"), tr("Finding books by authors"), div);
                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/authorsindex") + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
