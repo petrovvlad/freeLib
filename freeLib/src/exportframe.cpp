@@ -41,7 +41,7 @@ ExportFrame::ExportFrame(QWidget *parent) :
     QHBoxLayout*  layout = new QHBoxLayout(ui->Path);
     layout->addWidget(btnPath, 0, Qt::AlignRight);
     layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
     connect(ui->toolBox, &QToolBox::currentChanged, this, &ExportFrame::onTabWidgetCurrentChanged);
 }

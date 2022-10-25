@@ -459,7 +459,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
         }
         layout_abc->addStretch();
         layout_abc->setSpacing(1);
-        layout_abc->setMargin(0);
+        layout_abc->setContentsMargins(0, 0, 0, 0);
         layout_abc_all->addItem(layout_abc);
     }
     QString abc = QStringLiteral("*#ABCDEFGHIJKLMNOPQRSTUVWXYZ");
@@ -482,7 +482,6 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
     }
     layout_abc->addStretch();
     layout_abc->setSpacing(1);
-    layout_abc->setMargin(0);
 #ifdef Q_OS_WIN
     layout_abc->setContentsMargins(0,!sAlphabet.isEmpty()?4:0,0,0);
 #else
@@ -492,9 +491,10 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
 
     ui->abc->setLayout(layout_abc_all);
     ui->abc->layout()->setSpacing(1);
-    ui->abc->layout()->setMargin(0);
 #ifdef Q_OS_WIN
     ui->abc->layout()->setContentsMargins(0,4,0,5);
+#else
+    ui->abc->layout()->setContentsMargins(0,0,0,0);
 #endif
 }
 
