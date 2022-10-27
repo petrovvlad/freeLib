@@ -752,7 +752,7 @@ void fb2mobi::parse_format(const QDomNode &elem, QString tag , QString css, QStr
                         if(hstring[len-2].isDigit() && hstring[len-1] == ' ')
                             break;
                     }
-                    if(hstring.midRef(len-1).startsWith(QLatin1String("&quot;"), Qt::CaseInsensitive))
+                    if(hstring.mid(len-1).startsWith(QLatin1String("&quot;"), Qt::CaseInsensitive))
                         len += 6;
                     else
                         len++;

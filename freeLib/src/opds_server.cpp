@@ -541,7 +541,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
     if(posQuestion >= 0)
     {
         strings = url.left(posQuestion).split(QStringLiteral("/"));
-        strings.last().append(url.rightRef(url.length() - posQuestion));
+        strings.last().append(url.right(url.length() - posQuestion));
     }
     else
     {
@@ -613,7 +613,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     else
                         params.insert(str, QLatin1String(""));
                     if(str.left(pos_eqv) == QLatin1String("page"))
-                        nPage = str.rightRef(str.length() - pos_eqv - 1).toUInt();
+                        nPage = str.right(str.length() - pos_eqv - 1).toUInt();
                 }
                 strings.last() = strings.last().left(pos);
             }

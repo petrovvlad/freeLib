@@ -107,7 +107,7 @@ void SetLocale(const QString &sLocale)
     if(translator == nullptr)
         translator = new QTranslator();
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.leftRef(2));
+    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.left(2));
 #else
     QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.left(2));
 #endif
