@@ -7,6 +7,7 @@
 #include <QNetworkProxy>
 #include <QStringBuilder>
 #include <QDir>
+#include <QRegularExpression>
 
 #include "config-freelib.h"
 #include "fb2mobi/fb2mobi.h"
@@ -1774,7 +1775,8 @@ void opds_server::slotRead()
     while(clientSocket->bytesAvailable() > 0)
     {
         QString str = clientSocket->readLine();
-        QStringList tokens = QString(str).split(QRegExp("[ \r\n][ \r\n]*"));
+        static const QRegularExpression re(QStringLiteral("[ \r\n][ \r\n]*"));
+        QStringList tokens = str.split(re);
         if (tokens[0] == QLatin1String("GET") || tokens[0] == QLatin1String("POST"))
             TCPtokens=tokens;
         if (tokens[0] == QLatin1String("Authorization:"))

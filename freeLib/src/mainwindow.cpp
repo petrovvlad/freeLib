@@ -1594,10 +1594,11 @@ void MainWindow::FillAuthors()
     QListWidgetItem *selectedItem = nullptr;
     QString sSearch = ui->searchAuthor->text();
     auto iAuthor = currentLib.mAuthors.constBegin();
+    static const QRegularExpression re(QStringLiteral("[A-Za-zа-яА-ЯЁё]"));
 
     while(iAuthor != currentLib.mAuthors.constEnd()){
         if(sSearch == QLatin1String("*") || (sSearch == QLatin1String("#") &&
-          !iAuthor->getName().left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) || iAuthor->getName().startsWith(sSearch,Qt::CaseInsensitive))
+          !iAuthor->getName().left(1).contains(re)) || iAuthor->getName().startsWith(sSearch, Qt::CaseInsensitive))
         {
             QList<uint> booksId = currentLib.mAuthorBooksLink.values(iAuthor.key());
             int count =0;
@@ -1637,6 +1638,7 @@ void MainWindow::FillSerials()
     const bool wasBlocked = ui->SeriaList->blockSignals(true);
     ui->SeriaList->clear();
     QString sSearch = ui->searchSeries->text();
+    static const QRegularExpression re(QStringLiteral("[A-Za-zа-яА-ЯЁё]"));
 
     QMap<uint,uint> mCounts;
     const SLib& lib = mLibs[idCurrentLib];
@@ -1644,7 +1646,7 @@ void MainWindow::FillSerials()
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if(IsBookInList(*iBook) && (sSearch == QLatin1String("*") || (sSearch == QLatin1String("#") &&
-           !lib.mSerials[iBook->idSerial].sName.left(1).contains(QRegExp("[A-Za-zа-яА-ЯЁё]"))) ||
+           !lib.mSerials[iBook->idSerial].sName.left(1).contains(re)) ||
            lib.mSerials[iBook->idSerial].sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
             if(mCounts.contains(iBook->idSerial))
