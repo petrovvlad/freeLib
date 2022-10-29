@@ -1,7 +1,6 @@
 #define QT_USE_QSTRINGBUILDER
 #include <iostream>
 #include <QApplication>
-#include <QDesktopWidget>
 #include <QNetworkProxy>
 #include <QLocale>
 #include <QTranslator>
