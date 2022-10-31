@@ -60,7 +60,9 @@ QSettings* GetSettings(bool reopen)
             global_settings = new QSettings(sFile, QSettings::IniFormat);
         else
             global_settings = new QSettings();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         global_settings->setIniCodec("UTF-8");
+#endif
     }
     return global_settings;
 }
@@ -125,7 +127,12 @@ void SetLocale(const QString &sLocale)
 
     if(translator_qt == nullptr)
         translator_qt = new QTranslator();
-    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale), QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
+    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale),
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
+#else
+        QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
+#endif
     {
         QApplication::installTranslator(translator_qt);
     }
@@ -491,7 +498,9 @@ int main(int argc, char *argv[])
     }else{
         a = new QApplication(argc, argv);
         static_cast<QApplication*>(a)->setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         a->setAttribute(Qt::AA_UseHighDpiPixmaps);
+#endif
     }
 
     a->setOrganizationName(QStringLiteral("freeLib"));

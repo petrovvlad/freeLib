@@ -582,7 +582,9 @@ void SettingsDlg::onBtnSaveExportClicked()
     if(file_name.isEmpty())
         return;
     QSettings set(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini"), QSettings::IniFormat);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     set.setIniCodec("UTF-8");
+#endif
     ExportOptions exportOptions;
 
     QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);

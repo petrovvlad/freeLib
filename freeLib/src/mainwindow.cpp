@@ -235,14 +235,22 @@ MainWindow::MainWindow(QWidget *parent) :
 
     settings->beginGroup(QStringLiteral("Columns"));
     QVariant varHeaders = settings->value(QStringLiteral("headersTree"));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if(varHeaders.type() == QVariant::ByteArray)
+#else
+    if(varHeaders.metaType().id() == QMetaType::QByteArray)
+#endif
         aHeadersTree_ = varHeaders.toByteArray();
     else{
         ui->Books->setColumnHidden(1, true);
         ui->Books->setColumnHidden(2, true);
     }
     varHeaders = settings->value(QStringLiteral("headersList"));
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     if(varHeaders.type() == QVariant::ByteArray)
+#else
+    if(varHeaders.metaType().id() == QMetaType::QByteArray)
+#endif
         aHeadersList_ = varHeaders.toByteArray();
     settings->endGroup();
     if(bTreeView_)
