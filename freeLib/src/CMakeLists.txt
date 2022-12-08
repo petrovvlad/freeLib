@@ -2,7 +2,7 @@
 configure_file(git-info.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/git-info.h)
 set(QT_COMPONENTS Core Network Widgets Gui Sql Xml)
 
-find_package(QT NAMES Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
+find_package(QT NAMES Qt6 Qt5 REQUIRED)
 find_package(Qt${QT_VERSION_MAJOR} COMPONENTS ${QT_COMPONENTS} REQUIRED)
 find_package(ZLIB REQUIRED)
 
@@ -52,36 +52,33 @@ set(PROJECT_SOURCES
 
 add_subdirectory(Help)
 
-find_package(QuaZip-Qt5 QUIET)
+find_package(QuaZip-Qt${QT_VERSION_MAJOR} QUIET)
 if(NOT QuaZip-Qt5_FOUND)
     set(QUAZIP_INSTALL OFF)
     set(BUILD_SHARED_LIBS OFF)
     add_subdirectory(quazip)
 endif()
 
-
-
-qt5_add_resources(PROJECT_SOURCES resource.qrc)
 #configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 #file(COPY ${TS_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/translate)
-
 
 if(UNIX AND NOT APPLE)
     file(COPY xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
 endif(UNIX AND NOT APPLE)
 
 if(${QT_VERSION_MAJOR} GREATER_EQUAL 6)
+    qt6_add_resources(PROJECT_SOURCES resource.qrc)
     qt_add_executable(freelib
         MANUAL_FINALIZATION
         ${PROJECT_SOURCES}
     )
 else()
+    qt5_add_resources(PROJECT_SOURCES resource.qrc)
     add_executable(freelib
         ${PROJECT_SOURCES}
         #${CMAKE_CURRENT_BINARY_DIR}/translations.qrc
     )
 endif()
-
 
 #FILE(GLOB TS_FILES "${CMAKE_CURRENT_SOURCE_DIR}/*.ts")
 #qt5_add_translation(QM_FILES ${TS_FILES})

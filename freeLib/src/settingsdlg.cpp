@@ -114,7 +114,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     QHBoxLayout*  layout = new QHBoxLayout(ui->database_path);
     layout->addWidget(btnDBPath, 0, Qt::AlignRight);
     layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
 
     QToolButton* btnDirPath = new QToolButton(this);
@@ -124,7 +124,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout = new QHBoxLayout(ui->dirForBrowsing);
     layout->addWidget(btnDirPath, 0, Qt::AlignRight);
     layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
     connect(btnDirPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDirPath);
 
     LoadSettings();
@@ -582,7 +582,9 @@ void SettingsDlg::onBtnSaveExportClicked()
     if(file_name.isEmpty())
         return;
     QSettings set(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini"), QSettings::IniFormat);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     set.setIniCodec("UTF-8");
+#endif
     ExportOptions exportOptions;
 
     QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);

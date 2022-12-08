@@ -7,6 +7,7 @@
 #include <QNetworkProxy>
 #include <QStringBuilder>
 #include <QDir>
+#include <QRegularExpression>
 
 #include "config-freelib.h"
 #include "fb2mobi/fb2mobi.h"
@@ -540,7 +541,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
     if(posQuestion >= 0)
     {
         strings = url.left(posQuestion).split(QStringLiteral("/"));
-        strings.last().append(url.rightRef(url.length() - posQuestion));
+        strings.last().append(url.right(url.length() - posQuestion));
     }
     else
     {
@@ -612,7 +613,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     else
                         params.insert(str, QLatin1String(""));
                     if(str.left(pos_eqv) == QLatin1String("page"))
-                        nPage = str.rightRef(str.length() - pos_eqv - 1).toUInt();
+                        nPage = str.right(str.length() - pos_eqv - 1).toUInt();
                 }
                 strings.last() = strings.last().left(pos);
             }
@@ -1774,7 +1775,8 @@ void opds_server::slotRead()
     while(clientSocket->bytesAvailable() > 0)
     {
         QString str = clientSocket->readLine();
-        QStringList tokens = QString(str).split(QRegExp("[ \r\n][ \r\n]*"));
+        static const QRegularExpression re(QStringLiteral("[ \r\n][ \r\n]*"));
+        QStringList tokens = str.split(re);
         if (tokens[0] == QLatin1String("GET") || tokens[0] == QLatin1String("POST"))
             TCPtokens=tokens;
         if (tokens[0] == QLatin1String("Authorization:"))

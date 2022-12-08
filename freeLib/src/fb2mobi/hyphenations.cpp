@@ -113,7 +113,7 @@ QString hyphenations::hyphenate_word(QString word_original, const QString &separ
         //qDebug()<<word;
         if(word.length() < 3 /*&& hyphenation_only*/)
         {
-            result_word += ((last_word_empty || result_word>0) ?QLatin1String("-") :QLatin1String("")) + word;
+            result_word += ((last_word_empty || !result_word.isEmpty()) ?QLatin1String("-") :QLatin1String("")) + word;
             last_word_empty = word.isEmpty();
             continue;
         }

@@ -40,7 +40,7 @@ public:
         layout->addWidget(button,0);
         //layout->setStretch(1,0);
         layout->setSpacing(0);
-        layout->setMargin(0);
+        layout->setContentsMargins(0, 0, 0, 0);
         connect(editor,&QLineEdit::editingFinished, this, &FileItemDelegate::editingFinished);
         connect(button, &QAbstractButton::clicked, this, &FileItemDelegate::SelectFile);
 

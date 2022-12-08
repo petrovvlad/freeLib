@@ -6,6 +6,7 @@
 #include <QPainter>
 #include <QDir>
 #include <QDebug>
+#include <QRegularExpression>
 
 #include "../quazip/quazip/quazip.h"
 #include "../quazip/quazip/quazipfile.h"
@@ -324,7 +325,8 @@ void fb2mobi::parse_note_elem(const QDomNode &elem)
                QString str;
                QTextStream stream(&str);
                elem.childNodes().at(e).save(stream, 4);
-               str.replace(QRegExp("<[^>]*>"), QStringLiteral(" "));
+               static const QRegularExpression re(QStringLiteral("<[^>]*>"));
+               str.replace(re, QStringLiteral(" "));
                if(elem.childNodes().at(e).toElement().tagName() == QLatin1String("title") || elem.childNodes().at(e).toElement().tagName() == QLatin1String("subtitle"))
                {
                   note_title = str.trimmed();
@@ -385,8 +387,14 @@ void fb2mobi::parse_title(const QDomNode &elem)
     QString str;
     QTextStream stream(&str);
     elem.save(stream, 4);
-    str.replace(QRegExp("</p>|<br>|<br/>", Qt::CaseInsensitive), QStringLiteral(" "));
-    QStringList list = str.replace(QLatin1String("\n"),QLatin1String("")).replace(QLatin1String("\r"),QLatin1String("")).replace(QRegExp("<[^>]*>"),QLatin1String("")).split(QStringLiteral(" "));
+    static const QRegularExpression re1(QStringLiteral("</p>|<br>|<br/>"), QRegularExpression::CaseInsensitiveOption);
+    str.replace(re1, QStringLiteral(" "));
+
+    static const QRegularExpression re2(QStringLiteral("<[^>]*>"));
+    QStringList list = str.replace(QLatin1String("\n") ,QLatin1String("")).
+                           replace(QLatin1String("\r"), QLatin1String("")).
+                           replace(re2, QLatin1String("")).
+                           split(QStringLiteral(" "));
     foreach(const QString &i, list)
     {
         toc_title += (i.trimmed().isEmpty() ?QLatin1String("") :QString(i.trimmed() + QLatin1String(" ")));
@@ -744,7 +752,7 @@ void fb2mobi::parse_format(const QDomNode &elem, QString tag , QString css, QStr
                         if(hstring[len-2].isDigit() && hstring[len-1] == ' ')
                             break;
                     }
-                    if(hstring.midRef(len-1).startsWith(QLatin1String("&quot;"), Qt::CaseInsensitive))
+                    if(hstring.mid(len-1).startsWith(QLatin1String("&quot;"), Qt::CaseInsensitive))
                         len += 6;
                     else
                         len++;
@@ -1151,8 +1159,10 @@ void fb2mobi::generate_opf_epub()
     buf += QStringLiteral("<dc:creator opf:role=\"aut\">%1</dc:creator>").arg(book_author);
 
     buf += QStringLiteral("<dc:subject>%1</dc:subject> ").arg(mGenre[pBook->listIdGenres.first()].sName);
-    if(!book_anntotation.isEmpty())
-        buf += QStringLiteral("<dc:description>%1</dc:description>").arg(book_anntotation.replace(QRegExp("<[^>]*>"),QLatin1String("")).trimmed());
+    if(!book_anntotation.isEmpty()){
+        static const QRegularExpression re(QStringLiteral("<[^>]*>"));
+        buf += QStringLiteral("<dc:description>%1</dc:description>").arg(book_anntotation.replace(re, QLatin1String("")).trimmed());
+    }
     if(!book_cover.isEmpty())
         buf += QLatin1String("<meta name=\"cover\" content=\"cover-image\" />"
                              "</metadata>"

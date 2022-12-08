@@ -10,6 +10,8 @@
 #include <QDir>
 #include <QSqlError>
 #include <QSqlQuery>
+#include <QRegularExpression>
+
 
 #include "SmtpClient/src/smtpclient.h"
 #include "SmtpClient/src/mimeattachment.h"
@@ -78,16 +80,20 @@ QString ValidateFileName(QString str)
     {
 
         str = str.replace('\"', '\'');
-        str = str.replace(QRegExp("^([a-zA-Z]\\:|\\\\\\\\[^\\/\\\\:*?\"<>|]+\\\\[^\\/\\\\:*?\"<>|]+)(\\\\[^\\/\\\\:*?\"<>|]+)+(\\.[^\\/\\\\:*?\"<>|]+)$"), QStringLiteral("_"));
+        static const QRegularExpression re(QStringLiteral("^([a-zA-Z]\\:|\\\\\\\\[^\\/\\\\:*?\"<>|]+\\\\[^\\/\\\\:*?\"<>|]+)(\\\\[^\\/\\\\:*?\"<>|]+)+(\\.[^\\/\\\\:*?\"<>|]+)$"));
+        str = str.replace(re, QStringLiteral("_"));
         bool bMtp = str.startsWith(QLatin1String("mtp:"));
         str=str.left(bMtp ?4 :2) + str.mid(bMtp ?4 :2).replace(':', '_');
     }
     else
     {
-        if(mac)
-            str = str.replace(QRegExp("[:]"), QStringLiteral("_"));
+        if(mac){
+            static const QRegularExpression re(QStringLiteral("[:]"));
+            str = str.replace(re, QStringLiteral("_"));
+        }
     }
-    str = str.replace(QRegExp("[/\\]"), QStringLiteral("_"));
+    static const QRegularExpression re2(QStringLiteral("[/\\]"));
+    str = str.replace(re2, QStringLiteral("_"));
     qDebug()<<str;
     return str;
 }

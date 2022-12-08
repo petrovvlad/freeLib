@@ -289,8 +289,7 @@ void SLib::loadAnnotation(uint idBook)
                                 QBuffer buff;
                                 buff.open(QIODevice::WriteOnly);
                                 QTextStream ts(&buff);
-                                ts.setCodec("UTF-8");
-                                meta.childNodes().at(m).save(ts,0,QDomNode::EncodingFromTextStream);
+                                meta.childNodes().at(m).save(ts, 0, QDomNode::EncodingFromTextStream);
                                 book.sAnnotation = QString::fromUtf8(buff.data().data());
                             }
                             else if(meta.childNodes().at(m).nodeName().right(4) == QLatin1String("meta"))
@@ -361,7 +360,6 @@ void SLib::loadAnnotation(uint idBook)
         QBuffer buff;
         buff.open(QIODevice::WriteOnly);
         QTextStream ts(&buff);
-        ts.setCodec("UTF-8");
         title_info.elementsByTagName(QStringLiteral("annotation")).at(0).save(ts, 0, QDomNode::EncodingFromTextStream);
         book.sAnnotation = QString::fromUtf8(buff.data().data());
         book.sAnnotation.replace(QLatin1String("<annotation>"), QLatin1String(""), Qt::CaseInsensitive);
@@ -510,7 +508,7 @@ QString SLib::fillParams(const QString &str, uint idBook)
     QString num_in_seria = QString::number(book.numInSerial);
     if(result.contains(QLatin1String("%n")))
     {
-        int len = result.midRef(result.indexOf(QLatin1String("%n")) + 2, 1).toInt();
+        int len = result.mid(result.indexOf(QLatin1String("%n")) + 2, 1).toInt();
         QString zerro;
         if(book.numInSerial == 0)
             result.replace("%n" + QString::number(len), QLatin1String(""));

@@ -33,7 +33,7 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     QHBoxLayout* layout = new QHBoxLayout(ui->inpx);
     layout->addWidget(tbInpx, 0, Qt::AlignRight);
     layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     QToolButton* tbBooksDir = new QToolButton(this);
     tbBooksDir->setFocusPolicy(Qt::NoFocus);
@@ -42,7 +42,7 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     layout = new QHBoxLayout(ui->BookDir);
     layout->addWidget(tbBooksDir, 0, Qt::AlignRight);
     layout->setSpacing(0);
-    layout->setMargin(0);
+    layout->setContentsMargins(0, 0, 0, 0);
 
     QPalette palette = QApplication::style()->standardPalette();
     bool darkTheme = palette.color(QPalette::Window).lightness()<127;
