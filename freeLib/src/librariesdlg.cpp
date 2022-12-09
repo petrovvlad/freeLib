@@ -44,8 +44,7 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    QPalette palette = QApplication::style()->standardPalette();
-    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
     ui->Add->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QLatin1String("plus.svg"))));
     ui->Del->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QLatin1String("minus.svg"))));
