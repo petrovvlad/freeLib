@@ -39,15 +39,15 @@ ImportThread::ImportThread(QObject *parent) :
 //14- ключевые слова
 
 
-qlonglong ImportThread::AddSeria(const QString &str, qlonglong libID, int tag)
+uint ImportThread::AddSeria(const QString &str, qlonglong libID, int tag)
 {
     if(str.trimmed().isEmpty())
-        return -1;
+        return 0;
     QString name = str.trimmed();
     query->exec(QLatin1String("SELECT id FROM seria WHERE name='") + name + QLatin1String("' and id_lib=") + QString::number(libID));
     if(query->next())
     {
-        qlonglong id = query->value(0).toLongLong();
+        uint id = query->value(0).toLongLong();
         return id;
     }
     query->prepare(QStringLiteral("INSERT INTO seria(name,id_lib) values(:name,:id_lib)"));
@@ -55,11 +55,11 @@ qlonglong ImportThread::AddSeria(const QString &str, qlonglong libID, int tag)
     query->bindValue(QStringLiteral(":id_lib"), libID);
     if(!query->exec())
         qDebug() << query->lastError().text();
-    qlonglong id = query->lastInsertId().toLongLong();
+    uint id = query->lastInsertId().toLongLong();
     return id;
 }
 
-qlonglong ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, int tag)
+uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, int tag)
 {
     QString sQuery = QStringLiteral("SELECT id FROM author WHERE id_lib=%1 and %2 and %3 and %4").arg(
                 QString::number(libID),
@@ -68,7 +68,7 @@ qlonglong ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook
                 (author.sMiddleName.isEmpty() ?QStringLiteral("(name3 is null or name3=\"\")") :(QLatin1String("name3=\"") + author.sMiddleName + QLatin1String("\""))));
     query->prepare(sQuery);
     query->exec();
-    qlonglong id = 0;
+    uint id = 0;
     if(query->next())
     {
         id = query->value(0).toLongLong();
