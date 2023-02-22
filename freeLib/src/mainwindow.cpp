@@ -93,8 +93,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(settings->contains(QStringLiteral("MainWnd/HSplitterSizes")))
         ui->splitterH->restoreState(settings->value(QStringLiteral("MainWnd/HSplitterSizes")).toByteArray());
 
-    QPalette palette = QApplication::style()->standardPalette();
-    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
     ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
     ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
@@ -271,8 +270,7 @@ void MainWindow::UpdateTags()
         return;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QSettings *settings = GetSettings();
-    QPalette palette = QApplication::style()->standardPalette();
-    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
 
     QButtonGroup *group = new QButtonGroup(this);
     group->setExclusive(true);
@@ -1174,8 +1172,7 @@ void MainWindow::SelectBook()
     pCover->setBook(&book);
 
     QLocale locale;
-    QPalette palette = QApplication::style()->standardPalette();
-    QColor colorBInfo = palette.color(QPalette::AlternateBase);
+    QColor colorBInfo = palette().color(QPalette::AlternateBase);
     content.replace(QLatin1String("#annotation#"), book.sAnnotation).
             replace(QLatin1String("#title#"), book.sName).
             replace(QLatin1String("#author#"), sAuthors).
@@ -1888,8 +1885,10 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
             item_book->setText(6, book.date.toString(QStringLiteral("dd.MM.yyyy")));
             item_book->setTextAlignment(6, Qt::AlignCenter);
 
-            item_book->setText(7, mGenre[book.listIdGenres.first()].sName);
-            item_book->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
+            if(!book.listIdGenres.empty()){
+                item_book->setText(7, mGenre[book.listIdGenres.first()].sName);
+                item_book->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
+            }
 
             item_book->setText(8, lib.vLaguages[book.idLanguage]);
             item_book->setTextAlignment(8, Qt::AlignCenter);
@@ -1976,8 +1975,7 @@ void MainWindow::UpdateExportMenu()
     QFont font(ui->btnExport->defaultAction()->font());
     font.setBold(true);
     ui->btnExport->defaultAction()->setFont(font);
-    QPalette palette = QApplication::style()->standardPalette();
-    bool darkTheme = palette.color(QPalette::Window).lightness() < 127;
+    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
     ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);

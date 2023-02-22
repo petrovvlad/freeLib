@@ -38,8 +38,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 
     ui->tabWidget->setCurrentIndex(0);
 
-    QPalette palette = QApplication::style()->standardPalette();
-    bool darkTheme = palette.color(QPalette::Window).lightness() < 127;
+    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
     ui->AddExport->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QLatin1String("plus.svg"))));
     ui->DelExport->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QLatin1String("minus.svg"))));

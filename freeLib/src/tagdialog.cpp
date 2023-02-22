@@ -20,8 +20,7 @@ TagDialog::TagDialog(QWidget *parent) :
     ui->tableWidget->setColumnWidth(0,140);
     ui->tableWidget->setColumnWidth(1,30);
 
-    QPalette palette = QApplication::style()->standardPalette();
-    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
+    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
 
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec(QStringLiteral("SELECT id, light_theme, dark_theme FROM icon"));
