@@ -53,7 +53,7 @@ set(PROJECT_SOURCES
 add_subdirectory(Help)
 
 find_package(QuaZip-Qt${QT_VERSION_MAJOR} QUIET)
-if(NOT QuaZip-Qt5_FOUND)
+if(NOT QuaZip-Qt${QT_VERSION_MAJOR}_FOUND)
     set(QUAZIP_INSTALL OFF)
     set(BUILD_SHARED_LIBS OFF)
     add_subdirectory(quazip)
