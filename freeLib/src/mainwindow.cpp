@@ -1885,8 +1885,10 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
             item_book->setText(6, book.date.toString(QStringLiteral("dd.MM.yyyy")));
             item_book->setTextAlignment(6, Qt::AlignCenter);
 
-            item_book->setText(7, mGenre[book.listIdGenres.first()].sName);
-            item_book->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
+            if(!book.listIdGenres.empty()){
+                item_book->setText(7, mGenre[book.listIdGenres.first()].sName);
+                item_book->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
+            }
 
             item_book->setText(8, lib.vLaguages[book.idLanguage]);
             item_book->setTextAlignment(8, Qt::AlignCenter);
