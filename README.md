@@ -33,3 +33,6 @@ mkdir freeLib/build && cd freeLib/build
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build . -j2
 sudo make install
 ```
+
+#### Обсуждение
+канал Matrix:  #freeLib:matrix.p-vlad.gq
