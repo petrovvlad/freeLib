@@ -483,10 +483,12 @@ QString SLib::fillParams(const QString &str, uint idBook)
     SBook& book = mBooks[idBook];
     QString result = str;
     QString abbr = QLatin1String("");
-    foreach(const QString &str, mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
-    {
-        if(!str.isEmpty())
-            abbr += str.at(0);
+    if(book.idSerial != 0){
+        foreach(const QString &str, mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
+        {
+            if(!str.isEmpty())
+                abbr += str.at(0);
+        }
     }
     result.replace(QLatin1String("%abbrs"), abbr.toLower());
     result.replace(QLatin1String("%app_dir"), QApplication::applicationDirPath() + QLatin1String("/"));
@@ -501,7 +503,7 @@ QString SLib::fillParams(const QString &str, uint idBook)
             replace(QLatin1String("%nm"), sFirstAuthor.sMiddleName).
             replace(QLatin1String("%nl"), sFirstAuthor.sLastName);
 
-    result = result.replace(QLatin1String("%s"), mSerials[book.idSerial].sName)
+    result = result.replace(QLatin1String("%s"), book.idSerial==0 ?QLatin1String("") :mSerials[book.idSerial].sName)
             .replace(QLatin1String("%b"), book.sName)
             .replace(QLatin1String("%a"), sFirstAuthor.getName())
             .replace(QLatin1String(","), QLatin1String(" ")).trimmed();

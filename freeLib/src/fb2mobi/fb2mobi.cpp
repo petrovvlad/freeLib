@@ -94,7 +94,7 @@ void fb2mobi::parse_description(const QDomNode &elem)
 {
     if(join_seria)
     {
-        pBook->sName = mLibs[idLib_].mSerials[pBook->idSerial].sName;
+        pBook->sName = pBook->idSerial==0 ?QLatin1String("") :mLibs[idLib_].mSerials[pBook->idSerial].sName;
         //pBook->idSerial = 0;
     }
     book_author = authorstring;
@@ -1486,7 +1486,8 @@ void fb2mobi::InsertSeriaNumberToCover(const QString &number,CreateCover create_
         font.setPixelSize(img.height() / 17);
         painter->setFont(font);
         PaintText(painter,QRect(delta,delta+r_heigth-r_heigthTopBottom+delta2,r_width,r_heigthTopBottom-delta2),Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
-                  mLibs[idLib_].mSerials[pBook->idSerial].sName + (pBook->numInSerial>0 ?QLatin1String("\n") + QString::number(pBook->numInSerial) :QString()));
+                  (pBook->idSerial ==0 ?QLatin1String("") :mLibs[idLib_].mSerials[pBook->idSerial].sName) +
+                  (pBook->numInSerial>0 ?QLatin1String("\n") + QString::number(pBook->numInSerial) :QStringLiteral("")));
     }
     img.save(tmp_dir + QLatin1String("/OEBPS/") + book_cover);
     delete painter;
@@ -1938,8 +1939,10 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     {
         QString abbr = QLatin1String("");
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-        foreach(const QString &str, mLibs[idLib_].mSerials[pBook->idSerial].sName.split(' ', Qt::SkipEmptyParts))
-            abbr += str.at(0);
+        if(pBook->idSerial != 0){
+            foreach(const QString &str, mLibs[idLib_].mSerials[pBook->idSerial].sName.split(' ', Qt::SkipEmptyParts))
+                abbr += str.at(0);
+        }
 #else
         foreach(const QString &str, mLibs[idLib_].mSerials[pBook->idSerial].sName.split(' '))
             if(!str.isEmpty())
