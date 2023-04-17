@@ -643,17 +643,17 @@ void SettingsDlg::onBtnSaveExportClicked()
 
 void SettingsDlg::onBtnOpenExportClicked()
 {
-    QString file_name=QFileDialog::getOpenFileName(this, tr("Open profile"), QString() , QStringLiteral("freeLib export (*.fle)"));
+    QString file_name = QFileDialog::getOpenFileName(this, tr("Open profile"), QString() , QStringLiteral("freeLib export (*.fle)"));
     if(file_name.isEmpty())
         return;
-    int result = QMessageBox::question(this, tr("Load profile"),
-            tr("How to load profile?"),
-            tr("Replace current"), tr("Load to new"), tr("Cancel"), 1, 2);
-    if(result == 2)
+    QMessageBox msgBox = QMessageBox(QMessageBox::Question, tr("Load profile"), tr("How to load profile?"), QMessageBox::Cancel, this);
+    msgBox.addButton(tr("Replace current"), QMessageBox::ActionRole);
+    QPushButton *pButtonLoadNew = msgBox.addButton(tr("Load to new"), QMessageBox::ActionRole);
+    if(msgBox.exec() == QMessageBox::Cancel)
         return;
+
     QuaZip zip(file_name);
     zip.open(QuaZip::mdUnzip);
-
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
@@ -686,7 +686,7 @@ void SettingsDlg::onBtnOpenExportClicked()
                 font_file.write(zip_file.readAll());
                 font_file.close();
 
-                QFile::copy(font_name,db_path + QLatin1String("/") + fi.fileName());
+                QFile::copy(font_name, db_path + QLatin1String("/") + fi.fileName());
             }
         }
     }
@@ -702,15 +702,14 @@ void SettingsDlg::onBtnOpenExportClicked()
     file.close();
     QSettings in_settings(ini_name, QSettings::IniFormat);
 
-    if(result == 1)
+    if(msgBox.clickedButton() == pButtonLoadNew)
     {
-
         ExportFrame* frame = new ExportFrame(this);
         ui->stackedWidget->addWidget(frame);
         ExportOptions exportOptions;
         exportOptions.Load(&in_settings);
         frame->Load(&exportOptions);
-        ui->ExportName->addItem(QFileInfo(file_name).completeBaseName(),false);
+        ui->ExportName->addItem(QFileInfo(file_name).completeBaseName(), false);
         connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
         connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
         connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
