@@ -958,7 +958,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Filter:</source>
-        <translation type="obsolete">Фильтр:</translation>
+        <translation>Фильтр:</translation>
     </message>
 </context>
 <context>
