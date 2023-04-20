@@ -11,7 +11,7 @@
 
 #include "config-freelib.h"
 #include "fb2mobi/fb2mobi.h"
-#include "common.h"
+#include "utilites.h"
 
 #define SAVE_INDEX  4
 #define MAX_COLUMN_COUNT    3

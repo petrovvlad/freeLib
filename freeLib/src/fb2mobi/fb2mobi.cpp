@@ -13,6 +13,7 @@
 #include "../mobiEdit/mobiedit.h"
 #include "config-freelib.h"
 #include "common.h"
+#include "utilites.h"
 
 fb2mobi::fb2mobi(const ExportOptions *pExportOptions, uint idLib)
 {
@@ -99,7 +100,7 @@ void fb2mobi::parse_description(const QDomNode &elem)
     book_author = authorstring;
     book_author = mLibs[idLib_].fillParams(book_author, idBook_);
     if(pExportOptions_->bAuthorTranslit)
-        book_author=Transliteration(book_author);
+        book_author = Transliteration(book_author);
     isbn = pBook->sIsbn;
     for(int e=0;e<elem.childNodes().count();e++)
     {
