@@ -4,7 +4,6 @@
 #include <QDialog>
 
 #include "exportthread.h"
-#include "library.h"
 
 namespace Ui {
 class ExportDlg;

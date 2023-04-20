@@ -12,8 +12,6 @@
 #include <QFileDialog>
 #include <QSettings>
 
-#include "fontframe.h"
-#include "common.h"
 #include "options.h"
 
 

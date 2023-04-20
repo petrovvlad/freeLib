@@ -8,7 +8,6 @@
 #include <algorithm>
 #include <QSqlQuery>
 
-#include "common.h"
 #include "library.h"
 
 TagDialog::TagDialog(QWidget *parent) :

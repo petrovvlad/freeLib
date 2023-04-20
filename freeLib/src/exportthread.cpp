@@ -22,6 +22,7 @@
 #include "fb2mobi/fb2mobi.h"
 #include "library.h"
 #include "utilites.h"
+#include "common.h"
 
 QString Transliteration(QString str)
 {

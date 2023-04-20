@@ -9,10 +9,9 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 
-#include "fontframe.h"
 #include "exportframe.h"
 #include "config-freelib.h"
-
+#include "common.h"
 
 
 SettingsDlg::SettingsDlg(QWidget *parent) :

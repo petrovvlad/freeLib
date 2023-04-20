@@ -4,7 +4,6 @@
 #include <QStringList>
 #include <QVector>
 
-#include "../common.h"
 
 #define SOFT_HYPHEN  QStringLiteral("&#173;") //&shy;"
 #define CHILD_HYPHEN  QStringLiteral("-")

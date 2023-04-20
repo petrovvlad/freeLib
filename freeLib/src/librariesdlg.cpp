@@ -12,7 +12,6 @@
 #include <qmessagebox.h>
 
 #include "quazip/quazip/quazip.h"
-#include "quazip/quazip/quazipfile.h"
 #include "exportdlg.h"
 #include "utilites.h"
 

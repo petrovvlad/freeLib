@@ -4,6 +4,7 @@
 #include <QtAlgorithms>
 #include <qstringbuilder.h>
 #include <QDebug>
+#include <QFile>
 
 hyphenations::hyphenations()
 {

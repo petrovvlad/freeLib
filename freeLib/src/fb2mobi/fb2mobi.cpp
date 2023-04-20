@@ -11,9 +11,8 @@
 #include "../quazip/quazip/quazip.h"
 #include "../quazip/quazip/quazipfile.h"
 #include "../mobiEdit/mobiedit.h"
-#include "importthread.h"
 #include "config-freelib.h"
-
+#include "common.h"
 
 fb2mobi::fb2mobi(const ExportOptions *pExportOptions, uint idLib)
 {

@@ -9,13 +9,9 @@
 #include <QDesktopServices>
 #include <QTextBrowser>
 
-#include "quazip/quazip/quazip.h"
-#include "SmtpClient/src/smtpclient.h"
-
 #include "librariesdlg.h"
 #include "settingsdlg.h"
 #include "exportdlg.h"
-#include "exportthread.h"
 #include "aboutdialog.h"
 #include "tagdialog.h"
 #include "bookeditdlg.h"
@@ -23,9 +19,9 @@
 #include "genresortfilterproxymodel.h"
 #include "library.h"
 #include "starsdelegate.h"
-#include "utilites.h"
 #include "opds_server.h"
 #include "statisticsdialog.h"
+#include "common.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
 QString sizeToString(uint size)

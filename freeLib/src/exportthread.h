@@ -2,8 +2,8 @@
 #define EXPORTTHREAD_H
 
 #include <QThread>
+#include <QBuffer>
 
-#include "library.h"
 #include "options.h"
 
 class ExportThread : public QObject
@@ -31,7 +31,7 @@ private:
     const ExportOptions* pExportOptions_;
     void export_books();
     void export_lib();
-    bool convert(QList<QBuffer *> outbuff, uint idLib, const QString &file_name, int count,  uint idBook );
+    bool convert(QList<QBuffer*> outbuff, uint idLib, const QString &file_name, int count,  uint idBook );
 public slots:
     void break_exp();
     //void smtpError(SmtpError e);
