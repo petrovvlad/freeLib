@@ -1164,10 +1164,10 @@ void fb2mobi::generate_opf_epub()
         buf += QStringLiteral("<dc:description>%1</dc:description>").arg(book_anntotation.replace(re, QLatin1String("")).trimmed());
     }
     if(!book_cover.isEmpty())
-        buf += QLatin1String("<meta name=\"cover\" content=\"cover-image\" />"
-                             "</metadata>"
-                             "<manifest>"
-                             "<item id=\"ncx\" media-type=\"application/x-dtbncx+xml\" href=\"toc.ncx\"/>");
+        buf += QLatin1String("<meta name=\"cover\" content=\"cover-image\" />");
+    buf += QLatin1String("</metadata>"
+                         "<manifest>"
+                         "<item id=\"ncx\" media-type=\"application/x-dtbncx+xml\" href=\"toc.ncx\"/>");
     buf += ((buf_annotation.isEmpty() || pExportOptions_->bAnnotation) ?QLatin1String("") :QLatin1String("<item id=\"annotation\" media-type=\"application/xhtml+xml\" href=\"annotation.html\"/>"));
     buf += (book_cover.isEmpty() ?QLatin1String("") :QStringLiteral("<item id=\"cover-image\" href=\"%1\" media-type=\"%2\"/>").arg(book_cover, MIME_TYPE(QFileInfo(book_cover).suffix())));
     QString spine_files;
