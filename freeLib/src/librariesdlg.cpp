@@ -16,7 +16,6 @@
 #include "utilites.h"
 
 bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
-QSettings* GetSettings(bool reopen=false);
 
 LibrariesDlg::LibrariesDlg(QWidget *parent) :
     QDialog(parent),
@@ -220,7 +219,7 @@ void LibrariesDlg::SelectLibrary()
     ui->OPDS->setText(idCurrentLib_ == 0 ?QLatin1String("") :QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
     ui->HTTP->setText(idCurrentLib_ == 0 ?QLatin1String("") :QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
 
-    QSettings* settings = GetSettings();
+    auto settings = GetSettings();
     settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
 }
 
@@ -235,7 +234,7 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
         if(!result)
             qDebug()<<query.lastError().databaseText();
         idCurrentLib_ = query.lastInsertId().toInt();
-        QSettings* settings = GetSettings();
+        auto settings = GetSettings();
         settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
         SLib &newLib = mLibs[idCurrentLib_];
         newLib.name = lib.name;

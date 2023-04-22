@@ -10,10 +10,6 @@
 #define AppName  QStringLiteral("freeLib")
 #define OrgName  QStringLiteral("freeLibOrg")
 
-extern QCommandLineParser CMDparser;
-
-QSettings* GetSettings(bool reopen=false);
-
 struct tag
 {
     QString name;

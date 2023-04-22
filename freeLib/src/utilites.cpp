@@ -1,7 +1,6 @@
 #define QT_USE_QSTRINGBUILDER
 #include "utilites.h"
 
-#include <QDebug>
 #include <QFileInfo>
 #include <QDir>
 #include <QSettings>
@@ -261,4 +260,21 @@ void setProxy()
         break;
     }
     QNetworkProxy::setApplicationProxy(proxy);
+}
+
+QSharedPointer<QSettings> GetSettings(bool bReopen)
+{
+    static QSharedPointer<QSettings> pSettings;
+    if(bReopen || !pSettings)
+    {
+        QString sFile = QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg");
+        if(QFile::exists(sFile)){
+            pSettings = QSharedPointer<QSettings> (new QSettings(sFile, QSettings::IniFormat));
+        }else
+            pSettings = QSharedPointer<QSettings> (new QSettings());
+        #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        pSettings->setIniCodec("UTF-8");
+        #endif
+    }
+    return pSettings;
 }

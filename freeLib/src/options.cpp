@@ -36,7 +36,7 @@ QString decodeStr(const QString &str)
     return QString::fromUtf8(arr);
 }
 
-void ExportOptions::Save(QSettings *pSettings, bool bSavePasswords)
+void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePasswords)
 {
     pSettings->setValue(QStringLiteral("ExportName"), sName);
     if(bSavePasswords)
@@ -109,16 +109,16 @@ void ExportOptions::Save(QSettings *pSettings, bool bSavePasswords)
             pSettings->setValue(QStringLiteral("font_i"), QFileInfo(fontExportOptions.sFontI).fileName());
             pSettings->setValue(QStringLiteral("font_bi"), QFileInfo(fontExportOptions.sFontBI).fileName());
         }
-        pSettings->setValue(QStringLiteral("fontSize"),fontExportOptions.nFontSize);
+        pSettings->setValue(QStringLiteral("fontSize"), fontExportOptions.nFontSize);
     }
     pSettings->endArray();
 }
 
-void ExportOptions::Load(QSettings *pSettings)
+void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
 {
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count()>0)
-        HomeDir=QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
+        HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
     sName = pSettings->value(QStringLiteral("ExportName")).toString();
     bDefault = pSettings->value(QStringLiteral("Default"), false).toBool();
@@ -265,10 +265,10 @@ void Options::setExportDefault()
     vExportOptions[3].setDefault(QApplication::tr("Save as") + QStringLiteral(" AZW3"), QStringLiteral("AZW3"), false);
 }
 
-void Options::Load(QSettings *pSettings)
+void Options::Load(QSharedPointer<QSettings> pSettings)
 {
-    bShowDeleted =pSettings->value(QStringLiteral("ShowDeleted"), false).toBool();
-    bUseTag=pSettings->value(QStringLiteral("use_tag"), true).toBool();
+    bShowDeleted = pSettings->value(QStringLiteral("ShowDeleted"), false).toBool();
+    bUseTag = pSettings->value(QStringLiteral("use_tag"), true).toBool();
     bShowSplash = !pSettings->value(QStringLiteral("no_splash"), false).toBool();
     bStorePosition = pSettings->value(QStringLiteral("store_position"), true).toBool();
     sAlphabetName = pSettings->value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
@@ -307,7 +307,7 @@ void Options::Load(QSettings *pSettings)
     }
     pSettings->endArray();
 
-    count=pSettings->beginReadArray(QStringLiteral("tools"));
+    count = pSettings->beginReadArray(QStringLiteral("tools"));
     for(int i=0;i<count;i++)
     {
         pSettings->setArrayIndex(i);
@@ -334,7 +334,7 @@ void Options::Load(QSettings *pSettings)
     pSettings->endArray();
 }
 
-void Options::Save(QSettings *pSettings)
+void Options::Save(QSharedPointer<QSettings> pSettings)
 {
     int countExport = vExportOptions.count();
     pSettings->beginWriteArray(QStringLiteral("export"));
@@ -387,7 +387,7 @@ void Options::Save(QSettings *pSettings)
 
     pSettings->beginWriteArray(QStringLiteral("tools"));
     auto iTool = options.tools.constBegin();
-    index=0;
+    index = 0;
     while(iTool != options.tools.constEnd()){
         pSettings->setArrayIndex(index);
         pSettings->setValue(QStringLiteral("name"), iTool.key());

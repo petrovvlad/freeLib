@@ -29,7 +29,6 @@ uint idCurrentLib;
 QTranslator* translator;
 QTranslator* translator_qt;
 QList<tag> tag_list;
-QSettings *global_settings = nullptr;
 bool bTray;
 QSplashScreen *splash;
 Options options;
@@ -44,27 +43,6 @@ bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
         result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     }
     return result;
-}
-
-QSettings* GetSettings(bool reopen)
-{
-    if(reopen && global_settings)
-    {
-        global_settings->sync();
-        delete global_settings;
-        global_settings = nullptr;
-    }
-    if(global_settings == nullptr){
-        QString sFile = QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg");
-        if(QFile::exists(sFile))
-            global_settings = new QSettings(sFile, QSettings::IniFormat);
-        else
-            global_settings = new QSettings();
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        global_settings->setIniCodec("UTF-8");
-#endif
-    }
-    return global_settings;
 }
 
 void SetLocale(const QString &sLocale)
@@ -137,7 +115,7 @@ void UpdateLibs()
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         idCurrentLib = 0;
     else{
-        QSettings *settings = GetSettings();
+        auto settings = GetSettings();
         idCurrentLib = settings->value(QStringLiteral("LibID"), 0).toInt();
         QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
         query.exec(QStringLiteral("SELECT id,name,path,inpx,version,firstauthor,woDeleted FROM lib ORDER BY name"));
@@ -243,7 +221,7 @@ int main(int argc, char *argv[])
                 a->setOrganizationName(QStringLiteral("freeLib"));
                 a->setApplicationName(QStringLiteral("freeLib"));
 
-                QSettings* settings = GetSettings();
+                auto settings = GetSettings();
                 options.Load(settings);
 
 
@@ -280,14 +258,7 @@ int main(int argc, char *argv[])
                         else{
                             std::cout << "The path " + sDbpath.toStdString() + " does not exist! \n";
                         }
-
-                        if(global_settings)
-                        {
-                            global_settings->sync();
-                            delete global_settings;
-                        }
                     }
-
                     else{
                         cmdhelp();
                     }
@@ -488,7 +459,7 @@ int main(int argc, char *argv[])
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
-    QSettings* settings = GetSettings();
+    auto  settings = GetSettings();
     options.Load(settings);
     SetLocale(options.sUiLanguageName);
     if(options.vExportOptions.isEmpty())
@@ -531,7 +502,6 @@ int main(int argc, char *argv[])
         options.bOpdsEnable = true;
         pOpds->server_run();
     }else{
-
         pMainWindow = new MainWindow;
 #ifdef Q_OS_OSX
         //  w.setWindowFlags(w.windowFlags() & ~Qt::WindowFullscreenButtonHint);
@@ -550,12 +520,6 @@ int main(int argc, char *argv[])
     }
 
     int result = a->exec();
-    if(global_settings)
-    {
-        global_settings->sync();
-        delete global_settings;
-    }
-
     if(pMainWindow)
         delete pMainWindow;
     delete pOpds;
