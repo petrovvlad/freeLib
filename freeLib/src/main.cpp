@@ -67,28 +67,6 @@ QSettings* GetSettings(bool reopen)
     return global_settings;
 }
 
-QNetworkProxy proxy;
-void setProxy()
-{
-    proxy.setPort(options.nProxyPort);
-    proxy.setHostName(options.sProxyHost);
-    proxy.setPassword(options.sProxyPassword);
-    proxy.setUser(options.sProxyUser);
-    switch(options.nProxyType)
-    {
-    case 0:
-        proxy.setType(QNetworkProxy::NoProxy);
-        break;
-    case 1:
-        proxy.setType(QNetworkProxy::Socks5Proxy);
-        break;
-    case 2:
-        proxy.setType(QNetworkProxy::HttpProxy);
-        break;
-    }
-    QNetworkProxy::setApplicationProxy(proxy);
-}
-
 void SetLocale(const QString &sLocale)
 {
     setlocale(LC_ALL, (sLocale + QLatin1String(".UTF-8")).toLatin1().data());

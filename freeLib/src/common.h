@@ -29,7 +29,6 @@ extern QList<tag> tag_list;
 
 QPixmap GetTag(QColor color,int size);
 void SetLocale(const QString &sLocale);
-void setProxy();
 QString decodeStr(const QString &str);
 bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
 QString RelativeToAbsolutePath(QString path);

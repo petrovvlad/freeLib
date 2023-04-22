@@ -12,6 +12,7 @@
 #include "exportframe.h"
 #include "config-freelib.h"
 #include "common.h"
+#include "utilites.h"
 
 
 SettingsDlg::SettingsDlg(QWidget *parent) :

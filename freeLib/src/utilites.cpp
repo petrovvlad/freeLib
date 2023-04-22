@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QSettings>
 #include <QSqlQuery>
+#include <QNetworkProxy>
 
 #include "options.h"
 
@@ -238,4 +239,26 @@ QString Transliteration(QString str)
     if (fn.isEmpty() )
         fn = QStringLiteral("file");
     return fn;
+}
+
+QNetworkProxy proxy;
+void setProxy()
+{
+    proxy.setPort(options.nProxyPort);
+    proxy.setHostName(options.sProxyHost);
+    proxy.setPassword(options.sProxyPassword);
+    proxy.setUser(options.sProxyUser);
+    switch(options.nProxyType)
+    {
+    case 0:
+        proxy.setType(QNetworkProxy::NoProxy);
+        break;
+    case 1:
+        proxy.setType(QNetworkProxy::Socks5Proxy);
+        break;
+    case 2:
+        proxy.setType(QNetworkProxy::HttpProxy);
+        break;
+    }
+    QNetworkProxy::setApplicationProxy(proxy);
 }
