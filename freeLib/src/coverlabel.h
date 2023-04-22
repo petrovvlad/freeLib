@@ -8,6 +8,7 @@
 
 class CoverLabel : public QLabel
 {
+    Q_OBJECT
 public:
     CoverLabel(QWidget *parent);
     void setBook(const SBook *pBook);
