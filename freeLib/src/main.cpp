@@ -495,7 +495,7 @@ int main(int argc, char *argv[])
 
     MainWindow *pMainWindow = nullptr;
 
-    pOpds = new opds_server;
+    pOpds = new opds_server(a);
     if(bServer){
         loadGenres();
         loadLibrary(idCurrentLib);
@@ -513,6 +513,8 @@ int main(int argc, char *argv[])
                 pMainWindow->show();
         }
         else{
+            delete pMainWindow;
+            delete a;
             return 1;
         }
         if(options.bShowSplash)
@@ -522,7 +524,6 @@ int main(int argc, char *argv[])
     int result = a->exec();
     if(pMainWindow)
         delete pMainWindow;
-    delete pOpds;
     delete a;
     return result;
 }
