@@ -92,7 +92,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
     ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
     ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QLatin1String("pen.svg"))));
     ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
@@ -1974,7 +1973,7 @@ void MainWindow::UpdateExportMenu()
     ui->btnExport->defaultAction()->setFont(font);
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
+    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("document-send"), QIcon(sIconsPath + QLatin1String("send.svg"))));
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);
 }
 
