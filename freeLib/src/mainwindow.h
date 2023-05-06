@@ -11,7 +11,6 @@
 #include <QSystemTrayIcon>
 
 #include "helpdialog.h"
-#include "common.h"
 #include "options.h"
 #include "coverlabel.h"
 

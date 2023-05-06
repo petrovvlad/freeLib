@@ -509,10 +509,6 @@
              <property name="text">
               <string notr="true">...</string>
              </property>
-             <property name="icon">
-              <iconset theme="tablet">
-               <normaloff>.</normaloff>.</iconset>
-             </property>
              <property name="popupMode">
               <enum>QToolButton::MenuButtonPopup</enum>
              </property>

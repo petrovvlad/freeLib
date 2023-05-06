@@ -63,6 +63,8 @@
         <file>img/icons/dark/view-tree.svg</file>
         <file>img/icons/light/view-list.svg</file>
         <file>img/icons/light/view-tree.svg</file>
+        <file>img/icons/dark/send.svg</file>
+        <file>img/icons/light/send.svg</file>        
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>

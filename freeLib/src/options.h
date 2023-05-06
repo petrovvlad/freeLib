@@ -29,8 +29,8 @@ struct FontExportOptions
 
 struct ExportOptions
 {
-    void Save(QSettings *pSettings, bool bSavePasswords=true);
-    void Load(QSettings *pSettings);
+    void Save(QSharedPointer<QSettings> pSettings, bool bSavePasswords = true);
+    void Load(QSharedPointer<QSettings> pSettings);
     void setDefault(const QString &_sName, const QString &_sOtputFormat, bool _bDefault);
 
     constexpr const static char* sDefaultEexpFileName = "%a/%s/%n3%b";
@@ -90,8 +90,8 @@ struct Options
 {
     void setDefault();
     void setExportDefault();
-    void Load(QSettings *pSettings);
-    void Save(QSettings *pSettings);
+    void Load(QSharedPointer<QSettings> pSettings);
+    void Save(QSharedPointer<QSettings> pSettings);
 
     const static ushort nDefaultOpdsPort = 8080;
     const static ushort  nDefaultProxyPort = 8080;
@@ -127,8 +127,8 @@ struct Options
     bool bOpdsShowAnotation;
     bool bOpdsNeedPassword;
 
-    QHash <QString,QString> applications;
-    QHash <QString,ToolsOptions> tools;
+    QHash <QString, QString> applications;
+    QHash <QString, ToolsOptions> tools;
     QVector<ExportOptions> vExportOptions;
 };
 

@@ -5,7 +5,6 @@
 #include <QXmlStreamReader>
 #include <QDomDocument>
 
-#include "../common.h"
 #include "../library.h"
 #include "hyphenations.h"
 #include "options.h"

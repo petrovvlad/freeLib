@@ -9,10 +9,10 @@
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 
-#include "fontframe.h"
 #include "exportframe.h"
 #include "config-freelib.h"
-
+#include "common.h"
+#include "utilites.h"
 
 
 SettingsDlg::SettingsDlg(QWidget *parent) :
@@ -22,7 +22,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->setupUi(this);
     options_ = options;
 
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     if(settings->contains(QStringLiteral("SettingsWnd/geometry")))
         restoreGeometry(settings->value(QStringLiteral("SettingsWnd/geometry")).toByteArray());
     if(settings->contains(QStringLiteral("SettingsWndExportList/geometry")))
@@ -354,7 +354,7 @@ void SettingsDlg::btnOK()
         QFile().remove(QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg"));
 #endif
     }
-    QSettings *settings = GetSettings(true);
+    auto settings = GetSettings(true);
 
     options.sUiLanguageName = options_.sUiLanguageName;
     options.sAlphabetName = options_.sAlphabetName;
@@ -580,22 +580,22 @@ void SettingsDlg::onBtnSaveExportClicked()
         (ui->ExportName->currentText()), QStringLiteral("freeLib export (*.fle)"));
     if(file_name.isEmpty())
         return;
-    QSettings set(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini"), QSettings::IniFormat);
+    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini"), QSettings::IniFormat));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    set.setIniCodec("UTF-8");
+    settings->setIniCodec("UTF-8");
 #endif
     ExportOptions exportOptions;
 
     QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
     exportOptions.sName = ui->ExportName->currentText();
-    exportOptions.Save(&set, false);
-    set.sync();
+    exportOptions.Save(settings, false);
+    settings->sync();
     QuaZip zip(file_name);
     zip.open(QuaZip::mdCreate);
     QuaZipFile zip_file(&zip);
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("export.ini"), set.fileName()));
-    QFile file(set.fileName());
+    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("export.ini"), settings->fileName()));
+    QFile file(settings->fileName());
     file.open(QIODevice::ReadOnly);
     zip_file.write(file.readAll());
     file.close();
@@ -700,14 +700,14 @@ void SettingsDlg::onBtnOpenExportClicked()
     file.open(QFile::WriteOnly);
     file.write(zip_file.readAll());
     file.close();
-    QSettings in_settings(ini_name, QSettings::IniFormat);
+    auto settings = QSharedPointer<QSettings> (new QSettings(ini_name, QSettings::IniFormat));
 
     if(msgBox.clickedButton() == pButtonLoadNew)
     {
         ExportFrame* frame = new ExportFrame(this);
         ui->stackedWidget->addWidget(frame);
         ExportOptions exportOptions;
-        exportOptions.Load(&in_settings);
+        exportOptions.Load(settings);
         frame->Load(&exportOptions);
         ui->ExportName->addItem(QFileInfo(file_name).completeBaseName(), false);
         connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
@@ -718,7 +718,7 @@ void SettingsDlg::onBtnOpenExportClicked()
     else
     {
         ExportOptions exportOptions;
-        exportOptions.Load(&in_settings);
+        exportOptions.Load(settings);
         qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Load(&exportOptions);
     }
 

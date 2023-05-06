@@ -1,11 +1,11 @@
 #define QT_USE_QSTRINGBUILDER
 #include "utilites.h"
 
-#include <QDebug>
 #include <QFileInfo>
 #include <QDir>
 #include <QSettings>
 #include <QSqlQuery>
+#include <QNetworkProxy>
 
 #include "options.h"
 
@@ -196,4 +196,85 @@ void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
         query.exec(QLatin1String("delete from book_genre where id_lib=") + QString::number(id_lib));
         query.exec(QStringLiteral("VACUUM"));
     }
+}
+
+QString Transliteration(QString str)
+{
+    str = str.trimmed();
+    QString fn;
+    int i, rU, rL;
+    QString validChars = QStringLiteral("ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz1234567890-_,.()[]{}<>!@#$%^&+=\\/");
+    QString rusUpper = QStringLiteral("АБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЫЭЮЯ");
+    QString rusLower = QStringLiteral("абвгдеёжзийклмнопрстуфхцчшщыэюя");
+    QStringList latUpper, latLower;
+    latUpper <<QStringLiteral("A")<<QStringLiteral("B")<<QStringLiteral("V")<<QStringLiteral("G")<<QStringLiteral("D")<<QStringLiteral("E")<<QStringLiteral("Jo")<<QStringLiteral("Zh")<<
+        QStringLiteral("Z")<<QStringLiteral("I")<<QStringLiteral("J")<<QStringLiteral("K")<<QStringLiteral("L")<<QStringLiteral("M")<<QStringLiteral("N")<<QStringLiteral("O")<<
+        QStringLiteral("P")<<QStringLiteral("R")<<QStringLiteral("S")<<QStringLiteral("T")<<QStringLiteral("U")<<QStringLiteral("F")<<QStringLiteral("H")<<QStringLiteral("C")<<
+        QStringLiteral("Ch")<<QStringLiteral("Sh")<<QStringLiteral("Sh")<<QStringLiteral("I")<<QStringLiteral("E")<<QStringLiteral("Ju")<<QStringLiteral("Ja");
+    latLower <<QStringLiteral("a")<<QStringLiteral("b")<<QStringLiteral("v")<<QStringLiteral("g")<<QStringLiteral("d")<<QStringLiteral("e")<<QStringLiteral("jo")<<QStringLiteral("zh")<<
+        QStringLiteral("z")<<QStringLiteral("i")<<QStringLiteral("j")<<QStringLiteral("k")<<QStringLiteral("l")<<QStringLiteral("m")<<QStringLiteral("n")<<QStringLiteral("o")<<
+        QStringLiteral("p")<<QStringLiteral("r")<<QStringLiteral("s")<<QStringLiteral("t")<<QStringLiteral("u")<<QStringLiteral("f")<<QStringLiteral("h")<<QStringLiteral("c")<<
+        QStringLiteral("ch")<<QStringLiteral("sh")<<QStringLiteral("sh")<<QStringLiteral("i")<<QStringLiteral("e")<<QStringLiteral("ju")<<QStringLiteral("ja");
+    for (i=0; i < str.size(); ++i){
+        if ( validChars.contains(str[i]) ){
+            fn = fn + str[i];
+        }else if (str[i] == ' '){  //replace spaces
+            fn = fn + QLatin1String(" ");
+        }else if (str[i] == '?'){  //replace ?
+            fn = fn + QLatin1String(".");
+        }else if (str[i] == '*'){  //replace *
+            fn = fn + QLatin1String(".");
+        }else if (str[i] == '~'){  //replace ~
+            fn = fn + QLatin1String(".");
+        }else{
+            rU = rusUpper.indexOf(str[i]);
+            rL = rusLower.indexOf(str[i]);
+            if (rU >= 0)
+                fn = fn + latUpper[rU];
+            else if (rL >= 0)
+                fn = fn + latLower[rL];
+        }
+    }
+    if (fn.isEmpty() )
+        fn = QStringLiteral("file");
+    return fn;
+}
+
+QNetworkProxy proxy;
+void setProxy()
+{
+    proxy.setPort(options.nProxyPort);
+    proxy.setHostName(options.sProxyHost);
+    proxy.setPassword(options.sProxyPassword);
+    proxy.setUser(options.sProxyUser);
+    switch(options.nProxyType)
+    {
+    case 0:
+        proxy.setType(QNetworkProxy::NoProxy);
+        break;
+    case 1:
+        proxy.setType(QNetworkProxy::Socks5Proxy);
+        break;
+    case 2:
+        proxy.setType(QNetworkProxy::HttpProxy);
+        break;
+    }
+    QNetworkProxy::setApplicationProxy(proxy);
+}
+
+QSharedPointer<QSettings> GetSettings(bool bReopen)
+{
+    static QSharedPointer<QSettings> pSettings;
+    if(bReopen || !pSettings)
+    {
+        QString sFile = QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg");
+        if(QFile::exists(sFile)){
+            pSettings = QSharedPointer<QSettings> (new QSettings(sFile, QSettings::IniFormat));
+        }else
+            pSettings = QSharedPointer<QSettings> (new QSettings());
+        #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        pSettings->setIniCodec("UTF-8");
+        #endif
+    }
+    return pSettings;
 }

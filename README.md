@@ -2,7 +2,8 @@
 freeLib - каталогизатор для библиотек LibRusEc и Flibusta
 
 Это форк общедоступного freeLib 5.0 , разработка которого прекращена. 
-![screenshot](./freeLib/doc/screenshot.png)
+![screenshot](./freeLib/doc/screenshot.png#gh-light-mode-only)
+![screenshot](./freeLib/doc/screenshot-dark.png#gh-dark-mode-only)
 * Создание собственных библиотек на основе файлов FB2(.ZIP), EPUB, FBD.
 * Конвертация в форматы AZW3 (KF8), MOBI, MOBI7 (KF7), EPUB.
 * Работа с несколькими библиотеками.
@@ -20,8 +21,11 @@ freeLib - каталогизатор для библиотек LibRusEc и Flibu
 
 Установить необходимые компоненты:
 ```
-sudo apt update
-sudo apt-get install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev
+sudo apt update && sudo apt-get install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev
+```
+или в Ubuntu ≥ 22.04 можно установить Qt6:
+```
+sudo apt update && sudo apt-get install git cmake build-essential qt6-base-dev libqt6core5compat6-dev zlib1g-dev
 ```
 Скачать исходники программы:
 ```

@@ -10,10 +10,6 @@
 #define AppName  QStringLiteral("freeLib")
 #define OrgName  QStringLiteral("freeLibOrg")
 
-extern QCommandLineParser CMDparser;
-
-QSettings* GetSettings(bool reopen=false);
-
 struct tag
 {
     QString name;
@@ -29,8 +25,6 @@ extern QList<tag> tag_list;
 
 QPixmap GetTag(QColor color,int size);
 void SetLocale(const QString &sLocale);
-QString Transliteration(QString str);
-void setProxy();
 QString decodeStr(const QString &str);
 bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
 QString RelativeToAbsolutePath(QString path);

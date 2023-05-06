@@ -9,13 +9,9 @@
 #include <QDesktopServices>
 #include <QTextBrowser>
 
-#include "quazip/quazip/quazip.h"
-#include "SmtpClient/src/smtpclient.h"
-
 #include "librariesdlg.h"
 #include "settingsdlg.h"
 #include "exportdlg.h"
-#include "exportthread.h"
 #include "aboutdialog.h"
 #include "tagdialog.h"
 #include "bookeditdlg.h"
@@ -23,9 +19,10 @@
 #include "genresortfilterproxymodel.h"
 #include "library.h"
 #include "starsdelegate.h"
-#include "utilites.h"
 #include "opds_server.h"
 #include "statisticsdialog.h"
+#include "common.h"
+#include "utilites.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
 QString sizeToString(uint size)
@@ -63,7 +60,7 @@ MainWindow::MainWindow(QWidget *parent) :
     trIcon = nullptr;
     error_quit = false;
 
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
 
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
@@ -95,7 +92,6 @@ MainWindow::MainWindow(QWidget *parent) :
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
     ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
     ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QLatin1String("pen.svg"))));
     ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
@@ -269,7 +265,7 @@ void MainWindow::UpdateTags()
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
 
     QButtonGroup *group = new QButtonGroup(this);
@@ -572,7 +568,7 @@ void MainWindow::setTag(uint idTag, uint id, QList<uint> &listIdTags,  QString s
 
 void MainWindow::tag_select(int index)
 {
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     if(ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toInt() == -1)
     {
         const bool wasBlocked = ui->TagFilter->blockSignals(true);
@@ -594,7 +590,7 @@ void MainWindow::tag_select(int index)
 
 void MainWindow::SaveLibPosition()
 {
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     switch (ui->tabWidget->currentIndex()) {
     case TabAuthors:
         settings->setValue(QStringLiteral("filter_set"), ui->searchAuthor->text());
@@ -614,7 +610,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
         delete pHelpDlg;
     if(options.bStorePosition)
         SaveLibPosition();
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     settings->beginGroup(QStringLiteral("Columns"));
     if(bTreeView_){
         settings->setValue(QStringLiteral("headersTree"), ui->Books->header()->saveState());
@@ -986,7 +982,7 @@ void MainWindow::SelectLibrary()
 
     QAction* action = qobject_cast<QAction*>(sender());
     SaveLibPosition();
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     idCurrentLib = action->data().toUInt();
     settings->setValue(QStringLiteral("LibID"), idCurrentLib);
 
@@ -1034,7 +1030,7 @@ void MainWindow::SelectGenre()
     }
     idCurrentGenre_ = idGenre;
     FillListBooks(listBooks,0);
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     if(options.bStorePosition){
         settings->setValue(QStringLiteral("current_genre_id"), idCurrentGenre_);
     }
@@ -1064,7 +1060,7 @@ void MainWindow::SelectSeria()
 
     idCurrentSerial_= idSerial;
     if(options.bStorePosition){
-        QSettings *settings = GetSettings();
+        auto settings = GetSettings();
         settings->setValue(QStringLiteral("current_serial_id"), idSerial);
     }
 }
@@ -1083,7 +1079,7 @@ void MainWindow::SelectAuthor()
     QList<uint> booksId = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
     FillListBooks(booksId,idCurrentAuthor_);
     if(options.bStorePosition){
-        QSettings *settings = GetSettings();
+        auto settings = GetSettings();
         settings->setValue(QStringLiteral("current_author_id"),idCurrentAuthor_);
     }
 }
@@ -1204,7 +1200,7 @@ void MainWindow::UpdateBooks()
     ui->findLanguage->addItem(QStringLiteral("*"), -1);
     ui->findLanguage->setCurrentIndex(0);
 
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     QString sCurrentLanguage = settings->value(QStringLiteral("BookLanguage"), QStringLiteral("*")).toString();
     for(int iLang = 0; iLang<currentLib.vLaguages.size(); iLang++){
         QString sLanguage = currentLib.vLaguages[iLang].toUpper();
@@ -1505,7 +1501,7 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
 void MainWindow::ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide)
 {
     ui->Books->setColumnHidden(nColumn, bHide);
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     settings->beginGroup(QStringLiteral("Columns"));
     settings->setValue(sSetting, !bHide);
     settings->endGroup();
@@ -1977,7 +1973,7 @@ void MainWindow::UpdateExportMenu()
     ui->btnExport->defaultAction()->setFont(font);
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("tablet"), QIcon(sIconsPath + QLatin1String("streamline.svg"))));
+    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("document-send"), QIcon(sIconsPath + QLatin1String("send.svg"))));
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);
 }
 
@@ -1993,7 +1989,7 @@ void MainWindow::ExportAction()
 void MainWindow::onLanguageFilterChanged(int index)
 {
     QString sLanguage = ui->language->itemText(index);
-    QSettings *settings = GetSettings();
+    auto settings = GetSettings();
     settings->setValue(QStringLiteral("BookLanguage"), sLanguage);
     idCurrentLanguage_ = ui->language->itemData(index).toInt();
 
@@ -2035,7 +2031,7 @@ void MainWindow::onTreeView()
     if(!bTreeView_){
         bTreeView_ = true;
         FillListBooks();
-        QSettings *settings = GetSettings();
+        auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), true);
         aHeadersList_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersTree_);
@@ -2050,7 +2046,7 @@ void MainWindow::onListView()
     if(bTreeView_){
         bTreeView_ = false;
         FillListBooks();
-        QSettings *settings = GetSettings();
+        auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), false);
         aHeadersTree_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersList_);
