@@ -3,8 +3,11 @@ configure_file(git-info.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/git-info.h)
 set(QT_COMPONENTS Core Network Widgets Gui Sql Xml)
 
 find_package(QT NAMES Qt6 Qt5 QUIET COMPONENTS Core)
-message(STATUS "Found Qt ${QT_VERSION_MAJOR} VERSION}")
-set(FREELIB_QT_MAJOR_VERSION ${QT_VERSION_MAJOR} CACHE STRING "Qt version to use (5 or 6), defaults to ${QT_VERSION_MAJOR}")
+message(STATUS "Found Qt ${QT_VERSION_MAJOR} VERSION")
+if(NOT DEFINED FREELIB_QT_MAJOR_VERSION)
+    set(FREELIB_QT_MAJOR_VERSION ${QT_VERSION_MAJOR} CACHE STRING "Qt version to use (5 or 6), defaults to ${QT_VERSION_MAJOR}")
+endif()
+message(STATUS "FREELIB_QT_MAJOR_VERSION: ${FREELIB_QT_MAJOR_VERSION}")
 
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
     find_package(QT NAMES Qt6 REQUIRED)
@@ -114,23 +117,16 @@ if(CMAKE_BUILD_TYPE STREQUAL "Debug")
     endforeach( file_i )
 endif()
 
-if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
-    target_link_libraries(freelib PRIVATE
-        Qt${QT_VERSION_MAJOR}::Widgets
-        Qt${QT_VERSION_MAJOR}::Network
-        Qt${QT_VERSION_MAJOR}::Sql
-        Qt${QT_VERSION_MAJOR}::Xml
-        Qt${QT_VERSION_MAJOR}::HttpServer
-        QuaZip::QuaZip)
-else()
-    target_link_libraries(freelib PRIVATE
-        Qt5::Widgets
-        Qt5::Network
-        Qt5::Sql
-        Qt5::Xml
-        QuaZip::QuaZip)
-endif()
+target_link_libraries(freelib PRIVATE
+    Qt${QT_VERSION_MAJOR}::Widgets
+    Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::Sql
+    Qt${QT_VERSION_MAJOR}::Xml
+    QuaZip::QuaZip)
 
+if(QT_VERSION_MAJOR EQUAL 6 AND QT_VERSION_MINOR GREATER_EQUAL 4)
+    target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
+endif()
 
 set_target_properties(freelib PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
