@@ -48,8 +48,6 @@ QString sizeToString(uint size)
 }
 #endif
 
-
-extern opds_server *pOpds;
 extern bool bTray;
 
 MainWindow::MainWindow(QWidget *parent) :
@@ -216,7 +214,10 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->header()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->Books->header(), &QWidget::customContextMenuRequested, this, &MainWindow::HeaderContextMenu);
 
-    pOpds->server_run();
+    if(options.bOpdsEnable){
+        pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
+        pOpds_->server_run();
+    }
     FillLibrariesMenu();
     UpdateExportMenu();
 
@@ -650,7 +651,9 @@ void MainWindow::Settings()
            options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || options.sOpdsUser != pDlg->options_.sOpdsUser ||
            options.sOpdsPassword != pDlg->options_.sOpdsPassword)
         {
-            pOpds->server_run();
+            if(pOpds_ == nullptr && options.bOpdsEnable)
+                pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
+            pOpds_->server_run();
         }
         UpdateExportMenu();
         resizeEvent(nullptr);

@@ -23,7 +23,6 @@
 uint idCurrentLib;
 bool bTray;
 Options options;
-opds_server *pOpds;
 
 bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
 {
@@ -420,8 +419,9 @@ int main(int argc, char *argv[])
 
     MainWindow *pMainWindow = nullptr;
 
-    pOpds = new opds_server(a);
+    std::unique_ptr<opds_server> pOpds;
     if(bServer){
+        pOpds = std::unique_ptr<opds_server>( new opds_server(a) );
         loadGenres();
         loadLibrary(idCurrentLib);
         options.bOpdsEnable = true;
