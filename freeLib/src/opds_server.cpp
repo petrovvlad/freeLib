@@ -822,14 +822,10 @@ QDomElement opds_server::docHeaderOPDS()
 
 SLib& opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLibUrl)
 {
-    if(idLib > 0){
-        if(pLibUrl != nullptr)
-            *pLibUrl = sTypeServer +u"_"_s + QString::number(idLib);
-    }else{
-        if(pLibUrl != nullptr)
-            *pLibUrl = sTypeServer;
+    if(idLib == 0)
         idLib = idCurrentLib;
-    }
+    if(pLibUrl != nullptr)
+        *pLibUrl = sTypeServer +u"_"_s + QString::number(idLib);
     SLib &lib = mLibs[idLib];
     if(!lib.bLoaded)
         loadLibrary(idLib);
