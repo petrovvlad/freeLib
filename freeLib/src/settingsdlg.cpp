@@ -265,7 +265,7 @@ void SettingsDlg::reject()
 {
     // Возврат к исхдному языку интерфеса.
     if(options_.sUiLanguageName != options.sUiLanguageName){
-        SetLocale(options.sUiLanguageName);
+        ::setLocale(options.sUiLanguageName);
         emit ChangingLanguage();
     }
     // Возврат к исхдному алфавиту.
@@ -320,7 +320,7 @@ void SettingsDlg::ChangePort(int i)
 void SettingsDlg::ChangeLanguage()
 {
     options_.sUiLanguageName = ui->Language->currentData().toString();
-    SetLocale(options_.sUiLanguageName);
+    ::setLocale(options_.sUiLanguageName);
     ui->retranslateUi(this);
     emit ChangingLanguage();
 }

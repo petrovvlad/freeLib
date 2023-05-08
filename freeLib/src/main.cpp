@@ -2,18 +2,13 @@
 #include <iostream>
 #include <QApplication>
 #include <QNetworkProxy>
-#include <QLocale>
-#include <QTranslator>
-#include <QLibraryInfo>
 #include <QSplashScreen>
 #include <QPainter>
 #include <QStringBuilder>
 #include <QDir>
-#include <QMessageBox>
 #include <QSqlError>
 #include <QThread>
 #include <QString>
-#include <QFile>
 
 #include "quazip/quazip/quazip.h"
 
@@ -26,9 +21,6 @@
 #include "importthread.h"
 
 uint idCurrentLib;
-QTranslator* translator;
-QTranslator* translator_qt;
-QList<tag> tag_list;
 bool bTray;
 QSplashScreen *splash;
 Options options;
@@ -43,71 +35,6 @@ bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
         result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     }
     return result;
-}
-
-void SetLocale(const QString &sLocale)
-{
-    setlocale(LC_ALL, (sLocale + QLatin1String(".UTF-8")).toLatin1().data());
-    QLocale::setDefault(QLocale(sLocale));
-
-    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-
-    if(translator)
-    {
-        QApplication::removeTranslator(translator);
-    }
-    if(translator_qt)
-    {
-        QApplication::removeTranslator(translator_qt);
-    }
-
-    if(translator == nullptr)
-        translator = new QTranslator();
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.left(2));
-#else
-    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.left(2));
-#endif
-    QString sQmFileFull = QApplication::applicationDirPath() + sQmFile;
-    if(!QFile::exists(sQmFileFull))
-            sQmFileFull = FREELIB_DATA_DIR + sQmFile;
-    if(translator->load(sQmFileFull))
-    {
-        QApplication::installTranslator(translator);
-    }
-    else
-    {
-        delete translator;
-        translator = nullptr;
-    }
-
-    if(translator_qt == nullptr)
-        translator_qt = new QTranslator();
-    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale),
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
-#else
-        QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
-#endif
-    {
-        QApplication::installTranslator(translator_qt);
-    }
-    else
-    {
-        delete translator_qt;
-        translator_qt = nullptr;
-    }
-
-    tag_list.clear();
-    tag_list<<
-               tag(QApplication::translate("SettingsDlg", "Top level captions"), QStringLiteral(".h0"), QStringLiteral("top_caption_font"), 140)<<
-               tag(QApplication::translate("SettingsDlg", "Captions"), QStringLiteral(".h1,.h2,.h3,.h4,.h5,.h6"), QStringLiteral("caption_font"), 120)<<
-               tag(QApplication::translate("SettingsDlg", "Dropcaps"), QStringLiteral("span.dropcaps"), QStringLiteral("dropcaps_font"), 300)<<
-               tag(QApplication::translate("SettingsDlg", "Footnotes"), QStringLiteral(".inlinenote,.blocknote"), QStringLiteral("footnotes_font"), 80)<<
-               tag(QApplication::translate("SettingsDlg", "Annotation"), QStringLiteral(".annotation"), QStringLiteral("annotation_font"), 100)<<
-               tag(QApplication::translate("SettingsDlg", "Poems"), QStringLiteral(".poem"), QStringLiteral("poem_font"), 100)<<
-               tag(QApplication::translate("SettingsDlg", "Epigraph"), QStringLiteral(".epigraph"), QStringLiteral("epigraph_font"), 100)<<
-               tag(QApplication::translate("SettingsDlg", "Book"), QStringLiteral("body"), QStringLiteral("body_font"), 100);
 }
 
 void UpdateLibs()
@@ -185,8 +112,6 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(resource);
     bool bServer = false;
     bTray = false;
-    translator = nullptr;
-    translator_qt = nullptr;
     QCoreApplication *a;
     QString cmdparam;
     
@@ -229,7 +154,7 @@ int main(int argc, char *argv[])
                 UpdateLibs();
 
 
-                SetLocale(options.sUiLanguageName);
+                setLocale(options.sUiLanguageName);
 
                 uint nId = 0;
 
@@ -461,7 +386,7 @@ int main(int argc, char *argv[])
 
     auto  settings = GetSettings();
     options.Load(settings);
-    SetLocale(options.sUiLanguageName);
+    setLocale(options.sUiLanguageName);
     if(options.vExportOptions.isEmpty())
         options.setExportDefault();
     
