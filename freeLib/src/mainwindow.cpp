@@ -49,7 +49,6 @@ QString sizeToString(uint size)
 #endif
 
 
-extern QSplashScreen *splash;
 extern opds_server *pOpds;
 extern bool bTray;
 

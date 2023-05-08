@@ -22,7 +22,6 @@
 
 uint idCurrentLib;
 bool bTray;
-QSplashScreen *splash;
 Options options;
 opds_server *pOpds;
 
@@ -396,13 +395,14 @@ int main(int argc, char *argv[])
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
 
+    std::unique_ptr<QSplashScreen> splash;
     if(!bServer && options.bShowSplash){
         QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a)->devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
         painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, QStringLiteral(FREELIB_VERSION));
-        splash = new QSplashScreen(pixmap);
+        splash = std::unique_ptr<QSplashScreen>(new QSplashScreen(pixmap));
 #ifdef Q_OS_LINUX
         splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
 #endif
