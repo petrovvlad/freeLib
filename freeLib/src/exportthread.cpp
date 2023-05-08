@@ -16,7 +16,6 @@
 #include "SmtpClient/src/smtpclient.h"
 #include "SmtpClient/src/mimeattachment.h"
 #include "SmtpClient/src/mimetext.h"
-#include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 
 #include "fb2mobi/fb2mobi.h"

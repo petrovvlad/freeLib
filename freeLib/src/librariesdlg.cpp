@@ -11,11 +11,8 @@
 #include <QSqlError>
 #include <qmessagebox.h>
 
-#include "quazip/quazip/quazip.h"
 #include "exportdlg.h"
 #include "utilites.h"
-
-bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
 
 LibrariesDlg::LibrariesDlg(QWidget *parent) :
     QDialog(parent),

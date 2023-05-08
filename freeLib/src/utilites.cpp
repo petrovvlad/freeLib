@@ -339,3 +339,14 @@ void setLocale(const QString &sLocale)
         tag(QApplication::translate("SettingsDlg", "Epigraph"), QStringLiteral(".epigraph"), QStringLiteral("epigraph_font"), 100)<<
         tag(QApplication::translate("SettingsDlg", "Book"), QStringLiteral("body"), QStringLiteral("body_font"), 100);
 }
+
+bool setCurrentZipFileName(QuaZip *zip, const QString &name)
+{
+    bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
+    if(!result)
+    {
+        zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
+        result = zip->setCurrentFile(name, QuaZip::csInsensitive);
+    }
+    return result;
+}

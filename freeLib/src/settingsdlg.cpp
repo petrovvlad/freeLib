@@ -6,9 +6,7 @@
 #include <QStringBuilder>
 #include <QMessageBox>
 
-#include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
-
 #include "exportframe.h"
 #include "config-freelib.h"
 #include "common.h"
@@ -677,7 +675,7 @@ void SettingsDlg::onBtnOpenExportClicked()
 
             {
                 QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/") + fi.fileName();
-                SetCurrentZipFileName(&zip, ffile);
+                setCurrentZipFileName(&zip, ffile);
                 QuaZipFile zip_file(&zip);
                 zip_file.open(QIODevice::ReadOnly);
                 QFile font_file(font_name);
@@ -691,7 +689,7 @@ void SettingsDlg::onBtnOpenExportClicked()
         }
     }
 
-    SetCurrentZipFileName(&zip, QStringLiteral("export.ini"));
+    setCurrentZipFileName(&zip, QStringLiteral("export.ini"));
     QuaZipFile zip_file(&zip);
     zip_file.open(QIODevice::ReadOnly);
     QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini");

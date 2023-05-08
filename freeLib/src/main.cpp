@@ -10,11 +10,8 @@
 #include <QThread>
 #include <QString>
 
-#include "quazip/quazip/quazip.h"
-
 #include "mainwindow.h"
 #include "aboutdialog.h"
-#include "common.h"
 #include "utilites.h"
 #include "config-freelib.h"
 #include "opds_server.h"
@@ -23,17 +20,6 @@
 uint idCurrentLib;
 bool bTray;
 Options options;
-
-bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
-{
-    bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    if(!result)
-    {
-        zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-        result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    }
-    return result;
-}
 
 void UpdateLibs()
 {
@@ -80,7 +66,6 @@ QString parseOption(int argc, char* argv[], const char* option)
     }
     return sRet;
 }
-
 
 void cmdhelp(){
 

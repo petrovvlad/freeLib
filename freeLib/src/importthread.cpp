@@ -10,13 +10,11 @@
 #include <QDebug>
 #include <QDir>
 
-#include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
 #include "options.h"
 #include "utilites.h"
 
 QString RelativeToAbsolutePath(QString path);
-bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
 
 ImportThread::ImportThread(QObject *parent) :
     QObject(parent)
@@ -261,7 +259,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
     QuaZip zip(&buf);
     zip.open(QuaZip::mdUnzip);
     QBuffer info;
-    SetCurrentZipFileName(&zip, QStringLiteral("META-INF/container.xml"));
+    setCurrentZipFileName(&zip, QStringLiteral("META-INF/container.xml"));
     QuaZipFile zip_file(&zip);
     zip_file.open(QIODevice::ReadOnly);
     info.setData(zip_file.readAll());
@@ -288,7 +286,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
                     QBuffer opf_buf;
                     QFileInfo fi(path);
                     rel_path = fi.path();
-                    SetCurrentZipFileName(&zip,path);
+                    setCurrentZipFileName(&zip,path);
                     zip_file.open(QIODevice::ReadOnly);
                     opf_buf.setData(zip_file.readAll());
                     zip_file.close();
@@ -437,7 +435,7 @@ void ImportThread::importFB2(const QString &path, int &count)
                     if(zip_fi.name.right(3).toLower() == QLatin1String("fb2"))
                     {
                         //uz.extractFile(str.filename,&buffer,UnZip::SkipPaths,16*1024);
-                        SetCurrentZipFileName(&uz, zip_fi.name);
+                        setCurrentZipFileName(&uz, zip_fi.name);
                         zip_file.open(QIODevice::ReadOnly);
                         buffer.setData(zip_file.read(16*1024));
                         zip_file.close();
@@ -445,7 +443,7 @@ void ImportThread::importFB2(const QString &path, int &count)
                     }
                     else if(zip_fi.name.right(3).toLower() == QLatin1String("epub"))
                     {
-                        SetCurrentZipFileName(&uz, zip_fi.name);
+                        setCurrentZipFileName(&uz, zip_fi.name);
                         zip_file.open(QIODevice::ReadOnly);
                         buffer.setData(zip_file.readAll());
                         readEPUB(buffer.data(), str.name, file_name, str.uncompressedSize);
@@ -456,9 +454,9 @@ void ImportThread::importFB2(const QString &path, int &count)
                         if(!fi.completeBaseName().isEmpty() && fi.completeBaseName().at(0) != '.')
                         {
                             QString fbd = fi.path() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".fbd");
-                            if(SetCurrentZipFileName(&uz, fbd))
+                            if(setCurrentZipFileName(&uz, fbd))
                             {
-                                SetCurrentZipFileName(&uz, zip_fi.name);
+                                setCurrentZipFileName(&uz, zip_fi.name);
                                 zip_file.open(QIODevice::ReadOnly);
                                 buffer.setData(zip_file.readAll());
                                 readFB2(buffer.data(), str.name, file_name, str.uncompressedSize);
@@ -540,7 +538,7 @@ void ImportThread::process()
         return;
     }
 
-    if(SetCurrentZipFileName(&uz, QStringLiteral("VERSION.INFO")))
+    if(setCurrentZipFileName(&uz, QStringLiteral("VERSION.INFO")))
     {
         QBuffer outbuff;
         QuaZipFile zip_file(&uz);
@@ -601,7 +599,7 @@ void ImportThread::process()
             for(unsigned int i=0; i<sizeof(field_index)/sizeof(int); i++)
                 field_index[i] = -1;
             QBuffer outbuff;
-            SetCurrentZipFileName(&uz, str);
+            setCurrentZipFileName(&uz, str);
             zip_file.open(QIODevice::ReadOnly);
             outbuff.setData(zip_file.readAll());
             zip_file.close();
@@ -674,7 +672,7 @@ void ImportThread::process()
                 continue;
         }
         QBuffer outbuff;
-        SetCurrentZipFileName(&uz, str);
+        setCurrentZipFileName(&uz, str);
         zip_file.open(QIODevice::ReadOnly);
         outbuff.setData(zip_file.readAll());
         zip_file.close();
@@ -817,7 +815,7 @@ void ImportThread::process()
                                 qDebug()<<("Error open archive!")<<" "<<sArchive;
                         }
                         QuaZipFile zip_file(&archiveFile);
-                        SetCurrentZipFileName(&archiveFile, sFile);
+                        setCurrentZipFileName(&archiveFile, sFile);
                         if(!zip_file.open(QIODevice::ReadOnly))
                             qDebug()<<"Error open file: "<<sFile;
                         buffer.setData(zip_file.read(16*1024));

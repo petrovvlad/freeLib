@@ -5,6 +5,8 @@
 #include <QSqlDatabase>
 #include <QSettings>
 
+#include "quazip/quazip/quazip.h"
+
 struct tag
 {
     QString name;
@@ -25,6 +27,7 @@ QString Transliteration(QString str);
 void setProxy();
 QSharedPointer<QSettings> GetSettings(bool bReopen = false);
 void setLocale(const QString &sLocale);
+bool setCurrentZipFileName(QuaZip *zip, const QString &name);
 
 
 #endif // UTILITES_H
