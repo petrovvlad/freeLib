@@ -907,7 +907,7 @@ void MainWindow::StartSearch()
     int idLanguage = ui->findLanguage->currentData().toInt();
 
     SLib& lib = mLibs[idCurrentLib];
-    QList<uint> listBooks;
+    listBooks_.clear();
     int nCount = 0;
     auto iBook = lib.mBooks.constBegin();
     QList<uint> listPosFound;
@@ -956,13 +956,13 @@ void MainWindow::StartSearch()
         {
             if(idGenre == 0){
                 nCount++;
-                listBooks << iBook.key();
+                listBooks_ << iBook.key();
             }else
             {
                 foreach (uint id, iBook->listIdGenres) {
                    if(id == idGenre){
                        nCount++;
-                       listBooks << iBook.key();
+                       listBooks_ << iBook.key();
                        break;
                    }
                 }
@@ -973,7 +973,9 @@ void MainWindow::StartSearch()
             break;
     }
     ui->find_books->setText(QString::number(nCount));
-    FillListBooks(listBooks, 0);
+
+
+    FillListBooks(listBooks_, 0);
 
     QApplication::restoreOverrideCursor();
 }
@@ -1016,14 +1018,14 @@ void MainWindow::SelectGenre()
         return;
     QTreeWidgetItem* cur_item = ui->GenreList->selectedItems()[0];
     uint idGenre = cur_item->data(0, Qt::UserRole).toUInt();
-    QList<uint> listBooks;
+    listBooks_.clear();
     SLib& lib = mLibs[idCurrentLib];
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
             foreach (uint iGenre, iBook->listIdGenres) {
                 if(iGenre == idGenre){
-                    listBooks << iBook.key();
+                    listBooks_ << iBook.key();
                     break;
                 }
             }
@@ -1031,7 +1033,7 @@ void MainWindow::SelectGenre()
         ++iBook;
     }
     idCurrentGenre_ = idGenre;
-    FillListBooks(listBooks,0);
+    FillListBooks(listBooks_, 0);
     auto settings = GetSettings();
     if(options.bStorePosition){
         settings->setValue(QStringLiteral("current_genre_id"), idCurrentGenre_);
@@ -1049,16 +1051,16 @@ void MainWindow::SelectSeria()
         return;
     QListWidgetItem* cur_item = ui->SeriaList->selectedItems().at(0);
     uint idSerial = cur_item->data(Qt::UserRole).toUInt();
-    QList<uint> listBooks;
+    listBooks_.clear();
     SLib& lib = mLibs[idCurrentLib];
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if(iBook->idSerial == idSerial && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
-            listBooks << iBook.key();
+            listBooks_ << iBook.key();
         }
         ++iBook;
     }
-    FillListBooks(listBooks, 0);
+    FillListBooks(listBooks_, 0);
 
     idCurrentSerial_= idSerial;
     if(options.bStorePosition){
@@ -1077,12 +1079,13 @@ void MainWindow::SelectAuthor()
         return;
     QListWidgetItem* cur_item =ui->AuthorList->selectedItems().at(0);
     idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
+    listBooks_.clear();
+    listBooks_ = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
+    FillListBooks(listBooks_, idCurrentAuthor_);
 
-    QList<uint> booksId = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
-    FillListBooks(booksId,idCurrentAuthor_);
     if(options.bStorePosition){
         auto settings = GetSettings();
-        settings->setValue(QStringLiteral("current_author_id"),idCurrentAuthor_);
+        settings->setValue(QStringLiteral("current_author_id"), idCurrentAuthor_);
     }
 }
 
@@ -1822,7 +1825,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                 }else
                     item_author = mAuthors[idAuthor];
 
-                if(idSerial>0){
+                if(idSerial > 0){
                     auto iSerial = mSerias.constFind(idSerial);
                     while(iSerial != mSerias.constEnd()){
                         item_seria = iSerial.value();
@@ -1856,7 +1859,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                 item_book->setIcon(0, getTagIcon(book.listIdTags));
             }
 
-            item_book->setText(0,book.sName);
+            item_book->setText(0, book.sName);
 
             item_book->setText(1, sAuthor);
 
@@ -2032,7 +2035,7 @@ void MainWindow::onTreeView()
     ui->btnListView->setChecked(false);
     if(!bTreeView_){
         bTreeView_ = true;
-        FillListBooks();
+        FillListBooks(listBooks_, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), true);
         aHeadersList_ = ui->Books->header()->saveState();
@@ -2047,7 +2050,7 @@ void MainWindow::onListView()
     ui->btnListView->setChecked(true);
     if(bTreeView_){
         bTreeView_ = false;
-        FillListBooks();
+        FillListBooks(listBooks_, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), false);
         aHeadersTree_ = ui->Books->header()->saveState();

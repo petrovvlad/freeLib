@@ -33,11 +33,12 @@ private:
     QSystemTrayIcon *trIcon;
     void UpdateBooks();
     void UpdateTags();
+    void SaveLibPosition();
+
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
     QMenu TagMenu;
     QObject* current_list_for_tag;
-    void SaveLibPosition();
     QMap<uint, QIcon> iconsTags_;
 
     void uncheck_books(QList<qlonglong> list);
@@ -66,6 +67,7 @@ private:
     uint idCurrentGenre_;
     uint idCurrentSerial_;
     uint idCurrentBook_;
+    QList<uint> listBooks_;
     CoverLabel *pCover;
     bool bTreeView_;
     QByteArray aHeadersTree_;
