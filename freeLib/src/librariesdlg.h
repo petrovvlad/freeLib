@@ -27,8 +27,8 @@ private:
     void SaveLibrary(const SLib &lib);
 
     Ui::LibrariesDlg *ui;
-    ImportThread *imp_tr;
-    QThread *thread;
+    ImportThread *pImportThread_;
+    QThread *pThread_;
     uint idCurrentLib_;
 
 private slots:
@@ -44,6 +44,7 @@ private slots:
     void reject();
     void ExistingLibsChanged();
     void ExportLib();
+    void addBook();
     void onComboboxLibraryChanged(int index);
     QString UniqueName(const QString &sName);
 

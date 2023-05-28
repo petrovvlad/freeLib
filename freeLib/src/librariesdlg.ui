@@ -219,6 +219,13 @@
       </spacer>
      </item>
      <item>
+      <widget class="QPushButton" name="btnAddBook">
+       <property name="text">
+        <string>Add…</string>
+       </property>
+      </widget>
+     </item>
+     <item>
       <widget class="QPushButton" name="btnExport">
        <property name="minimumSize">
         <size>
