@@ -173,8 +173,8 @@ void loadGenres()
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
     mGenre.clear();
-    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index FROM genre;"));
-    //                                   0   1     2          3
+    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index, keys FROM genre;"));
+    //                                   0   1     2          3           4
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
@@ -182,6 +182,8 @@ void loadGenres()
         SGenre &genre = mGenre[idGenre];
         genre.sName = query.value(1).toString();
         genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
+        QString sKeys = query.value(4).toString();
+        genre.listKeys = sKeys.split(';', Qt::SkipEmptyParts);
         genre.nSort = static_cast<ushort>(query.value(3).toUInt());
     }
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();

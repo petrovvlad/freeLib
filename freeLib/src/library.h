@@ -52,6 +52,7 @@ struct SSerial
 struct SGenre
 {
     QString sName;
+    QStringList listKeys;
     ushort idParrentGenre;
     ushort nSort;
 };
