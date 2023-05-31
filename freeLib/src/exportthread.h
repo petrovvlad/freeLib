@@ -14,7 +14,7 @@ public:
     void start(const QString &_export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author);
 
     void start(QString _export_dir, const QStringList &list_books, SendType send);
-    void start(qlonglong id_lib, const QString &path);
+    void start(uint idLib, const QString &path);
     QList<qlonglong> successful_export_books;
     bool loop_enable;
  signals:
@@ -26,8 +26,8 @@ private:
     QList<uint> book_list;
     SendType send_type;
     qlonglong IDauthor;
-    QString export_dir;
-    qlonglong ID_lib;
+    QString sExportDir_;
+    uint idLib_;
     const ExportOptions* pExportOptions_;
     void export_books();
     void export_lib();

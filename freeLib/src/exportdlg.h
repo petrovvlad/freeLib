@@ -17,7 +17,7 @@ public:
     explicit ExportDlg(QWidget *parent = 0);
     ~ExportDlg();
     void exec(const QList<uint> &list_books,SendType send, qlonglong id_author, const ExportOptions &exportOptions);
-    void exec(qlonglong id_lib, const QString &path);
+    void exec(uint idLib, const QString &path);
     int exec();
     QList<qlonglong> succesfull_export_books;
 private:
