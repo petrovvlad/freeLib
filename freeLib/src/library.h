@@ -30,6 +30,7 @@ struct SBook
     QDate date;
     QString sFormat;
     QString sFile;
+    QString sKeywords;
     QList<uint> listIdGenres;
     QList<uint> listIdAuthors;
     QList<uint> listIdTags;
