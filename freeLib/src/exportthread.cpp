@@ -1,4 +1,3 @@
-#define QT_USE_QSTRINGBUILDER
 #include "exportthread.h"
 
 #include <QApplication>
@@ -111,7 +110,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
     QString tmp_dir;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
         tmp_dir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    book_dir.mkpath(tmp_dir + QLatin1String("/freeLib"));
+    book_dir.mkpath(tmp_dir + QStringLiteral("/freeLib"));
 
     QStringList out_file;
     int i = 0;
@@ -141,7 +140,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
         current_out_file = conv.convert(out_file, idBook);
     }
 
-    QString book_file_name = fi.path() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".") + QFileInfo(current_out_file).suffix();
+    QString book_file_name = fi.path() % QLatin1String("/") % fi.completeBaseName() % QLatin1String(".") % QFileInfo(current_out_file).suffix();
 
     if(send_type == ST_Mail)
     {
@@ -252,17 +251,17 @@ void ExportThread::export_books()
             {
                 archive = book.sArchive.replace(QLatin1String(".inp"), QLatin1String(".zip"));
             }
-            file = book.sName + QLatin1String(".") + book.sFormat;
+            file = book.sName % QLatin1String(".") % book.sFormat;
             LibPath = RelativeToAbsolutePath(LibPath);
             archive = archive.replace('\\', '/');
             file = file.replace('\\', '/');
             if(archive.isEmpty())
             {
-                QDir().mkpath(QFileInfo(dir.absolutePath() + QLatin1String("/") + file).absolutePath());
-                QFile().copy(LibPath + QLatin1String("/") + file, dir.absolutePath() + QLatin1String("/") + file);
+                QDir().mkpath(QFileInfo(dir.absolutePath() % QLatin1String("/") % file).absolutePath());
+                QFile().copy(LibPath % QLatin1String("/") % file, dir.absolutePath() % QLatin1String("/") + file);
                 continue;
             }
-            QuaZip uz(LibPath + QLatin1String("/") + archive);
+            QuaZip uz(LibPath % QLatin1String("/") % archive);
             if(!uz.open(QuaZip::mdUnzip))
             {
                 qDebug()<<("Error open archive!")<<" "<<archive;
@@ -271,22 +270,22 @@ void ExportThread::export_books()
             if(uz.getEntriesCount() > 1)
             {
                 uz.close();
-                QString out_dir = dir.absolutePath() + QLatin1String("/") + archive.left( archive.length() - 4 );
+                QString out_dir = dir.absolutePath() % QLatin1String("/") % archive.left( archive.length() - 4 );
                 QDir().mkpath(out_dir);
                 QBuffer buff;
                 mLibs[idCurrentLib].getBookFile(idBook, &buff);
 
-                QFile::remove(out_dir + QLatin1String("/") + file);
+                QFile::remove(out_dir % QLatin1String("/") % file);
                 QFile outfile;
-                outfile.setFileName(out_dir + QLatin1String("/") + file);
+                outfile.setFileName(out_dir % QLatin1String("/") % file);
                 outfile.open(QFile::WriteOnly);
                 outfile.write(buff.data());
                 outfile.close();
             }
             else
             {
-                QDir().mkpath(QFileInfo(dir.absolutePath() + QLatin1String("/") + archive).absolutePath());
-                QFile().copy(LibPath + QLatin1String("/") + archive, dir.absolutePath() + QLatin1String("/") + archive);
+                QDir().mkpath(QFileInfo(dir.absolutePath() % QLatin1String("/") % archive).absolutePath());
+                QFile().copy(LibPath + QLatin1String("/") % archive, dir.absolutePath() % QLatin1String("/") % archive);
             }
             successful_export_books << idBook;
         }
@@ -354,11 +353,11 @@ void ExportThread::export_books()
                 file_name = pExportOptions_->sExportFileName;
                 if(file_name.isEmpty())
                     file_name = QLatin1String(ExportOptions::sDefaultEexpFileName);
-                file_name = mLibs[idCurrentLib].fillParams(file_name, idBook) + QLatin1String(".") + book.sFormat;
+                file_name = mLibs[idCurrentLib].fillParams(file_name, idBook) % QLatin1String(".") % book.sFormat;
                 if(pExportOptions_->bTransliteration)
                     file_name = Transliteration(file_name);
             }
-            file_name = dir.path() + QLatin1String("/") + file_name;
+            file_name = dir.path() % QLatin1String("/") % file_name;
         }
 
         if(convert(buffers, idCurrentLib, file_name, count, listBooks[0]))
@@ -402,26 +401,26 @@ void ExportThread::export_lib()
 {
     QString tmp_dir = QStringLiteral("freeLib");
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
-        tmp_dir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0) + QLatin1String("/freeLib");
-    QString impx_file = tmp_dir + QLatin1String("/freeLib.inp");
-    QString structure_file = tmp_dir + QLatin1String("/structure.info");
-    QString version_file = tmp_dir + QLatin1String("/version.info");
-    QString collection_file = tmp_dir + QLatin1String("/collection.info");
+        tmp_dir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0) + QStringLiteral("/freeLib");
+    QString impx_file = tmp_dir + QStringLiteral("/freeLib.inp");
+    QString structure_file = tmp_dir + QStringLiteral("/structure.info");
+    QString version_file = tmp_dir + QStringLiteral("/version.info");
+    QString collection_file = tmp_dir + QStringLiteral("/collection.info");
     QDir().mkpath(tmp_dir);
     QFile inpx(impx_file);
     QFile structure(structure_file);
     structure.open(QFile::WriteOnly);
     //structure.write(QStringLiteral("AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;INSNO;FILE;FOLDER;EXT;SIZE;LANG;DATE;DEL;KEYWORDS;CRC32;TAG;TAGAUTHOR;TAGSERIES;\r\n").toUtf8());
-    structure.write(QStringLiteral("AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;INSNO;FILE;FOLDER;EXT;SIZE;LANG;STARS;DATE;DEL;KEYWORDS;CRC32;\r\n").toUtf8());
+    structure.write(QStringLiteral("AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;FILE;FOLDER;EXT;SIZE;LANG;STARS;DATE;DEL;KEYWORDS;\r\n").toUtf8());
     structure.close();
     QFile version(version_file);
     version.open(QFile::WriteOnly);
-    version.write((QDate::currentDate().toString(QStringLiteral("dd.MM.yyyy")) + QLatin1String("\r\n")).toUtf8());
+    version.write((QDate::currentDate().toString(QStringLiteral("dd.MM.yyyy")) + QStringLiteral("\r\n")).toUtf8());
     version.close();
     QFile collection(collection_file);
     collection.open(QFile::WriteOnly);
-    collection.write((mLibs[idCurrentLib].name + QLatin1String("\r\n")).toUtf8());
-    collection.write((mLibs[idCurrentLib].name + QLatin1String("\r\n")).toUtf8());
+    collection.write((mLibs[idCurrentLib].name + QStringLiteral("\r\n")).toUtf8());
+    collection.write((mLibs[idCurrentLib].name + QStringLiteral("\r\n")).toUtf8());
     collection.write(QStringLiteral("0\r\n").toUtf8());
     collection.write(QStringLiteral("freeLib\r\n").toUtf8());
     collection.close();
@@ -439,21 +438,19 @@ void ExportThread::export_lib()
         QString sAuthors;
         for(qsizetype i=0; i<iBook->listIdAuthors.size(); i++){
             const SAuthor &author = lib.mAuthors[iBook->listIdAuthors[i]];
-            sAuthors += author.sLastName + "," + author.sFirstName + ","  + author.sMiddleName + ":";
+            sAuthors += author.sLastName % "," % author.sFirstName % ","  % author.sMiddleName % ":";
         }
-        QString sLine = (QStringLiteral("%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8\4%9").arg
-                        (
-                            sAuthors,                                                   //AUTHOR
-                            iBook->sName,                                               //TITLE
-                            iBook->idSerial !=0 ?lib.mSerials[iBook->idSerial].sName :QLatin1String(""),     //SERIES
-                            QString::number(iBook->numInSerial),                                            //SERNO
-                            mGenre[iBook->listIdGenres.constFirst()].listKeys.constFirst() + ":", //GENRE
-                            QString::number(iBook->idInLib),                                      //LIBID
-                            "",                                                                   //INSNO
-                            iBook->sFile,                                                         //FILE
-                            iBook->sArchive                                                       //FOLDER
-                        ) +
-                           QStringLiteral("\4%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8\r\n").arg
+        QString sLine = (QStringLiteral("%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8").arg(
+                             sAuthors,                                                   //AUTHOR
+                             iBook->sName,                                               //TITLE
+                             iBook->idSerial !=0 ?lib.mSerials[iBook->idSerial].sName :QLatin1String(""),     //SERIES
+                             QString::number(iBook->numInSerial),                                            //SERNO
+                             iBook->listIdGenres.size()>0 ?mGenre[iBook->listIdGenres.constFirst()].listKeys.constFirst() + QStringLiteral(":") :QLatin1String(""),//GENRE
+                             QString::number(iBook->idInLib),                                      //LIBID
+                             iBook->sFile,                                                         //FILE
+                             iBook->sArchive                                                       //FOLDER
+                             ) +
+                         QStringLiteral("\4%1\4%2\4%3\4%4\4%5\4%6\4%7\r\n").arg
                         (
                             iBook->sFormat,                         //EXT
                             QString::number(iBook->nSize),          //SIZE
@@ -461,8 +458,7 @@ void ExportThread::export_lib()
                             QString::number(iBook->nStars),         //STARS
                             iBook->date.toString(QStringLiteral("yyyy-MM-dd")),     //DATE
                             iBook->bDeleted ?"1" :"",                               //DEL
-                            iBook->sKeywords,                                       //KEYWORDS
-                            ""                                      //CRC32
+                            iBook->sKeywords                                        //KEYWORDS
                         )/*+
                         QStringLiteral("\4%1\4%2\4%3\r\n").arg
                         (
@@ -478,7 +474,7 @@ void ExportThread::export_lib()
             emit Progress( nCount * 100 / lib.mBooks.count(), nCount );
     }
     inpx.close();
-    QuaZip zip(sExportDir_ + QStringLiteral("/%1.inpx").arg(BuildFileName(mLibs[idCurrentLib].name)));
+    QuaZip zip(sExportDir_ + QStringLiteral("/%1.inpx").arg(BuildFileName(lib.name)));
     qDebug()<<zip.getZipName();
     qDebug()<<zip.open(QuaZip::mdCreate);
     QuaZipFile zip_file(&zip);
