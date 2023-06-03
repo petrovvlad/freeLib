@@ -39,11 +39,11 @@ private:
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     QHttpServerResponse FillPageHTTP(QList<uint> listBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor);
-    QString FillPageOPDS(QList<uint> listBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url/*bool bShowAuthor*/);
+    QString FillPageOPDS(QList<uint> listBooks, SLib &lib, const QString &sTitle, const QString &sId, const QString &sLibUrl, const QUrl &url);
 
     bool checkAuth(const QHttpServerRequest &request, QUrl &url);
     QDomElement docHeaderHTTP(const QString &sSesionQuery, const QString &sLibName, const QString &sLibUrl);
-    QDomElement docHeaderOPDS();
+    QDomElement docHeaderOPDS(const QString &sTitle, const QString &sID, const QString &sLibUrl, const QString &sSesionQuery);
 
     SLib& getLib(uint &idLib, const QString &sTypeServer = u"opds"_s, QString *pLibUrl = nullptr);
     QHttpServerResponse responseHTTP();
