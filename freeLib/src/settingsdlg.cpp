@@ -9,7 +9,6 @@
 #include "quazip/quazip/quazipfile.h"
 #include "exportframe.h"
 #include "config-freelib.h"
-#include "common.h"
 #include "utilites.h"
 
 
@@ -362,6 +361,7 @@ void SettingsDlg::btnOK()
     options.bShowSplash = !ui->splash->isChecked();
     options.bStorePosition = ui->store_pos->isChecked();
     options.nIconTray = ui->trayIcon->currentIndex();
+    options.nTrayColor = ui->tray_color->currentIndex();
     options.bCloseDlgAfterExport = ui->CloseExpDlg->isChecked();
     options.bUncheckAfterExport = ui->uncheck_export->isChecked();
     options.bExtendedSymbols = ui->extended_symbols->isChecked();

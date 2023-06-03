@@ -353,6 +353,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(QStringLiteral("no_splash"), !options.bShowSplash);
     pSettings->setValue(QStringLiteral("store_position"), options.bStorePosition);
     pSettings->setValue(QStringLiteral("tray_icon"), options.nIconTray);
+    pSettings->setValue(QStringLiteral("tray_color"), options.nTrayColor);
     pSettings->setValue(QStringLiteral("CloseExpDlg"),options.bCloseDlgAfterExport);
     pSettings->setValue(QStringLiteral("uncheck_export"),options.bUncheckAfterExport);
     pSettings->setValue(QStringLiteral("extended_symbols"), options.bExtendedSymbols);
