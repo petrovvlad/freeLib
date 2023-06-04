@@ -142,6 +142,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->searchSeries, &QLineEdit::textChanged, this, &MainWindow::onSerachSeriesChanded);
     connect(ui->actionAddLibrary, &QAction::triggered, this, &MainWindow::ManageLibrary);
     connect(ui->actionStatistics, &QAction::triggered, this, &MainWindow::onStatistics);
+    connect(ui->actionAddBooks, &QAction::triggered, this, &MainWindow::onAddBooks);
     connect(ui->btnLibrary, &QAbstractButton::clicked, this, &MainWindow::ManageLibrary);
     connect(ui->btnOpenBook, &QAbstractButton::clicked, this, &MainWindow::BookDblClick);
     connect(ui->btnOption, &QAbstractButton::clicked, this, &MainWindow::Settings);
@@ -983,6 +984,7 @@ void MainWindow::StartSearch()
 void MainWindow::SelectLibrary()
 {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+    QApplication::processEvents();
 
     QAction* action = qobject_cast<QAction*>(sender());
     SaveLibPosition();
@@ -1231,6 +1233,8 @@ void MainWindow::ManageLibrary()
     LibrariesDlg al(this);
     al.exec();
     if(al.bLibChanged){
+        QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         loadLibrary(idCurrentLib);
         UpdateTags();
         UpdateBooks();
@@ -1245,6 +1249,7 @@ void MainWindow::ManageLibrary()
         setWindowTitle(AppName + ((idCurrentLib==0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
         FillLibrariesMenu();
         FillGenres();
+        QGuiApplication::restoreOverrideCursor();
     }
 }
 
@@ -1252,6 +1257,64 @@ void MainWindow::onStatistics()
 {
     StatisticsDialog dlg;
     dlg.exec();
+}
+
+void MainWindow::onAddBooks()
+{
+    SLib &lib = mLibs[idCurrentLib];
+
+    QStringList listFiles = QFileDialog::getOpenFileNames(this, tr("Select books to add"), lib.path,
+                                                          tr("Books (*.fb2 *.epub *.zip)"), nullptr, QFileDialog::ReadOnly);
+    if(!listFiles.isEmpty()){
+        QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+
+        for(qsizetype i = 0 ; i < listFiles.size(); ++i) {
+            QString sFile = listFiles.at(i);
+            if(!sFile.startsWith(lib.path)){
+                //перенос файлов книг в папку библиотеки
+                QFileInfo fiSrc = QFileInfo(sFile);
+                QString baseName = fiSrc.baseName(); // получаем имя файла без расширения
+                QString extension = fiSrc.completeSuffix(); // получаем расширение файла
+                QFileInfo fiDst = QFileInfo(lib.path + "/" + baseName + "." + extension);
+                uint j = 1;
+                while(fiDst.exists()){
+                    QString sNewName = QStringLiteral("%1 (%2).%3").arg(baseName, QString::number(j), extension);
+                    fiDst = QFileInfo(lib.path + "/" + sNewName);
+                    j++;
+                }
+                QFile::copy(sFile, fiDst.absoluteFilePath());
+                listFiles[i] = fiDst.absoluteFilePath();
+            }
+        }
+        pThread_ = new QThread;
+        pImportThread_ = new ImportThread();
+        pImportThread_->init(idCurrentLib, lib, listFiles);
+        pImportThread_->moveToThread(pThread_);
+        connect(pThread_, &QThread::started, pImportThread_, &ImportThread::process);
+        connect(pImportThread_, &ImportThread::End, pThread_, &QThread::quit);
+        connect(pThread_, &QThread::finished, this, &MainWindow::addBooksFinished);
+        pThread_->start();
+    }
+}
+
+void MainWindow::addBooksFinished()
+{
+    pImportThread_->deleteLater();
+    pThread_->deleteLater();
+    loadLibrary(idCurrentLib);
+    UpdateBooks();
+    FillAuthors();
+    FillSerials();
+    FillGenres();
+    switch(ui->tabWidget->currentIndex()){
+    case TabAuthors:
+        onSerachAuthorsChanded(ui->searchAuthor->text());
+        break;
+    case TabSeries:
+        onSerachSeriesChanded(ui->searchSeries->text());
+        break;
+    }
+    QGuiApplication::restoreOverrideCursor();
 }
 
 void MainWindow::btnSearch()
@@ -1718,7 +1781,7 @@ void MainWindow::FillGenres()
     while(iGenre != mGenre.constEnd()){
         QTreeWidgetItem *item;
         if(iGenre->idParrentGenre == 0 && !mTopGenresItem.contains(iGenre.key())){
-            item=new QTreeWidgetItem(ui->GenreList);
+            item = new QTreeWidgetItem(ui->GenreList);
             item->setFont(0, bold_font);
             item->setText(0, iGenre->sName);
             item->setData(0, Qt::UserRole, iGenre.key());
@@ -1735,7 +1798,7 @@ void MainWindow::FillGenres()
                     itemTop->setExpanded(false);
                     mTopGenresItem[iGenre->idParrentGenre] = itemTop;
                 }
-                item=new QTreeWidgetItem(mTopGenresItem[iGenre->idParrentGenre]);
+                item = new QTreeWidgetItem(mTopGenresItem[iGenre->idParrentGenre]);
                 item->setText(0,QStringLiteral("%1 (%2)").arg(iGenre->sName).arg(mCounts[iGenre.key()]));
                 item->setData(0,Qt::UserRole, iGenre.key());
                 ui->s_genre->addItem(QLatin1String("   ") + iGenre->sName, iGenre.key());
@@ -2114,7 +2177,7 @@ void MainWindow::ChangingTrayIcon(int index, int color)
             trIcon->hide();
             trIcon->deleteLater();
         }
-        trIcon=nullptr;
+        trIcon = nullptr;
     }
     else
     {

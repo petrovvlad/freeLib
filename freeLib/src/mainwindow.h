@@ -14,6 +14,7 @@
 #include "options.h"
 #include "coverlabel.h"
 #include "opds_server.h"
+#include "importthread.h"
 
 namespace Ui {
 class MainWindow;
@@ -74,6 +75,8 @@ private:
     QByteArray aHeadersList_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
     std::unique_ptr<opds_server> pOpds_;
+    ImportThread *pImportThread_;
+    QThread *pThread_;
 
 protected:
     void showEvent(QShowEvent *ev);
@@ -92,6 +95,8 @@ private slots:
     void ExportAction();
     void ManageLibrary();
     void onStatistics();
+    void onAddBooks();
+    void addBooksFinished();
     void CheckBooks();
     void EditBooks();
     void Settings();

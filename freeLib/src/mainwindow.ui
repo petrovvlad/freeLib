@@ -910,7 +910,7 @@
      <x>0</x>
      <y>0</y>
      <width>1297</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">
@@ -929,6 +929,7 @@
     <addaction name="actionAddLibrary"/>
     <addaction name="actionStatistics"/>
     <addaction name="actionCheck_uncheck"/>
+    <addaction name="actionAddBooks"/>
     <addaction name="separator"/>
     <addaction name="separator"/>
     <addaction name="actionPreference"/>
@@ -1037,6 +1038,11 @@
   <action name="actionStatistics">
    <property name="text">
     <string>Statistics</string>
+   </property>
+  </action>
+  <action name="actionAddBooks">
+   <property name="text">
+    <string>Add books…</string>
    </property>
   </action>
  </widget>
