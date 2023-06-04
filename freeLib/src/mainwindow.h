@@ -31,7 +31,6 @@ public:
     
 private:
     Ui::MainWindow *ui;
-    QSystemTrayIcon *trIcon;
     void UpdateBooks();
     void UpdateTags();
     void SaveLibPosition();
@@ -63,6 +62,8 @@ private:
     QIcon getTagIcon(const QList<uint> &listTags);
 
 
+    QSystemTrayIcon *pTrayIcon_;
+    QMenu *pTrayMenu_;
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
     uint idCurrentGenre_;
@@ -79,8 +80,8 @@ private:
     QThread *pThread_;
 
 protected:
-    void showEvent(QShowEvent *ev);
-    void closeEvent(QCloseEvent *event);
+    void showEvent(QShowEvent *ev) override;
+    void closeEvent(QCloseEvent *event) override;
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
@@ -89,7 +90,7 @@ protected:
     void FillLibrariesMenu();
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
-    void changeEvent(QEvent *event);
+    void changeEvent(QEvent *event) override;
     void ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide);
 private slots:
     void ExportAction();

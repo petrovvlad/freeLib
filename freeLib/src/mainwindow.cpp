@@ -54,7 +54,8 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
-    trIcon = nullptr;
+    pTrayIcon_ = nullptr;
+    pTrayMenu_ = nullptr;
     error_quit = false;
 
     auto settings = GetSettings();
@@ -606,7 +607,10 @@ void MainWindow::SaveLibPosition()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-
+    if(pTrayIcon_)
+        delete pTrayIcon_;
+    if(pTrayMenu_)
+        delete pTrayMenu_;
     if(pHelpDlg != nullptr)
         delete pHelpDlg;
     if(options.bStorePosition)
@@ -631,6 +635,8 @@ void MainWindow::closeEvent(QCloseEvent *event)
         TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
     QDir(TempDir + QLatin1String("/freeLib/")).removeRecursively();
     QMainWindow::closeEvent(event);
+    if(!this->isVisible())
+        QApplication::quit();
 }
 
 void MainWindow::Settings()
@@ -639,7 +645,7 @@ void MainWindow::Settings()
     connect(pDlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
-    if(pDlg->exec()==QDialog::Accepted){
+    if(pDlg->exec() == QDialog::Accepted){
         if(options.bShowDeleted != pDlg->options_.bShowDeleted || options.bUseTag != pDlg->options_.bUseTag)
         {
             UpdateTags();
@@ -2172,23 +2178,30 @@ void MainWindow::ChangingTrayIcon(int index, int color)
         index = 2;
     if(index == 0)
     {
-        if(trIcon)
+        if(pTrayIcon_)
         {
-            trIcon->hide();
-            trIcon->deleteLater();
+            pTrayIcon_->hide();
+            pTrayIcon_->deleteLater();
+            pTrayMenu_->deleteLater();
         }
-        trIcon = nullptr;
+        pTrayIcon_ = nullptr;
+        pTrayMenu_ = nullptr;
     }
     else
     {
-        if(!trIcon)
+        if(!pTrayIcon_)
         {
-            trIcon = new QSystemTrayIcon(this);  //инициализируем объект
-            connect(trIcon, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
+            pTrayMenu_ = new QMenu;
+            QAction * quitAction = new QAction(tr("Quit"), this);
+            pTrayMenu_->addAction(quitAction);
+            pTrayIcon_ = new QSystemTrayIcon(this);  //инициализируем объект
+            pTrayIcon_->setContextMenu(pTrayMenu_);
+            connect(pTrayIcon_, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
+            connect(quitAction, &QAction::triggered, this, &QWidget::close);
         }
         QIcon icon(QStringLiteral(":/img/tray%1.png").arg(color));
-        trIcon->setIcon(icon);//.arg(app->devicePixelRatio()>=2?"@2x":"")));  //устанавливаем иконку
-        trIcon->show();
+        pTrayIcon_->setIcon(icon); //устанавливаем иконку
+        pTrayIcon_->show();
     }
 }
 
