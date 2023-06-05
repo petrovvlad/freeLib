@@ -21,7 +21,6 @@
 #include "starsdelegate.h"
 #include "opds_server.h"
 #include "statisticsdialog.h"
-#include "common.h"
 #include "utilites.h"
 
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
@@ -185,7 +184,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FillAlphabet(options.sAlphabetName);
     ExportBookListBtn(false);
 
-    setWindowTitle(AppName + ((idCurrentLib==0 || mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
+    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0 || mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
 
     ui->tabWidget->setCurrentIndex(nCurrentTab);
     switch (nCurrentTab) {
@@ -1012,7 +1011,7 @@ void MainWindow::SelectLibrary()
         break;
     }
 
-    setWindowTitle(AppName + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
+    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
     FillLibrariesMenu();
 
     QApplication::restoreOverrideCursor();
@@ -1252,7 +1251,7 @@ void MainWindow::ManageLibrary()
             onSerachSeriesChanded(ui->searchSeries->text());
             break;
         }
-        setWindowTitle(AppName + ((idCurrentLib==0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
+        setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
         FillLibrariesMenu();
         FillGenres();
         QGuiApplication::restoreOverrideCursor();

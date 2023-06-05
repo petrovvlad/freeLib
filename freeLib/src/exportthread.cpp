@@ -20,7 +20,6 @@
 #include "fb2mobi/fb2mobi.h"
 #include "library.h"
 #include "utilites.h"
-#include "common.h"
 
 QString ValidateFileName(QString str)
 {
@@ -157,7 +156,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
        EmailAddress to(pExportOptions_->sEmail, QLatin1String(""));
        msg.addRecipient(to);
        QString caption = pExportOptions_->sEmailSubject;
-       msg.setSubject(caption.isEmpty() ?AppName :caption);
+       msg.setSubject(caption.isEmpty() ?QStringLiteral("freeLib") :caption);
 
        QBuffer outbuff;
        QString FileName = current_out_file;
