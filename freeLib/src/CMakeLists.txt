@@ -24,7 +24,6 @@ find_package(ZLIB REQUIRED)
 
 set(PROJECT_SOURCES
         main.cpp
-        common.h
         mainwindow.cpp      mainwindow.h    mainwindow.ui
         library.cpp         library.h
         librariesdlg.cpp    librariesdlg.h  librariesdlg.ui

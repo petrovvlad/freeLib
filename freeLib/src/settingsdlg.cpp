@@ -6,12 +6,9 @@
 #include <QStringBuilder>
 #include <QMessageBox>
 
-#include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
-
 #include "exportframe.h"
 #include "config-freelib.h"
-#include "common.h"
 #include "utilites.h"
 
 
@@ -265,7 +262,7 @@ void SettingsDlg::reject()
 {
     // Возврат к исхдному языку интерфеса.
     if(options_.sUiLanguageName != options.sUiLanguageName){
-        SetLocale(options.sUiLanguageName);
+        ::setLocale(options.sUiLanguageName);
         emit ChangingLanguage();
     }
     // Возврат к исхдному алфавиту.
@@ -320,7 +317,7 @@ void SettingsDlg::ChangePort(int i)
 void SettingsDlg::ChangeLanguage()
 {
     options_.sUiLanguageName = ui->Language->currentData().toString();
-    SetLocale(options_.sUiLanguageName);
+    ::setLocale(options_.sUiLanguageName);
     ui->retranslateUi(this);
     emit ChangingLanguage();
 }
@@ -364,6 +361,7 @@ void SettingsDlg::btnOK()
     options.bShowSplash = !ui->splash->isChecked();
     options.bStorePosition = ui->store_pos->isChecked();
     options.nIconTray = ui->trayIcon->currentIndex();
+    options.nTrayColor = ui->tray_color->currentIndex();
     options.bCloseDlgAfterExport = ui->CloseExpDlg->isChecked();
     options.bUncheckAfterExport = ui->uncheck_export->isChecked();
     options.bExtendedSymbols = ui->extended_symbols->isChecked();
@@ -677,7 +675,7 @@ void SettingsDlg::onBtnOpenExportClicked()
 
             {
                 QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/") + fi.fileName();
-                SetCurrentZipFileName(&zip, ffile);
+                setCurrentZipFileName(&zip, ffile);
                 QuaZipFile zip_file(&zip);
                 zip_file.open(QIODevice::ReadOnly);
                 QFile font_file(font_name);
@@ -691,7 +689,7 @@ void SettingsDlg::onBtnOpenExportClicked()
         }
     }
 
-    SetCurrentZipFileName(&zip, QStringLiteral("export.ini"));
+    setCurrentZipFileName(&zip, QStringLiteral("export.ini"));
     QuaZipFile zip_file(&zip);
     zip_file.open(QIODevice::ReadOnly);
     QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini");

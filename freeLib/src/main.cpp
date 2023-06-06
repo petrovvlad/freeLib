@@ -2,113 +2,24 @@
 #include <iostream>
 #include <QApplication>
 #include <QNetworkProxy>
-#include <QLocale>
-#include <QTranslator>
-#include <QLibraryInfo>
 #include <QSplashScreen>
 #include <QPainter>
 #include <QStringBuilder>
 #include <QDir>
-#include <QMessageBox>
 #include <QSqlError>
 #include <QThread>
 #include <QString>
-#include <QFile>
-
-#include "quazip/quazip/quazip.h"
 
 #include "mainwindow.h"
 #include "aboutdialog.h"
-#include "common.h"
 #include "utilites.h"
 #include "config-freelib.h"
 #include "opds_server.h"
 #include "importthread.h"
 
 uint idCurrentLib;
-QTranslator* translator;
-QTranslator* translator_qt;
-QList<tag> tag_list;
 bool bTray;
-QSplashScreen *splash;
 Options options;
-opds_server *pOpds;
-
-bool SetCurrentZipFileName(QuaZip *zip, const QString &name)
-{
-    bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    if(!result)
-    {
-        zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-        result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    }
-    return result;
-}
-
-void SetLocale(const QString &sLocale)
-{
-    setlocale(LC_ALL, (sLocale + QLatin1String(".UTF-8")).toLatin1().data());
-    QLocale::setDefault(QLocale(sLocale));
-
-    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
-
-    if(translator)
-    {
-        QApplication::removeTranslator(translator);
-    }
-    if(translator_qt)
-    {
-        QApplication::removeTranslator(translator_qt);
-    }
-
-    if(translator == nullptr)
-        translator = new QTranslator();
-#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.left(2));
-#else
-    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.left(2));
-#endif
-    QString sQmFileFull = QApplication::applicationDirPath() + sQmFile;
-    if(!QFile::exists(sQmFileFull))
-            sQmFileFull = FREELIB_DATA_DIR + sQmFile;
-    if(translator->load(sQmFileFull))
-    {
-        QApplication::installTranslator(translator);
-    }
-    else
-    {
-        delete translator;
-        translator = nullptr;
-    }
-
-    if(translator_qt == nullptr)
-        translator_qt = new QTranslator();
-    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale),
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-        QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
-#else
-        QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
-#endif
-    {
-        QApplication::installTranslator(translator_qt);
-    }
-    else
-    {
-        delete translator_qt;
-        translator_qt = nullptr;
-    }
-
-    tag_list.clear();
-    tag_list<<
-               tag(QApplication::translate("SettingsDlg", "Top level captions"), QStringLiteral(".h0"), QStringLiteral("top_caption_font"), 140)<<
-               tag(QApplication::translate("SettingsDlg", "Captions"), QStringLiteral(".h1,.h2,.h3,.h4,.h5,.h6"), QStringLiteral("caption_font"), 120)<<
-               tag(QApplication::translate("SettingsDlg", "Dropcaps"), QStringLiteral("span.dropcaps"), QStringLiteral("dropcaps_font"), 300)<<
-               tag(QApplication::translate("SettingsDlg", "Footnotes"), QStringLiteral(".inlinenote,.blocknote"), QStringLiteral("footnotes_font"), 80)<<
-               tag(QApplication::translate("SettingsDlg", "Annotation"), QStringLiteral(".annotation"), QStringLiteral("annotation_font"), 100)<<
-               tag(QApplication::translate("SettingsDlg", "Poems"), QStringLiteral(".poem"), QStringLiteral("poem_font"), 100)<<
-               tag(QApplication::translate("SettingsDlg", "Epigraph"), QStringLiteral(".epigraph"), QStringLiteral("epigraph_font"), 100)<<
-               tag(QApplication::translate("SettingsDlg", "Book"), QStringLiteral("body"), QStringLiteral("body_font"), 100);
-}
 
 void UpdateLibs()
 {
@@ -156,7 +67,6 @@ QString parseOption(int argc, char* argv[], const char* option)
     return sRet;
 }
 
-
 void cmdhelp(){
 
 std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]\n"
@@ -185,8 +95,6 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(resource);
     bool bServer = false;
     bTray = false;
-    translator = nullptr;
-    translator_qt = nullptr;
     QCoreApplication *a;
     QString cmdparam;
     
@@ -229,7 +137,7 @@ int main(int argc, char *argv[])
                 UpdateLibs();
 
 
-                SetLocale(options.sUiLanguageName);
+                setLocale(options.sUiLanguageName);
 
                 uint nId = 0;
 
@@ -403,7 +311,7 @@ int main(int argc, char *argv[])
                         auto imp_tr = new ImportThread();
                         const SLib &lib = mLibs[nId];
 
-                        imp_tr->start(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
+                        imp_tr->init(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
                         imp_tr->moveToThread(thread);
                         QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
                         {
@@ -461,7 +369,7 @@ int main(int argc, char *argv[])
 
     auto  settings = GetSettings();
     options.Load(settings);
-    SetLocale(options.sUiLanguageName);
+    setLocale(options.sUiLanguageName);
     if(options.vExportOptions.isEmpty())
         options.setExportDefault();
     
@@ -471,13 +379,14 @@ int main(int argc, char *argv[])
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
 
+    std::unique_ptr<QSplashScreen> splash;
     if(!bServer && options.bShowSplash){
         QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a)->devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
         painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, QStringLiteral(FREELIB_VERSION));
-        splash = new QSplashScreen(pixmap);
+        splash = std::unique_ptr<QSplashScreen>(new QSplashScreen(pixmap));
 #ifdef Q_OS_LINUX
         splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
 #endif
@@ -495,8 +404,9 @@ int main(int argc, char *argv[])
 
     MainWindow *pMainWindow = nullptr;
 
-    pOpds = new opds_server(a);
+    std::unique_ptr<opds_server> pOpds;
     if(bServer){
+        pOpds = std::unique_ptr<opds_server>( new opds_server(a) );
         loadGenres();
         loadLibrary(idCurrentLib);
         options.bOpdsEnable = true;

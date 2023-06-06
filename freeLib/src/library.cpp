@@ -10,12 +10,11 @@
 #include <QStandardPaths>
 #include <QDir>
 
-#include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
+#include "utilites.h"
 
 QMap<uint,SLib> mLibs;
 QMap <uint,SGenre> mGenre;
-bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
 QString RelativeToAbsolutePath(QString path);
 
 void loadLibrary(uint idLibrary)
@@ -82,8 +81,8 @@ void loadLibrary(uint idLibrary)
 
     lib.mBooks.clear();
     query.setForwardOnly(true);
-    query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id FROM book WHERE id_lib=:id_lib;"));
-    //                                    0  1     2     3         4             5         6     7     8        9     10      11        12       13
+    query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, keys FROM book WHERE id_lib=:id_lib;"));
+    //                                    0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
     query.bindValue(QStringLiteral(":id_lib"),idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
@@ -112,6 +111,7 @@ void loadLibrary(uint idLibrary)
         book.idInLib = query.value(11).toUInt();
         book.sArchive = query.value(12).toString();
         book.idFirstAuthor = query.value(13).toUInt();
+        book.sKeywords = query.value(14).toString();
     }
 
     lib.mAuthorBooksLink.clear();
@@ -174,8 +174,8 @@ void loadGenres()
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
     mGenre.clear();
-    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index FROM genre;"));
-    //                                   0   1     2          3
+    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index, keys FROM genre;"));
+    //                                   0   1     2          3           4
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
@@ -183,6 +183,8 @@ void loadGenres()
         SGenre &genre = mGenre[idGenre];
         genre.sName = query.value(1).toString();
         genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
+        QString sKeys = query.value(4).toString();
+        genre.listKeys = sKeys.split(';', Qt::SkipEmptyParts);
         genre.nSort = static_cast<ushort>(query.value(3).toUInt());
     }
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
@@ -251,7 +253,7 @@ void SLib::loadAnnotation(uint idBook)
         QuaZip zip(&buffer);
         zip.open(QuaZip::mdUnzip);
         QBuffer info;
-        SetCurrentZipFileName(&zip, QStringLiteral("META-INF/container.xml"));
+        setCurrentZipFileName(&zip, QStringLiteral("META-INF/container.xml"));
         QuaZipFile zip_file(&zip);
         zip_file.open(QIODevice::ReadOnly);
         info.setData(zip_file.readAll());
@@ -274,7 +276,7 @@ void SLib::loadAnnotation(uint idBook)
                         QBuffer opf_buf;
                         QFileInfo fi(path);
                         rel_path = fi.path();
-                        SetCurrentZipFileName(&zip,path);
+                        setCurrentZipFileName(&zip,path);
                         zip_file.open(QIODevice::ReadOnly);
                         opf_buf.setData(zip_file.readAll());
                         zip_file.close();
@@ -304,7 +306,7 @@ void SLib::loadAnnotation(uint idBook)
                                         {
                                             cover = rel_path + QLatin1String("/") + manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("href")).toAttr().value();
 
-                                            SetCurrentZipFileName(&zip, cover);
+                                            setCurrentZipFileName(&zip, cover);
                                             zip_file.open(QIODevice::ReadOnly);
                                             QByteArray ba = zip_file.readAll();
                                             zip_file.close();
@@ -425,7 +427,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
 
         if(fileData)
         {
-            SetCurrentZipFileName(&uz, file);
+            setCurrentZipFileName(&uz, file);
             QuaZipFileInfo64 zip_fi;
             if(uz.getCurrentFileInfo(&zip_fi))
             {
@@ -433,7 +435,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
             }
         }
         QuaZipFile zip_file(&uz);
-        SetCurrentZipFileName(&uz,file);
+        setCurrentZipFileName(&uz,file);
         if(!zip_file.open(QIODevice::ReadOnly))
         {
             qDebug()<<"Error open file: "<<file;
@@ -447,7 +449,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
         if(pBufferInfo != nullptr){
             fi.setFile(file);
             QString fbd = fi.path() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".fbd");
-            if(SetCurrentZipFileName(&uz, fbd))
+            if(setCurrentZipFileName(&uz, fbd))
             {
                 zip_file.open(QIODevice::ReadOnly);
                 pBufferInfo->setData(zip_file.readAll());
@@ -570,7 +572,7 @@ QString SLib::nameFromInpx(QString sInpx)
             qDebug()<<"Error open INPX file: " << sInpx;
             //return sName;
         } else
-        if(SetCurrentZipFileName(&uz, QStringLiteral("COLLECTION.INFO")))
+        if(setCurrentZipFileName(&uz, QStringLiteral("COLLECTION.INFO")))
         {
             QBuffer outbuff;
             QuaZipFile zip_file(&uz);

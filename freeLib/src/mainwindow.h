@@ -13,6 +13,8 @@
 #include "helpdialog.h"
 #include "options.h"
 #include "coverlabel.h"
+#include "opds_server.h"
+#include "importthread.h"
 
 namespace Ui {
 class MainWindow;
@@ -29,14 +31,14 @@ public:
     
 private:
     Ui::MainWindow *ui;
-    QSystemTrayIcon *trIcon;
     void UpdateBooks();
     void UpdateTags();
+    void SaveLibPosition();
+
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
     QMenu TagMenu;
     QObject* current_list_for_tag;
-    void SaveLibPosition();
     QMap<uint, QIcon> iconsTags_;
 
     void uncheck_books(QList<qlonglong> list);
@@ -60,20 +62,26 @@ private:
     QIcon getTagIcon(const QList<uint> &listTags);
 
 
+    QSystemTrayIcon *pTrayIcon_;
+    QMenu *pTrayMenu_;
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
     uint idCurrentGenre_;
     uint idCurrentSerial_;
     uint idCurrentBook_;
+    QList<uint> listBooks_;
     CoverLabel *pCover;
     bool bTreeView_;
     QByteArray aHeadersTree_;
     QByteArray aHeadersList_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
+    std::unique_ptr<opds_server> pOpds_;
+    ImportThread *pImportThread_;
+    QThread *pThread_;
 
 protected:
-    void showEvent(QShowEvent *ev);
-    void closeEvent(QCloseEvent *event);
+    void showEvent(QShowEvent *ev) override;
+    void closeEvent(QCloseEvent *event) override;
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
     void CheckChild(QTreeWidgetItem* parent);
@@ -82,12 +90,14 @@ protected:
     void FillLibrariesMenu();
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
-    void changeEvent(QEvent *event);
+    void changeEvent(QEvent *event) override;
     void ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide);
 private slots:
     void ExportAction();
     void ManageLibrary();
     void onStatistics();
+    void onAddBooks();
+    void addBooksFinished();
     void CheckBooks();
     void EditBooks();
     void Settings();

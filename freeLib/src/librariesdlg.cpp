@@ -11,11 +11,8 @@
 #include <QSqlError>
 #include <qmessagebox.h>
 
-#include "quazip/quazip/quazip.h"
 #include "exportdlg.h"
 #include "utilites.h"
-
-bool SetCurrentZipFileName(QuaZip *zip,const QString &name);
 
 LibrariesDlg::LibrariesDlg(QWidget *parent) :
     QDialog(parent),
@@ -54,6 +51,7 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     connect(tbBooksDir, &QAbstractButton::clicked, this, &LibrariesDlg::SelectBooksDir);
     connect(ui->btnUpdate, &QPushButton::clicked, this, [=](){this->StartImport();});
     connect(ui->btnExport, &QAbstractButton::clicked, this, &LibrariesDlg::ExportLib);
+    connect(ui->btnAddBook, &QPushButton::clicked, this, &LibrariesDlg::addBook);
     connect(ui->ExistingLibs, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [=](int index){this->onComboboxLibraryChanged(index);});
     connect(ui->Del, &QAbstractButton::clicked, this, &LibrariesDlg::DeleteLibrary);
     connect(ui->Add, &QAbstractButton::clicked, this, &LibrariesDlg::Add_Library);
@@ -170,18 +168,18 @@ void LibrariesDlg::StartImport(const SLib &lib)
     ui->btnCancel->setText(tr("Break"));
     ui->update_group->hide();
 
-    thread = new QThread;
-    imp_tr = new ImportThread();
-    imp_tr->start(idCurrentLib_, lib, update_type, lib.bFirstAuthor && lib.sInpx.isEmpty());
-    imp_tr->moveToThread(thread);
-    connect(imp_tr, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
-    connect(thread, &QThread::started, imp_tr, &ImportThread::process);
-    connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
-    connect(thread, &QThread::finished, thread, &QObject::deleteLater);
-    connect(imp_tr, &ImportThread::End, this, &LibrariesDlg::EndUpdate);
-    connect(this, &LibrariesDlg::break_import, imp_tr, &ImportThread::break_import);
+    pThread_ = new QThread;
+    pImportThread_ = new ImportThread();
+    pImportThread_->init(idCurrentLib_, lib, update_type, lib.bFirstAuthor && lib.sInpx.isEmpty());
+    pImportThread_->moveToThread(pThread_);
+    connect(pImportThread_, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
+    connect(pThread_, &QThread::started, pImportThread_, &ImportThread::process);
+    connect(pImportThread_, &ImportThread::End, pThread_, &QThread::quit);
+    connect(pThread_, &QThread::finished, pThread_, &QObject::deleteLater);
+    connect(pImportThread_, &ImportThread::End, this, &LibrariesDlg::EndUpdate);
+    connect(this, &LibrariesDlg::break_import, pImportThread_, &ImportThread::break_import);
 
-    thread->start();
+    pThread_->start();
 }
 
 void LibrariesDlg::AddNewLibrary(SLib &lib)
@@ -331,6 +329,71 @@ void LibrariesDlg::ExportLib()
     {
         ExportDlg ed(this);
         ed.exec(idCurrentLib_, dirName);
+    }
+}
+
+void LibrariesDlg::addBook()
+{
+    QStringList listFiles = QFileDialog::getOpenFileNames(this, tr("Select books to add"), ui->BookDir->text(),
+                                                      tr("Books (*.fb2 *.epub *.zip)"), nullptr, QFileDialog::ReadOnly);
+    if(!listFiles.isEmpty()){
+        QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
+        SLib *pLib;
+        if(idCurrentLib_ != 0)
+            pLib = &mLibs[idCurrentLib_];
+        else
+            pLib = new SLib;
+        pLib->name = ui->ExistingLibs->currentText().trimmed();
+        pLib->sInpx = ui->inpx->text().trimmed();
+        pLib->path = ui->BookDir->text().trimmed();
+        if(pLib->path.endsWith(u"/"))
+            pLib->path.chop(1);;
+        pLib->bFirstAuthor = ui->firstAuthorOnly->isChecked();
+        pLib->bWoDeleted = ui->checkwoDeleted->isChecked();
+
+        SaveLibrary(*pLib);
+        ui->btnUpdate->setDisabled(true);
+        ui->BookDir->setDisabled(true);
+        ui->inpx->setDisabled(true);
+        ui->ExistingLibs->setDisabled(true);
+        ui->Del->setDisabled(true);
+        ui->Add->setDisabled(true);
+        ui->firstAuthorOnly->setDisabled(true);
+        ui->checkwoDeleted->setDisabled(true);
+        ui->btnCancel->setText(tr("Break"));
+        ui->update_group->hide();
+
+        for(qsizetype i = 0 ; i < listFiles.size(); ++i) {
+            QString sFile = listFiles.at(i);
+            if(!sFile.startsWith(pLib->path)){
+                //перенос файлов книг в папку библиотеки
+                QFileInfo fiSrc = QFileInfo(sFile);
+                QString baseName = fiSrc.baseName(); // получаем имя файла без расширения
+                QString extension = fiSrc.completeSuffix(); // получаем расширение файла
+                QFileInfo fiDst = QFileInfo(pLib->path + "/" + baseName + "." + extension);
+                uint j = 1;
+                while(fiDst.exists()){
+                    QString sNewName = QString("%1 (%2).%3").arg(baseName).arg(j).arg(extension);
+                    fiDst = QFileInfo(pLib->path + "/" + sNewName);
+                    j++;
+                }
+                //QString sNewName  = pLib->path +
+                QFile::copy(sFile, fiDst.absoluteFilePath());
+                listFiles[i] = fiDst.absoluteFilePath();
+            }    
+        }
+        pThread_ = new QThread;
+        pImportThread_ = new ImportThread();
+        pImportThread_->init(idCurrentLib_, *pLib, listFiles);
+        pImportThread_->moveToThread(pThread_);
+        connect(pImportThread_, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
+        connect(pThread_, &QThread::started, pImportThread_, &ImportThread::process);
+        connect(pImportThread_, &ImportThread::End, pThread_, &QThread::quit);
+        connect(pThread_, &QThread::finished, pThread_, &QObject::deleteLater);
+        connect(pImportThread_, &ImportThread::End, this, &LibrariesDlg::EndUpdate);
+        connect(this, &LibrariesDlg::break_import, pImportThread_, &ImportThread::break_import);
+
+        pThread_->start();
     }
 }
 

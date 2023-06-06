@@ -6,8 +6,14 @@
 #include <QSettings>
 #include <QSqlQuery>
 #include <QNetworkProxy>
+#include <QTranslator>
+#include <QTextCodec>
+#include <QLibraryInfo>
 
 #include "options.h"
+#include "config-freelib.h"
+
+QList<tag> tag_list;
 
 QString RelativeToAbsolutePath(QString path)
 {
@@ -277,4 +283,70 @@ QSharedPointer<QSettings> GetSettings(bool bReopen)
         #endif
     }
     return pSettings;
+}
+
+void setLocale(const QString &sLocale)
+{
+    static std::unique_ptr<QTranslator> translator;
+    static std::unique_ptr<QTranslator> translator_qt;
+
+    setlocale(LC_ALL, (sLocale + QLatin1String(".UTF-8")).toLatin1().data());
+    QLocale::setDefault(QLocale(sLocale));
+
+    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
+
+    if(translator)
+        QApplication::removeTranslator(translator.get());
+    else
+        translator = std::unique_ptr<QTranslator> (new QTranslator());
+
+    if(translator_qt)
+        QApplication::removeTranslator(translator_qt.get());
+    else
+        translator_qt = std::unique_ptr<QTranslator> (new QTranslator());
+
+    QString sQmFile = QStringLiteral("/translations/language_%1.qm").arg(sLocale.left(2));
+    QString sQmFileFull = QApplication::applicationDirPath() + sQmFile;
+    if(!QFile::exists(sQmFileFull))
+        sQmFileFull = FREELIB_DATA_DIR + sQmFile;
+    if(translator->load(sQmFileFull))
+        QApplication::installTranslator(translator.get());
+    else
+        translator.reset();
+
+    if(translator_qt->load(QStringLiteral("qtbase_%1.qm").arg(sLocale),
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+        QLibraryInfo::location(QLibraryInfo::TranslationsPath)))
+#else
+        QLibraryInfo::path(QLibraryInfo::TranslationsPath)))
+#endif
+    {
+        QApplication::installTranslator(translator_qt.get());
+    }
+    else
+    {
+        translator_qt.reset();
+    }
+
+    tag_list.clear();
+    tag_list<<
+        tag(QApplication::translate("SettingsDlg", "Top level captions"), QStringLiteral(".h0"), QStringLiteral("top_caption_font"), 140)<<
+        tag(QApplication::translate("SettingsDlg", "Captions"), QStringLiteral(".h1,.h2,.h3,.h4,.h5,.h6"), QStringLiteral("caption_font"), 120)<<
+        tag(QApplication::translate("SettingsDlg", "Dropcaps"), QStringLiteral("span.dropcaps"), QStringLiteral("dropcaps_font"), 300)<<
+        tag(QApplication::translate("SettingsDlg", "Footnotes"), QStringLiteral(".inlinenote,.blocknote"), QStringLiteral("footnotes_font"), 80)<<
+        tag(QApplication::translate("SettingsDlg", "Annotation"), QStringLiteral(".annotation"), QStringLiteral("annotation_font"), 100)<<
+        tag(QApplication::translate("SettingsDlg", "Poems"), QStringLiteral(".poem"), QStringLiteral("poem_font"), 100)<<
+        tag(QApplication::translate("SettingsDlg", "Epigraph"), QStringLiteral(".epigraph"), QStringLiteral("epigraph_font"), 100)<<
+        tag(QApplication::translate("SettingsDlg", "Book"), QStringLiteral("body"), QStringLiteral("body_font"), 100);
+}
+
+bool setCurrentZipFileName(QuaZip *zip, const QString &name)
+{
+    bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
+    if(!result)
+    {
+        zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
+        result = zip->setCurrentFile(name, QuaZip::csInsensitive);
+    }
+    return result;
 }

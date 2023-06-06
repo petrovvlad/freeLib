@@ -713,6 +713,10 @@ Kernel: %3 %4</source>
         <translation>Библиотека</translation>
     </message>
     <message>
+        <source>Add books…</source>
+        <translation>Добавить книги…</translation>
+    </message>
+    <message>
         <source>Statistics</source>
         <translation>Статистика</translation>
     </message>
@@ -1511,7 +1515,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Books of genre</source>
-        <translation>Книг жанра</translation>
+        <translation>Книги жанра</translation>
     </message>
     <message>
         <source>authors beginig with</source>

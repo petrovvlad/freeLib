@@ -4,6 +4,7 @@
 #include <QSqlDatabase>
 
 #include "library.h"
+#include "qsqlquery.h"
 
 //способы обновления
 #define UT_FULL 10
@@ -16,7 +17,8 @@ class ImportThread : public QObject
     Q_OBJECT
 public:
     explicit ImportThread(QObject *parent = 0);
-    void start(uint id_, const SLib &lib, uchar update_type, bool save_only);
+    void init(uint id, const SLib &lib, uchar update_type, bool save_only);
+    void init(uint id, const SLib &lib, const QStringList &files);
     //void SaveLibrary();
     bool loop;
 signals:
@@ -36,13 +38,14 @@ private:
     QString sInpxFile_;
     QString sName_;
     QString sPath_;
-    bool _save_only;
+    bool bSaveOnly_;
     uchar nUpdateType_;
     bool bFirstAuthorOnly;
     bool bWoDeleted_;
     uint  idLib_;
     QList<uint> listIdBookInLib_;
-    QSqlQuery *query;
+    QStringList listFiles_;
+    QSqlQuery query_;
     uint AddSeria(const QString &str, qlonglong libID, int tag);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, int tag);
     uint AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,

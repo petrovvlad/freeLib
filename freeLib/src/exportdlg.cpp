@@ -65,16 +65,17 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
     QDialog::exec();
 }
 
-void ExportDlg::exec(qlonglong id_lib, const QString &path)
+void ExportDlg::exec(uint idLib, const QString &path)
 {
+    QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
     ui->Exporting->setText(QStringLiteral("0"));
     ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);
     ui->progressBar->setValue(0);
-    ui->progressBar->setRange(0, 0);
+    ui->progressBar->setRange(0, 100);
 
     thread = new QThread;
     worker = new ExportThread;
-    worker->start(id_lib,path);
+    worker->start(idLib, path);
     worker->moveToThread(thread);
     connect(worker, &ExportThread::Progress, this, &ExportDlg::Process);
     connect(thread, &QThread::started, worker, &ExportThread::process);
@@ -97,13 +98,15 @@ QString ExportDlg::SelectDir()
     QString result = pExportOptions_->sDevicePath;
     if(pExportOptions_->bAskPath || result.isEmpty())
     {
-        result=QFileDialog::getExistingDirectory(this, tr("Select device directory"), result);
+        result = QFileDialog::getExistingDirectory(this, tr("Select device directory"), result);
     }
     return result;
 }
 
 void ExportDlg::EndExport()
 {
+    QApplication::restoreOverrideCursor();
+
     thread = 0;
     ui->AbortButton->setText(tr("Close"));
     succesfull_export_books = worker->successful_export_books;
