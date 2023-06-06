@@ -53,7 +53,7 @@ private:
     void FillAlphabet(const QString &sAlphabetName);
     bool IsBookInList(const SBook &book);
     void checkLetter(const QChar cLetter);
-    QList<uint> listCheckedBooks(bool bCheckedOnly = false);
+    QList<uint> getCheckedBooks(bool bCheckedOnly = false);
     void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, QList<uint> *pList);
     QList<QTreeWidgetItem*> checkedItemsBookList(const QTreeWidgetItem *item = nullptr);
     void setTag(uint idTag, uint id, QList<uint> &listIdTags, QString sTable, bool bSet);

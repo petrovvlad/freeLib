@@ -667,7 +667,7 @@ void MainWindow::Settings()
     pDlg->deleteLater();
 }
 
-QList<uint> MainWindow::listCheckedBooks(bool bCheckedOnly)
+QList<uint> MainWindow::getCheckedBooks(bool bCheckedOnly)
 {
     QList<uint> listBooks;
     FillCheckedItemsBookList(nullptr, false, &listBooks);
@@ -764,7 +764,7 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
 
 void MainWindow::SendToDevice(const ExportOptions &exportOptions)
 {
-    QList<uint> book_list = listCheckedBooks();
+    QList<uint> book_list = getCheckedBooks();
     if(book_list.count() == 0)
         return;
     ExportDlg dlg(this);
@@ -774,7 +774,7 @@ void MainWindow::SendToDevice(const ExportOptions &exportOptions)
 
 void MainWindow::SendMail(const ExportOptions &exportOptions)
 {
-    QList<uint> book_list = listCheckedBooks();
+    QList<uint> book_list = getCheckedBooks();
     if(book_list.count() == 0)
         return;
     ExportDlg dlg(this);
@@ -821,7 +821,7 @@ void MainWindow::BookDblClick()
 
 void MainWindow::CheckBooks()
 {
-    QList<uint> book_list = listCheckedBooks(true);
+    QList<uint> book_list = getCheckedBooks(true);
 
     const QSignalBlocker blocker(ui->Books);
     Qt::CheckState cs = book_list.count() > 0 ?Qt::Unchecked :Qt::Checked;
@@ -883,7 +883,7 @@ void MainWindow::itemChanged(QTreeWidgetItem *item, int)
     QTreeWidgetItem* parent = item->parent();
     if(parent)
         CheckParent(parent);
-    QList<uint> book_list = listCheckedBooks();
+    QList<uint> book_list = getCheckedBooks();
     ExportBookListBtn(book_list.count() != 0);
 
     ui->Books->blockSignals(wasBlocked);
