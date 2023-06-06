@@ -49,7 +49,7 @@ private:
     void FillSerials();
     void FillGenres();
     void FillListBooks();
-    void FillListBooks(QList<uint> listBook, uint idCurrentAuthor);
+    void FillListBooks(const QList<uint> &listBook, const QList<uint> &listCheckedBooks, uint idCurrentAuthor);
     void FillAlphabet(const QString &sAlphabetName);
     bool IsBookInList(const SBook &book);
     void checkLetter(const QChar cLetter);

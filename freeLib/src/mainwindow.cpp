@@ -981,7 +981,7 @@ void MainWindow::StartSearch()
     ui->find_books->setText(QString::number(nCount));
 
 
-    FillListBooks(listBooks_, 0);
+    FillListBooks(listBooks_, QList<uint>(), 0);
 
     QApplication::restoreOverrideCursor();
 }
@@ -1040,7 +1040,7 @@ void MainWindow::SelectGenre()
         ++iBook;
     }
     idCurrentGenre_ = idGenre;
-    FillListBooks(listBooks_, 0);
+    FillListBooks(listBooks_, QList<uint>(), 0);
     auto settings = GetSettings();
     if(options.bStorePosition){
         settings->setValue(QStringLiteral("current_genre_id"), idCurrentGenre_);
@@ -1067,7 +1067,7 @@ void MainWindow::SelectSeria()
         }
         ++iBook;
     }
-    FillListBooks(listBooks_, 0);
+    FillListBooks(listBooks_, QList<uint>(), 0);
 
     idCurrentSerial_= idSerial;
     if(options.bStorePosition){
@@ -1088,7 +1088,7 @@ void MainWindow::SelectAuthor()
     idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
     listBooks_.clear();
     listBooks_ = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
-    FillListBooks(listBooks_, idCurrentAuthor_);
+    FillListBooks(listBooks_, QList<uint>(), idCurrentAuthor_);
 
     if(options.bStorePosition){
         auto settings = GetSettings();
@@ -1842,7 +1842,7 @@ void MainWindow::FillListBooks()
     }
 }
 
-void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
+void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &listCheckedBooks, uint idCurrentAuthor)
 {
     if(idCurrentLib == 0)
         return;
@@ -1869,6 +1869,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
         {
             uint idAuthor;
             QString sAuthor;
+            bool bBookChecked = listCheckedBooks.contains(idBook);
             if(idCurrentAuthor > 0)
                 idAuthor = idCurrentAuthor;
             else
@@ -1882,7 +1883,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                     item_author->setText(0, sAuthor);
                     item_author->setExpanded(true);
                     item_author->setFont(0, bold_font);
-                    item_author->setCheckState(0, Qt::Unchecked);
+                    item_author->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
                     item_author->setData(0, Qt::UserRole, idAuthor);
                     item_author->setData(3, Qt::UserRole, -1);
 
@@ -1890,15 +1891,23 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                         item_author->setIcon(0, getTagIcon(lib.mAuthors[idAuthor].listIdTags));
                     }
                     mAuthors[idAuthor] = item_author;
-                }else
+                }else{
                     item_author = mAuthors[idAuthor];
+                    auto checkedState = item_author->checkState(0);
+                    if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
+                        item_author->setCheckState(0, Qt::PartiallyChecked);
+                }
 
                 if(idSerial > 0){
                     auto iSerial = mSerias.constFind(idSerial);
                     while(iSerial != mSerias.constEnd()){
                         item_seria = iSerial.value();
-                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor)
+                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor){
+                            auto checkedState = item_seria->checkState(0);
+                            if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
+                                item_seria->setCheckState(0, Qt::PartiallyChecked);
                             break;
+                        }
                         ++iSerial;
                     }
                     if(iSerial == mSerias.constEnd()){
@@ -1907,7 +1916,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                         item_author->addChild(item_seria);
                         item_seria->setExpanded(true);
                         item_seria->setFont(0, bold_font);
-                        item_seria->setCheckState(0, Qt::Unchecked);
+                        item_seria->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
                         item_seria->setData(0, Qt::UserRole, idSerial);
                         item_seria->setData(3, Qt::UserRole, -1);
                         if(options.bUseTag)
@@ -1921,7 +1930,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
             }else
                 item_book = new TreeBookItem(ui->Books, ITEM_TYPE_BOOK);
 
-            item_book->setCheckState(0, Qt::Unchecked);
+            item_book->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
             item_book->setData(0, Qt::UserRole, idBook);
             if(options.bUseTag){
                 item_book->setIcon(0, getTagIcon(book.listIdTags));
@@ -2103,7 +2112,8 @@ void MainWindow::onTreeView()
     ui->btnListView->setChecked(false);
     if(!bTreeView_){
         bTreeView_ = true;
-        FillListBooks(listBooks_, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        QList<uint> listCheckedBooks = getCheckedBooks(true);
+        FillListBooks(listBooks_, listCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), true);
         aHeadersList_ = ui->Books->header()->saveState();
@@ -2118,7 +2128,8 @@ void MainWindow::onListView()
     ui->btnListView->setChecked(true);
     if(bTreeView_){
         bTreeView_ = false;
-        FillListBooks(listBooks_, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        QList<uint> listCheckedBooks = getCheckedBooks(true);
+        FillListBooks(listBooks_, listCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), false);
         aHeadersTree_ = ui->Books->header()->saveState();
