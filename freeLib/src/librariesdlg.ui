@@ -220,8 +220,11 @@
      </item>
      <item>
       <widget class="QPushButton" name="btnAddBook">
+       <property name="visible">
+        <bool>false</bool>
+       </property>
        <property name="text">
-        <string>Add…</string>
+        <string>Add books…</string>
        </property>
       </widget>
      </item>
