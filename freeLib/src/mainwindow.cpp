@@ -155,7 +155,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnEdit, &QAbstractButton::clicked, this, &MainWindow::EditBooks);
     connect(ui->btnTreeView, &QAbstractButton::clicked, this, &MainWindow::onTreeView);
     connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
-    connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
+    connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
     #endif
