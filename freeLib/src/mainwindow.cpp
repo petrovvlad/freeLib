@@ -56,6 +56,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     pTrayIcon_ = nullptr;
     pTrayMenu_ = nullptr;
+    pHideAction_ = nullptr;
+    pShowAction_ = nullptr;
     error_quit = false;
 
     auto settings = GetSettings();
@@ -2200,17 +2202,31 @@ void MainWindow::ChangingTrayIcon(int index, int color)
         }
         pTrayIcon_ = nullptr;
         pTrayMenu_ = nullptr;
+        pHideAction_ = nullptr;
+        pShowAction_ = nullptr;
     }
     else
     {
         if(!pTrayIcon_)
         {
             pTrayMenu_ = new QMenu;
-            QAction * quitAction = new QAction(tr("Quit"), pTrayMenu_);
+            pHideAction_ = new QAction(tr("Minimize"), pTrayMenu_);
+            pTrayMenu_->addAction(pHideAction_);
+            pShowAction_ = new QAction(tr("Open freeLib"), pTrayMenu_);
+            pTrayMenu_->addAction(pShowAction_);
+            QAction *quitAction = new QAction(tr("Quit"), pTrayMenu_);
             pTrayMenu_->addAction(quitAction);
             pTrayIcon_ = new QSystemTrayIcon(pTrayMenu_);  //инициализируем объект
             pTrayIcon_->setContextMenu(pTrayMenu_);
+
+            if(isVisible())
+                pShowAction_->setVisible(false);
+            else
+                pHideAction_->setVisible(false);
+
             connect(pTrayIcon_, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
+            connect(pHideAction_, &QAction::triggered, this, &MainWindow::hide);
+            connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
             connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
         }
         QIcon icon(QStringLiteral(":/img/tray%1.png").arg(color));
@@ -2278,6 +2294,24 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
 void MainWindow::MinimizeWindow()
 {
     this->setWindowState(this->windowState() | Qt::WindowMinimized);
+}
+
+void MainWindow::hide()
+{
+    if(pHideAction_){
+        pHideAction_->setVisible(false);
+        pShowAction_->setVisible(true);
+    }
+    QMainWindow::hide();
+}
+
+void MainWindow::show()
+{
+    if(pHideAction_){
+        pHideAction_->setVisible(true);
+        pShowAction_->setVisible(false);
+    }
+    QMainWindow::show();
 }
 
 void MainWindow::changeEvent(QEvent *event)

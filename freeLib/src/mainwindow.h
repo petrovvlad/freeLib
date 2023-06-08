@@ -64,6 +64,8 @@ private:
 
     QSystemTrayIcon *pTrayIcon_;
     QMenu *pTrayMenu_;
+    QAction *pHideAction_;
+    QAction *pShowAction_;
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
     uint idCurrentGenre_;
@@ -134,6 +136,10 @@ private slots:
     void ChangingTrayIcon(int index, int color);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void MinimizeWindow();
+    void hide();
+
+public slots:
+    void show();
 
 signals:
     void window_loaded();

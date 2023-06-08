@@ -761,6 +761,14 @@ Kernel: %3 %4</source>
         <translation>Свернуть окно</translation>
     </message>
     <message>
+        <source>Minimize</source>
+        <translation>Свернуть</translation>
+    </message>
+    <message>
+        <source>Open freeLib</source>
+        <translation>Открыть freeLib</translation>
+    </message>
+    <message>
         <source>Authors</source>
         <translation>Авторы</translation>
     </message>
