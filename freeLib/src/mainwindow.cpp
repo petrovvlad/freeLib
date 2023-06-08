@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QTextBrowser>
+#include <QCloseEvent>
 
 #include "librariesdlg.h"
 #include "settingsdlg.h"
@@ -396,6 +397,35 @@ QIcon MainWindow::getTagIcon(const QList<uint> &listTags)
 
 MainWindow::~MainWindow()
 {
+    if(pTrayIcon_)
+        delete pTrayIcon_;
+    if(pTrayMenu_)
+        delete pTrayMenu_;
+    if(pHelpDlg != nullptr)
+        delete pHelpDlg;
+
+    if(options.bStorePosition)
+        SaveLibPosition();
+    auto settings = GetSettings();
+    settings->beginGroup(QStringLiteral("Columns"));
+    if(bTreeView_){
+        settings->setValue(QStringLiteral("headersTree"), ui->Books->header()->saveState());
+        settings->setValue(QStringLiteral("headersList"), aHeadersList_);
+    }else{
+        settings->setValue(QStringLiteral("headersTree"), aHeadersTree_);
+        settings->setValue(QStringLiteral("headersList"), ui->Books->header()->saveState());
+    }
+    settings->endGroup();
+
+    settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
+    settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
+    settings->setValue(QStringLiteral("MainWnd/VSplitterSizes"), ui->splitterV->saveState());
+    settings->setValue(QStringLiteral("MainWnd/HSplitterSizes"), ui->splitterH->saveState());
+    QString TempDir;
+    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
+        TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
+    QDir(TempDir + QLatin1String("/freeLib/")).removeRecursively();
+
     delete ui;
 }
 
@@ -606,36 +636,10 @@ void MainWindow::SaveLibPosition()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if(pTrayIcon_)
-        delete pTrayIcon_;
-    if(pTrayMenu_)
-        delete pTrayMenu_;
-    if(pHelpDlg != nullptr)
-        delete pHelpDlg;
-    if(options.bStorePosition)
-        SaveLibPosition();
-    auto settings = GetSettings();
-    settings->beginGroup(QStringLiteral("Columns"));
-    if(bTreeView_){
-        settings->setValue(QStringLiteral("headersTree"), ui->Books->header()->saveState());
-        settings->setValue(QStringLiteral("headersList"), aHeadersList_);
-    }else{
-        settings->setValue(QStringLiteral("headersTree"), aHeadersTree_);
-        settings->setValue(QStringLiteral("headersList"), ui->Books->header()->saveState());
+    if (pTrayIcon_ != nullptr && pTrayIcon_->isVisible()) {
+        hide();
+        event->ignore();
     }
-    settings->endGroup();
-
-    settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
-    settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
-    settings->setValue(QStringLiteral("MainWnd/VSplitterSizes"), ui->splitterV->saveState());
-    settings->setValue(QStringLiteral("MainWnd/HSplitterSizes"), ui->splitterH->saveState());
-    QString TempDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
-        TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    QDir(TempDir + QLatin1String("/freeLib/")).removeRecursively();
-    QMainWindow::closeEvent(event);
-    if(!this->isVisible())
-        QApplication::quit();
 }
 
 void MainWindow::Settings()
@@ -2202,12 +2206,12 @@ void MainWindow::ChangingTrayIcon(int index, int color)
         if(!pTrayIcon_)
         {
             pTrayMenu_ = new QMenu;
-            QAction * quitAction = new QAction(tr("Quit"), this);
+            QAction * quitAction = new QAction(tr("Quit"), pTrayMenu_);
             pTrayMenu_->addAction(quitAction);
-            pTrayIcon_ = new QSystemTrayIcon(this);  //инициализируем объект
+            pTrayIcon_ = new QSystemTrayIcon(pTrayMenu_);  //инициализируем объект
             pTrayIcon_->setContextMenu(pTrayMenu_);
             connect(pTrayIcon_, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
-            connect(quitAction, &QAction::triggered, this, &QWidget::close);
+            connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
         }
         QIcon icon(QStringLiteral(":/img/tray%1.png").arg(color));
         pTrayIcon_->setIcon(icon); //устанавливаем иконку
