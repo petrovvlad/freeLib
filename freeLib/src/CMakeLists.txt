@@ -127,6 +127,11 @@ if(QT_VERSION_MAJOR EQUAL 6 AND QT_VERSION_MINOR GREATER_EQUAL 4)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
 endif()
 
+target_precompile_headers(freelib
+  PRIVATE
+    precompiled.h
+)
+
 set_target_properties(freelib PROPERTIES
     MACOSX_BUNDLE_GUI_IDENTIFIER my.example.com
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}

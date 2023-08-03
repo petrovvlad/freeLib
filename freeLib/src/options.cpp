@@ -237,8 +237,6 @@ void Options::setDefault(){
     bUncheckAfterExport = true;
     bExtendedSymbols = false;
     bOpdsEnable = false;
-    bBrowseDir = false;
-    sDirForBrowsing = QLatin1String("");
     bOpdsShowCover = true;
     bOpdsShowAnotation = true;
     bOpdsNeedPassword = false;
@@ -282,8 +280,6 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     bUncheckAfterExport = pSettings->value(QStringLiteral("uncheck_export"), true).toBool();
     bExtendedSymbols = pSettings->value(QStringLiteral("extended_symbols"), false).toBool();
     bOpdsEnable = pSettings->value(QStringLiteral("OPDS_enable"), false).toBool();
-    bBrowseDir = pSettings->value(QStringLiteral("browseDir"), false).toBool();
-    sDirForBrowsing = pSettings->value(QStringLiteral("dirForBrowsing")).toString();
     bOpdsShowCover = pSettings->value(QStringLiteral("srv_covers"), true).toBool();
     bOpdsShowAnotation = pSettings->value(QStringLiteral("srv_annotation"), true).toBool();
     bOpdsNeedPassword = pSettings->value(QStringLiteral("HTTP_need_pasword"), false).toBool();
@@ -359,8 +355,6 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(QStringLiteral("extended_symbols"), options.bExtendedSymbols);
     pSettings->setValue(QStringLiteral("OPDS_enable"), options.bOpdsEnable);
     pSettings->setValue(QStringLiteral("httpExport"), options.nHttpExport);
-    pSettings->setValue(QStringLiteral("browseDir"), options.bBrowseDir);
-    pSettings->setValue(QStringLiteral("dirForBrowsing"), options.sDirForBrowsing);
     pSettings->setValue(QStringLiteral("HTTP_need_pasword"), options.bOpdsNeedPassword);
     pSettings->setValue(QStringLiteral("HTTP_user"), options.sOpdsUser);
     pSettings->setValue(QStringLiteral("HTTP_password"), options.sOpdsPassword);

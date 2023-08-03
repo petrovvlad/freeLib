@@ -398,6 +398,25 @@ void ExportThread::process()
 
 void ExportThread::export_lib()
 {
+    QMap<uint, QString> tagsName;
+    {
+        QSqlDatabase dbase = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("exportbdb"));
+        if (!dbase.open())
+        {
+            qDebug() << dbase.lastError().text();
+            return;
+        }
+        QSqlQuery query(dbase);
+        query.exec(QStringLiteral("SELECT id,name FROM tag"));
+        while(query.next())
+        {
+            uint id = query.value(0).toUInt();
+            QString sName = query.value(1).toString().trimmed();
+            tagsName[id] = sName;
+        }
+    }
+    QSqlDatabase::removeDatabase(QStringLiteral("exportbdb"));
+
     QString tmp_dir = QStringLiteral("freeLib");
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
         tmp_dir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0) + QStringLiteral("/freeLib");
@@ -410,7 +429,7 @@ void ExportThread::export_lib()
     QFile structure(structure_file);
     structure.open(QFile::WriteOnly);
     //structure.write(QStringLiteral("AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;INSNO;FILE;FOLDER;EXT;SIZE;LANG;DATE;DEL;KEYWORDS;CRC32;TAG;TAGAUTHOR;TAGSERIES;\r\n").toUtf8());
-    structure.write(QStringLiteral("AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;FILE;FOLDER;EXT;SIZE;LANG;STARS;DATE;DEL;KEYWORDS;\r\n").toUtf8());
+    structure.write(QStringLiteral("AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;FILE;FOLDER;EXT;SIZE;LANG;STARS;DATE;DEL;KEYWORDS;TAG;TAGAUTHOR;TAGSERIES;\r\n").toUtf8());
     structure.close();
     QFile version(version_file);
     version.open(QFile::WriteOnly);
@@ -430,14 +449,31 @@ void ExportThread::export_lib()
         return;
     }
 
+
     const SLib &lib = mLibs[idLib_];
     uint nCount = 0;
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
+        QString sBookTags;
+        for(uint i=0; i<iBook->listIdTags.size(); i++)
+            sBookTags += tagsName[iBook->listIdTags[i]] + ":";
+
         QString sAuthors;
+        QString sAuthorTags;
         for(qsizetype i=0; i<iBook->listIdAuthors.size(); i++){
             const SAuthor &author = lib.mAuthors[iBook->listIdAuthors[i]];
             sAuthors += author.sLastName % "," % author.sFirstName % ","  % author.sMiddleName % ":";
+            for(uint j=0; j<author.listIdTags.size(); j++)
+                sAuthorTags += tagsName[author.listIdTags[j]] + ":";
+        }
+
+        QString sSerialTag;
+        if(iBook->idSerial != 0){
+            const auto &listTags = lib.mSerials[iBook->idSerial].listIdTags;
+            uint count = listTags.size();
+            for(uint i=0; i<count; i++){
+                sSerialTag += tagsName[listTags[i]] + ":";
+            }
         }
         QString sLine = (QStringLiteral("%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8").arg(
                              sAuthors,                                                   //AUTHOR
@@ -448,23 +484,23 @@ void ExportThread::export_lib()
                              QString::number(iBook->idInLib),                                      //LIBID
                              iBook->sFile,                                                         //FILE
                              iBook->sArchive                                                       //FOLDER
-                             ) +
-                         QStringLiteral("\4%1\4%2\4%3\4%4\4%5\4%6\4%7\r\n").arg
+                         ) %
+                         QStringLiteral("\4%1\4%2\4%3\4%4\4%5\4%6\4%7").arg
                         (
                             iBook->sFormat,                         //EXT
                             QString::number(iBook->nSize),          //SIZE
                             lib.vLaguages[iBook->idLanguage],       //LANG
                             QString::number(iBook->nStars),         //STARS
-                            iBook->date.toString(QStringLiteral("yyyy-MM-dd")),     //DATE
-                            iBook->bDeleted ?"1" :"",                               //DEL
-                            iBook->sKeywords                                        //KEYWORDS
-                        )/*+
+                            iBook->date.toString(QStringLiteral("yyyy-MM-dd")),  //DATE
+                            iBook->bDeleted ?"1" :"",                            //DEL
+                            iBook->sKeywords                                     //KEYWORDS
+                        ) %
                         QStringLiteral("\4%1\4%2\4%3\r\n").arg
                         (
-                             query.value(16).toString().trimmed(),  //FAV_BOOK
-                             fav_authors,                           //FAV_AUTHOR
-                             query.value(18).toString().trimmed()   //FAV_SERIES
-                        )*/);
+                             sBookTags,     //TAG
+                             sAuthorTags,   //TAGAUTHOR
+                             sSerialTag     //TAGSERIES
+                        ));
 
         inpx.write(sLine.toUtf8());
         ++iBook;
@@ -474,33 +510,32 @@ void ExportThread::export_lib()
     }
     inpx.close();
     QuaZip zip(sExportDir_ + QStringLiteral("/%1.inpx").arg(BuildFileName(lib.name)));
-    qDebug()<<zip.getZipName();
-    qDebug()<<zip.open(QuaZip::mdCreate);
+    zip.open(QuaZip::mdCreate);
     QuaZipFile zip_file(&zip);
     QFile file;
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("freeLib.inp")), 0, 0, 8, 5);
+    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("freeLib.inp")), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(impx_file);
     file.open(QIODevice::ReadOnly);
     zip_file.write(file.readAll());
     file.close();
     zip_file.close();
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("structure.info")), 0, 0, 8, 5);
+    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("structure.info")), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(structure_file);
     file.open(QIODevice::ReadOnly);
     zip_file.write(file.readAll());
     file.close();
     zip_file.close();
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("version.info")), 0, 0, 8, 5);
+    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("version.info")), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(version_file);
     file.open(QIODevice::ReadOnly);
     zip_file.write(file.readAll());
     file.close();
     zip_file.close();
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("collection.info")), 0, 0, 8, 5);
+    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("collection.info")), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(collection_file);
     file.open(QIODevice::ReadOnly);
     zip_file.write(file.readAll());

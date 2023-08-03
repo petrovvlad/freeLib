@@ -2,8 +2,7 @@
 #define SETTINGSDLG_H
 
 #include <QDialog>
-#include <qitemdelegate.h>
-#include <QToolButton>
+#include <QItemDelegate>
 #include <QHBoxLayout>
 #include <QLineEdit>
 #include <QWidget>
@@ -122,7 +121,6 @@ private slots:
     void onBtnDefaultSettingsClicked();
     void onTabWidgetCurrentChanged(int index);
     void onProxyTypeCurrentIndexChanged(int index);
-    void onBrowseDirStateChanged(int checked);
     void onTrayIconCurrentIndexChanged(int index);
     void onTrayColorCurrentIndexChanged(int index);
     void onHTTPneedPaswordClicked();
@@ -131,7 +129,6 @@ private slots:
     void onChangeAlphabetCombobox(int index);
     void onOpdsEnable(int state);
     void btnDBPath();
-    void btnDirPath();
     void UpdateWebExportList();
     virtual void reject();
 

@@ -8,6 +8,7 @@
 #include <QMessageBox>
 #include <QDesktopServices>
 #include <QTextBrowser>
+#include <QCloseEvent>
 
 #include "librariesdlg.h"
 #include "settingsdlg.h"
@@ -55,6 +56,8 @@ MainWindow::MainWindow(QWidget *parent) :
 {
     pTrayIcon_ = nullptr;
     pTrayMenu_ = nullptr;
+    pHideAction_ = nullptr;
+    pShowAction_ = nullptr;
     error_quit = false;
 
     auto settings = GetSettings();
@@ -152,7 +155,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnEdit, &QAbstractButton::clicked, this, &MainWindow::EditBooks);
     connect(ui->btnTreeView, &QAbstractButton::clicked, this, &MainWindow::onTreeView);
     connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
-    connect(ui->actionExit, &QAction::triggered, this, &QWidget::close);
+    connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
     #endif
@@ -299,7 +302,7 @@ void MainWindow::UpdateTags()
     query.exec(QStringLiteral("SELECT id,name,id_icon FROM tag"));
     //                                0  1    2
     ui->TagFilter->clear();
-    int con=1;
+    int con = 1;
     ui->TagFilter->addItem(QStringLiteral("*"), 0);
     TagMenu.clear();
     ui->TagFilter->setVisible(options.bUseTag);
@@ -311,7 +314,7 @@ void MainWindow::UpdateTags()
         QString sTagName = query.value(1).toString().trimmed();
         bool bLatin1 = true;
         for(int i=0; i<sTagName.length(); i++){
-            if(sTagName.at(i).unicode()>127){
+            if(sTagName.at(i).unicode() > 127){
                 bLatin1 = false;
                 break;
             }
@@ -396,6 +399,35 @@ QIcon MainWindow::getTagIcon(const QList<uint> &listTags)
 
 MainWindow::~MainWindow()
 {
+    if(pTrayIcon_)
+        delete pTrayIcon_;
+    if(pTrayMenu_)
+        delete pTrayMenu_;
+    if(pHelpDlg != nullptr)
+        delete pHelpDlg;
+
+    if(options.bStorePosition)
+        SaveLibPosition();
+    auto settings = GetSettings();
+    settings->beginGroup(QStringLiteral("Columns"));
+    if(bTreeView_){
+        settings->setValue(QStringLiteral("headersTree"), ui->Books->header()->saveState());
+        settings->setValue(QStringLiteral("headersList"), aHeadersList_);
+    }else{
+        settings->setValue(QStringLiteral("headersTree"), aHeadersTree_);
+        settings->setValue(QStringLiteral("headersList"), ui->Books->header()->saveState());
+    }
+    settings->endGroup();
+
+    settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
+    settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
+    settings->setValue(QStringLiteral("MainWnd/VSplitterSizes"), ui->splitterV->saveState());
+    settings->setValue(QStringLiteral("MainWnd/HSplitterSizes"), ui->splitterH->saveState());
+    QString TempDir;
+    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
+        TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
+    QDir(TempDir + QLatin1String("/freeLib/")).removeRecursively();
+
     delete ui;
 }
 
@@ -561,6 +593,7 @@ void MainWindow::setTag(uint idTag, uint id, QList<uint> &listIdTags,  QString s
     }else{
         int index = listIdTags.indexOf(idTag);
         listIdTags.removeAt(index);
+        query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
         sQuery = QStringLiteral("DELETE FROM %1_tag WHERE (id_%1=%2) AND (id_tag=%3)").
                 arg(sTable, QString::number(id), QString::number(idTag));
     }
@@ -606,36 +639,10 @@ void MainWindow::SaveLibPosition()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
-    if(pTrayIcon_)
-        delete pTrayIcon_;
-    if(pTrayMenu_)
-        delete pTrayMenu_;
-    if(pHelpDlg != nullptr)
-        delete pHelpDlg;
-    if(options.bStorePosition)
-        SaveLibPosition();
-    auto settings = GetSettings();
-    settings->beginGroup(QStringLiteral("Columns"));
-    if(bTreeView_){
-        settings->setValue(QStringLiteral("headersTree"), ui->Books->header()->saveState());
-        settings->setValue(QStringLiteral("headersList"), aHeadersList_);
-    }else{
-        settings->setValue(QStringLiteral("headersTree"), aHeadersTree_);
-        settings->setValue(QStringLiteral("headersList"), ui->Books->header()->saveState());
+    if (pTrayIcon_ != nullptr && pTrayIcon_->isVisible()) {
+        hide();
+        event->ignore();
     }
-    settings->endGroup();
-
-    settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
-    settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
-    settings->setValue(QStringLiteral("MainWnd/VSplitterSizes"), ui->splitterV->saveState());
-    settings->setValue(QStringLiteral("MainWnd/HSplitterSizes"), ui->splitterH->saveState());
-    QString TempDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
-        TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    QDir(TempDir + QLatin1String("/freeLib/")).removeRecursively();
-    QMainWindow::closeEvent(event);
-    if(!this->isVisible())
-        QApplication::quit();
 }
 
 void MainWindow::Settings()
@@ -667,7 +674,7 @@ void MainWindow::Settings()
     pDlg->deleteLater();
 }
 
-QList<uint> MainWindow::listCheckedBooks(bool bCheckedOnly)
+QList<uint> MainWindow::getCheckedBooks(bool bCheckedOnly)
 {
     QList<uint> listBooks;
     FillCheckedItemsBookList(nullptr, false, &listBooks);
@@ -764,7 +771,7 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
 
 void MainWindow::SendToDevice(const ExportOptions &exportOptions)
 {
-    QList<uint> book_list = listCheckedBooks();
+    QList<uint> book_list = getCheckedBooks();
     if(book_list.count() == 0)
         return;
     ExportDlg dlg(this);
@@ -774,7 +781,7 @@ void MainWindow::SendToDevice(const ExportOptions &exportOptions)
 
 void MainWindow::SendMail(const ExportOptions &exportOptions)
 {
-    QList<uint> book_list = listCheckedBooks();
+    QList<uint> book_list = getCheckedBooks();
     if(book_list.count() == 0)
         return;
     ExportDlg dlg(this);
@@ -821,7 +828,7 @@ void MainWindow::BookDblClick()
 
 void MainWindow::CheckBooks()
 {
-    QList<uint> book_list = listCheckedBooks(true);
+    QList<uint> book_list = getCheckedBooks(true);
 
     const QSignalBlocker blocker(ui->Books);
     Qt::CheckState cs = book_list.count() > 0 ?Qt::Unchecked :Qt::Checked;
@@ -883,7 +890,7 @@ void MainWindow::itemChanged(QTreeWidgetItem *item, int)
     QTreeWidgetItem* parent = item->parent();
     if(parent)
         CheckParent(parent);
-    QList<uint> book_list = listCheckedBooks();
+    QList<uint> book_list = getCheckedBooks();
     ExportBookListBtn(book_list.count() != 0);
 
     ui->Books->blockSignals(wasBlocked);
@@ -981,7 +988,7 @@ void MainWindow::StartSearch()
     ui->find_books->setText(QString::number(nCount));
 
 
-    FillListBooks(listBooks_, 0);
+    FillListBooks(listBooks_, QList<uint>(), 0);
 
     QApplication::restoreOverrideCursor();
 }
@@ -1040,7 +1047,7 @@ void MainWindow::SelectGenre()
         ++iBook;
     }
     idCurrentGenre_ = idGenre;
-    FillListBooks(listBooks_, 0);
+    FillListBooks(listBooks_, QList<uint>(), 0);
     auto settings = GetSettings();
     if(options.bStorePosition){
         settings->setValue(QStringLiteral("current_genre_id"), idCurrentGenre_);
@@ -1067,7 +1074,7 @@ void MainWindow::SelectSeria()
         }
         ++iBook;
     }
-    FillListBooks(listBooks_, 0);
+    FillListBooks(listBooks_, QList<uint>(), 0);
 
     idCurrentSerial_= idSerial;
     if(options.bStorePosition){
@@ -1088,7 +1095,7 @@ void MainWindow::SelectAuthor()
     idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
     listBooks_.clear();
     listBooks_ = mLibs[idCurrentLib].mAuthorBooksLink.values(idCurrentAuthor_);
-    FillListBooks(listBooks_, idCurrentAuthor_);
+    FillListBooks(listBooks_, QList<uint>(), idCurrentAuthor_);
 
     if(options.bStorePosition){
         auto settings = GetSettings();
@@ -1842,7 +1849,7 @@ void MainWindow::FillListBooks()
     }
 }
 
-void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
+void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &listCheckedBooks, uint idCurrentAuthor)
 {
     if(idCurrentLib == 0)
         return;
@@ -1869,6 +1876,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
         {
             uint idAuthor;
             QString sAuthor;
+            bool bBookChecked = listCheckedBooks.contains(idBook);
             if(idCurrentAuthor > 0)
                 idAuthor = idCurrentAuthor;
             else
@@ -1882,7 +1890,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                     item_author->setText(0, sAuthor);
                     item_author->setExpanded(true);
                     item_author->setFont(0, bold_font);
-                    item_author->setCheckState(0, Qt::Unchecked);
+                    item_author->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
                     item_author->setData(0, Qt::UserRole, idAuthor);
                     item_author->setData(3, Qt::UserRole, -1);
 
@@ -1890,15 +1898,23 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                         item_author->setIcon(0, getTagIcon(lib.mAuthors[idAuthor].listIdTags));
                     }
                     mAuthors[idAuthor] = item_author;
-                }else
+                }else{
                     item_author = mAuthors[idAuthor];
+                    auto checkedState = item_author->checkState(0);
+                    if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
+                        item_author->setCheckState(0, Qt::PartiallyChecked);
+                }
 
                 if(idSerial > 0){
                     auto iSerial = mSerias.constFind(idSerial);
                     while(iSerial != mSerias.constEnd()){
                         item_seria = iSerial.value();
-                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor)
+                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor){
+                            auto checkedState = item_seria->checkState(0);
+                            if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
+                                item_seria->setCheckState(0, Qt::PartiallyChecked);
                             break;
+                        }
                         ++iSerial;
                     }
                     if(iSerial == mSerias.constEnd()){
@@ -1907,7 +1923,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
                         item_author->addChild(item_seria);
                         item_seria->setExpanded(true);
                         item_seria->setFont(0, bold_font);
-                        item_seria->setCheckState(0, Qt::Unchecked);
+                        item_seria->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
                         item_seria->setData(0, Qt::UserRole, idSerial);
                         item_seria->setData(3, Qt::UserRole, -1);
                         if(options.bUseTag)
@@ -1921,7 +1937,7 @@ void MainWindow::FillListBooks(QList<uint> listBook, uint idCurrentAuthor)
             }else
                 item_book = new TreeBookItem(ui->Books, ITEM_TYPE_BOOK);
 
-            item_book->setCheckState(0, Qt::Unchecked);
+            item_book->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
             item_book->setData(0, Qt::UserRole, idBook);
             if(options.bUseTag){
                 item_book->setIcon(0, getTagIcon(book.listIdTags));
@@ -2103,7 +2119,8 @@ void MainWindow::onTreeView()
     ui->btnListView->setChecked(false);
     if(!bTreeView_){
         bTreeView_ = true;
-        FillListBooks(listBooks_, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        QList<uint> listCheckedBooks = getCheckedBooks(true);
+        FillListBooks(listBooks_, listCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), true);
         aHeadersList_ = ui->Books->header()->saveState();
@@ -2118,7 +2135,8 @@ void MainWindow::onListView()
     ui->btnListView->setChecked(true);
     if(bTreeView_){
         bTreeView_ = false;
-        FillListBooks(listBooks_, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        QList<uint> listCheckedBooks = getCheckedBooks(true);
+        FillListBooks(listBooks_, listCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), false);
         aHeadersTree_ = ui->Books->header()->saveState();
@@ -2185,18 +2203,32 @@ void MainWindow::ChangingTrayIcon(int index, int color)
         }
         pTrayIcon_ = nullptr;
         pTrayMenu_ = nullptr;
+        pHideAction_ = nullptr;
+        pShowAction_ = nullptr;
     }
     else
     {
         if(!pTrayIcon_)
         {
             pTrayMenu_ = new QMenu;
-            QAction * quitAction = new QAction(tr("Quit"), this);
+            pHideAction_ = new QAction(tr("Minimize"), pTrayMenu_);
+            pTrayMenu_->addAction(pHideAction_);
+            pShowAction_ = new QAction(tr("Open freeLib"), pTrayMenu_);
+            pTrayMenu_->addAction(pShowAction_);
+            QAction *quitAction = new QAction(tr("Quit"), pTrayMenu_);
             pTrayMenu_->addAction(quitAction);
-            pTrayIcon_ = new QSystemTrayIcon(this);  //инициализируем объект
+            pTrayIcon_ = new QSystemTrayIcon(pTrayMenu_);  //инициализируем объект
             pTrayIcon_->setContextMenu(pTrayMenu_);
+
+            if(isVisible())
+                pShowAction_->setVisible(false);
+            else
+                pHideAction_->setVisible(false);
+
             connect(pTrayIcon_, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
-            connect(quitAction, &QAction::triggered, this, &QWidget::close);
+            connect(pHideAction_, &QAction::triggered, this, &MainWindow::hide);
+            connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
+            connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
         }
         QIcon icon(QStringLiteral(":/img/tray%1.png").arg(color));
         pTrayIcon_->setIcon(icon); //устанавливаем иконку
@@ -2263,6 +2295,24 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
 void MainWindow::MinimizeWindow()
 {
     this->setWindowState(this->windowState() | Qt::WindowMinimized);
+}
+
+void MainWindow::hide()
+{
+    if(pHideAction_){
+        pHideAction_->setVisible(false);
+        pShowAction_->setVisible(true);
+    }
+    QMainWindow::hide();
+}
+
+void MainWindow::show()
+{
+    if(pHideAction_){
+        pHideAction_->setVisible(true);
+        pShowAction_->setVisible(false);
+    }
+    QMainWindow::show();
 }
 
 void MainWindow::changeEvent(QEvent *event)

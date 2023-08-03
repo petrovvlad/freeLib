@@ -25,7 +25,7 @@ sudo apt update && sudo apt-get install git cmake build-essential qtbase5-dev li
 ```
 или в Ubuntu ≥ 22.04 можно установить Qt6:
 ```
-sudo apt update && sudo apt-get install git cmake build-essential qt6-base-dev libqt6core5compat6-dev zlib1g-dev
+sudo apt update && sudo apt-get install git cmake build-essential qt6-base-dev libqt6core5compat6-dev libqt6svg6 zlib1g-dev
 ```
 Скачать исходники программы:
 ```

@@ -104,7 +104,6 @@ struct Options
     QString sProxyHost;
     QString sProxyUser;
     QString sProxyPassword;
-    QString sDirForBrowsing;
 
     int nHttpExport;
     quint16 nOpdsPort;
@@ -121,7 +120,6 @@ struct Options
     bool bCloseDlgAfterExport;
     bool bUncheckAfterExport;
     bool bExtendedSymbols;
-    bool bBrowseDir;
     bool bOpdsEnable;
     bool bOpdsShowCover;
     bool bOpdsShowAnotation;

@@ -93,7 +93,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &SettingsDlg::onTabWidgetCurrentChanged);
     connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
-    connect(ui->browseDir, &QCheckBox::stateChanged, this, &SettingsDlg::onBrowseDirStateChanged);
     connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
     connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
     connect(ui->HTTP_need_pasword, &QCheckBox::clicked, this, &SettingsDlg::onHTTPneedPaswordClicked);
@@ -112,16 +111,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
     connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
-
-    QToolButton* btnDirPath = new QToolButton(this);
-    btnDirPath->setFocusPolicy(Qt::NoFocus);
-    btnDirPath->setCursor(Qt::ArrowCursor);
-    btnDirPath->setText(QStringLiteral("..."));
-    layout = new QHBoxLayout(ui->dirForBrowsing);
-    layout->addWidget(btnDirPath, 0, Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    connect(btnDirPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDirPath);
 
     LoadSettings();
     UpdateWebExportList();
@@ -180,9 +169,6 @@ void SettingsDlg::LoadSettings()
     ui->extended_symbols->setChecked(options_.bExtendedSymbols);
     ui->OPDS_enable->setChecked(options_.bOpdsEnable);
     ui->OPDS_port->setValue(options_.nOpdsPort);
-    ui->browseDir->setChecked(options_.bBrowseDir);
-    ui->dirForBrowsing->setText(options_.sDirForBrowsing);
-    onBrowseDirStateChanged(options_.bBrowseDir);
     ui->HTTP_need_pasword->setChecked(options_.bOpdsNeedPassword);
     ui->HTTP_user->setText(options_.sOpdsUser);
     ui->HTTP_password->setText(options_.sOpdsPassword);
@@ -276,15 +262,6 @@ void SettingsDlg::reject()
     QDialog::reject();
 }
 
-void SettingsDlg::btnDirPath()
-{
-    QDir::setCurrent(QFileInfo(ui->database_path->text()).absolutePath());
-    QString dir = QFileDialog::getExistingDirectory(this, tr("Select book`s directory"));
-    if(!dir.isEmpty())
-    {
-        ui->dirForBrowsing->setText(dir);
-    }
-}
 void SettingsDlg::btnDBPath()
 {
     QDir::setCurrent(QFileInfo(ui->database_path->text()).absolutePath());
@@ -366,8 +343,6 @@ void SettingsDlg::btnOK()
     options.bUncheckAfterExport = ui->uncheck_export->isChecked();
     options.bExtendedSymbols = ui->extended_symbols->isChecked();
     options.bOpdsEnable = ui->OPDS_enable->isChecked();
-    options.bBrowseDir = ui->browseDir->isChecked();
-    options.sDirForBrowsing = ui->dirForBrowsing->text().trimmed();
     options.nHttpExport = ui->httpExport->currentIndex();
     options.bOpdsNeedPassword = ui->HTTP_need_pasword->isChecked();
     options.bOpdsShowAnotation = ui->srv_annotation->isChecked();
@@ -544,11 +519,6 @@ void SettingsDlg::onProxyTypeCurrentIndexChanged(int index)
     ui->proxy_password->setEnabled(bEnable);
     ui->proxy_port->setEnabled(bEnable);
     ui->proxy_user->setEnabled(bEnable);
-}
-
-void SettingsDlg::onBrowseDirStateChanged(int checked)
-{
-    ui->dirForBrowsing->setEnabled(checked);
 }
 
 void SettingsDlg::onTrayIconCurrentIndexChanged(int index)
@@ -740,9 +710,6 @@ void SettingsDlg::onOpdsEnable(int state)
     ui->label_23->setEnabled(bOpdsEnable);
     ui->httpExport->setEnabled(bOpdsEnable);
     ui->label_2->setEnabled(bOpdsEnable);
-    ui->browseDir->setEnabled(bOpdsEnable);
-    ui->dirForBrowsing->setEnabled(bOpdsEnable && ui->browseDir->isChecked());
-    ui->label_3->setEnabled(bOpdsEnable);
     ui->HTTP_need_pasword->setEnabled(bOpdsEnable);
     ui->HTTP_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
     ui->p_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());

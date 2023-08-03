@@ -195,6 +195,7 @@ void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
     }
     else
     {
+        query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
         query.exec(QLatin1String("delete from book where id_lib=") + QString::number(id_lib));
         query.exec(QLatin1String("delete from author where id_lib=") + QString::number(id_lib));
         query.exec(QLatin1String("delete from seria where id_lib=") + QString::number(id_lib));
