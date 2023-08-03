@@ -2,6 +2,7 @@
 #include "librariesdlg.h"
 #include "ui_librariesdlg.h"
 
+#include <QMessageBox>
 #include <QToolButton>
 #include <QStringBuilder>
 #include <QDir>
@@ -9,7 +10,6 @@
 #include <QDebug>
 #include <QSqlQuery>
 #include <QSqlError>
-#include <qmessagebox.h>
 
 #include "exportdlg.h"
 #include "utilites.h"
@@ -264,6 +264,7 @@ void LibrariesDlg::DeleteLibrary()
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
     if(!query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
         qDebug()<<query.lastError().databaseText();
     query.exec(QStringLiteral("VACUUM"));
@@ -373,11 +374,10 @@ void LibrariesDlg::addBook()
                 QFileInfo fiDst = QFileInfo(pLib->path + "/" + baseName + "." + extension);
                 uint j = 1;
                 while(fiDst.exists()){
-                    QString sNewName = QString("%1 (%2).%3").arg(baseName).arg(j).arg(extension);
+                    QString sNewName = QStringLiteral("%1 (%2).%3").arg(baseName, QString::number(j), extension);
                     fiDst = QFileInfo(pLib->path + "/" + sNewName);
                     j++;
                 }
-                //QString sNewName  = pLib->path +
                 QFile::copy(sFile, fiDst.absoluteFilePath());
                 listFiles[i] = fiDst.absoluteFilePath();
             }    

@@ -302,7 +302,7 @@ void MainWindow::UpdateTags()
     query.exec(QStringLiteral("SELECT id,name,id_icon FROM tag"));
     //                                0  1    2
     ui->TagFilter->clear();
-    int con=1;
+    int con = 1;
     ui->TagFilter->addItem(QStringLiteral("*"), 0);
     TagMenu.clear();
     ui->TagFilter->setVisible(options.bUseTag);
@@ -314,7 +314,7 @@ void MainWindow::UpdateTags()
         QString sTagName = query.value(1).toString().trimmed();
         bool bLatin1 = true;
         for(int i=0; i<sTagName.length(); i++){
-            if(sTagName.at(i).unicode()>127){
+            if(sTagName.at(i).unicode() > 127){
                 bLatin1 = false;
                 break;
             }
@@ -593,6 +593,7 @@ void MainWindow::setTag(uint idTag, uint id, QList<uint> &listIdTags,  QString s
     }else{
         int index = listIdTags.indexOf(idTag);
         listIdTags.removeAt(index);
+        query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
         sQuery = QStringLiteral("DELETE FROM %1_tag WHERE (id_%1=%2) AND (id_tag=%3)").
                 arg(sTable, QString::number(id), QString::number(idTag));
     }
