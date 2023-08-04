@@ -184,7 +184,11 @@ void loadGenres()
         genre.sName = query.value(1).toString();
         genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
         QString sKeys = query.value(4).toString();
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
         genre.listKeys = sKeys.split(';', Qt::SkipEmptyParts);
+#else
+        genre.listKeys = sKeys.split(';');
+#endif
         genre.nSort = static_cast<ushort>(query.value(3).toUInt());
     }
     qint64 t_end = QDateTime::currentMSecsSinceEpoch();
@@ -556,13 +560,14 @@ void SLib::deleteTag(uint idTag)
         ++iAuthor;
     }
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
     query.exec(QStringLiteral("DELETE FROM book_tag WHERE id_tag=%1").arg(idTag));
     query.exec(QStringLiteral("DELETE FROM seria_tag WHERE id_tag=%1").arg(idTag));
     query.exec(QStringLiteral("DELETE FROM author_tag WHERE id_tag=%1").arg(idTag));
     query.exec(QStringLiteral("DELETE FROM tag WHERE id=%1").arg(idTag));
 }
 
-QString SLib::nameFromInpx(QString sInpx)
+QString SLib::nameFromInpx(const QString &sInpx)
 {
     QString sName;
     if(!sInpx.isEmpty()){
