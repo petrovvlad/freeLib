@@ -68,7 +68,7 @@ public:
     QString fillParams(const QString &str, uint idBook);
     QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file);
     void deleteTag(uint idTag);
-    static QString nameFromInpx(QString sInpx);
+    static QString nameFromInpx(const QString &sInpx);
 
     QString name;
     QString path;

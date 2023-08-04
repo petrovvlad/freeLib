@@ -10,6 +10,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QRegularExpression>
+#include <QSqlDatabase>
 
 
 #include "SmtpClient/src/smtpclient.h"
@@ -400,7 +401,16 @@ void ExportThread::export_lib()
 {
     QMap<uint, QString> tagsName;
     {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
         QSqlDatabase dbase = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("exportbdb"));
+#else
+        if(!QSqlDatabase::database(QStringLiteral("exportbdb"), false).isOpen())
+        {
+            openDB(QStringLiteral("exportbdb"));
+        }
+        QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("exportbdb"), false);
+#endif
+
         if (!dbase.open())
         {
             qDebug() << dbase.lastError().text();
@@ -467,12 +477,12 @@ void ExportThread::export_lib()
                 sAuthorTags += tagsName[author.listIdTags[j]] + ":";
         }
 
-        QString sSerialTag;
+        QString sSerialTags;
         if(iBook->idSerial != 0){
             const auto &listTags = lib.mSerials[iBook->idSerial].listIdTags;
             uint count = listTags.size();
             for(uint i=0; i<count; i++){
-                sSerialTag += tagsName[listTags[i]] + ":";
+                sSerialTags += tagsName[listTags[i]] + ":";
             }
         }
         QString sLine = (QStringLiteral("%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8").arg(
@@ -499,7 +509,7 @@ void ExportThread::export_lib()
                         (
                              sBookTags,     //TAG
                              sAuthorTags,   //TAGAUTHOR
-                             sSerialTag     //TAGSERIES
+                             sSerialTags     //TAGSERIES
                         ));
 
         inpx.write(sLine.toUtf8());
