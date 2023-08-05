@@ -66,13 +66,12 @@ bool openDB(const QString &sName)
     dbase.setDatabaseName(sFileDB);
     if (!dbase.open())
     {
-        qDebug() << ("Error connect! ")<<sFileDB;
+        qDebug() << ("Error connect! ") << sFileDB;
         return false;
     }
-    //qDebug()<<"Open DB OK. "<<db_file;
     QSqlQuery query(dbase);
     query.exec(QStringLiteral("SELECT value FROM params WHERE name='version'"));
-    int version=0;
+    int version = 0;
     if(query.next())
     {
         version = query.value(0).toUInt();
@@ -112,21 +111,49 @@ bool openDB(const QString &sName)
                                   "(7,'<svg enable-background=\"new 0 0 509.117 509.117\" version=\"1.1\" viewBox=\"0 0 509.12 509.12\" xmlns=\"http://www.w3.org/2000/svg\"><g transform=\"translate(1 1)\" fill=\"#fff\"><g fill=\"#fff\"><g fill=\"#fff\"><path d=\"m500.96 256.16c-13.017-16.488-39.919-11.281-54.671-1.736l-75.498 50.332h-115.42c-1.736-1.736-2.603-5.207-2.603-7.81 0-3.471 1.736-7.81 4.339-10.414l51.2-17.356c15.62-6.942 28.637-28.637 21.695-45.993-2.603-6.075-7.81-11.281-14.753-13.885-9.546-3.471-21.695-3.471-31.241 0.868l-77.234 26.034-93.722 8.678c-6.942 0-18.224 6.942-22.563 9.546l-59.878 25.166c-26.902 12.149-39.051 43.39-26.902 70.292l39.919 97.193c0.868 2.603 2.603 4.339 5.207 5.207 1.736 0.868 2.603 0.868 3.471 0.868 1.736 0 2.603 0 3.471-0.868l102.4-51.2h154.47c0.868 0 1.736 0 2.603-1.736l104.14-34.712c0.868 0 1.736 0 2.603-0.868l69.424-52.068c8.678-6.075 14.753-17.356 16.488-28.637 0.869-10.413-0.867-19.959-6.941-26.901zm-10.414 25.166c-0.868 6.942-4.339 13.885-9.546 17.356l-68.556 51.2-101.53 33.844h-154.47-4.339l-95.458 47.729-36.447-88.515c-7.81-18.224 0-39.051 18.224-47.729l60.746-26.034c0.868 0 0.868 0 1.736-0.868 3.471-2.603 10.414-6.942 13.017-6.942l95.458-8.678h1.736l78.969-26.034c3.471-0.868 6.942-1.736 10.414-1.736 2.603 0 5.207 0 7.81 0.868s4.339 2.603 5.207 4.339c2.603 6.942-4.339 19.959-12.149 23.431l-52.068 17.356c-0.868 0.868-1.736 0.868-2.603 1.736-7.81 6.075-12.149 15.62-12.149 26.034 0.868 9.546 5.207 17.356 13.017 22.563 0.868 0.868 2.603 1.736 4.339 1.736h121.49c1.736 0 3.471-0.868 3.471-1.736l78.102-52.068c9.546-6.075 26.902-8.678 32.108-1.736 3.469 3.47 4.337 8.677 3.469 13.884z\"/><path d=\"m60.992 175.46h399.19c5.207 0 8.678-3.471 8.678-8.678v-104.14c0-5.207-3.471-8.678-8.678-8.678h-399.19c-5.207 0-8.678 3.471-8.678 8.678v104.14c0 5.206 3.471 8.678 8.678 8.678zm95.457-17.356v-86.78h208.27v86.78h-208.27zm295.05 0h-34.712v-86.78h34.712v86.78zm-52.067-86.78v86.78h-17.356v-86.78h17.356zm-260.34 0v86.78h-17.356v-86.78h17.356zm-69.424 0h34.712v86.78h-34.712v-86.78z\"/><path d=\"m321.33 106.03h-121.49c-5.207 0-8.678 3.471-8.678 8.678s3.471 8.678 8.678 8.678h121.49c5.207 0 8.678-3.471 8.678-8.678s-3.471-8.678-8.678-8.678z\"/></g></g></g></svg>','<svg enable-background=\"new 0 0 509.117 509.117\" version=\"1.1\" viewBox=\"0 0 509.12 509.12\" xmlns=\"http://www.w3.org/2000/svg\"><g transform=\"translate(1 1)\"><path d=\"m500.96 256.16c-13.017-16.488-39.919-11.281-54.671-1.736l-75.498 50.332h-115.42c-1.736-1.736-2.603-5.207-2.603-7.81 0-3.471 1.736-7.81 4.339-10.414l51.2-17.356c15.62-6.942 28.637-28.637 21.695-45.993-2.603-6.075-7.81-11.281-14.753-13.885-9.546-3.471-21.695-3.471-31.241 0.868l-77.234 26.034-93.722 8.678c-6.942 0-18.224 6.942-22.563 9.546l-59.878 25.166c-26.902 12.149-39.051 43.39-26.902 70.292l39.919 97.193c0.868 2.603 2.603 4.339 5.207 5.207 1.736 0.868 2.603 0.868 3.471 0.868 1.736 0 2.603 0 3.471-0.868l102.4-51.2h154.47c0.868 0 1.736 0 2.603-1.736l104.14-34.712c0.868 0 1.736 0 2.603-0.868l69.424-52.068c8.678-6.075 14.753-17.356 16.488-28.637 0.869-10.413-0.867-19.959-6.941-26.901zm-10.414 25.166c-0.868 6.942-4.339 13.885-9.546 17.356l-68.556 51.2-101.53 33.844h-154.47-4.339l-95.458 47.729-36.447-88.515c-7.81-18.224 0-39.051 18.224-47.729l60.746-26.034c0.868 0 0.868 0 1.736-0.868 3.471-2.603 10.414-6.942 13.017-6.942l95.458-8.678h1.736l78.969-26.034c3.471-0.868 6.942-1.736 10.414-1.736 2.603 0 5.207 0 7.81 0.868s4.339 2.603 5.207 4.339c2.603 6.942-4.339 19.959-12.149 23.431l-52.068 17.356c-0.868 0.868-1.736 0.868-2.603 1.736-7.81 6.075-12.149 15.62-12.149 26.034 0.868 9.546 5.207 17.356 13.017 22.563 0.868 0.868 2.603 1.736 4.339 1.736h121.49c1.736 0 3.471-0.868 3.471-1.736l78.102-52.068c9.546-6.075 26.902-8.678 32.108-1.736 3.469 3.47 4.337 8.677 3.469 13.884z\"/><path d=\"m60.992 175.46h399.19c5.207 0 8.678-3.471 8.678-8.678v-104.14c0-5.207-3.471-8.678-8.678-8.678h-399.19c-5.207 0-8.678 3.471-8.678 8.678v104.14c0 5.206 3.471 8.678 8.678 8.678zm95.457-17.356v-86.78h208.27v86.78h-208.27zm295.05 0h-34.712v-86.78h34.712v86.78zm-52.067-86.78v86.78h-17.356v-86.78h17.356zm-260.34 0v86.78h-17.356v-86.78h17.356zm-69.424 0h34.712v86.78h-34.712v-86.78z\"/><path d=\"m321.33 106.03h-121.49c-5.207 0-8.678 3.471-8.678 8.678s3.471 8.678 8.678 8.678h121.49c5.207 0 8.678-3.471 8.678-8.678s-3.471-8.678-8.678-8.678z\"/></g></svg>');"));
         query.exec(QStringLiteral("DELETE FROM 'tag';"));
         query.exec(QStringLiteral("INSERT INTO 'tag' ('id','name','id_icon') VALUES (1,'Favorite',1),(4,'Reading',4),(5,'To read',5),(6,'Read',6);"));
-        query.exec(QStringLiteral("CREATE TABLE book_tag (id_book INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_book) REFERENCES book (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE);"));
-        query.exec(QStringLiteral("CREATE TABLE seria_tag (id_seria INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_seria) REFERENCES seria (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE);"));
-        query.exec(QStringLiteral("CREATE TABLE author_tag (id_author INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_author) REFERENCES author (id) ON DELETE CASCADE);"));
+        query.exec(QStringLiteral("CREATE TABLE book_tag (id_book INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_book) REFERENCES book (id) ON DELETE CASCADE, UNIQUE (id_book, id_tag) ON CONFLICT IGNORE);"));
+        query.exec(QStringLiteral("CREATE TABLE seria_tag (id_seria INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_seria) REFERENCES seria (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, UNIQUE (id_seria, id_tag) ON CONFLICT IGNORE);"));
+        query.exec(QStringLiteral("CREATE TABLE author_tag (id_author INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_author) REFERENCES author (id) ON DELETE CASCADE, UNIQUE (id_author, id_tag) ON CONFLICT IGNORE);"));
+
+        query.exec(QStringLiteral("INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 4)"));
+    }else
+    if(nMinorVersion < 4){
+        query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
+        query.exec(QStringLiteral("BEGIN TRANSACTION;"));
+        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM book_tag;"));
+        query.exec(QStringLiteral("DROP TABLE book_tag;"));
+        query.exec(QStringLiteral("CREATE TABLE book_tag (id_book INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_book) REFERENCES book (id) ON DELETE CASCADE, UNIQUE (id_book, id_tag) ON CONFLICT IGNORE);"));
+        query.exec(QStringLiteral("INSERT INTO book_tag (id_book, id_tag) SELECT id_book, id_tag FROM temp_table;"));
+        query.exec(QStringLiteral("DROP TABLE temp_table;"));
+
+        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM author_tag;"));
+        query.exec(QStringLiteral("DROP TABLE author_tag;"));
+        query.exec(QStringLiteral("CREATE TABLE author_tag (id_author INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_author) REFERENCES author (id) ON DELETE CASCADE, UNIQUE (id_author, id_tag) ON CONFLICT IGNORE);"));
+        query.exec(QStringLiteral("INSERT INTO author_tag (id_author, id_tag) SELECT id_author, id_tag FROM temp_table;"));
+        query.exec(QStringLiteral("DROP TABLE temp_table;"));
+
+        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM seria_tag;"));
+        query.exec(QStringLiteral("DROP TABLE seria_tag;"));
+        query.exec(QStringLiteral("CREATE TABLE seria_tag (id_seria INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_seria) REFERENCES seria (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, UNIQUE (id_seria, id_tag) ON CONFLICT IGNORE);"));
+        query.exec(QStringLiteral("INSERT INTO seria_tag (id_seria, id_tag) SELECT id_seria, id_tag FROM temp_table;"));
+        query.exec(QStringLiteral("DROP TABLE temp_table;"));
+
+        query.exec(QStringLiteral("COMMIT;"));
+        query.exec(QStringLiteral("INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 4)"));
     }
     if(nMinorVersion < 3){
         query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
-        query.exec(QStringLiteral("CREATE TABLE sqlitestudio_temp_table AS SELECT * FROM lib;"));
+        query.exec(QStringLiteral("BEGIN TRANSACTION;"));
+        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM lib;"));
         query.exec(QStringLiteral("DROP TABLE lib;"));
         query.exec(QStringLiteral("CREATE TABLE lib (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT, path TEXT, inpx TEXT, version TEXT, firstAuthor BOOL, woDeleted BOOL);"));
-        query.exec(QStringLiteral("INSERT INTO lib (id, name, path, inpx, firstAuthor, woDeleted) SELECT id, name, path, inpx, firstAuthor, woDeleted FROM sqlitestudio_temp_table;"));
-        query.exec(QStringLiteral("DROP TABLE sqlitestudio_temp_table;"));
-        query.exec(QStringLiteral("INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 3)"));
+        query.exec(QStringLiteral("INSERT INTO lib (id, name, path, inpx, firstAuthor, woDeleted) SELECT id, name, path, inpx, firstAuthor, woDeleted FROM temp_table;"));
+        query.exec(QStringLiteral("DROP TABLE temp_table;"));
+        query.exec(QStringLiteral("COMMIT;"));
     }
     if(nMinorVersion < 2){
         query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
+        query.exec(QStringLiteral("BEGIN TRANSACTION;"));
         query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM author;"));
         query.exec(QStringLiteral("DROP TABLE author;"));
         query.exec(QStringLiteral("CREATE TABLE author (id INTEGER, name1 TEXT, name2 TEXT, name3 TEXT, id_lib INTEGER, FOREIGN KEY (id_lib) REFERENCES lib (id) ON DELETE CASCADE, PRIMARY KEY (id));"));
@@ -162,24 +189,7 @@ bool openDB(const QString &sName)
         query.exec(QStringLiteral("DROP TABLE temp_table;"));
         query.exec(QStringLiteral("CREATE INDEX seria_id ON seria (\"id\" ASC);"));
         query.exec(QStringLiteral("CREATE INDEX seria_name ON seria (\"name\" ASC, \"id_lib\" ASC);"));
-    }
-    if(nMinorVersion == 1){
-        query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
-        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM author_tag;"));
-        query.exec(QStringLiteral("DROP TABLE author_tag;"));
-        query.exec(QStringLiteral("CREATE TABLE author_tag (id_author INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_author) REFERENCES author (id) ON DELETE CASCADE);"));
-        query.exec(QStringLiteral("INSERT INTO author_tag (id_author, id_tag) SELECT id_author, id_tag FROM temp_table;"));
-        query.exec(QStringLiteral("DROP TABLE temp_table;"));
-        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM book_tag;"));
-        query.exec(QStringLiteral("DROP TABLE book_tag;"));
-        query.exec(QStringLiteral("CREATE TABLE book_tag (id_book INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_book) REFERENCES book (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE);"));
-        query.exec(QStringLiteral("INSERT INTO book_tag (id_book, id_tag) SELECT id_book, id_tag FROM temp_table;"));
-        query.exec(QStringLiteral("DROP TABLE temp_table;"));
-        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM seria_tag;"));
-        query.exec(QStringLiteral("DROP TABLE seria_tag;"));
-        query.exec(QStringLiteral("CREATE TABLE seria_tag (id_seria INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_seria) REFERENCES seria (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE);"));
-        query.exec(QStringLiteral("INSERT INTO seria_tag (id_seria, id_tag) SELECT id_seria, id_tag FROM temp_table;"));
-        query.exec(QStringLiteral("DROP TABLE temp_table;"));
+        query.exec(QStringLiteral("COMMIT;"));
     }
     query.exec(QStringLiteral("PRAGMA foreign_keys = 1;"));
 
