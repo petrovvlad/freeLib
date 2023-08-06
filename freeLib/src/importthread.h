@@ -46,10 +46,10 @@ private:
     QList<uint> listIdBookInLib_;
     QStringList listFiles_;
     QSqlQuery query_;
-    uint AddSeria(const QString &str, qlonglong libID, int tag);
-    uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool first_author, int tag);
+    uint AddSeria(const QString &str, qlonglong libID, const QVariantList *pTags = nullptr);
+    uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);
     uint AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
-                 int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, int tag);
+                 int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
 
     qlonglong AddGenre(qlonglong idBook, QString sGenre, qlonglong id_lib);
 
