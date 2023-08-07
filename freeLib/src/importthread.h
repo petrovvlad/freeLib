@@ -17,7 +17,7 @@ class ImportThread : public QObject
     Q_OBJECT
 public:
     explicit ImportThread(QObject *parent = 0);
-    void init(uint id, const SLib &lib, uchar update_type, bool save_only);
+    void init(uint id, const SLib &lib, uchar nUpdateType);
     void init(uint id, const SLib &lib, const QStringList &files);
     //void SaveLibrary();
     bool loop;
@@ -38,7 +38,6 @@ private:
     QString sInpxFile_;
     QString sName_;
     QString sPath_;
-    bool bSaveOnly_;
     uchar nUpdateType_;
     bool bFirstAuthorOnly;
     bool bWoDeleted_;

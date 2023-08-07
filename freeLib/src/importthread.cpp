@@ -171,7 +171,7 @@ qlonglong ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong id_
     return id;
 }
 
-void ImportThread::init(uint id, const SLib &lib, uchar update_type, bool save_only)
+void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
 {
     sInpxFile_ = RelativeToAbsolutePath(lib.sInpx);
     if(!QFileInfo::exists(sInpxFile_) || !QFileInfo(sInpxFile_).isFile())
@@ -180,10 +180,9 @@ void ImportThread::init(uint id, const SLib &lib, uchar update_type, bool save_o
     }
     sPath_ = RelativeToAbsolutePath(lib.path);
     sName_ = lib.name;
-    nUpdateType_ = update_type;
+    nUpdateType_ = nUpdateType;
     idLib_ = id;
     loop = true;
-    bSaveOnly_ = save_only;
     bFirstAuthorOnly = lib.bFirstAuthor;
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
@@ -203,7 +202,6 @@ void ImportThread::init(uint id, const SLib &lib, const QStringList &files)
     sPath_ = RelativeToAbsolutePath(lib.path);
     bFirstAuthorOnly = lib.bFirstAuthor;
     loop = true;
-    bSaveOnly_ = false;
 }
 
 void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_name, qint32 file_size)
@@ -529,11 +527,6 @@ void ImportThread::importFB2(const QString &path, int &count)
 
 void ImportThread::process()
 {
-    if(bSaveOnly_)
-    {
-        emit End();
-        return;
-    }
     QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
     QString sDbFile = fi.canonicalFilePath();
     QSqlDatabase dbase = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));

@@ -311,7 +311,7 @@ int main(int argc, char *argv[])
                         auto imp_tr = new ImportThread();
                         const SLib &lib = mLibs[nId];
 
-                        imp_tr->init(nId, lib, UT_NEW, lib.bFirstAuthor && lib.sInpx.isEmpty());
+                        imp_tr->init(nId, lib, UT_NEW);
                         imp_tr->moveToThread(thread);
                         QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
                         {
