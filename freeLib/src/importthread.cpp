@@ -96,11 +96,16 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
     else
     {
     }
-    if(bFirstAuthor)
-        query_.exec(QLatin1String("UPDATE book SET first_author_id=") + QString::number(id) + QLatin1String(" WHERE id=") + QString::number(idBook));
-    if(!query_.exec(QLatin1String("INSERT INTO book_author(id_book,id_author,id_lib) values(") + QString::number(idBook) +
-                    QLatin1String(",") + QString::number(id) + QLatin1String(",") + QString::number(libID) + QLatin1String(")")))
+    if(bFirstAuthor){
+        if(!query_.exec(QStringLiteral("UPDATE book SET first_author_id=") + QString::number(id) + QStringLiteral(" WHERE id=") + QString::number(idBook)))
+            MyDBG << query_.lastError().text();
+
+    }
+    if(!query_.exec(QStringLiteral("INSERT OR IGNORE INTO book_author(id_book,id_author,id_lib) values(") + QString::number(idBook) +
+                    QStringLiteral(",") + QString::number(id) + QStringLiteral(",") + QString::number(libID) + QStringLiteral(");")))
+    {
         MyDBG << query_.lastError().text();
+    }
 
     if(pTags != nullptr){
         QVariantList listAuthors;
