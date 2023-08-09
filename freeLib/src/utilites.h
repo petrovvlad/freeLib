@@ -7,6 +7,8 @@
 
 #include "quazip/quazip/quazip.h"
 
+#define MyDBG (qDebug()<<__FILE__<<__LINE__<<__PRETTY_FUNCTION__)
+
 struct tag
 {
     QString name;

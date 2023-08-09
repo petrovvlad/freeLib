@@ -155,7 +155,7 @@ void LibrariesDlg::StartImport(const SLib &lib)
 {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
-    uchar update_type = (ui->add_new->isChecked() ?UT_NEW :ui->del_old->isChecked() ?UT_DEL_AND_NEW :UT_FULL);
+    uchar nUdateType = (ui->add_new->isChecked() ?UT_NEW :ui->del_old->isChecked() ?UT_DEL_AND_NEW :UT_FULL);
     SaveLibrary(lib);
     ui->btnUpdate->setDisabled(true);
     ui->BookDir->setDisabled(true);
@@ -170,7 +170,7 @@ void LibrariesDlg::StartImport(const SLib &lib)
 
     pThread_ = new QThread;
     pImportThread_ = new ImportThread();
-    pImportThread_->init(idCurrentLib_, lib, update_type, lib.bFirstAuthor && lib.sInpx.isEmpty());
+    pImportThread_->init(idCurrentLib_, lib, nUdateType);
     pImportThread_->moveToThread(pThread_);
     connect(pImportThread_, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
     connect(pThread_, &QThread::started, pImportThread_, &ImportThread::process);

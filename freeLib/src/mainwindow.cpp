@@ -347,16 +347,23 @@ void MainWindow::UpdateTags()
 
 void MainWindow::updateIcons()
 {
+    bool wasBlocked = ui->SeriaList->blockSignals(true);
     for(int i=0; i<ui->SeriaList->count(); i++){
         auto item = ui->SeriaList->item(i);
         uint idSerial = item->data(Qt::UserRole).toUInt();
         item->setIcon(getTagIcon(mLibs[idCurrentLib].mSerials[idSerial].listIdTags));
     }
+    ui->SeriaList->blockSignals(wasBlocked);
+
+    wasBlocked = ui->AuthorList->blockSignals(true);
     for(int i=0; i<ui->AuthorList->count(); i++){
         auto item = ui->AuthorList->item(i);
         uint idAuthor = item->data(Qt::UserRole).toUInt();
         item->setIcon(getTagIcon(mLibs[idCurrentLib].mAuthors[idAuthor].listIdTags));
     }
+    ui->AuthorList->blockSignals(wasBlocked);
+
+    wasBlocked = ui->Books->blockSignals(true);
     for(int i=0; i<ui->Books->topLevelItemCount(); i++){
         auto item1 = ui->Books->topLevelItem(i);
         updateItemIcon(item1);
@@ -369,6 +376,7 @@ void MainWindow::updateIcons()
                 }
         }
     }
+    ui->Books->blockSignals(wasBlocked);
 }
 
 void MainWindow::updateItemIcon(QTreeWidgetItem *item)
@@ -577,6 +585,8 @@ void MainWindow::set_tag()
         id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
         setTag(idTag, id, mLibs[idCurrentLib].mSerials[id].listIdTags, QStringLiteral("seria"), bSet);
     }
+
+    //TODO оптимизировать обновление иконок при большом количестве отображаемых авторов/книг
     updateIcons();
 }
 
@@ -901,7 +911,6 @@ void MainWindow::ExportBookListBtn(bool Enable)
     ui->btnExport->setEnabled(Enable);
     ui->btnOpenBook->setEnabled(false);
 }
-
 
 void MainWindow::StartSearch()
 {
@@ -1248,6 +1257,7 @@ void MainWindow::ManageLibrary()
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         loadLibrary(idCurrentLib);
+
         UpdateTags();
         UpdateBooks();
         switch(ui->tabWidget->currentIndex()){
