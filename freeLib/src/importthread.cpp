@@ -156,19 +156,15 @@ void ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong idLib)
 {
     qlonglong idGenre = 0;
     sGenre.replace(' ', '_');
-    query_.exec(QLatin1String("SELECT id FROM genre where keys LIKE '%") + sGenre.toLower() + QLatin1String(";%'"));
-    if(query_.next())
-    {
-        idGenre = query_.value(0).toLongLong();
-    }
-    else
+    if(genreKeys_.contains(sGenre)){
+        idGenre = genreKeys_[sGenre];
+        if(!query_.exec(QStringLiteral("INSERT OR IGNORE INTO book_genre(id_book,id_genre,id_lib) values(") +  QString::number(idBook) + QLatin1String(",") +
+                         QString::number(idGenre) + QStringLiteral(",") + QString::number(idLib) + QLatin1String(");")))
+        {
+            MyDBG << query_.lastError().text();
+        }
+    }else
         qDebug() << "Неизвестный жанр: " + sGenre;
-
-    if(!query_.exec(QStringLiteral("INSERT INTO book_genre(id_book,id_genre,id_lib) values(") +  QString::number(idBook) + QLatin1String(",") +
-                     QString::number(idGenre) + QLatin1String(",") + QString::number(idLib) + QLatin1String(")")))
-    {
-        MyDBG << query_.lastError().text();
-    }
 }
 
 void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
@@ -552,6 +548,20 @@ void ImportThread::process()
         tags[sTagName] = idTag;
     }
 
+    query_.exec(QLatin1String("SELECT id, keys FROM genre where NOT keys='';"));
+    while(query_.next())
+    {
+        uint idGenre = query_.value(0).toUInt();
+        QString sKeys = query_.value(1).toString().trimmed();
+        QStringList kistKeys = sKeys.split(QStringLiteral(";"));
+        for(qsizetype i=0; i<kistKeys.size(); i++){
+            QString sKey = kistKeys.at(i).trimmed();
+            if(!sKey.isEmpty()){
+                genreKeys_[sKey] = idGenre;
+            }
+        }
+    }
+
     if(!listFiles_.isEmpty()){
         int count = 0;
         QString sFile;
@@ -924,7 +934,18 @@ void ImportThread::process()
 
                 if(substrings.count() >= field_index[_JANRES] + 1)
                 {
-                    QStringList Janres = substrings[field_index[_JANRES]].split(QStringLiteral(":"));
+#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
+                    QStringList Janres = substrings[field_index[_JANRES]].split(':', Qt::SkipEmptyParts);
+#else
+                    QStringList Janres;
+                    QStringList tmpList = substrings[field_index[_JANRES]].split(QStringLiteral(":"));
+                    for(int i=0; i<tmpList.size(); i++){
+                        QString str = tmpList.at(i);
+                        if(!str.isEmpty())
+                            Janres << str;
+                    }
+#endif
+
                     bool first = true;
                     foreach(const QString &janre, Janres)
                     {
