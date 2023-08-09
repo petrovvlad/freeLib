@@ -11,7 +11,7 @@
 #include <QDir>
 
 #include "quazip/quazip/quazipfile.h"
-#include "options.h"
+//#include "options.h"
 #include "utilites.h"
 
 QString RelativeToAbsolutePath(QString path);
@@ -123,7 +123,7 @@ uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_ser
 
     query_.bindValue(QStringLiteral(":name"), name);
     query_.bindValue(QStringLiteral(":star"), star);
-    query_.bindValue(QStringLiteral(":id_seria"), id_seria);
+    query_.bindValue(QStringLiteral(":id_seria"), id_seria!=0 ?id_seria :QVariant());
     query_.bindValue(QStringLiteral(":num_in_seria"), num_in_seria);
     query_.bindValue(QStringLiteral(":language"), language);
     query_.bindValue(QStringLiteral(":file"), file);
@@ -152,7 +152,7 @@ uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_ser
     return id;
 }
 
-qlonglong ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong id_lib)
+void ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong idLib)
 {
     qlonglong idGenre = 0;
     sGenre.replace(' ', '_');
@@ -162,13 +162,13 @@ qlonglong ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong id_
         idGenre = query_.value(0).toLongLong();
     }
     else
-        MyDBG << "Неизвестный жанр: " + sGenre;
-    query_.exec(QStringLiteral("INSERT INTO book_genre(id_book,id_genre,id_lib) values(") +  QString::number(idBook) + QLatin1String(",") +
-                QString::number(idGenre) + QLatin1String(",") + QString::number(id_lib) + QLatin1String(")"));
-    query_.exec(QStringLiteral("select last_insert_rowid()"));
-    query_.next();
-    qlonglong id = query_.value(0).toLongLong();
-    return id;
+        qDebug() << "Неизвестный жанр: " + sGenre;
+
+    if(!query_.exec(QStringLiteral("INSERT INTO book_genre(id_book,id_genre,id_lib) values(") +  QString::number(idBook) + QLatin1String(",") +
+                     QString::number(idGenre) + QLatin1String(",") + QString::number(idLib) + QLatin1String(")")))
+    {
+        MyDBG << query_.lastError().text();
+    }
 }
 
 void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
@@ -527,13 +527,17 @@ void ImportThread::importFB2(const QString &path, int &count)
 
 void ImportThread::process()
 {
+#if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
+    QSqlDatabase dbase = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("importdb"));
+#else
     QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
     QString sDbFile = fi.canonicalFilePath();
     QSqlDatabase dbase = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));
     dbase.setDatabaseName(sDbFile);
+#endif
     if (!dbase.open())
     {
-        MyDBG << ("Error connect! ")<<sDbFile;
+        MyDBG << dbase.lastError().text();
         return;
     }
 
@@ -572,12 +576,7 @@ void ImportThread::process()
     if(sInpxFile_.isEmpty())
     {
         importFB2_main(sPath_);
-        query_.exec(QStringLiteral("drop table if exists tmp;"));
-        query_.exec(QStringLiteral("create table tmp as select id from book where id_lib=%1 and deleted=1;").arg(QString::number(idLib_)));
-        query_.exec(QStringLiteral("delete from book where id_lib=%1 and id in (select id from tmp);").arg(QString::number(idLib_)));
-        query_.exec(QStringLiteral("delete from book_genre where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(idLib_)));
-        query_.exec(QStringLiteral("delete from book_author where id_lib=%1 and id_book in (select id from tmp);").arg(QString::number(idLib_)));
-        query_.exec(QStringLiteral("drop table if exists tmp;"));
+        query_.exec(QStringLiteral("DELETE FROM book WHERE id_lib=%1 AND deleted=TRUE;").arg(QString::number(idLib_)));
         query_.exec(QStringLiteral("VACUUM"));
         emit End();
         return;
