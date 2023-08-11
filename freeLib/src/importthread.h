@@ -39,7 +39,7 @@ private:
     QString sName_;
     QString sPath_;
     uchar nUpdateType_;
-    bool bFirstAuthorOnly;
+    bool bFirstAuthorOnly_;
     bool bWoDeleted_;
     uint  idLib_;
     QList<uint> listIdBookInLib_;

@@ -184,7 +184,7 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
     nUpdateType_ = nUpdateType;
     idLib_ = id;
     loop = true;
-    bFirstAuthorOnly = lib.bFirstAuthor;
+    bFirstAuthorOnly_ = lib.bFirstAuthor;
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
        auto iBook = lib.mBooks.constBegin();
@@ -201,7 +201,7 @@ void ImportThread::init(uint id, const SLib &lib, const QStringList &files)
     idLib_ = id;
     listFiles_ = files;
     sPath_ = RelativeToAbsolutePath(lib.path);
-    bFirstAuthorOnly = lib.bFirstAuthor;
+    bFirstAuthorOnly_ = lib.bFirstAuthor;
     loop = true;
 }
 
@@ -265,7 +265,7 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     {
         addAuthor(author, idLib_, id_book, first_author);
         first_author = false;
-        if(bFirstAuthorOnly)
+        if(bFirstAuthorOnly_)
             break;
     }
     foreach(const auto sGenre, listGenres)
@@ -382,6 +382,8 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
     foreach(const SAuthor &author, listAuthors)
     {
         addAuthor(author, idLib_, id_book, first_author);
+        if(bFirstAuthorOnly_)
+            break;
         first_author = false;
     }
     foreach(const auto sGenre, listGenres)
@@ -450,7 +452,7 @@ void ImportThread::importFB2(const QString &path, int &count)
                     emit Message(iter->fileName());
                     QString arh_name = file_name.right(file_name.length() - sPath_.length());
                     if(arh_name.at(0) == '/' || arh_name.at(0) == '\\')
-                            arh_name=arh_name.right(arh_name.length()-1);
+                            arh_name = arh_name.right(arh_name.length()-1);
                     query_.exec(QStringLiteral("SELECT * FROM book where archive='%1' LIMIT 1").arg(arh_name));
                     if(query_.next())
                         continue;
