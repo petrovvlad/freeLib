@@ -466,37 +466,35 @@ void ImportThread::importFB2(const QString &path, int &count)
                 }
 
                 QuaZipFile zip_file(&uz);
-                QList<QuaZipFileInfo64> list = uz.getFileInfoList64();
-                foreach(const QuaZipFileInfo64 &str, list  )
+                QList<QuaZipFileInfo> list = uz.getFileInfoList();
+                foreach(const QuaZipFileInfo &zip_fi, list  )
                 {
-                    //app->processEvents();
                     QCoreApplication::processEvents();
                     if(!loop)
                         break;
+                    if(zip_fi.uncompressedSize==0)
+                        continue;
                     QBuffer buffer;
                     if(count == 0)
                         query_.exec(QStringLiteral("BEGIN;"));
-                    QuaZipFileInfo zip_fi;
-                    str.toQuaZipFileInfo(zip_fi);
                     if(zip_fi.name.right(3).toLower() == QLatin1String("fb2"))
                     {
-                        //uz.extractFile(str.filename,&buffer,UnZip::SkipPaths,16*1024);
                         setCurrentZipFileName(&uz, zip_fi.name);
                         zip_file.open(QIODevice::ReadOnly);
                         buffer.setData(zip_file.read(16*1024));
                         zip_file.close();
-                        readFB2(buffer.data(), str.name, file_name, str.uncompressedSize);
+                        readFB2(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
                     }
                     else if(zip_fi.name.right(3).toLower() == QLatin1String("epub"))
                     {
                         setCurrentZipFileName(&uz, zip_fi.name);
                         zip_file.open(QIODevice::ReadOnly);
                         buffer.setData(zip_file.readAll());
-                        readEPUB(buffer.data(), str.name, file_name, str.uncompressedSize);
+                        readEPUB(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
                     }
                     else if(zip_fi.name.right(3).toLower() != QLatin1String("fbd"))
                     {
-                        QFileInfo fi(str.name);
+                        QFileInfo fi(zip_fi.name);
                         if(!fi.completeBaseName().isEmpty() && fi.completeBaseName().at(0) != '.')
                         {
                             QString fbd = fi.path() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".fbd");
@@ -505,7 +503,7 @@ void ImportThread::importFB2(const QString &path, int &count)
                                 setCurrentZipFileName(&uz, zip_fi.name);
                                 zip_file.open(QIODevice::ReadOnly);
                                 buffer.setData(zip_file.readAll());
-                                readFB2(buffer.data(), str.name, file_name, str.uncompressedSize);
+                                readFB2(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
                             }
                         }
                     }
@@ -745,7 +743,6 @@ void ImportThread::process()
         zip_file.open(QIODevice::ReadOnly);
         outbuff.setData(zip_file.readAll());
         zip_file.close();
-        //uz.extractFile(str,&outbuff,UnZip::SkipPaths);
         QStringList lines = (QString::fromUtf8(outbuff.data())).split('\n');
         qlonglong count=0;
         foreach(const QString &line, lines)
