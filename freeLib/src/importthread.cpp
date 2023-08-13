@@ -69,17 +69,21 @@ uint ImportThread::AddSeria(const QString &str, qlonglong libID, const QVariantL
 
 uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags)
 {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    uint idAuthor = hashAuthors_.value(author, 0);
+#else
+    uint idAuthor = 0;
     QString sQuery = QStringLiteral("SELECT id FROM author WHERE id_lib=%1 and %2 and %3 and %4").arg(
                 QString::number(libID),
-                (author.sLastName.isEmpty() ?QStringLiteral("(name1 is null or name1=\"\")") :(QLatin1String("name1=\"") + author.sLastName + QLatin1String("\""))),
-                (author.sFirstName.isEmpty() ?QStringLiteral("(name2 is null or name2=\"\")") :(QLatin1String("name2=\"") + author.sFirstName + QLatin1String("\""))),
-                (author.sMiddleName.isEmpty() ?QStringLiteral("(name3 is null or name3=\"\")") :(QLatin1String("name3=\"") + author.sMiddleName + QLatin1String("\""))));
+                (author.sLastName.isEmpty() ?QStringLiteral("(name1 is null or name1=\"\")") :(QStringLiteral("name1=\"") + author.sLastName + QStringLiteral("\""))),
+                (author.sFirstName.isEmpty() ?QStringLiteral("(name2 is null or name2=\"\")") :(QStringLiteral("name2=\"") + author.sFirstName + QStringLiteral("\""))),
+                (author.sMiddleName.isEmpty() ?QStringLiteral("(name3 is null or name3=\"\")") :(QStringLiteral("name3=\"") + author.sMiddleName + QStringLiteral("\""))));
     query_.exec(sQuery);
-    uint idAuthor = 0;
     if(query_.next())
     {
         idAuthor = query_.value(0).toLongLong();
     }
+#endif
     if(idAuthor == 0)
     {
         queryInsertAuthor_.bindValue(QStringLiteral(":name1"), author.sLastName);
@@ -89,6 +93,9 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
         if(!queryInsertAuthor_.exec())
             MyDBG << queryInsertAuthor_.lastError().text();
         idAuthor = queryInsertAuthor_.lastInsertId().toLongLong();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        hashAuthors_[author] = idAuthor;
+#endif
     }
     else
     {
@@ -192,6 +199,13 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
            ++iBook;
        }
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+       auto iAuthor = lib.mAuthors.constBegin();
+       while(iAuthor != lib.mAuthors.constEnd()){
+           hashAuthors_[iAuthor.value()] = iAuthor.key();
+           ++iAuthor;
+       }
+#endif
     }
 }
 
@@ -565,6 +579,7 @@ void ImportThread::process()
             }
         }
     }
+
     queryInsertBook_ = QSqlQuery(dbase);
     queryInsertBook_.prepare(QStringLiteral("INSERT INTO book(name,star,id_seria,num_in_seria,language,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive) "
                                   "values(:name,:star,:id_seria,:num_in_seria,:language,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive);"));

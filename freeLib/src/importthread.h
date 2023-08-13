@@ -44,6 +44,9 @@ private:
     uint  idLib_;
     QList<uint> listIdBookInLib_;
     QStringList listFiles_;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QHash<SAuthor, uint> hashAuthors_;
+#endif
     QSqlQuery query_;
     QSqlQuery queryInsertBook_;
     QSqlQuery queryInsertAuthor_;
