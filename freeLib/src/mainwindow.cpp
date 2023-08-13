@@ -91,14 +91,14 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->splitterH->restoreState(settings->value(QStringLiteral("MainWnd/HSplitterSizes")).toByteArray());
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
     ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
-    ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QLatin1String("pen.svg"))));
-    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QLatin1String("checkbox.svg"))));
-    ui->btnLibrary->setIcon(QIcon(sIconsPath + QLatin1String("library.svg")));
-    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"), QIcon(sIconsPath + QLatin1String("settings.svg"))));
-    ui->btnTreeView->setIcon(QIcon(sIconsPath + QLatin1String("view-tree.svg")));
-    ui->btnListView->setIcon(QIcon(sIconsPath + QLatin1String("view-list.svg")));
+    ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QStringLiteral("pen.svg"))));
+    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QStringLiteral("checkbox.svg"))));
+    ui->btnLibrary->setIcon(QIcon(sIconsPath + QStringLiteral("library.svg")));
+    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"), QIcon(sIconsPath + QStringLiteral("settings.svg"))));
+    ui->btnTreeView->setIcon(QIcon(sIconsPath + QStringLiteral("view-tree.svg")));
+    ui->btnListView->setIcon(QIcon(sIconsPath + QStringLiteral("view-list.svg")));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
@@ -187,7 +187,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FillAlphabet(options.sAlphabetName);
     ExportBookListBtn(false);
 
-    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0 || mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
+    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0 || mLibs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
 
     ui->tabWidget->setCurrentIndex(nCurrentTab);
     switch (nCurrentTab) {
@@ -276,7 +276,7 @@ void MainWindow::UpdateTags()
     group->setExclusive(true);
 
     iconsTags_.clear();
-    QString sMultiTagsIcon = QLatin1String(":/img/icons/") +(darkTheme ?QLatin1String("dark/") :QLatin1String("light/")) + QStringLiteral("multitags.svg");
+    QString sMultiTagsIcon = QStringLiteral(":/img/icons/") +(darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/")) + QStringLiteral("multitags.svg");
     iconsTags_[0] = QIcon(sMultiTagsIcon);
     QMap<uint, QIcon> icons;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
@@ -434,7 +434,7 @@ MainWindow::~MainWindow()
     QString TempDir;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
         TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    QDir(TempDir + QLatin1String("/freeLib/")).removeRecursively();
+    QDir(TempDir + QStringLiteral("/freeLib/")).removeRecursively();
 
     delete ui;
 }
@@ -451,15 +451,15 @@ void MainWindow::EditBooks()
 void MainWindow::ReviewLink(const QUrl &url)
 {
     QString sPath = url.path();
-    if(sPath.startsWith(QLatin1String("author_")))
+    if(sPath.startsWith(u"author_"))
     {
         MoveToAuthor(sPath.right(sPath.length()-8).toLongLong(), sPath.mid(7,1).toUpper());
     }
-    else if(sPath.startsWith(QLatin1String("genre_")))
+    else if(sPath.startsWith(u"genre_"))
     {
         MoveToGenre(sPath.right(sPath.length()-7).toLongLong());
     }
-    else if(sPath.startsWith(QLatin1String("seria_")))
+    else if(sPath.startsWith(u"seria_"))
     {
         MoveToSeria(sPath.right(sPath.length()-7).toLongLong(), sPath.mid(6,1).toUpper());
     }
@@ -814,9 +814,9 @@ void MainWindow::BookDblClick()
     QString TempDir;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
         TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    QDir dir(TempDir + QLatin1String("/freeLib"));
+    QDir dir(TempDir + QStringLiteral("/freeLib"));
     dir.mkpath(dir.path());
-    QFile file(dir.path() + QLatin1String("/") + fi.fileName());
+    QFile file(dir.path() + QStringLiteral("/") + fi.fileName());
     file.open(QFile::WriteOnly);
     file.write(outbuff.data());
     file.close();
@@ -1027,7 +1027,7 @@ void MainWindow::SelectLibrary()
         break;
     }
 
-    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
+    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
     FillLibrariesMenu();
 
     QApplication::restoreOverrideCursor();
@@ -1117,7 +1117,7 @@ void MainWindow::SelectBook()
     if(ui->Books->selectedItems().count() == 0)
     {
         ExportBookListBtn(false);
-        ui->Review->setHtml(QLatin1String(""));
+        ui->Review->setHtml(QStringLiteral(""));
         pCover->setBook(nullptr);
         return;
     }
@@ -1126,7 +1126,7 @@ void MainWindow::SelectBook()
     if(item->type() != ITEM_TYPE_BOOK)
     {
         ui->btnOpenBook->setEnabled(false);
-        ui->Review->setHtml(QLatin1String(""));
+        ui->Review->setHtml(QStringLiteral(""));
         pCover->setBook(nullptr);
         return;
     }
@@ -1150,8 +1150,8 @@ void MainWindow::SelectBook()
         else
         {
             QString sArchive = book.sArchive;
-            sArchive.replace(QLatin1String(".inp"), QLatin1String(".zip"));
-            file = sLibPath + QLatin1String("/") + sArchive;
+            sArchive.replace(QStringLiteral(".inp"), QStringLiteral(".zip"));
+            file = sLibPath + QStringLiteral("/") + sArchive;
         }
         file = file.replace('\\', '/');
     }
@@ -1166,14 +1166,14 @@ void MainWindow::SelectBook()
     foreach (auto idAuthor, book.listIdAuthors)
     {
         QString sAuthor = lib.mAuthors[idAuthor].getName();
-        sAuthors += (sAuthors.isEmpty() ?QLatin1String("") :QLatin1String("; ")) + QStringLiteral("<a href='author_%3%1'>%2</a>")
+        sAuthors += (sAuthors.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='author_%3%1'>%2</a>")
                 .arg(QString::number(idAuthor), sAuthor.replace(',', ' '), sAuthor.at(0));
     }
     QString sGenres;
     foreach (auto idGenre, book.listIdGenres)
     {
         QString sGenre = mGenre[idGenre].sName;
-        sGenres += (sGenres.isEmpty() ?QLatin1String("") :QLatin1String("; ")) + QStringLiteral("<a href='genre_%3%1'>%2</a>")
+        sGenres += (sGenres.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='genre_%3%1'>%2</a>")
                 .arg(QString::number(idGenre), sGenre, sGenre.at(0));
     }
     QFile file_html(QStringLiteral(":/preview.html"));
@@ -1197,20 +1197,20 @@ void MainWindow::SelectBook()
 
     QLocale locale;
     QColor colorBInfo = palette().color(QPalette::AlternateBase);
-    content.replace(QLatin1String("#annotation#"), book.sAnnotation).
-            replace(QLatin1String("#title#"), book.sName).
-            replace(QLatin1String("#author#"), sAuthors).
-            replace(QLatin1String("#genre#"), sGenres).
-            replace(QLatin1String("#series#"), seria).
-            replace(QLatin1String("#file_path#"), arh.filePath()).
+    content.replace(QStringLiteral("#annotation#"), book.sAnnotation).
+            replace(QStringLiteral("#title#"), book.sName).
+            replace(QStringLiteral("#author#"), sAuthors).
+            replace(QStringLiteral("#genre#"), sGenres).
+            replace(QStringLiteral("#series#"), seria).
+            replace(QStringLiteral("#file_path#"), arh.filePath()).
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-            replace(QLatin1String("#file_size#"), size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : QLatin1String("")).
+            replace(QStringLiteral("#file_size#"), size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : QStringLiteral("")).
 #else
             replace(QLatin1String("#file_size#"), size>0 ?sizeToString(size) : QLatin1String("")).
 #endif
-            replace(QLatin1String("#file_data#"), book_date.toString(QStringLiteral("dd.MM.yyyy hh:mm:ss"))).
-            replace(QLatin1String("#file_name#"), fi.fileName()).
-            replace(QLatin1String("#infobcolor"), colorBInfo.name());
+            replace(QStringLiteral("#file_data#"), book_date.toString(QStringLiteral("dd.MM.yyyy hh:mm:ss"))).
+            replace(QStringLiteral("#file_name#"), fi.fileName()).
+            replace(QStringLiteral("#infobcolor"), colorBInfo.name());
     ui->Review->setHtml(content);
 }
 
@@ -1268,7 +1268,7 @@ void MainWindow::ManageLibrary()
             onSerachSeriesChanded(ui->searchSeries->text());
             break;
         }
-        setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0||mLibs[idCurrentLib].name.isEmpty() ?QLatin1String("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
+        setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0||mLibs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
         FillLibrariesMenu();
         FillGenres();
         QGuiApplication::restoreOverrideCursor();
@@ -1392,7 +1392,7 @@ void MainWindow::onSerachAuthorsChanded(const QString &str)
     else
     {
         last_search_symbol = str.left(1);
-        if((last_search_symbol == QLatin1String("*") || last_search_symbol == QLatin1String("#") ) && str.length()>1)
+        if((last_search_symbol == u"*" || last_search_symbol == u"#" ) && str.length()>1)
         {
             ui->searchAuthor->setText(str.right(str.length()-1));
         }
@@ -1418,7 +1418,7 @@ void MainWindow::onSerachSeriesChanded(const QString &str)
     else
     {
         last_search_symbol=str.left(1);
-        if((last_search_symbol == QLatin1String("*") || last_search_symbol == QLatin1String("#") ) && str.length()>1)
+        if((last_search_symbol == u"*" || last_search_symbol == u"#") && str.length()>1)
         {
             ui->searchSeries->setText(str.right(str.length()-1));
         }
@@ -1688,7 +1688,7 @@ void MainWindow::FillAuthors()
     static const QRegularExpression re(QStringLiteral("[A-Za-zа-яА-ЯЁё]"));
 
     while(iAuthor != currentLib.mAuthors.constEnd()){
-        if(sSearch == QLatin1String("*") || (sSearch == QLatin1String("#") &&
+        if(sSearch == u"*" || (sSearch == u"#" &&
           !iAuthor->getName().left(1).contains(re)) || iAuthor->getName().startsWith(sSearch, Qt::CaseInsensitive))
         {
             QList<uint> booksId = currentLib.mAuthorBooksLink.values(iAuthor.key());
@@ -1736,7 +1736,7 @@ void MainWindow::FillSerials()
 
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
-        if(IsBookInList(*iBook) && (sSearch == QLatin1String("*") || (sSearch == QLatin1String("#") &&
+        if(IsBookInList(*iBook) && (sSearch == u"*" || (sSearch == u"#" &&
            !lib.mSerials[iBook->idSerial].sName.left(1).contains(re)) ||
            lib.mSerials[iBook->idSerial].sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
@@ -1823,7 +1823,7 @@ void MainWindow::FillGenres()
                 item = new QTreeWidgetItem(mTopGenresItem[iGenre->idParrentGenre]);
                 item->setText(0,QStringLiteral("%1 (%2)").arg(iGenre->sName).arg(mCounts[iGenre.key()]));
                 item->setData(0,Qt::UserRole, iGenre.key());
-                ui->s_genre->addItem(QLatin1String("   ") + iGenre->sName, iGenre.key());
+                ui->s_genre->addItem(QStringLiteral("   ") + iGenre->sName, iGenre.key());
                 if(iGenre.key() == idCurrentGenre_)
                 {
                     item->setSelected(true);
@@ -2071,8 +2071,8 @@ void MainWindow::UpdateExportMenu()
     font.setBold(true);
     ui->btnExport->defaultAction()->setFont(font);
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("document-send"), QIcon(sIconsPath + QLatin1String("send.svg"))));
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("document-send"), QIcon(sIconsPath + QStringLiteral("send.svg"))));
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);
 }
 

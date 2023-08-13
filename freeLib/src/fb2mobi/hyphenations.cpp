@@ -1,8 +1,9 @@
 #include "hyphenations.h"
+
 #include <QApplication>
 #include <QTextStream>
 #include <QtAlgorithms>
-#include <qstringbuilder.h>
+#include <QStringBuilder>
 #include <QDebug>
 #include <QFile>
 
@@ -26,7 +27,7 @@ bool pattern_compare(const pattern_t* a, const pattern_t* b)
 
 void hyphenations::init(const QString &language)
 {
-    QFile file(QLatin1String(":/xsl/hyphenations/") + language.toLower() + QLatin1String(".txt"));
+    QFile file(QStringLiteral(":/xsl/hyphenations/") + language.toLower() + QStringLiteral(".txt"));
     if(!file.open(QFile::ReadOnly))
     {
         qDebug()<<"Error open file "+file.fileName();
@@ -50,7 +51,7 @@ void hyphenations::init(const QString &language)
 //    abc=ts.readLine();
 //    abc_glasnie=ts.readLine();
     //file.close();
-    if(language == QLatin1String("ru"))
+    if(language == u"ru")
     {
       //  file.setFileName(QApplication::applicationDirPath()+"/xsl/hyphenations/en.txt");
   //      if(!file.open(QFile::ReadOnly))
@@ -114,7 +115,7 @@ QString hyphenations::hyphenate_word(QString word_original, const QString &separ
         //qDebug()<<word;
         if(word.length() < 3 /*&& hyphenation_only*/)
         {
-            result_word += ((last_word_empty || !result_word.isEmpty()) ?QLatin1String("-") :QLatin1String("")) + word;
+            result_word += ((last_word_empty || !result_word.isEmpty()) ?QStringLiteral("-") :QStringLiteral("")) + word;
             last_word_empty = word.isEmpty();
             continue;
         }
@@ -153,7 +154,7 @@ QString hyphenations::hyphenate_word(QString word_original, const QString &separ
             return word;
         //qDebug()<<"3";
 
-        QString word_string = QLatin1String(".") + word.toLower() + QLatin1String(".");
+        QString word_string = QStringLiteral(".") + word.toLower() + QStringLiteral(".");
         QVector<int> levels;
         levels.fill(0, word_string.size());
         //qDebug()<<plist.list.count();
@@ -197,20 +198,20 @@ QString hyphenations::hyphenate_word(QString word_original, const QString &separ
                 //qDebug()<<"dd";
                 if(!(!wh[i] /*|| (!slog_yest_glasnaya)*/))
                 {
-                    result += ((result.isEmpty() || (result.length()<2 /*&& hyphenation_only*/)) ?QLatin1String("") :separator);
+                    result += ((result.isEmpty() || (result.length()<2 /*&& hyphenation_only*/)) ?QStringLiteral("") :separator);
                     result += slog;
                    // slog_yest_glasnaya=false;
-                    slog = QLatin1String("");
+                    slog = QStringLiteral("");
                 }
             //}
             slog += word[i];
            // if(abc_glasnie.contains(word[i]))
             //    slog_yest_glasnaya=true;
         }
-        result += ((result.isEmpty()|| (result.length()<2 /*&& hyphenation_only*/) || slog.length()<2)?QLatin1String(""):separator);
+        result += ((result.isEmpty()|| (result.length()<2 /*&& hyphenation_only*/) || slog.length()<2)?QStringLiteral(""):separator);
         result += slog;
 
-        result_word += ((result_word.length()>0 || last_word_empty) ?QLatin1String("-") :QLatin1String("")) + begin_points+result + end_points;
+        result_word += ((result_word.length()>0 || last_word_empty) ?QStringLiteral("-") :QStringLiteral("")) + begin_points+result + end_points;
         last_word_empty = false;
     }
     return result_word;

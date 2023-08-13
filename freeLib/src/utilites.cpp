@@ -215,14 +215,14 @@ void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
     QSqlQuery query(dbase);
     if(delete_only)
     {
-        query.exec(QLatin1String("update book set deleted=1 where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("update book set deleted=1 where id_lib=") + QString::number(id_lib));
     }
     else
     {
         query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-        query.exec(QLatin1String("delete from book where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from author where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from seria where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("delete from book where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("delete from author where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("delete from seria where id_lib=") + QString::number(id_lib));
         query.exec(QStringLiteral("VACUUM"));
     }
 }
@@ -248,13 +248,13 @@ QString Transliteration(QString str)
         if ( validChars.contains(str[i]) ){
             fn = fn + str[i];
         }else if (str[i] == ' '){  //replace spaces
-            fn = fn + QLatin1String(" ");
+            fn = fn + QStringLiteral(" ");
         }else if (str[i] == '?'){  //replace ?
-            fn = fn + QLatin1String(".");
+            fn = fn + QStringLiteral(".");
         }else if (str[i] == '*'){  //replace *
-            fn = fn + QLatin1String(".");
+            fn = fn + QStringLiteral(".");
         }else if (str[i] == '~'){  //replace ~
-            fn = fn + QLatin1String(".");
+            fn = fn + QStringLiteral(".");
         }else{
             rU = rusUpper.indexOf(str[i]);
             rL = rusLower.indexOf(str[i]);
@@ -296,7 +296,7 @@ QSharedPointer<QSettings> GetSettings(bool bReopen)
     static QSharedPointer<QSettings> pSettings;
     if(bReopen || !pSettings)
     {
-        QString sFile = QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg");
+        QString sFile = QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg");
         if(QFile::exists(sFile)){
             pSettings = QSharedPointer<QSettings> (new QSettings(sFile, QSettings::IniFormat));
         }else
@@ -313,7 +313,7 @@ void setLocale(const QString &sLocale)
     static std::unique_ptr<QTranslator> translator;
     static std::unique_ptr<QTranslator> translator_qt;
 
-    setlocale(LC_ALL, (sLocale + QLatin1String(".UTF-8")).toLatin1().data());
+    setlocale(LC_ALL, (sLocale + QStringLiteral(".UTF-8")).toLatin1().data());
     QLocale::setDefault(QLocale(sLocale));
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));

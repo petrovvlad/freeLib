@@ -40,9 +40,9 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     layout->setContentsMargins(0, 0, 0, 0);
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->Add->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QLatin1String("plus.svg"))));
-    ui->Del->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QLatin1String("minus.svg"))));
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->Add->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QStringLiteral("plus.svg"))));
+    ui->Del->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QStringLiteral("minus.svg"))));
 
     idCurrentLib_ = idCurrentLib;
     UpdateLibList();
@@ -92,7 +92,7 @@ void LibrariesDlg::LogMessage(const QString &msg)
 void LibrariesDlg::InputINPX()
 {
     QDir::setCurrent(QFileInfo(ui->inpx->text()).absolutePath());
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Add library"),QLatin1String(""), tr("Library") + QLatin1String(" (*.inpx)"));
+    QString fileName = QFileDialog::getOpenFileName(this, tr("Add library"),QLatin1String(""), tr("Library") + QStringLiteral(" (*.inpx)"));
     if(!fileName.isEmpty())
     {
         ui->inpx->setText(fileName);
@@ -214,8 +214,8 @@ void LibrariesDlg::SelectLibrary()
     ui->inpx->setDisabled(idCurrentLib_ == 0);
     ui->BookDir->setDisabled(idCurrentLib_ == 0);
     ui->btnUpdate->setDisabled(idCurrentLib_ == 0);
-    ui->OPDS->setText(idCurrentLib_ == 0 ?QLatin1String("") :QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
-    ui->HTTP->setText(idCurrentLib_ == 0 ?QLatin1String("") :QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+    ui->OPDS->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+    ui->HTTP->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
 
     auto settings = GetSettings();
     settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
@@ -265,7 +265,7 @@ void LibrariesDlg::DeleteLibrary()
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-    if(!query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
+    if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
         qDebug()<<query.lastError().databaseText();
     query.exec(QStringLiteral("VACUUM"));
     mLibs.remove(idCurrentLib_);

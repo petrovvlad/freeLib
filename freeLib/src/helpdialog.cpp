@@ -25,9 +25,9 @@ HelpDialog::~HelpDialog()
 
 void HelpDialog::loadPage(QTextBrowser *textBrowser, const QString &sFileName)
 {
-    QString sHelpFile = QApplication::applicationDirPath() + QLatin1String("/Help/") + sFileName;
+    QString sHelpFile = QApplication::applicationDirPath() + QStringLiteral("/Help/") + sFileName;
     if(!QFile::exists(sHelpFile))
-        sHelpFile = FREELIB_DATA_DIR + QLatin1String("/help/") + sFileName;
+        sHelpFile = FREELIB_DATA_DIR + QStringLiteral("/help/") + sFileName;
     QFile file(sHelpFile);
     if (file.open(QIODevice::ReadOnly | QIODevice::Text))
     {
