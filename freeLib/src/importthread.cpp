@@ -194,18 +194,49 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
     bFirstAuthorOnly_ = lib.bFirstAuthor;
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
-       auto iBook = lib.mBooks.constBegin();
-       while(iBook != lib.mBooks.constEnd()){
-           listIdBookInLib_ << iBook->idInLib;
-           ++iBook;
-       }
+        if(lib.mBooks.isEmpty()){
+            QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+            query.setForwardOnly(true);
+            query.prepare(QStringLiteral("SELECT id FROM book WHERE id_lib=:id_lib;"));
+            query.bindValue(QStringLiteral(":id_lib"),idLib_);
+            if(!query.exec())
+                MyDBG << query.lastError().text();
+            else{
+                while (query.next()){
+                    listIdBookInLib_ << query.value(0).toUInt();
+                }
+            }
+        }else{
+            auto iBook = lib.mBooks.constBegin();
+            while(iBook != lib.mBooks.constEnd()){
+                listIdBookInLib_ << iBook->idInLib;
+                ++iBook;
+            }
+        }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-       auto iAuthor = lib.mAuthors.constBegin();
-       while(iAuthor != lib.mAuthors.constEnd()){
-           hashAuthors_[iAuthor.value()] = iAuthor.key();
-           ++iAuthor;
-       }
+        if(lib.mAuthors.isEmpty()){
+            QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+            query.setForwardOnly(true);
+            query.prepare(QStringLiteral("SELECT id, name1, name2, name3 FROM author WHERE id_lib=:idLib;"));
+            //                                     0          1      2      3
+            query.bindValue(QStringLiteral(":idLib"), idLib_);
+            query.exec();
+            while (query.next()) {
+                uint idAuthor = query.value(0).toUInt();
+                SAuthor author;
+                author.sFirstName = query.value(2).toString().trimmed();;
+                author.sLastName = query.value(1).toString().trimmed();;
+                author.sMiddleName = query.value(3).toString().trimmed();;
+                hashAuthors_[author] = idAuthor;
+            }
+        }else{
+            auto iAuthor = lib.mAuthors.constBegin();
+            while(iAuthor != lib.mAuthors.constEnd()){
+                hashAuthors_[iAuthor.value()] = iAuthor.key();
+                ++iAuthor;
+            }
+        }
 #endif
     }
 }
@@ -557,6 +588,7 @@ void ImportThread::process()
     }
 
     query_ = QSqlQuery(dbase);
+    query_.setForwardOnly(true);
     QHash<QString, uint> tags;
     tags.clear();
     query_.exec(QStringLiteral("SELECT id,name FROM tag"));
