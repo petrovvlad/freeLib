@@ -512,7 +512,7 @@ QString SLib::fillParams(const QString &str, uint idBook)
             .replace(QStringLiteral("%a"), sFirstAuthor.getName())
             .replace(QStringLiteral(","), QStringLiteral(" ")).trimmed();
     QString num_in_seria = QString::number(book.numInSerial);
-    if(result.contains(u"%n"))
+    if(result.contains(QStringLiteral("%n")))
     {
         int len = result.mid(result.indexOf(QStringLiteral("%n")) + 2, 1).toInt();
         QString zerro;

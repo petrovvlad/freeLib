@@ -124,7 +124,7 @@ int main(int argc, char *argv[])
                     }
 
             // Edit libraries
-            if (cmdparam.contains(u"--lib")){
+                    if (cmdparam.contains(QStringLiteral("--lib"))){
                 a = new QCoreApplication(argc, argv);
                 a->setOrganizationName(QStringLiteral("freeLib"));
                 a->setApplicationName(QStringLiteral("freeLib"));
