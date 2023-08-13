@@ -163,12 +163,13 @@ uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_ser
     return id;
 }
 
-void ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong idLib)
+void ImportThread::AddGenre(uint idBook, const QString &sGenre, uint idLib)
 {
     qlonglong idGenre = 0;
-    sGenre.replace(' ', '_');
-    if(genreKeys_.contains(sGenre)){
-        idGenre = genreKeys_[sGenre];
+    QString sCorrectGenre = sGenre.toLower();
+    sCorrectGenre.replace(' ', '_');
+    if(genreKeys_.contains(sCorrectGenre)){
+        idGenre = genreKeys_[sCorrectGenre];
         queryInsertBookGenre_.bindValue(QStringLiteral(":idBook"), idBook);
         queryInsertBookGenre_.bindValue(QStringLiteral(":idGenre"), idGenre);
         queryInsertBookGenre_.bindValue(QStringLiteral(":idLib"), idLib);
@@ -570,10 +571,10 @@ void ImportThread::process()
     while(query_.next())
     {
         uint idGenre = query_.value(0).toUInt();
-        QString sKeys = query_.value(1).toString().trimmed();
+        QString sKeys = query_.value(1).toString();
         QStringList kistKeys = sKeys.split(QStringLiteral(";"));
         for(qsizetype i=0; i<kistKeys.size(); i++){
-            QString sKey = kistKeys.at(i).trimmed();
+            QString sKey = kistKeys.at(i);
             if(!sKey.isEmpty()){
                 genreKeys_[sKey] = idGenre;
             }

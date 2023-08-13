@@ -60,7 +60,7 @@ private:
     uint AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
                  int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
 
-    void AddGenre(qlonglong idBook, QString sGenre, qlonglong idLib);
+    void AddGenre(uint idBook, const QString &sGenre, uint idLib);
 
 };
 
