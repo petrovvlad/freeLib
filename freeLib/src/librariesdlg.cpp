@@ -294,6 +294,18 @@ void LibrariesDlg::EndUpdate()
     ui->firstAuthorOnly->setDisabled(false);
     ui->checkwoDeleted->setDisabled(false);
     bLibChanged = true;
+
+    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    query.prepare(QStringLiteral("SELECT version FROM lib WHERE id=:idLib;"));
+    query.bindValue(QStringLiteral(":idLib"),idCurrentLib_);
+    if(!query.exec())
+        qDebug() << query.lastError().text();
+    else{
+        if(query.next())
+            mLibs[idCurrentLib_].sVersion = query.value(0).toString();
+    }
+
+
     QApplication::restoreOverrideCursor();
 }
 
