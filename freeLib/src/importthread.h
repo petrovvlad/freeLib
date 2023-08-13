@@ -45,6 +45,12 @@ private:
     QList<uint> listIdBookInLib_;
     QStringList listFiles_;
     QSqlQuery query_;
+    QSqlQuery queryInsertBook_;
+    QSqlQuery queryInsertAuthor_;
+    QSqlQuery queryInsertBookAuthor_;
+    QSqlQuery queryInsertBookGenre_;
+    QSqlQuery queryInsertSeria_;
+
     QHash <QString, uint> genreKeys_;
     uint AddSeria(const QString &str, qlonglong libID, const QVariantList *pTags = nullptr);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);

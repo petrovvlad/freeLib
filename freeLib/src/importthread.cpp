@@ -48,14 +48,13 @@ uint ImportThread::AddSeria(const QString &str, qlonglong libID, const QVariantL
         uint id = query_.value(0).toLongLong();
         return id;
     }
-    query_.prepare(QStringLiteral("INSERT INTO seria(name,id_lib) values(:name,:id_lib)"));
-    query_.bindValue(QStringLiteral(":name"), name);
-    query_.bindValue(QStringLiteral(":id_lib"), libID);
-    if(!query_.exec())
-        MyDBG << query_.lastError().text();
-    uint id = query_.lastInsertId().toLongLong();
+    queryInsertSeria_.bindValue(QStringLiteral(":name"), name);
+    queryInsertSeria_.bindValue(QStringLiteral(":id_lib"), libID);
+    if(!queryInsertSeria_.exec())
+        MyDBG << queryInsertSeria_.lastError().text();
+    uint id = queryInsertSeria_.lastInsertId().toLongLong();
 
-    if(pTags != nullptr){
+    if(pTags != nullptr && pTags->size()>0){
         QVariantList listSerials;
         for(int i=0; i<pTags->size(); ++i)
             listSerials << id;
@@ -75,76 +74,76 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
                 (author.sLastName.isEmpty() ?QStringLiteral("(name1 is null or name1=\"\")") :(QLatin1String("name1=\"") + author.sLastName + QLatin1String("\""))),
                 (author.sFirstName.isEmpty() ?QStringLiteral("(name2 is null or name2=\"\")") :(QLatin1String("name2=\"") + author.sFirstName + QLatin1String("\""))),
                 (author.sMiddleName.isEmpty() ?QStringLiteral("(name3 is null or name3=\"\")") :(QLatin1String("name3=\"") + author.sMiddleName + QLatin1String("\""))));
-    query_.prepare(sQuery);
-    query_.exec();
-    uint id = 0;
+    query_.exec(sQuery);
+    uint idAuthor = 0;
     if(query_.next())
     {
-        id = query_.value(0).toLongLong();
+        idAuthor = query_.value(0).toLongLong();
     }
-    if(id == 0)
+    if(idAuthor == 0)
     {
-        query_.prepare(QStringLiteral("INSERT INTO author(name1,name2,name3,id_lib) values(:name1,:name2,:name3,:id_lib)"));
-        query_.bindValue(QStringLiteral(":name1"), author.sLastName);
-        query_.bindValue(QStringLiteral(":name2"), author.sFirstName);
-        query_.bindValue(QStringLiteral(":name3"), author.sMiddleName);
-        query_.bindValue(QStringLiteral(":id_lib"), libID);
-        if(!query_.exec())
-            MyDBG << query_.lastError().text();
-        id = query_.lastInsertId().toLongLong();
+        queryInsertAuthor_.bindValue(QStringLiteral(":name1"), author.sLastName);
+        queryInsertAuthor_.bindValue(QStringLiteral(":name2"), author.sFirstName);
+        queryInsertAuthor_.bindValue(QStringLiteral(":name3"), author.sMiddleName);
+        queryInsertAuthor_.bindValue(QStringLiteral(":id_lib"), libID);
+        if(!queryInsertAuthor_.exec())
+            MyDBG << queryInsertAuthor_.lastError().text();
+        idAuthor = queryInsertAuthor_.lastInsertId().toLongLong();
     }
     else
     {
     }
     if(bFirstAuthor){
-        if(!query_.exec(QStringLiteral("UPDATE book SET first_author_id=") + QString::number(id) + QStringLiteral(" WHERE id=") + QString::number(idBook)))
+        if(!query_.exec(QStringLiteral("UPDATE book SET first_author_id=") + QString::number(idAuthor) + QStringLiteral(" WHERE id=") + QString::number(idBook)))
             MyDBG << query_.lastError().text();
-
-    }
-    if(!query_.exec(QStringLiteral("INSERT OR IGNORE INTO book_author(id_book,id_author,id_lib) values(") + QString::number(idBook) +
-                    QStringLiteral(",") + QString::number(id) + QStringLiteral(",") + QString::number(libID) + QStringLiteral(");")))
-    {
-        MyDBG << query_.lastError().text();
     }
 
-    if(pTags != nullptr){
+    queryInsertBookAuthor_.bindValue(QStringLiteral(":idBook"), idBook);
+    queryInsertBookAuthor_.bindValue(QStringLiteral(":idAuthor"), idAuthor);
+    queryInsertBookAuthor_.bindValue(QStringLiteral(":idLib"), libID);
+    if(!queryInsertBookAuthor_.exec()){
+        MyDBG << queryInsertBookAuthor_.lastError().text();
+        return 0;
+    }
+
+    if(pTags != nullptr && pTags->size()>0){
         QVariantList listAuthors;
         for(int i=0; i<pTags->size(); ++i)
-            listAuthors << id;
+            listAuthors << idAuthor;
         query_.prepare(QStringLiteral("INSERT INTO author_tag(id_author, id_tag) values(:idAuthor, :idTag)"));
         query_.bindValue(QStringLiteral(":idAuthor"), listAuthors);
         query_.bindValue(QStringLiteral(":idTag"), *pTags);
         if(!query_.execBatch())
             MyDBG << query_.lastError().text();
     }
-    return id;
+    return idAuthor;
 }
 
 uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
              int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags)
 {
-    query_.prepare(QStringLiteral("INSERT INTO book(name,star,id_seria,num_in_seria,language,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive) "
-                   "values(:name,:star,:id_seria,:num_in_seria,:language,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive)"));
+    queryInsertBook_.bindValue(QStringLiteral(":name"), name);
+    queryInsertBook_.bindValue(QStringLiteral(":star"), star);
+    queryInsertBook_.bindValue(QStringLiteral(":id_seria"), id_seria!=0 ?id_seria :QVariant());
+    queryInsertBook_.bindValue(QStringLiteral(":num_in_seria"), num_in_seria);
+    queryInsertBook_.bindValue(QStringLiteral(":language"), language);
+    queryInsertBook_.bindValue(QStringLiteral(":file"), file);
+    queryInsertBook_.bindValue(QStringLiteral(":size"), size);
+    queryInsertBook_.bindValue(QStringLiteral(":deleted"), deleted);
+    queryInsertBook_.bindValue(QStringLiteral(":date"), date);
+    queryInsertBook_.bindValue(QStringLiteral(":keys"), keys);
+    queryInsertBook_.bindValue(QStringLiteral(":id_inlib"), IDinLib);
+    queryInsertBook_.bindValue(QStringLiteral(":id_lib"), id_lib);
+    queryInsertBook_.bindValue(QStringLiteral(":format"), format);
+    queryInsertBook_.bindValue(QStringLiteral(":archive"), archive);
+    if(!queryInsertBook_.exec()){
+        MyDBG << queryInsertBook_.lastError().text();
+        return 0;
+    }
 
-    query_.bindValue(QStringLiteral(":name"), name);
-    query_.bindValue(QStringLiteral(":star"), star);
-    query_.bindValue(QStringLiteral(":id_seria"), id_seria!=0 ?id_seria :QVariant());
-    query_.bindValue(QStringLiteral(":num_in_seria"), num_in_seria);
-    query_.bindValue(QStringLiteral(":language"), language);
-    query_.bindValue(QStringLiteral(":file"), file);
-    query_.bindValue(QStringLiteral(":size"), size);
-    query_.bindValue(QStringLiteral(":deleted"), deleted);
-    query_.bindValue(QStringLiteral(":date"), date);
-    query_.bindValue(QStringLiteral(":keys"), keys);
-    query_.bindValue(QStringLiteral(":id_inlib"), IDinLib);
-    query_.bindValue(QStringLiteral(":id_lib"), id_lib);
-    query_.bindValue(QStringLiteral(":format"), format);
-    query_.bindValue(QStringLiteral(":archive"), archive);
-    if(!query_.exec())
-        MyDBG << query_.lastError().text();
-    uint id = query_.lastInsertId().toUInt();
+    uint id = queryInsertBook_.lastInsertId().toUInt();
 
-    if(pTags != nullptr){
+    if(pTags != nullptr && pTags->size()>0){
         QVariantList listIdBook;
         for(int i=0; i<pTags->size(); ++i)
             listIdBook << id;
@@ -163,11 +162,11 @@ void ImportThread::AddGenre(qlonglong idBook, QString sGenre, qlonglong idLib)
     sGenre.replace(' ', '_');
     if(genreKeys_.contains(sGenre)){
         idGenre = genreKeys_[sGenre];
-        if(!query_.exec(QStringLiteral("INSERT OR IGNORE INTO book_genre(id_book,id_genre,id_lib) values(") +  QString::number(idBook) + QLatin1String(",") +
-                         QString::number(idGenre) + QStringLiteral(",") + QString::number(idLib) + QLatin1String(");")))
-        {
-            MyDBG << query_.lastError().text();
-        }
+        queryInsertBookGenre_.bindValue(QStringLiteral(":idBook"), idBook);
+        queryInsertBookGenre_.bindValue(QStringLiteral(":idGenre"), idGenre);
+        queryInsertBookGenre_.bindValue(QStringLiteral(":idLib"), idLib);
+        if(!queryInsertBookGenre_.exec())
+            MyDBG << queryInsertBookGenre_.lastError().text();
     }else
         qDebug() << "Неизвестный жанр: " + sGenre;
 }
@@ -553,7 +552,7 @@ void ImportThread::process()
         tags[sTagName] = idTag;
     }
 
-    query_.exec(QLatin1String("SELECT id, keys FROM genre where NOT keys='';"));
+    query_.exec(QStringLiteral("SELECT id, keys FROM genre where NOT keys='';"));
     while(query_.next())
     {
         uint idGenre = query_.value(0).toUInt();
@@ -566,6 +565,21 @@ void ImportThread::process()
             }
         }
     }
+    queryInsertBook_ = QSqlQuery(dbase);
+    queryInsertBook_.prepare(QStringLiteral("INSERT INTO book(name,star,id_seria,num_in_seria,language,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive) "
+                                  "values(:name,:star,:id_seria,:num_in_seria,:language,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive);"));
+
+    queryInsertAuthor_ = QSqlQuery(dbase);
+    queryInsertAuthor_.prepare(QStringLiteral("INSERT INTO author(name1,name2,name3,id_lib) values(:name1,:name2,:name3,:id_lib);"));
+
+    queryInsertSeria_ = QSqlQuery(dbase);
+    queryInsertSeria_.prepare(QStringLiteral("INSERT INTO seria(name,id_lib) values(:name,:id_lib)"));
+
+    queryInsertBookAuthor_ = QSqlQuery(dbase);
+    queryInsertBookAuthor_.prepare(QStringLiteral("INSERT OR IGNORE INTO book_author(id_book,id_author,id_lib) values(:idBook,:idAuthor,:idLib);"));
+
+    queryInsertBookGenre_ = QSqlQuery(dbase);
+    queryInsertBookGenre_.prepare(QStringLiteral("INSERT OR IGNORE INTO book_genre(id_book,id_genre,id_lib) values(:idBook,:idGenre,:idLib);"));
 
     if(!listFiles_.isEmpty()){
         int count = 0;
