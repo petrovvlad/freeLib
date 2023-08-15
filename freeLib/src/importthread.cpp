@@ -11,7 +11,7 @@
 #include <QDir>
 
 #include "quazip/quazip/quazipfile.h"
-//#include "options.h"
+#include "options.h"
 #include "utilites.h"
 
 QString RelativeToAbsolutePath(QString path);
@@ -906,7 +906,7 @@ void ImportThread::process()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
                 QStringList listStrSeriaTags = substrings[field_index[_TAG_SERIA]].trimmed().split(':', Qt::SkipEmptyParts);
 #else
-                QStringList listStrAuthorTags = substrings[field_index[_TAG_SERIA]].trimmed().split(':');
+                QStringList listStrSeriaTags = substrings[field_index[_TAG_SERIA]].trimmed().split(':');
 #endif
                 for (qsizetype i = 0; i < listStrSeriaTags.size(); ++i){
                     QString sTag = listStrSeriaTags.at(i);
