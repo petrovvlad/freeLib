@@ -53,10 +53,11 @@ void loadLibrary(uint idLibrary)
     qDebug()<< "loadSeria " << t_end-t_start << "msec";
 
     t_start = QDateTime::currentMSecsSinceEpoch();
-    lib.mAuthors.insert(0,SAuthor());
+    lib.mAuthors.clear();
+    lib.mAuthors.insert(0, SAuthor());
     query.prepare(QStringLiteral("SELECT author.id, name1, name2, name3 FROM author WHERE id_lib=:id_lib;"));
     //                                     0          1      2      3
-    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
+    query.bindValue(QStringLiteral(":id_lib"), idLibrary);
     query.exec();
     while (query.next()) {
         uint idAuthor = query.value(0).toUInt();
@@ -80,7 +81,6 @@ void loadLibrary(uint idLibrary)
     qDebug()<< "loadAuthor " << t_end-t_start << "msec";
 
     lib.mBooks.clear();
-    query.setForwardOnly(true);
     query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, keys FROM book WHERE id_lib=:id_lib;"));
     //                                    0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
     query.bindValue(QStringLiteral(":id_lib"),idLibrary);
@@ -98,7 +98,7 @@ void loadLibrary(uint idLibrary)
         book.numInSerial = query.value(4).toUInt();
         QString sLaguage = query.value(5).toString().toLower();
         int idLaguage = lib.vLaguages.indexOf(sLaguage);
-        if(idLaguage<0){
+        if(idLaguage < 0){
             idLaguage =lib.vLaguages.count();
             lib.vLaguages << sLaguage;
         }
@@ -129,12 +129,10 @@ void loadLibrary(uint idLibrary)
         }
     }
     auto iBook = lib.mBooks.begin();
-    uint emptycount = 0;
     while(iBook != lib.mBooks.end()){
         if(iBook->listIdAuthors.isEmpty()){
             iBook->listIdAuthors << 0;
             lib.mAuthorBooksLink.insert(0,iBook.key());
-            emptycount++;
         }
         ++iBook;
     }
@@ -253,7 +251,7 @@ void SLib::loadAnnotation(uint idBook)
     getBookFile(idBook, &buffer);
     SBook& book = mBooks[idBook];
 
-    if(book.sFormat == QLatin1String("epub")){
+    if(book.sFormat == u"epub"){
         QuaZip zip(&buffer);
         zip.open(QuaZip::mdUnzip);
         QBuffer info;
@@ -269,12 +267,12 @@ void SLib::loadAnnotation(uint idBook)
         QString rel_path;
         for(int i=0;i<root.childNodes().count() && need_loop;i++)
         {
-            if(root.childNodes().at(i).nodeName().toLower() == QLatin1String("rootfiles"))
+            if(root.childNodes().at(i).nodeName().toLower() == u"rootfiles")
             {
                 QDomNode roots = root.childNodes().at(i);
                 for(int j=0; j<roots.childNodes().count() && need_loop; j++)
                 {
-                    if(roots.childNodes().at(j).nodeName().toLower() == QLatin1String("rootfile"))
+                    if(roots.childNodes().at(j).nodeName().toLower() == u"rootfile")
                     {
                         QString path = roots.childNodes().at(j).attributes().namedItem(QStringLiteral("full-path")).toAttr().value();
                         QBuffer opf_buf;
@@ -290,7 +288,7 @@ void SLib::loadAnnotation(uint idBook)
                         QDomNode meta = opf.documentElement().namedItem(QStringLiteral("metadata"));
                         for(int m=0; m<meta.childNodes().count(); m++)
                         {
-                            if(meta.childNodes().at(m).nodeName().right(11) == QLatin1String("description"))
+                            if(meta.childNodes().at(m).nodeName().right(11) == u"description")
                             {
                                 QBuffer buff;
                                 buff.open(QIODevice::WriteOnly);
@@ -298,17 +296,17 @@ void SLib::loadAnnotation(uint idBook)
                                 meta.childNodes().at(m).save(ts, 0, QDomNode::EncodingFromTextStream);
                                 book.sAnnotation = QString::fromUtf8(buff.data().data());
                             }
-                            else if(meta.childNodes().at(m).nodeName().right(4) == QLatin1String("meta"))
+                            else if(meta.childNodes().at(m).nodeName().right(4) == u"meta")
                             {
-                                if(meta.childNodes().at(m).attributes().namedItem(QStringLiteral("name")).toAttr().value() == QLatin1String("cover"))
+                                if(meta.childNodes().at(m).attributes().namedItem(QStringLiteral("name")).toAttr().value() == u"cover")
                                 {
                                     QString cover = meta.childNodes().at(m).attributes().namedItem(QStringLiteral("content")).toAttr().value();
                                     QDomNode manifest = opf.documentElement().namedItem(QStringLiteral("manifest"));
                                     for(int man=0; man<manifest.childNodes().count(); man++)
                                     {
-                                        if(manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("id")).toAttr().value()==cover)
+                                        if(manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("id")).toAttr().value() == cover)
                                         {
-                                            cover = rel_path + QLatin1String("/") + manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("href")).toAttr().value();
+                                            cover = rel_path + QStringLiteral("/") + manifest.childNodes().at(man).attributes().namedItem(QStringLiteral("href")).toAttr().value();
 
                                             setCurrentZipFileName(&zip, cover);
                                             zip_file.open(QIODevice::ReadOnly);
@@ -336,12 +334,12 @@ void SLib::loadAnnotation(uint idBook)
         }
         zip.close();
         info.close();
-    }else if(book.sFormat == QLatin1String("fb2")){
+    }else if(book.sFormat == u"fb2"){
         QDomDocument doc;
         doc.setContent(buffer.data());
         QDomElement title_info = doc.elementsByTagName(QStringLiteral("title-info")).at(0).toElement();
         QString cover  = title_info.elementsByTagName(QStringLiteral("coverpage")).at(0).toElement().elementsByTagName(QStringLiteral("image")).at(0).attributes().namedItem(QStringLiteral("l:href")).toAttr().value();
-        if(!cover.isEmpty() && cover.at(0) == QLatin1String("#"))
+        if(!cover.isEmpty() && cover.at(0) == u'#')
         {
             QDomNodeList binarys = doc.elementsByTagName(QStringLiteral("binary"));
             for(int i=0; i<binarys.count(); i++)
@@ -368,8 +366,8 @@ void SLib::loadAnnotation(uint idBook)
         QTextStream ts(&buff);
         title_info.elementsByTagName(QStringLiteral("annotation")).at(0).save(ts, 0, QDomNode::EncodingFromTextStream);
         book.sAnnotation = QString::fromUtf8(buff.data().data());
-        book.sAnnotation.replace(QLatin1String("<annotation>"), QLatin1String(""), Qt::CaseInsensitive);
-        book.sAnnotation.replace(QLatin1String("</annotation>"), QLatin1String(""), Qt::CaseInsensitive);
+        book.sAnnotation.replace(QStringLiteral("<annotation>"), QStringLiteral(""), Qt::CaseInsensitive);
+        book.sAnnotation.replace(QStringLiteral("</annotation>"), QStringLiteral(""), Qt::CaseInsensitive);
     }
 }
 
@@ -384,7 +382,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
     }else{
         file = QStringLiteral("%1.%2").arg(book.sFile, book.sFormat);
         QString sArchive = book.sArchive;
-        sArchive.replace(QLatin1String(".inp"), QLatin1String(".zip"));
+        sArchive.replace(QStringLiteral(".inp"), QStringLiteral(".zip"));
         archive = QStringLiteral("%1/%2").arg(LibPath, sArchive);
     }
 
@@ -411,7 +409,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
 
         if(pBufferInfo != nullptr){
             fi.setFile(file);
-            QString fbd = fi.absolutePath() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".fbd");
+            QString fbd = fi.absolutePath() + QStringLiteral("/") + fi.completeBaseName() + QStringLiteral(".fbd");
             QFile info_file(fbd);
             if(info_file.exists())
             {
@@ -452,7 +450,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
 
         if(pBufferInfo != nullptr){
             fi.setFile(file);
-            QString fbd = fi.path() + QLatin1String("/") + fi.completeBaseName() + QLatin1String(".fbd");
+            QString fbd = fi.path() + QStringLiteral("/") + fi.completeBaseName() + QStringLiteral(".fbd");
             if(setCurrentZipFileName(&uz, fbd))
             {
                 zip_file.open(QIODevice::ReadOnly);
@@ -461,7 +459,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
             }
         }
 
-        fi.setFile(archive + QLatin1String("/") + file);
+        fi.setFile(archive + QStringLiteral("/") + file);
     }
     return fi;
 }
@@ -488,7 +486,7 @@ QString SLib::fillParams(const QString &str, uint idBook)
 {
     SBook& book = mBooks[idBook];
     QString result = str;
-    QString abbr = QLatin1String("");
+    QString abbr = QStringLiteral("");
     if(book.idSerial != 0){
         foreach(const QString &str, mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
         {
@@ -496,48 +494,48 @@ QString SLib::fillParams(const QString &str, uint idBook)
                 abbr += str.at(0);
         }
     }
-    result.replace(QLatin1String("%abbrs"), abbr.toLower());
-    result.replace(QLatin1String("%app_dir"), QApplication::applicationDirPath() + QLatin1String("/"));
+    result.replace(QStringLiteral("%abbrs"), abbr.toLower());
+    result.replace(QStringLiteral("%app_dir"), QApplication::applicationDirPath() + QStringLiteral("/"));
 
     //result.removeOne("%no_point");
     const SAuthor& sFirstAuthor = mAuthors[book.idFirstAuthor];
 
-    result.replace(QLatin1String("%fi"), sFirstAuthor.sFirstName.left(1) + (sFirstAuthor.sFirstName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
-            replace(QLatin1String("%mi"), sFirstAuthor.sMiddleName.left(1) + (sFirstAuthor.sMiddleName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
-            replace(QLatin1String("%li"), sFirstAuthor.sLastName.left(1) + (sFirstAuthor.sLastName.isEmpty() ?QLatin1String("") :QLatin1String("."))).
-            replace(QLatin1String("%nf"), sFirstAuthor.sFirstName).
-            replace(QLatin1String("%nm"), sFirstAuthor.sMiddleName).
-            replace(QLatin1String("%nl"), sFirstAuthor.sLastName);
+    result.replace(QStringLiteral("%fi"), sFirstAuthor.sFirstName.left(1) + (sFirstAuthor.sFirstName.isEmpty() ?QStringLiteral("") :QStringLiteral("."))).
+            replace(QStringLiteral("%mi"), sFirstAuthor.sMiddleName.left(1) + (sFirstAuthor.sMiddleName.isEmpty() ?QStringLiteral("") :QStringLiteral("."))).
+            replace(QStringLiteral("%li"), sFirstAuthor.sLastName.left(1) + (sFirstAuthor.sLastName.isEmpty() ?QStringLiteral("") :QStringLiteral("."))).
+            replace(QStringLiteral("%nf"), sFirstAuthor.sFirstName).
+            replace(QStringLiteral("%nm"), sFirstAuthor.sMiddleName).
+            replace(QStringLiteral("%nl"), sFirstAuthor.sLastName);
 
-    result = result.replace(QLatin1String("%s"), book.idSerial==0 ?QLatin1String("") :mSerials[book.idSerial].sName)
-            .replace(QLatin1String("%b"), book.sName)
-            .replace(QLatin1String("%a"), sFirstAuthor.getName())
-            .replace(QLatin1String(","), QLatin1String(" ")).trimmed();
+    result = result.replace(QStringLiteral("%s"), book.idSerial==0 ?QStringLiteral("") :mSerials[book.idSerial].sName)
+            .replace(QStringLiteral("%b"), book.sName)
+            .replace(QStringLiteral("%a"), sFirstAuthor.getName())
+            .replace(QStringLiteral(","), QStringLiteral(" ")).trimmed();
     QString num_in_seria = QString::number(book.numInSerial);
-    if(result.contains(QLatin1String("%n")))
+    if(result.contains(QStringLiteral("%n")))
     {
-        int len = result.mid(result.indexOf(QLatin1String("%n")) + 2, 1).toInt();
+        int len = result.mid(result.indexOf(QStringLiteral("%n")) + 2, 1).toInt();
         QString zerro;
         if(book.numInSerial == 0)
-            result.replace("%n" + QString::number(len), QLatin1String(""));
+            result.replace("%n" + QString::number(len), QStringLiteral(""));
         else
-            result.replace(QLatin1String("%n") + (len>0 ?QString::number(len) :QLatin1String("")),
-                           (len>0 ?zerro.fill(u'0', len-num_in_seria.length()) :QLatin1String("")) + num_in_seria + QLatin1String(" "));
+            result.replace(QStringLiteral("%n") + (len>0 ?QString::number(len) :QStringLiteral("")),
+                           (len>0 ?zerro.fill(u'0', len-num_in_seria.length()) :QStringLiteral("")) + num_in_seria + QStringLiteral(" "));
     }
-    result.replace(QLatin1String("/ "), QLatin1String("/"));
-    result.replace(QLatin1String("/."), QLatin1String("/"));
-    result.replace(QLatin1String("////"), QLatin1String("/"));
-    result.replace(QLatin1String("///"), QLatin1String("/"));
-    result.replace(QLatin1String("//"), QLatin1String("/"));
+    result.replace(QStringLiteral("/ "), QStringLiteral("/"));
+    result.replace(QStringLiteral("/."), QStringLiteral("/"));
+    result.replace(QStringLiteral("////"), QStringLiteral("/"));
+    result.replace(QStringLiteral("///"), QStringLiteral("/"));
+    result.replace(QStringLiteral("//"), QStringLiteral("/"));
     return result;
 }
 
 QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_file)
 {
     QString result = str;
-    result.replace(QLatin1String("%fn"), book_file.completeBaseName()).
-           replace(QLatin1String("%f"), book_file.absoluteFilePath()).
-           replace(QLatin1String("%d"), book_file.absoluteDir().path());
+    result.replace(QStringLiteral("%fn"), book_file.completeBaseName()).
+           replace(QStringLiteral("%f"), book_file.absoluteFilePath()).
+           replace(QStringLiteral("%d"), book_file.absoluteDir().path());
     result = fillParams(result, idBook);
     return result;
 }

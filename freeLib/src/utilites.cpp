@@ -139,27 +139,46 @@ bool openDB(const QString &sName)
         query.exec(QStringLiteral("DROP TABLE temp_table;"));
 
         query.exec(QStringLiteral("COMMIT;"));
-        query.exec(QStringLiteral("INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 4)"));
     }
-    if(nMinorVersion < 3){
+    if(nMinorVersion < 5){
         query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
         query.exec(QStringLiteral("BEGIN TRANSACTION;"));
+
+        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM book_genre;"));
+        query.exec(QStringLiteral("DROP TABLE book_genre;"));
+        query.exec(QStringLiteral("CREATE TABLE book_genre (id_book INTEGER, id_genre INTEGER, id_lib INTEGER, PRIMARY KEY (id_book, id_genre, id_lib), FOREIGN KEY (id_lib) REFERENCES lib (id) ON DELETE CASCADE, FOREIGN KEY (id_book) REFERENCES book (id) ON DELETE CASCADE);"));
+        query.exec(QStringLiteral("INSERT INTO book_genre (id_book, id_genre, id_lib) SELECT id_book, id_genre, id_lib FROM temp_table;"));
+        query.exec(QStringLiteral("DROP TABLE temp_table;"));
+        query.exec(QStringLiteral("CREATE INDEX book_genre_id ON book_genre (\"id_genre\" ASC);"));
+        query.exec(QStringLiteral("CREATE INDEX book_genre_id_book ON book_genre (\"id_book\" ASC);"));
+
+        query.exec(QStringLiteral("UPDATE genre SET keys='prose;prose_all;' WHERE id=207;"));
+
+        query.exec(QStringLiteral("INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 5)"));
+
+        query.exec(QStringLiteral("COMMIT;"));
+    }
+    if(nMinorVersion < 3){
+        query.exec(QStringLiteral("BEGIN TRANSACTION;"));
+
         query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM lib;"));
         query.exec(QStringLiteral("DROP TABLE lib;"));
         query.exec(QStringLiteral("CREATE TABLE lib (id INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT, name TEXT, path TEXT, inpx TEXT, version TEXT, firstAuthor BOOL, woDeleted BOOL);"));
         query.exec(QStringLiteral("INSERT INTO lib (id, name, path, inpx, firstAuthor, woDeleted) SELECT id, name, path, inpx, firstAuthor, woDeleted FROM temp_table;"));
         query.exec(QStringLiteral("DROP TABLE temp_table;"));
+
         query.exec(QStringLiteral("COMMIT;"));
     }
     if(nMinorVersion < 2){
-        query.exec(QStringLiteral("PRAGMA foreign_keys = 0;"));
         query.exec(QStringLiteral("BEGIN TRANSACTION;"));
+
         query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM author;"));
         query.exec(QStringLiteral("DROP TABLE author;"));
         query.exec(QStringLiteral("CREATE TABLE author (id INTEGER, name1 TEXT, name2 TEXT, name3 TEXT, id_lib INTEGER, FOREIGN KEY (id_lib) REFERENCES lib (id) ON DELETE CASCADE, PRIMARY KEY (id));"));
         query.exec(QStringLiteral("INSERT INTO author (id, name1, name2, name3, id_lib) SELECT id, name1, name2, name3, id_lib FROM temp_table;"));
         query.exec(QStringLiteral("DROP TABLE temp_table;"));
         query.exec(QStringLiteral("CREATE INDEX author_sort ON author (\"name1\" ASC, \"name2\" ASC, \"name3\" ASC);"));
+
         query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM book;"));
         query.exec(QStringLiteral("DROP TABLE book;"));
         query.exec(QStringLiteral("CREATE TABLE book (id INTEGER, name TEXT, star INTEGER, id_seria INTEGER, num_in_seria INTEGER, language TEXT, id_lib INTEGER, file TEXT, size INTEGER, deleted BOOL, date DATETIME, format TEXT, keys TEXT, id_inlib INTEGER, archive TEXT, first_author_id INTEGER, FOREIGN KEY (id_lib) REFERENCES lib (id) ON DELETE CASCADE, PRIMARY KEY (id), FOREIGN KEY (id_seria) REFERENCES seria (id) ON DELETE CASCADE);"));
@@ -168,6 +187,7 @@ bool openDB(const QString &sName)
         query.exec(QStringLiteral("CREATE INDEX book_file ON book (\"id_lib\", \"file\", \"archive\");"));
         query.exec(QStringLiteral("CREATE INDEX book_first_author ON book (\"first_author_id\" ASC);"));
         query.exec(QStringLiteral("CREATE INDEX book_seria ON book (\"id_seria\" ASC);"));
+
         query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM book_author;"));
         query.exec(QStringLiteral("DROP TABLE book_author;"));
         query.exec(QStringLiteral("CREATE TABLE book_author (id_book INTEGER, id_author INTEGER, id_lib INTEGER, FOREIGN KEY (id_lib) REFERENCES lib (id) ON DELETE CASCADE, FOREIGN KEY (id_author) REFERENCES author (id), PRIMARY KEY (id_book, id_author, id_lib), FOREIGN KEY (id_book) REFERENCES book (id));"));
@@ -175,13 +195,7 @@ bool openDB(const QString &sName)
         query.exec(QStringLiteral("DROP TABLE temp_table;"));
         query.exec(QStringLiteral("CREATE INDEX book_author_id_author ON book_author (\"id_author\");"));
         query.exec(QStringLiteral("CREATE INDEX book_author_id_book ON book_author (\"id_book\" ASC);"));
-        query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM book_genre;"));
-        query.exec(QStringLiteral("DROP TABLE book_genre;"));
-        query.exec(QStringLiteral("CREATE TABLE book_genre (id_book INTEGER, id_genre INTEGER, id_lib INTEGER, PRIMARY KEY (id_book, id_genre, id_lib), FOREIGN KEY (id_lib) REFERENCES lib (id) ON DELETE CASCADE);"));
-        query.exec(QStringLiteral("INSERT INTO book_genre (id_book, id_genre, id_lib) SELECT id_book, id_genre, id_lib FROM temp_table;"));
-        query.exec(QStringLiteral("DROP TABLE temp_table;"));
-        query.exec(QStringLiteral("CREATE INDEX book_genre_id ON book_genre (\"id_genre\" ASC);"));
-        query.exec(QStringLiteral("CREATE INDEX book_genre_id_book ON book_genre (\"id_book\" ASC);"));
+
         query.exec(QStringLiteral("CREATE TABLE temp_table AS SELECT * FROM seria;"));
         query.exec(QStringLiteral("DROP TABLE seria;"));
         query.exec(QStringLiteral("CREATE TABLE seria (id INTEGER, name TEXT, id_lib INTEGER, PRIMARY KEY (id), FOREIGN KEY (id_lib) REFERENCES lib (id) ON DELETE CASCADE);"));
@@ -201,16 +215,14 @@ void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
     QSqlQuery query(dbase);
     if(delete_only)
     {
-        query.exec(QLatin1String("update book set deleted=1 where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("update book set deleted=1 where id_lib=") + QString::number(id_lib));
     }
     else
     {
         query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-        query.exec(QLatin1String("delete from book where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from author where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from seria where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from book_author where id_lib=") + QString::number(id_lib));
-        query.exec(QLatin1String("delete from book_genre where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("delete from book where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("delete from author where id_lib=") + QString::number(id_lib));
+        query.exec(QStringLiteral("delete from seria where id_lib=") + QString::number(id_lib));
         query.exec(QStringLiteral("VACUUM"));
     }
 }
@@ -236,13 +248,13 @@ QString Transliteration(QString str)
         if ( validChars.contains(str[i]) ){
             fn = fn + str[i];
         }else if (str[i] == ' '){  //replace spaces
-            fn = fn + QLatin1String(" ");
+            fn = fn + QStringLiteral(" ");
         }else if (str[i] == '?'){  //replace ?
-            fn = fn + QLatin1String(".");
+            fn = fn + QStringLiteral(".");
         }else if (str[i] == '*'){  //replace *
-            fn = fn + QLatin1String(".");
+            fn = fn + QStringLiteral(".");
         }else if (str[i] == '~'){  //replace ~
-            fn = fn + QLatin1String(".");
+            fn = fn + QStringLiteral(".");
         }else{
             rU = rusUpper.indexOf(str[i]);
             rL = rusLower.indexOf(str[i]);
@@ -284,7 +296,7 @@ QSharedPointer<QSettings> GetSettings(bool bReopen)
     static QSharedPointer<QSettings> pSettings;
     if(bReopen || !pSettings)
     {
-        QString sFile = QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg");
+        QString sFile = QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg");
         if(QFile::exists(sFile)){
             pSettings = QSharedPointer<QSettings> (new QSettings(sFile, QSettings::IniFormat));
         }else
@@ -301,7 +313,7 @@ void setLocale(const QString &sLocale)
     static std::unique_ptr<QTranslator> translator;
     static std::unique_ptr<QTranslator> translator_qt;
 
-    setlocale(LC_ALL, (sLocale + QLatin1String(".UTF-8")).toLatin1().data());
+    setlocale(LC_ALL, (sLocale + QStringLiteral(".UTF-8")).toLatin1().data());
     QLocale::setDefault(QLocale(sLocale));
 
     QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));

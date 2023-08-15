@@ -18,12 +18,12 @@ QString encodeStr(const QString& str)
             index = 0;
     }
 
-    return QLatin1String("#-#") + QString::fromLatin1(arr.toBase64());
+    return QStringLiteral("#-#") + QString::fromLatin1(arr.toBase64());
 }
 
 QString decodeStr(const QString &str)
 {
-    if(str.left(3) != QLatin1String("#-#"))
+    if(str.left(3) != u"#-#")
         return str;
     QByteArray arr = QByteArray::fromBase64(str.mid(3).toLatin1());
     quint32 index = 0;
@@ -86,7 +86,7 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
     pSettings->setValue(QStringLiteral("coverLabel"), sCoverLabel);
     pSettings->setValue(QStringLiteral("content_placement"), nContentPlacement);
 
-    QStringList fonts_list;
+//    QStringList fonts_list;
     pSettings->beginWriteArray(QStringLiteral("fonts"));
     int countFont = vFontExportOptions.count();
     for (int iFont = 0; iFont < countFont; ++iFont)
@@ -133,7 +133,7 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     bPostprocessingCopy = pSettings->value(QStringLiteral("PostprocessingCopy"), false).toBool();
     sDevicePath = pSettings->value(QStringLiteral("DevicePath"),HomeDir).toString();
     bOriginalFileName = pSettings->value(QStringLiteral("originalFileName"), false).toBool();
-    sExportFileName = pSettings->value(QStringLiteral("ExportFileName"), QLatin1String(sDefaultEexpFileName)).toString();
+    sExportFileName = pSettings->value(QStringLiteral("ExportFileName"), sDefaultEexpFileName).toString();
     nEmailPause = pSettings->value(QStringLiteral("PauseMail"), 5).toUInt();
     nEmailConnectionType = pSettings->value(QStringLiteral("ConnectionType"), 0).toUInt();
     bDropCaps = pSettings->value(QStringLiteral("dropcaps"), false).toBool();
@@ -190,7 +190,7 @@ void ExportOptions::setDefault(const QString &_sName, const QString &_sOtputForm
     nEmailServerPort = 25;
     bPostprocessingCopy = false;
     bOriginalFileName = false;
-    sExportFileName = QLatin1String(sDefaultEexpFileName);
+    sExportFileName = sDefaultEexpFileName;
     nEmailPause = 5;
     nEmailConnectionType = 0;
     bDropCaps = false;
@@ -218,7 +218,7 @@ void ExportOptions::setDefault(const QString &_sName, const QString &_sOtputForm
     FontExportOptions *pFontExportOptions = &vFontExportOptions[0];
     pFontExportOptions->bUse = true;
     pFontExportOptions->nTag = 2;  //"Dropcaps"
-    pFontExportOptions->sFont = QLatin1String(sDefaultDropcapsFont);
+    pFontExportOptions->sFont = sDefaultDropcapsFont;
     pFontExportOptions->nFontSize = 300;
 }
 
@@ -240,16 +240,16 @@ void Options::setDefault(){
     bOpdsShowCover = true;
     bOpdsShowAnotation = true;
     bOpdsNeedPassword = false;
-    sOpdsUser = QLatin1String("");
-    sOpdsPassword = QLatin1String("");
+    sOpdsUser = QStringLiteral("");
+    sOpdsPassword = QStringLiteral("");
     nOpdsPort = nDefaultOpdsPort;
     nOpdsBooksPerPage = 15;
     nHttpExport = 0;
     nProxyType = 0;
     nProxyPort = nDefaultProxyPort;
-    sProxyHost = QLatin1String("");
-    sProxyUser = QLatin1String("");
-    sProxyPassword = QLatin1String("");
+    sProxyHost = QStringLiteral("");
+    sProxyUser = QStringLiteral("");
+    sProxyPassword = QStringLiteral("");
     setExportDefault();
 }
 
@@ -273,7 +273,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     sAlphabetName = pSettings->value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
     sUiLanguageName = pSettings->value(QStringLiteral("localeUI"), QLocale::system().name()).toString();
     QString sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-    sDatabasePath = pSettings->value(QStringLiteral("database_path"), QString(sAppDir + QLatin1String("/freeLib.sqlite"))).toString();
+    sDatabasePath = pSettings->value(QStringLiteral("database_path"), QString(sAppDir + QStringLiteral("/freeLib.sqlite"))).toString();
     nIconTray = pSettings->value(QStringLiteral("tray_icon"), 0).toInt();
     nTrayColor = pSettings->value(QStringLiteral("tray_color"), 0).toInt();
     bCloseDlgAfterExport = pSettings->value(QStringLiteral("CloseExpDlg"), true).toBool();

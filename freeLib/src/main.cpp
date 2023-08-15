@@ -105,26 +105,26 @@ int main(int argc, char *argv[])
 
             cmdparam = argv[i];
 
-            if (cmdparam == QLatin1String("--help") || cmdparam == QLatin1String("-h")){
+            if (cmdparam == u"--help" || cmdparam == u"-h"){
                 cmdhelp();
                 return 0;
             }
 
-            if (cmdparam == QLatin1String("--server") || cmdparam == QLatin1String("-s")){
+            if (cmdparam == u"--server" || cmdparam == u"-s"){
                 bServer = true;
             }else
 
-                if (cmdparam == QLatin1String("--tray") || cmdparam == QLatin1String("-t")){
+                if (cmdparam == u"--tray" || cmdparam == u"-t"){
                     bTray = true;
                 }else
 
-                    if (cmdparam == QLatin1String("--version") || cmdparam == QLatin1String("-v")){
+                    if (cmdparam == u"--version" || cmdparam == u"-v"){
                         std::cout << "freelib " << FREELIB_VERSION << "\n";
                         return 0;
                     }
 
             // Edit libraries
-            if (cmdparam.contains(QLatin1String("--lib"))){
+                    if (cmdparam.contains(QStringLiteral("--lib"))){
                 a = new QCoreApplication(argc, argv);
                 a->setOrganizationName(QStringLiteral("freeLib"));
                 a->setApplicationName(QStringLiteral("freeLib"));
@@ -142,7 +142,7 @@ int main(int argc, char *argv[])
                 uint nId = 0;
 
                 // List libraries
-                if(cmdparam == QLatin1String("--lib-ls")){
+                if(cmdparam == u"--lib-ls"){
                     std::cout << "id\tlibrary\n"
                                  "----------------------------------------------------------\n";
                     auto iLib = mLibs.constBegin();
@@ -153,7 +153,7 @@ int main(int argc, char *argv[])
                 }
 
                 // Set database path
-                if(cmdparam == QLatin1String("--lib-db")){
+                if(cmdparam == u"--lib-db"){
                     QString sDbpath = parseOption(argc-(i), &argv[i], "--lib-db");
                     sDbpath = QFileInfo{sDbpath}.absoluteFilePath();
                     if(!sDbpath.isEmpty()){
@@ -173,7 +173,7 @@ int main(int argc, char *argv[])
                 }
 
                 // Get library information
-                if(cmdparam == QLatin1String("--lib-in")){
+                if(cmdparam == u"--lib-in"){
                     nId = (parseOption(argc-(i), &argv[i], "--lib-in")).toUInt();
                     if(mLibs.contains(nId)){
 
@@ -194,7 +194,7 @@ int main(int argc, char *argv[])
 
 
                 // Set library path
-                if(cmdparam == QLatin1String("--lib-sp")){
+                if(cmdparam == u"--lib-sp"){
                     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
                     QString sId = parseOption(argc-(i), &argv[i], "-id");
                     nId = sId.toUInt();
@@ -242,7 +242,7 @@ int main(int argc, char *argv[])
                 }
 
                 // Add library
-                if(cmdparam == QLatin1String("--lib-ad")){
+                if(cmdparam == u"--lib-ad"){
                     QString sPath = parseOption(argc-(i), &argv[i], "-path");
                     sPath = QFileInfo{sPath}.absoluteFilePath();
                     QString sInpx = parseOption(argc-(i), &argv[i], "-inpx");
@@ -281,7 +281,7 @@ int main(int argc, char *argv[])
 
 
                 // Delete library
-                if(cmdparam == QLatin1String("--lib-dl")){
+                if(cmdparam == u"--lib-dl"){
 
                     nId = (parseOption(argc-(i), &argv[i], "--lib-dl")).toUInt();
                     if(mLibs.contains(nId)){
@@ -292,7 +292,7 @@ int main(int argc, char *argv[])
                         if(a == 'y'){
                             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
                             query.exec(QStringLiteral("PRAGMA foreign_keys = ON;"));
-                            query.exec(QLatin1String("DELETE FROM lib where ID=") + QString::number(nId));
+                            query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(nId));
                             query.exec(QStringLiteral("VACUUM"));
                         }
                     }
@@ -303,7 +303,7 @@ int main(int argc, char *argv[])
 
 
                 // Update libraries
-                if(cmdparam == QLatin1String("--lib-up")){
+                if(cmdparam == u"--lib-up"){
                     nId = (parseOption(argc-(i), &argv[i], "--lib-up")).toUInt();
 
                     if(mLibs.contains(nId)){
@@ -381,7 +381,7 @@ int main(int argc, char *argv[])
 
     std::unique_ptr<QSplashScreen> splash;
     if(!bServer && options.bShowSplash){
-        QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a)->devicePixelRatio()>=2? QStringLiteral("@2x") :QLatin1String("")));
+        QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a)->devicePixelRatio()>=2? QStringLiteral("@2x") :QStringLiteral("")));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);

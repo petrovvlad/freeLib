@@ -36,9 +36,9 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->tabWidget->setCurrentIndex(0);
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QLatin1String(":/img/icons/") + (darkTheme ?QLatin1String("dark/") :QLatin1String("light/"));
-    ui->AddExport->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QLatin1String("plus.svg"))));
-    ui->DelExport->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QLatin1String("minus.svg"))));
+    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
+    ui->AddExport->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QStringLiteral("plus.svg"))));
+    ui->DelExport->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QStringLiteral("minus.svg"))));
     ui->btnOpenExport->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
     ui->btnSaveExport->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
 
@@ -51,9 +51,9 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->ExportList->hideColumn(3);
 
 
-    QStringList dirContent = QDir(QApplication::applicationDirPath() + QLatin1String("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    QStringList dirContent = QDir(QApplication::applicationDirPath() + QStringLiteral("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     if(dirContent.isEmpty())
-        dirContent = QDir(FREELIB_DATA_DIR + QLatin1String("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+        dirContent = QDir(FREELIB_DATA_DIR + QStringLiteral("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     ui->Language->clear();
     ui->Language->addItem(QStringLiteral("english"), "en_US");
     ui->Language->setCurrentIndex(0);
@@ -158,7 +158,7 @@ void SettingsDlg::LoadSettings()
 //    ui->settings_to_file->setChecked(QFileInfo(app->applicationDirPath()+"/../../../freeLib/freeLib.cfg").exists());
     ui->settings_to_file->setChecked(QFileInfo(app->applicationDirPath()+"/freeLib.cfg").exists());
 #else
-    ui->settings_to_file->setChecked(QFileInfo::exists(QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg")));
+    ui->settings_to_file->setChecked(QFileInfo::exists(QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg")));
 #endif
     ui->CloseExpDlg->setChecked(options.bCloseDlgAfterExport);
     ui->uncheck_export->setChecked(options.bUncheckAfterExport);
@@ -272,10 +272,10 @@ void SettingsDlg::btnDBPath()
         QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("libdb"), false);
         if (dbase.isOpen())
             dbase.close();
-        if(QFile().rename(RelativeToAbsolutePath(ui->database_path->text()), dir + QLatin1String("/freeLib.sqlite")))
+        if(QFile().rename(RelativeToAbsolutePath(ui->database_path->text()), dir + QStringLiteral("/freeLib.sqlite")))
         {
             QFile().remove(RelativeToAbsolutePath(ui->database_path->text()));
-            ui->database_path->setText(dir + QLatin1String("/freeLib.sqlite"));
+            ui->database_path->setText(dir + QStringLiteral("/freeLib.sqlite"));
             dbase.setDatabaseName(RelativeToAbsolutePath(ui->database_path->text()));
             if(!dbase.open())
             {
@@ -310,7 +310,7 @@ void SettingsDlg::btnOK()
         QString dir = QApplication::applicationDirPath();
 #endif
         QDir().mkpath(dir);
-        QFile cfg(dir + QLatin1String("/freeLib.cfg"));
+        QFile cfg(dir + QStringLiteral("/freeLib.cfg"));
         if(!cfg.exists())
         {
             cfg.open(QFile::WriteOnly);
@@ -325,7 +325,7 @@ void SettingsDlg::btnOK()
 //        if(QDir(app->applicationDirPath()+"/../../../freeLib").entryList(QDir::Files).count()==0)
 //            QDir(app->applicationDirPath()+"/../../../freeLib").removeRecursively();
 #else
-        QFile().remove(QApplication::applicationDirPath() + QLatin1String("/freeLib.cfg"));
+        QFile().remove(QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg"));
 #endif
     }
     auto settings = GetSettings(true);
@@ -548,7 +548,7 @@ void SettingsDlg::onBtnSaveExportClicked()
         (ui->ExportName->currentText()), QStringLiteral("freeLib export (*.fle)"));
     if(file_name.isEmpty())
         return;
-    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini"), QSettings::IniFormat));
+    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/export.ini"), QSettings::IniFormat));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     settings->setIniCodec("UTF-8");
 #endif
@@ -572,33 +572,33 @@ void SettingsDlg::onBtnSaveExportClicked()
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QLatin1String("/fonts");
+    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
     foreach (QString font, fonts_list)
     {
         QString font_file = font;
-        if(QFile::exists(QApplication::applicationDirPath() + QLatin1String("/xsl/fonts/") + font_file))
+        if(QFile::exists(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + font_file))
         {
-            font_file = QApplication::applicationDirPath() + QLatin1String("/xsl/fonts/") + font_file;
+            font_file = QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + font_file;
         }
         else
         {
-            if(QFile::exists(db_path + QLatin1String("/") + font_file))
+            if(QFile::exists(db_path + QStringLiteral("/") + font_file))
             {
-                font_file = db_path + QLatin1String("/") + font_file;
+                font_file = db_path + QStringLiteral("/") + font_file;
             }
-            else if(QFile::exists(FREELIB_DATA_DIR + QLatin1String("/fonts") + font_file))
+            else if(QFile::exists(FREELIB_DATA_DIR + QStringLiteral("/fonts") + font_file))
             {
-                font_file = FREELIB_DATA_DIR + QLatin1String("/fonts") + font_file;
+                font_file = FREELIB_DATA_DIR + QStringLiteral("/fonts") + font_file;
             }
             else
             {
                 if(!QFile::exists(font_file))
-                    font_file = QLatin1String("");
+                    font_file = QStringLiteral("");
             }
         }
         if(!font_file.isEmpty())
         {
-            zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QLatin1String("Fonts/") + QFileInfo(font_file).fileName(), font_file));
+            zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("Fonts/") + QFileInfo(font_file).fileName(), font_file));
             file.setFileName(font_file);
             file.open(QIODevice::ReadOnly);
             zip_file.write(file.readAll());
@@ -625,7 +625,7 @@ void SettingsDlg::onBtnOpenExportClicked()
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QLatin1String("/fonts");
+    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
     QDir().mkpath(db_path);
     QStringList files = zip.getFileNameList();
 
@@ -635,16 +635,16 @@ void SettingsDlg::onBtnOpenExportClicked()
         QFileInfo fi(ffile);
         if(fi.path() == QStringLiteral("Fonts"))
         {
-            if(QFile::exists(QApplication::applicationDirPath() + QLatin1String("/xsl/fonts/") + fi.fileName()))
+            if(QFile::exists(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + fi.fileName()))
                 continue;
-            if(QFile::exists(db_path + QLatin1String("/") + fi.fileName()))
+            if(QFile::exists(db_path + QStringLiteral("/") + fi.fileName()))
                 continue;
-            if(QFile::exists(FREELIB_DATA_DIR + QLatin1String("/fonts/") + fi.fileName()))
+            if(QFile::exists(FREELIB_DATA_DIR + QStringLiteral("/fonts/") + fi.fileName()))
                 continue;
 
 
             {
-                QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/") + fi.fileName();
+                QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/") + fi.fileName();
                 setCurrentZipFileName(&zip, ffile);
                 QuaZipFile zip_file(&zip);
                 zip_file.open(QIODevice::ReadOnly);
@@ -654,7 +654,7 @@ void SettingsDlg::onBtnOpenExportClicked()
                 font_file.write(zip_file.readAll());
                 font_file.close();
 
-                QFile::copy(font_name, db_path + QLatin1String("/") + fi.fileName());
+                QFile::copy(font_name, db_path + QStringLiteral("/") + fi.fileName());
             }
         }
     }
@@ -662,7 +662,7 @@ void SettingsDlg::onBtnOpenExportClicked()
     setCurrentZipFileName(&zip, QStringLiteral("export.ini"));
     QuaZipFile zip_file(&zip);
     zip_file.open(QIODevice::ReadOnly);
-    QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QLatin1String("/export.ini");
+    QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/export.ini");
     QFile file(ini_name);
     file.remove();
     file.open(QFile::WriteOnly);

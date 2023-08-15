@@ -12,7 +12,7 @@ class FontFrame : public QFrame
     Q_OBJECT
 
 public:
-    explicit FontFrame(bool use=true, int tag=0, const QString &font=QLatin1String(""), const QString &font_b=QLatin1String(""), const QString &font_i=QLatin1String(""), const QString &font_bi=QLatin1String(""),int fontSize=100, QWidget *parent = 0);
+    explicit FontFrame(bool use=true, int tag=0, const QString &font=QLatin1String(""), const QString &font_b=QLatin1String(""), const QString &font_i=QLatin1String(""), const QString &font_bi=QStringLiteral(""),int fontSize=100, QWidget *parent = 0);
     ~FontFrame();
     bool use();
     quint8 tag();

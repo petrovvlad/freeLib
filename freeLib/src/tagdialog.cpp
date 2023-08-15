@@ -16,8 +16,8 @@ TagDialog::TagDialog(QWidget *parent) :
 {
     ui->setupUi(this);
 
-    ui->tableWidget->setColumnWidth(0,140);
-    ui->tableWidget->setColumnWidth(1,30);
+    ui->tableWidget->setColumnWidth(0, 140);
+    ui->tableWidget->setColumnWidth(1, 30);
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
 
@@ -64,7 +64,7 @@ TagDialog::TagDialog(QWidget *parent) :
         QComboBox *combo = new QComboBox(ui->tableWidget);
         auto iIcon = icons_.constBegin();
         while(iIcon != icons_.constEnd()){
-            combo->insertItem(index, iIcon.value(), QLatin1String(""), iIcon.key());
+            combo->insertItem(index, iIcon.value(), QStringLiteral(""), iIcon.key());
             if(iIcon.key() == idIcon)
                 combo->setCurrentIndex(index);
             ++iIcon;

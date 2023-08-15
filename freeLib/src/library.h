@@ -20,6 +20,18 @@ public:
     QString sMiddleName;
 };
 
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+inline bool operator==(const SAuthor &a1, const SAuthor &a2)
+{
+    return a1.sFirstName == a2.sFirstName && a1.sMiddleName == a2.sMiddleName && a1.sLastName == a2.sLastName;
+}
+
+inline size_t qHash(const SAuthor &key, size_t seed = 0)
+{
+    return qHashMulti(seed, key.sFirstName, key.sMiddleName, key.sLastName);
+}
+#endif
+
 struct SBook
 {
     QString sName;

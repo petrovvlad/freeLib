@@ -39,19 +39,28 @@ private:
     QString sName_;
     QString sPath_;
     uchar nUpdateType_;
-    bool bFirstAuthorOnly;
+    bool bFirstAuthorOnly_;
     bool bWoDeleted_;
     uint  idLib_;
     QList<uint> listIdBookInLib_;
     QStringList listFiles_;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+    QHash<SAuthor, uint> hashAuthors_;
+#endif
     QSqlQuery query_;
+    QSqlQuery queryInsertBook_;
+    QSqlQuery queryInsertAuthor_;
+    QSqlQuery queryInsertBookAuthor_;
+    QSqlQuery queryInsertBookGenre_;
+    QSqlQuery queryInsertSeria_;
+
     QHash <QString, uint> genreKeys_;
     uint AddSeria(const QString &str, qlonglong libID, const QVariantList *pTags = nullptr);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);
     uint AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
                  int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
 
-    void AddGenre(qlonglong idBook, QString sGenre, qlonglong idLib);
+    void AddGenre(uint idBook, const QString &sGenre, uint idLib);
 
 };
 
