@@ -42,7 +42,7 @@ private slots:
 
     void FontMove(QWidget *font_widget, int direction);
     void RemoveFont(QWidget *font_widget);
-    FontFrame *AddFont(bool use=true, int tag=0, const QString &font=QStringLiteral(""), const QString &font_b=QStringLiteral(""), const QString &font_i=QStringLiteral(""), const QString &font_bi=QStringLiteral(""), int fontSize=100);
+    FontFrame *AddFont(bool use=true, int tag=0, const QString &font=QLatin1String(""), const QString &font_b=QLatin1String(""), const QString &font_i=QLatin1String(""), const QString &font_bi=QLatin1String(""), int fontSize=100);
     void btnPath();
 
 private:

@@ -80,7 +80,7 @@ private:
     void parse_body(const QDomNode &elem);
     void parse_description(const QDomNode &child);
     void parse_binary(const QDomNode &elem);
-    void parse_format(const QDomNode &elem, QString tag=QLatin1Literal("") , QString css=QLatin1Literal(""), QString href=QLatin1Literal(""));
+    void parse_format(const QDomNode &elem, QString tag=QLatin1String("") , QString css=QLatin1String(""), QString href=QLatin1String(""));
     void parse_span(const QString &span, const QDomNode &elem);
 
     void generate_toc();
