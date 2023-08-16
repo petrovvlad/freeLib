@@ -77,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnWidth(6,120);
     ui->Books->setColumnWidth(7,250);
     ui->Books->setColumnWidth(8,50);
+    ui->Books->setColumnWidth(9,50);
 
     pCover = new CoverLabel(this);
     ui->horizontalLayout_3->addWidget(pCover);
@@ -243,6 +244,7 @@ MainWindow::MainWindow(QWidget *parent) :
     else{
         ui->Books->setColumnHidden(1, true);
         ui->Books->setColumnHidden(2, true);
+        ui->Books->setColumnHidden(9, true);
     }
     varHeaders = settings->value(QStringLiteral("headersList"));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -1552,49 +1554,46 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     action = new QAction(tr("No."), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(3));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(3, QStringLiteral("ShowName"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(3, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Size"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(4));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(4, QStringLiteral("ShowSize"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(4, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Mark"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(5));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(5, QStringLiteral("ShowMark"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(5, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Import date"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(6));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(6, QStringLiteral("ShowImportDate"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(6, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Genre"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(7));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(7, QStringLiteral("ShowGenre"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(7, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Language"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(8));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(8, QStringLiteral("ShowLanguage"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(8, !action->isChecked());});
+    menu.addAction(action);
+
+    action = new QAction(tr("Format"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(9));
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(9, !action->isChecked());});
     menu.addAction(action);
 
     menu.exec(QCursor::pos());
-}
-
-void MainWindow::ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide)
-{
-    ui->Books->setColumnHidden(nColumn, bHide);
-    auto settings = GetSettings();
-    settings->beginGroup(QStringLiteral("Columns"));
-    settings->setValue(sSetting, !bHide);
-    settings->endGroup();
 }
 
 void MainWindow::MoveToSeria(uint id, const QString &FirstLetter)
@@ -1987,6 +1986,9 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
 
             item_book->setText(8, lib.vLaguages[book.idLanguage]);
             item_book->setTextAlignment(8, Qt::AlignCenter);
+
+            item_book->setText(9, book.sFormat);
+            item_book->setTextAlignment(9, Qt::AlignCenter);
 
             if(book.bDeleted)
             {

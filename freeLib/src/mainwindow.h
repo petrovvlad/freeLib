@@ -93,7 +93,6 @@ protected:
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
     void changeEvent(QEvent *event) override;
-    void ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide);
 private slots:
     void ExportAction();
     void ManageLibrary();

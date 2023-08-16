@@ -972,6 +972,10 @@ Kernel: %3 %4</source>
         <source>Filter:</source>
         <translation>Фильтр:</translation>
     </message>
+    <message>
+        <source>Format</source>
+        <translation>Формат</translation>
+    </message>
 </context>
 <context>
     <name>QApplication</name>

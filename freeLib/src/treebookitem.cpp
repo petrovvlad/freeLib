@@ -61,6 +61,8 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
             return collator.compare(mGenre[bookThis.listIdGenres.first()].sName, mGenre[bookOther.listIdGenres.first()].sName) < 0;
         case 8: //Язык
             return mLibs[idCurrentLib].vLaguages[bookThis.idLanguage] < mLibs[idCurrentLib].vLaguages[bookOther.idLanguage];
+        case 9: //Формат
+            return bookThis.sFormat < bookOther.sFormat;
         }
 
     }
