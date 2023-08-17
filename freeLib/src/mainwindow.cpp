@@ -1735,7 +1735,8 @@ void MainWindow::FillSerials()
 
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
-        if(IsBookInList(*iBook) && (sSearch == u"*" || (sSearch == u"#" &&
+        if(iBook->idSerial != 0 &&
+           IsBookInList(*iBook) && (sSearch == u"*" || (sSearch == u"#" &&
            !lib.mSerials[iBook->idSerial].sName.left(1).contains(re)) ||
            lib.mSerials[iBook->idSerial].sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
