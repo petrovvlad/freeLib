@@ -530,11 +530,12 @@ void ImportThread::importFB2(const QString &path, int &count)
                         zip_file.close();
                         readFB2(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
                     }
-                    else if(zip_fi.name.right(3).toLower() == u"epub")
+                    else if(zip_fi.name.right(4).toLower() == u"epub")
                     {
                         setCurrentZipFileName(&uz, zip_fi.name);
                         zip_file.open(QIODevice::ReadOnly);
                         buffer.setData(zip_file.readAll());
+                        zip_file.close();
                         readEPUB(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
                     }
                     else if(zip_fi.name.right(3).toLower() != u"fbd")
