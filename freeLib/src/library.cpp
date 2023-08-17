@@ -265,7 +265,7 @@ void SLib::loadAnnotation(uint idBook)
         QDomNode root = doc.documentElement();
         bool need_loop = true;
         QString rel_path;
-        for(int i=0;i<root.childNodes().count() && need_loop;i++)
+        for(int i=0; i<root.childNodes().count() && need_loop; i++)
         {
             if(root.childNodes().at(i).nodeName().toLower() == u"rootfiles")
             {
@@ -290,11 +290,7 @@ void SLib::loadAnnotation(uint idBook)
                         {
                             if(meta.childNodes().at(m).nodeName().right(11) == u"description")
                             {
-                                QBuffer buff;
-                                buff.open(QIODevice::WriteOnly);
-                                QTextStream ts(&buff);
-                                meta.childNodes().at(m).save(ts, 0, QDomNode::EncodingFromTextStream);
-                                book.sAnnotation = QString::fromUtf8(buff.data().data());
+                                book.sAnnotation = meta.childNodes().at(m).toElement().text();
                             }
                             else if(meta.childNodes().at(m).nodeName().right(4) == u"meta")
                             {
@@ -361,13 +357,7 @@ void SLib::loadAnnotation(uint idBook)
                 }
             }
         }
-        QBuffer buff;
-        buff.open(QIODevice::WriteOnly);
-        QTextStream ts(&buff);
-        title_info.elementsByTagName(QStringLiteral("annotation")).at(0).save(ts, 0, QDomNode::EncodingFromTextStream);
-        book.sAnnotation = QString::fromUtf8(buff.data().data());
-        book.sAnnotation.replace(QStringLiteral("<annotation>"), QStringLiteral(""), Qt::CaseInsensitive);
-        book.sAnnotation.replace(QStringLiteral("</annotation>"), QStringLiteral(""), Qt::CaseInsensitive);
+        book.sAnnotation = title_info.elementsByTagName(QStringLiteral("annotation")).at(0).toElement().text();
     }
 }
 
