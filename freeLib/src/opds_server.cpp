@@ -192,7 +192,7 @@ QDomElement opds_server::AddTextNode(const QString &name, const QString &text, Q
 }
 
 
-QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint idGenre, const QString &sSearch, bool sequenceless = false)
+QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, ushort idGenre, const QString &sSearch, bool sequenceless = false)
 {
     QList<uint> listBooks;
     if(idAuthor !=0 && idSeria != 0){
@@ -234,7 +234,7 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, uint 
         auto iBook = lib.mBooks.constBegin();
         while(iBook != lib.mBooks.constEnd()){
             if(!iBook->bDeleted){
-                foreach(uint iGenre, iBook->listIdGenres){
+                foreach(auto iGenre, iBook->listIdGenres){
                     if(iGenre == idGenre){
                         listBooks << iBook.key();
                         break;
@@ -1083,7 +1083,7 @@ QString opds_server::FillPageOPDS(QList<uint> listBooks, SLib &lib, const QStrin
                 entry.appendChild(author);
                 AddTextNode(u"name"_s, lib.mAuthors[idAuthor].getName(), author);
             }
-            foreach(uint idGenre, book.listIdGenres){
+            foreach(auto idGenre, book.listIdGenres){
                 QDomElement category = doc.createElement(u"category"_s);
                 entry.appendChild(category);
                 category.setAttribute(u"term"_s, mGenre[idGenre].sName);
@@ -3198,7 +3198,7 @@ QHttpServerResponse opds_server::bookOPDS(uint idLib, uint idBook, const QString
     return convert(idLib, idBook, sFormat, u""_s, true);
 }
 
-QHttpServerResponse opds_server::genresHTTP(uint idLib, uint idParentGenre, const QHttpServerRequest &request)
+QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, const QHttpServerRequest &request)
 {
     QUrl url;
     if(!checkAuth(request, url))
@@ -3210,8 +3210,8 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, uint idParentGenre, cons
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
 
     Q_ASSERT(!lib.mSerials.contains(0));
-    QList<uint> listIdGenres;
-    QMap<uint, uint> mCounts;
+    QList<ushort> listIdGenres;
+    QMap<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
         if(mGenre[idParentGenre].idParrentGenre > 0){
@@ -3227,7 +3227,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, uint idParentGenre, cons
         auto iBook = lib.mBooks.constBegin();
         while(iBook != lib.mBooks.constEnd()){
             if(!iBook->bDeleted){
-                foreach (uint iGenre, iBook->listIdGenres){
+                foreach (auto iGenre, iBook->listIdGenres){
                     if(mGenre[iGenre].idParrentGenre == idParentGenre){
                         if(mCounts.contains(iGenre))
                             mCounts[iGenre]++;
@@ -3251,7 +3251,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, uint idParentGenre, cons
     QDomElement feed;
     feed = docHeaderHTTP(sSesionQuery, lib.name, sLibUrl);
 
-    foreach(uint idGenre, listIdGenres)
+    foreach(ushort idGenre, listIdGenres)
     {
         QDomElement div = doc.createElement(u"DIV"_s);
         feed.appendChild(div);
@@ -3268,7 +3268,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, uint idParentGenre, cons
     return responseHTTP();
 }
 
-QHttpServerResponse opds_server::genresOPDS(uint idLib, uint idParentGenre, const QHttpServerRequest &request)
+QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, const QHttpServerRequest &request)
 {
     QUrl url;
     if(!checkAuth(request, url))
@@ -3281,8 +3281,8 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, uint idParentGenre, cons
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
 
 
-    QList<uint> listIdGenres;
-    QMap<uint, uint> mCounts;
+    QList<ushort> listIdGenres;
+    QMap<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
         if(mGenre[idParentGenre].idParrentGenre > 0){
@@ -3300,7 +3300,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, uint idParentGenre, cons
         auto iBook = lib.mBooks.constBegin();
         while(iBook != lib.mBooks.constEnd()){
             if(!iBook->bDeleted){
-                foreach (uint iGenre, iBook->listIdGenres){
+                foreach (auto iGenre, iBook->listIdGenres){
                     if(mGenre[iGenre].idParrentGenre == idParentGenre){
                         if(mCounts.contains(iGenre))
                             mCounts[iGenre]++;

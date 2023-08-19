@@ -927,7 +927,7 @@ void MainWindow::StartSearch()
     QDate dateFrom = ui->date_from->date();
     QDate dateTo = ui->date_to->date();
     int nMaxCount = ui->maxBooks->value();
-    uint idGenre = ui->s_genre->currentData().toUInt();
+    ushort idGenre = ui->s_genre->currentData().toUInt();
     int idLanguage = ui->findLanguage->currentData().toInt();
 
     SLib& lib = mLibs[idCurrentLib];
@@ -983,7 +983,7 @@ void MainWindow::StartSearch()
                 listBooks_ << iBook.key();
             }else
             {
-                foreach (uint id, iBook->listIdGenres) {
+                foreach (auto id, iBook->listIdGenres) {
                    if(id == idGenre){
                        nCount++;
                        listBooks_ << iBook.key();
@@ -1042,13 +1042,13 @@ void MainWindow::SelectGenre()
     if(ui->GenreList->selectedItems().count() == 0)
         return;
     QTreeWidgetItem* cur_item = ui->GenreList->selectedItems()[0];
-    uint idGenre = cur_item->data(0, Qt::UserRole).toUInt();
+    ushort idGenre = cur_item->data(0, Qt::UserRole).toUInt();
     listBooks_.clear();
     SLib& lib = mLibs[idCurrentLib];
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
-            foreach (uint iGenre, iBook->listIdGenres) {
+            foreach (auto iGenre, iBook->listIdGenres) {
                 if(iGenre == idGenre){
                     listBooks_ << iBook.key();
                     break;
@@ -1788,7 +1788,7 @@ void MainWindow::FillGenres()
     while(iBook != lib.mBooks.constEnd()){
         if(IsBookInList(*iBook))
         {
-            foreach (uint iGenre, iBook->listIdGenres) {
+            foreach (auto iGenre, iBook->listIdGenres) {
                 if(mCounts.contains(iGenre))
                     mCounts[iGenre]++;
                 else

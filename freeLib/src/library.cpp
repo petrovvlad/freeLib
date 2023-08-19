@@ -13,8 +13,8 @@
 #include "quazip/quazip/quazipfile.h"
 #include "utilites.h"
 
-QMap<uint,SLib> mLibs;
-QMap <uint,SGenre> mGenre;
+QMap<uint, SLib> mLibs;
+QMap <ushort, SGenre> mGenre;
 QString RelativeToAbsolutePath(QString path);
 
 void loadLibrary(uint idLibrary)
@@ -143,7 +143,7 @@ void loadLibrary(uint idLibrary)
         qDebug() << query.lastError().text();
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
-        uint idGenre = query.value(1).toUInt();
+        ushort idGenre = query.value(1).toUInt();
         if(idGenre == 0) idGenre = 1112; // Прочие/Неотсортированное
         if(lib.mBooks.contains(idBook))
             lib.mBooks[idBook].listIdGenres << idGenre;
@@ -177,7 +177,7 @@ void loadGenres()
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
-        uint idGenre = query.value(0).toUInt();
+        ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
         SGenre &genre = mGenre[idGenre];
         genre.sName = query.value(1).toString();
         genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());

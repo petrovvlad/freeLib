@@ -34,7 +34,7 @@ private slots:
 private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
 
-    QList<uint> book_list(SLib& lib, uint idAuthor, uint idSeria, uint idGenre,  const QString &sSearch, bool sequenceless);
+    QList<uint> book_list(SLib& lib, uint idAuthor, uint idSeria, ushort idGenre,  const QString &sSearch, bool sequenceless);
     void stop_server();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
@@ -69,8 +69,8 @@ private:
     QHttpServerResponse sequenceBooksOPDS(uint idLib, uint idSequence, const QHttpServerRequest &request);
     QHttpServerResponse bookHTTP(uint idLib, uint idBook, const QString &sFormat);
     QHttpServerResponse bookOPDS(uint idLib, uint idBook, const QString &sFormat);
-    QHttpServerResponse genresHTTP(uint idLib, uint idParentGenre, const QHttpServerRequest &request);
-    QHttpServerResponse genresOPDS(uint idLib, uint idParentGenre, const QHttpServerRequest &request);
+    QHttpServerResponse genresHTTP(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
+    QHttpServerResponse genresOPDS(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse searchHTTP(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
 

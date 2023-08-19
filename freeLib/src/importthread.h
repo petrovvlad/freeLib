@@ -54,7 +54,7 @@ private:
     QSqlQuery queryInsertBookGenre_;
     QSqlQuery queryInsertSeria_;
 
-    QHash <QString, uint> genreKeys_;
+    QHash <QString, ushort> genreKeys_;
     uint AddSeria(const QString &str, qlonglong libID, const QVariantList *pTags = nullptr);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);
     uint AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,

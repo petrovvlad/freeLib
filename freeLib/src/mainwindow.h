@@ -68,7 +68,7 @@ private:
     QAction *pShowAction_;
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
-    uint idCurrentGenre_;
+    ushort idCurrentGenre_;
     uint idCurrentSerial_;
     uint idCurrentBook_;
     QList<uint> listBooks_;
