@@ -1778,10 +1778,10 @@ void MainWindow::FillGenres()
     ui->GenreList->clear();
     ui->s_genre->clear();
     ui->s_genre->addItem(QStringLiteral("*"), 0);
-    QFont bold_font(ui->AuthorList->font());
-    bold_font.setBold(true);
+    QFont fontBold(ui->AuthorList->font());
+    fontBold.setBold(true);
 
-    QMap<uint,uint> mCounts;
+    QMap<ushort, uint> mCounts;
     SLib& lib = mLibs[idCurrentLib];
 
     auto iBook = lib.mBooks.constBegin();
@@ -1798,39 +1798,36 @@ void MainWindow::FillGenres()
         ++iBook;
     }
 
-    QMap<uint,QTreeWidgetItem*> mTopGenresItem;
-    auto iGenre = mGenre.constBegin();
-    while(iGenre != mGenre.constEnd()){
-        QTreeWidgetItem *item;
-        if(iGenre->idParrentGenre == 0 && !mTopGenresItem.contains(iGenre.key())){
-            item = new QTreeWidgetItem(ui->GenreList);
-            item->setFont(0, bold_font);
-            item->setText(0, iGenre->sName);
-            item->setData(0, Qt::UserRole, iGenre.key());
-            item->setExpanded(false);
-            mTopGenresItem[iGenre.key()] = item;
-            ui->s_genre->addItem(iGenre->sName, iGenre.key());
-        }else{
-            if(mCounts.contains(iGenre.key())){
-                if(!mTopGenresItem.contains(iGenre->idParrentGenre)){
-                    QTreeWidgetItem *itemTop = new QTreeWidgetItem(ui->GenreList);
-                    itemTop->setFont(0, bold_font);
-                    itemTop->setText(0, mGenre[iGenre->idParrentGenre].sName);
-                    itemTop->setData(0, Qt::UserRole, iGenre->idParrentGenre);
-                    itemTop->setExpanded(false);
-                    mTopGenresItem[iGenre->idParrentGenre] = itemTop;
-                }
-                item = new QTreeWidgetItem(mTopGenresItem[iGenre->idParrentGenre]);
-                item->setText(0,QStringLiteral("%1 (%2)").arg(iGenre->sName).arg(mCounts[iGenre.key()]));
-                item->setData(0,Qt::UserRole, iGenre.key());
-                ui->s_genre->addItem(QStringLiteral("   ") + iGenre->sName, iGenre.key());
-                if(iGenre.key() == idCurrentGenre_)
-                {
-                    item->setSelected(true);
-                    ui->GenreList->scrollToItem(item);
-                }
-            }
+    QMap<ushort, QTreeWidgetItem*> mTopGenresItem;
+    auto iGenre = mCounts.constBegin();
+    while(iGenre != mCounts.constEnd()){
+        auto idGenre = iGenre.key();
+        auto idParrentGenre = mGenre[idGenre].idParrentGenre;
+        QTreeWidgetItem *pTopItem;
+
+        if(!mTopGenresItem.contains(idParrentGenre)){
+            const QString &sTopName = mGenre[idParrentGenre].sName;
+            pTopItem = new QTreeWidgetItem(ui->GenreList);
+            pTopItem->setFont(0, fontBold);
+            pTopItem->setText(0, sTopName);
+            pTopItem->setData(0, Qt::UserRole, idParrentGenre);
+            pTopItem->setExpanded(false);
+            mTopGenresItem[idParrentGenre] = pTopItem;
+            ui->s_genre->addItem(sTopName, idParrentGenre);
+        }else
+            pTopItem = mTopGenresItem[idParrentGenre];
+
+        QTreeWidgetItem *item = new QTreeWidgetItem(pTopItem);
+        const QString &sName = mGenre[idGenre].sName;
+        item->setText(0, QStringLiteral("%1 (%2)").arg(sName).arg(mCounts[idGenre]));
+        item->setData(0, Qt::UserRole, idGenre);
+        ui->s_genre->addItem(QStringLiteral("   ") + sName, idGenre);
+        if(idGenre == idCurrentGenre_)
+        {
+            item->setSelected(true);
+            ui->GenreList->scrollToItem(item);
         }
+
         ++iGenre;
     }
 
