@@ -1027,6 +1027,9 @@ void MainWindow::SelectLibrary()
     case TabSeries:
         onSerachSeriesChanded(ui->searchSeries->text());
         break;
+    case TabGenres:
+        SelectGenre();
+        break;
     }
 
     setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
