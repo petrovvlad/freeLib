@@ -8,8 +8,8 @@ GenreSortFilterProxyModel::GenreSortFilterProxyModel(QObject *parent): QSortFilt
 
 bool GenreSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIndex &right) const
 {
-    uint idLeft = sourceModel()->data(left, Qt::UserRole).toUInt();
-    uint idRight = sourceModel()->data(right, Qt::UserRole).toUInt();
+    ushort idLeft = sourceModel()->data(left, Qt::UserRole).toUInt();
+    ushort idRight = sourceModel()->data(right, Qt::UserRole).toUInt();
 
     if(idRight == 0)
         return false;

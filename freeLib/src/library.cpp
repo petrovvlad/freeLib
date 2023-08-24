@@ -13,8 +13,8 @@
 #include "quazip/quazip/quazipfile.h"
 #include "utilites.h"
 
-QMap<uint,SLib> mLibs;
-QMap <uint,SGenre> mGenre;
+QMap<uint, SLib> mLibs;
+QMap <ushort, SGenre> mGenre;
 QString RelativeToAbsolutePath(QString path);
 
 void loadLibrary(uint idLibrary)
@@ -143,7 +143,7 @@ void loadLibrary(uint idLibrary)
         qDebug() << query.lastError().text();
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
-        uint idGenre = query.value(1).toUInt();
+        ushort idGenre = query.value(1).toUInt();
         if(idGenre == 0) idGenre = 1112; // Прочие/Неотсортированное
         if(lib.mBooks.contains(idBook))
             lib.mBooks[idBook].listIdGenres << idGenre;
@@ -177,7 +177,7 @@ void loadGenres()
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
-        uint idGenre = query.value(0).toUInt();
+        ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
         SGenre &genre = mGenre[idGenre];
         genre.sName = query.value(1).toString();
         genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
@@ -265,7 +265,7 @@ void SLib::loadAnnotation(uint idBook)
         QDomNode root = doc.documentElement();
         bool need_loop = true;
         QString rel_path;
-        for(int i=0;i<root.childNodes().count() && need_loop;i++)
+        for(int i=0; i<root.childNodes().count() && need_loop; i++)
         {
             if(root.childNodes().at(i).nodeName().toLower() == u"rootfiles")
             {
@@ -290,11 +290,7 @@ void SLib::loadAnnotation(uint idBook)
                         {
                             if(meta.childNodes().at(m).nodeName().right(11) == u"description")
                             {
-                                QBuffer buff;
-                                buff.open(QIODevice::WriteOnly);
-                                QTextStream ts(&buff);
-                                meta.childNodes().at(m).save(ts, 0, QDomNode::EncodingFromTextStream);
-                                book.sAnnotation = QString::fromUtf8(buff.data().data());
+                                book.sAnnotation = meta.childNodes().at(m).toElement().text();
                             }
                             else if(meta.childNodes().at(m).nodeName().right(4) == u"meta")
                             {
@@ -361,13 +357,7 @@ void SLib::loadAnnotation(uint idBook)
                 }
             }
         }
-        QBuffer buff;
-        buff.open(QIODevice::WriteOnly);
-        QTextStream ts(&buff);
-        title_info.elementsByTagName(QStringLiteral("annotation")).at(0).save(ts, 0, QDomNode::EncodingFromTextStream);
-        book.sAnnotation = QString::fromUtf8(buff.data().data());
-        book.sAnnotation.replace(QStringLiteral("<annotation>"), QStringLiteral(""), Qt::CaseInsensitive);
-        book.sAnnotation.replace(QStringLiteral("</annotation>"), QStringLiteral(""), Qt::CaseInsensitive);
+        book.sAnnotation = title_info.elementsByTagName(QStringLiteral("annotation")).at(0).toElement().text();
     }
 }
 

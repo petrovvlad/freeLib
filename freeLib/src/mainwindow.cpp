@@ -77,6 +77,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnWidth(6,120);
     ui->Books->setColumnWidth(7,250);
     ui->Books->setColumnWidth(8,50);
+    ui->Books->setColumnWidth(9,50);
 
     pCover = new CoverLabel(this);
     ui->horizontalLayout_3->addWidget(pCover);
@@ -243,6 +244,7 @@ MainWindow::MainWindow(QWidget *parent) :
     else{
         ui->Books->setColumnHidden(1, true);
         ui->Books->setColumnHidden(2, true);
+        ui->Books->setColumnHidden(9, true);
     }
     varHeaders = settings->value(QStringLiteral("headersList"));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -925,7 +927,7 @@ void MainWindow::StartSearch()
     QDate dateFrom = ui->date_from->date();
     QDate dateTo = ui->date_to->date();
     int nMaxCount = ui->maxBooks->value();
-    uint idGenre = ui->s_genre->currentData().toUInt();
+    ushort idGenre = ui->s_genre->currentData().toUInt();
     int idLanguage = ui->findLanguage->currentData().toInt();
 
     SLib& lib = mLibs[idCurrentLib];
@@ -981,7 +983,7 @@ void MainWindow::StartSearch()
                 listBooks_ << iBook.key();
             }else
             {
-                foreach (uint id, iBook->listIdGenres) {
+                foreach (auto id, iBook->listIdGenres) {
                    if(id == idGenre){
                        nCount++;
                        listBooks_ << iBook.key();
@@ -1025,6 +1027,9 @@ void MainWindow::SelectLibrary()
     case TabSeries:
         onSerachSeriesChanded(ui->searchSeries->text());
         break;
+    case TabGenres:
+        SelectGenre();
+        break;
     }
 
     setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
@@ -1040,13 +1045,13 @@ void MainWindow::SelectGenre()
     if(ui->GenreList->selectedItems().count() == 0)
         return;
     QTreeWidgetItem* cur_item = ui->GenreList->selectedItems()[0];
-    uint idGenre = cur_item->data(0, Qt::UserRole).toUInt();
+    ushort idGenre = cur_item->data(0, Qt::UserRole).toUInt();
     listBooks_.clear();
     SLib& lib = mLibs[idCurrentLib];
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
-            foreach (uint iGenre, iBook->listIdGenres) {
+            foreach (auto iGenre, iBook->listIdGenres) {
                 if(iGenre == idGenre){
                     listBooks_ << iBook.key();
                     break;
@@ -1552,49 +1557,46 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     action = new QAction(tr("No."), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(3));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(3, QStringLiteral("ShowName"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(3, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Size"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(4));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(4, QStringLiteral("ShowSize"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(4, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Mark"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(5));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(5, QStringLiteral("ShowMark"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(5, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Import date"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(6));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(6, QStringLiteral("ShowImportDate"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(6, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Genre"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(7));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(7, QStringLiteral("ShowGenre"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(7, !action->isChecked());});
     menu.addAction(action);
 
     action = new QAction(tr("Language"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(8));
-    connect(action, &QAction::triggered, this, [action, this]{ShowHeaderCoulmn(8, QStringLiteral("ShowLanguage"), !action->isChecked());});
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(8, !action->isChecked());});
+    menu.addAction(action);
+
+    action = new QAction(tr("Format"), this);
+    action->setCheckable(true);
+    action->setChecked(!ui->Books->isColumnHidden(9));
+    connect(action, &QAction::triggered, this, [action, this]{ui->Books->setColumnHidden(9, !action->isChecked());});
     menu.addAction(action);
 
     menu.exec(QCursor::pos());
-}
-
-void MainWindow::ShowHeaderCoulmn(int nColumn, const QString &sSetting, bool bHide)
-{
-    ui->Books->setColumnHidden(nColumn, bHide);
-    auto settings = GetSettings();
-    settings->beginGroup(QStringLiteral("Columns"));
-    settings->setValue(sSetting, !bHide);
-    settings->endGroup();
 }
 
 void MainWindow::MoveToSeria(uint id, const QString &FirstLetter)
@@ -1736,7 +1738,8 @@ void MainWindow::FillSerials()
 
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
-        if(IsBookInList(*iBook) && (sSearch == u"*" || (sSearch == u"#" &&
+        if(iBook->idSerial != 0 &&
+           IsBookInList(*iBook) && (sSearch == u"*" || (sSearch == u"#" &&
            !lib.mSerials[iBook->idSerial].sName.left(1).contains(re)) ||
            lib.mSerials[iBook->idSerial].sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
@@ -1778,17 +1781,17 @@ void MainWindow::FillGenres()
     ui->GenreList->clear();
     ui->s_genre->clear();
     ui->s_genre->addItem(QStringLiteral("*"), 0);
-    QFont bold_font(ui->AuthorList->font());
-    bold_font.setBold(true);
+    QFont fontBold(ui->AuthorList->font());
+    fontBold.setBold(true);
 
-    QMap<uint,uint> mCounts;
+    QMap<ushort, uint> mCounts;
     SLib& lib = mLibs[idCurrentLib];
 
     auto iBook = lib.mBooks.constBegin();
     while(iBook != lib.mBooks.constEnd()){
         if(IsBookInList(*iBook))
         {
-            foreach (uint iGenre, iBook->listIdGenres) {
+            foreach (auto iGenre, iBook->listIdGenres) {
                 if(mCounts.contains(iGenre))
                     mCounts[iGenre]++;
                 else
@@ -1798,39 +1801,36 @@ void MainWindow::FillGenres()
         ++iBook;
     }
 
-    QMap<uint,QTreeWidgetItem*> mTopGenresItem;
-    auto iGenre = mGenre.constBegin();
-    while(iGenre != mGenre.constEnd()){
-        QTreeWidgetItem *item;
-        if(iGenre->idParrentGenre == 0 && !mTopGenresItem.contains(iGenre.key())){
-            item = new QTreeWidgetItem(ui->GenreList);
-            item->setFont(0, bold_font);
-            item->setText(0, iGenre->sName);
-            item->setData(0, Qt::UserRole, iGenre.key());
-            item->setExpanded(false);
-            mTopGenresItem[iGenre.key()] = item;
-            ui->s_genre->addItem(iGenre->sName, iGenre.key());
-        }else{
-            if(mCounts.contains(iGenre.key())){
-                if(!mTopGenresItem.contains(iGenre->idParrentGenre)){
-                    QTreeWidgetItem *itemTop = new QTreeWidgetItem(ui->GenreList);
-                    itemTop->setFont(0, bold_font);
-                    itemTop->setText(0, mGenre[iGenre->idParrentGenre].sName);
-                    itemTop->setData(0, Qt::UserRole, iGenre->idParrentGenre);
-                    itemTop->setExpanded(false);
-                    mTopGenresItem[iGenre->idParrentGenre] = itemTop;
-                }
-                item = new QTreeWidgetItem(mTopGenresItem[iGenre->idParrentGenre]);
-                item->setText(0,QStringLiteral("%1 (%2)").arg(iGenre->sName).arg(mCounts[iGenre.key()]));
-                item->setData(0,Qt::UserRole, iGenre.key());
-                ui->s_genre->addItem(QStringLiteral("   ") + iGenre->sName, iGenre.key());
-                if(iGenre.key() == idCurrentGenre_)
-                {
-                    item->setSelected(true);
-                    ui->GenreList->scrollToItem(item);
-                }
-            }
+    QMap<ushort, QTreeWidgetItem*> mTopGenresItem;
+    auto iGenre = mCounts.constBegin();
+    while(iGenre != mCounts.constEnd()){
+        auto idGenre = iGenre.key();
+        auto idParrentGenre = mGenre[idGenre].idParrentGenre;
+        QTreeWidgetItem *pTopItem;
+
+        if(!mTopGenresItem.contains(idParrentGenre)){
+            const QString &sTopName = mGenre[idParrentGenre].sName;
+            pTopItem = new QTreeWidgetItem(ui->GenreList);
+            pTopItem->setFont(0, fontBold);
+            pTopItem->setText(0, sTopName);
+            pTopItem->setData(0, Qt::UserRole, idParrentGenre);
+            pTopItem->setExpanded(false);
+            mTopGenresItem[idParrentGenre] = pTopItem;
+            ui->s_genre->addItem(sTopName, idParrentGenre);
+        }else
+            pTopItem = mTopGenresItem[idParrentGenre];
+
+        QTreeWidgetItem *item = new QTreeWidgetItem(pTopItem);
+        const QString &sName = mGenre[idGenre].sName;
+        item->setText(0, QStringLiteral("%1 (%2)").arg(sName).arg(mCounts[idGenre]));
+        item->setData(0, Qt::UserRole, idGenre);
+        ui->s_genre->addItem(QStringLiteral("   ") + sName, idGenre);
+        if(idGenre == idCurrentGenre_)
+        {
+            item->setSelected(true);
+            ui->GenreList->scrollToItem(item);
         }
+
         ++iGenre;
     }
 
@@ -1987,6 +1987,9 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
 
             item_book->setText(8, lib.vLaguages[book.idLanguage]);
             item_book->setTextAlignment(8, Qt::AlignCenter);
+
+            item_book->setText(9, book.sFormat);
+            item_book->setTextAlignment(9, Qt::AlignCenter);
 
             if(book.bDeleted)
             {

@@ -165,7 +165,7 @@ uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_ser
 
 void ImportThread::AddGenre(uint idBook, const QString &sGenre, uint idLib)
 {
-    qlonglong idGenre = 0;
+    ushort idGenre = 0;
     QString sCorrectGenre = sGenre.toLower();
     sCorrectGenre.replace(' ', '_');
     if(genreKeys_.contains(sCorrectGenre)){
@@ -530,11 +530,12 @@ void ImportThread::importFB2(const QString &path, int &count)
                         zip_file.close();
                         readFB2(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
                     }
-                    else if(zip_fi.name.right(3).toLower() == u"epub")
+                    else if(zip_fi.name.right(4).toLower() == u"epub")
                     {
                         setCurrentZipFileName(&uz, zip_fi.name);
                         zip_file.open(QIODevice::ReadOnly);
                         buffer.setData(zip_file.readAll());
+                        zip_file.close();
                         readEPUB(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
                     }
                     else if(zip_fi.name.right(3).toLower() != u"fbd")
@@ -602,7 +603,7 @@ void ImportThread::process()
     query_.exec(QStringLiteral("SELECT id, keys FROM genre where NOT keys='';"));
     while(query_.next())
     {
-        uint idGenre = query_.value(0).toUInt();
+        ushort idGenre = query_.value(0).toUInt();
         QString sKeys = query_.value(1).toString();
         QStringList kistKeys = sKeys.split(QStringLiteral(";"));
         for(qsizetype i=0; i<kistKeys.size(); i++){

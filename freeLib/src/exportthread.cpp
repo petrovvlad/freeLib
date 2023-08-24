@@ -11,6 +11,7 @@
 #include <QSqlQuery>
 #include <QRegularExpression>
 #include <QSqlDatabase>
+#include <unistd.h>
 
 
 #include "SmtpClient/src/smtpclient.h"
@@ -24,8 +25,8 @@
 
 QString ValidateFileName(QString str)
 {
-    bool windows=false;
-    bool mac=false;
+    bool windows = false;
+    bool mac = false;
 #ifdef WIN32
     windows=true;
 #endif
@@ -49,9 +50,6 @@ QString ValidateFileName(QString str)
             str = str.replace(re, QStringLiteral("_"));
         }
     }
-    static const QRegularExpression re2(QStringLiteral("[/\\]"));
-    str = str.replace(re2, QStringLiteral("_"));
-    qDebug()<<str;
     return str;
 }
 
@@ -194,9 +192,9 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
     }
     else
     {
-        QStringList listArg;
-        book_file_name = ValidateFileName(book_file_name);
-        if(!pExportOptions_->bPostprocessingCopy)
+       QStringList listArg;
+       book_file_name = ValidateFileName(book_file_name);
+       if(!pExportOptions_->bPostprocessingCopy)
         {
             //book_dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
             if(book_file_name.startsWith(u"mtp:/")){
@@ -321,13 +319,14 @@ void ExportThread::export_books()
         }
     }
 
+    auto nMaxFileName = pathconf(sExportDir_.toUtf8().data(), _PC_NAME_MAX);
     uint count = 0;
     foreach(const QList<uint> &listBooks, books_group)
     {
         if(!loop_enable)
             break;
         QList<QBuffer*> buffers;
-        QString file_name;
+        QString sFileName;;
         foreach(uint idBook, listBooks)
         {
             QApplication::processEvents();
@@ -346,21 +345,36 @@ void ExportThread::export_books()
             {
                 QString arh = book.sArchive;
                 arh = arh.left(arh.length()-4);
-                file_name = arh.isEmpty() ?QStringLiteral("") :QStringLiteral("%1/%2.%3").arg(arh, book.sFile, book.sFormat);
+                sFileName = arh.isEmpty() ?QStringLiteral("") :QStringLiteral("%1/%2.%3").arg(arh, book.sFile, book.sFormat);
             }
             else
             {
-                file_name = pExportOptions_->sExportFileName;
-                if(file_name.isEmpty())
-                    file_name = ExportOptions::sDefaultEexpFileName;
-                file_name = mLibs[idCurrentLib].fillParams(file_name, idBook) % QStringLiteral(".") % book.sFormat;
+                sFileName = pExportOptions_->sExportFileName;
+                if(sFileName.isEmpty())
+                    sFileName = ExportOptions::sDefaultEexpFileName;
+                //Проверка и уменьшение длины имени файла до nMaxFileName байт
+                QStringList listPartName = mLibs[idCurrentLib].fillParams(sFileName, idBook).split(QStringLiteral("/"));
+                for(auto &sPartName :listPartName){
+                    while(sPartName.toUtf8().size() + book.sFormat.toUtf8().size() + 1 > nMaxFileName){
+                        sPartName.resize(sPartName.size() - 1);
+                    }
+                }
+
+                for(int i = 0; i<listPartName.size(); i++){
+                    if(i == 0)
+                        sFileName = listPartName.at(i);
+                    else
+                        sFileName += QStringLiteral("/") + listPartName.at(i);
+                }
+                sFileName += QStringLiteral(".") + book.sFormat;
                 if(pExportOptions_->bTransliteration)
-                    file_name = Transliteration(file_name);
+                    sFileName = Transliteration(sFileName);
             }
-            file_name = dir.path() % QStringLiteral("/") % file_name;
+
+            sFileName = dir.path() % QStringLiteral("/") % sFileName;
         }
 
-        if(convert(buffers, idCurrentLib, file_name, count, listBooks[0]))
+        if(convert(buffers, idCurrentLib, sFileName, count, listBooks[0]))
         {
             foreach(uint idBook, listBooks)
                 successful_export_books << idBook;

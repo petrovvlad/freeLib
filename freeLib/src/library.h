@@ -43,7 +43,7 @@ struct SBook
     QString sFormat;
     QString sFile;
     QString sKeywords;
-    QList<uint> listIdGenres;
+    QList<ushort> listIdGenres;
     QList<uint> listIdAuthors;
     QList<uint> listIdTags;
     uint idInLib;
@@ -101,6 +101,6 @@ void loadGenres();
 
 extern uint idCurrentLib;
 extern QMap<uint, SLib> mLibs;
-extern QMap <uint, SGenre> mGenre;
+extern QMap <ushort, SGenre> mGenre;
 
 #endif // LIBRARY_H
