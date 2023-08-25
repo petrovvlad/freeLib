@@ -352,20 +352,20 @@ void ExportThread::export_books()
                 sFileName = pExportOptions_->sExportFileName;
                 if(sFileName.isEmpty())
                     sFileName = ExportOptions::sDefaultEexpFileName;
-                //Проверка и уменьшение длины имени файла до nMaxFileName байт
                 QStringList listPartName = mLibs[idCurrentLib].fillParams(sFileName, idBook).split(QStringLiteral("/"));
-                for(auto &sPartName :listPartName){
-                    while(sPartName.toUtf8().size() + book.sFormat.toUtf8().size() + 1 > nMaxFileName){
-                        sPartName.resize(sPartName.size() - 1);
+                //Проверка и уменьшение длины имени файла до nMaxFileName байт
+                for(int i = 0; i<listPartName.size(); i++){
+                    auto &sPartName = listPartName[i];
+                    int nSizeExt = i==listPartName.size()-1 ?book.sFormat.toUtf8().size() + 1 :0;
+                    while(sPartName.toUtf8().size() + nSizeExt > nMaxFileName){
+                        sPartName.chop(1);
                     }
+                    if(i == 0)
+                        sFileName = sPartName;
+                    else
+                        sFileName += QStringLiteral("/") + sPartName;
                 }
 
-                for(int i = 0; i<listPartName.size(); i++){
-                    if(i == 0)
-                        sFileName = listPartName.at(i);
-                    else
-                        sFileName += QStringLiteral("/") + listPartName.at(i);
-                }
                 sFileName += QStringLiteral(".") + book.sFormat;
                 if(pExportOptions_->bTransliteration)
                     sFileName = Transliteration(sFileName);
