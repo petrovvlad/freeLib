@@ -9,6 +9,7 @@
 #include <QDesktopServices>
 #include <QTextBrowser>
 #include <QCloseEvent>
+#include <QWidgetAction>
 
 #include "librariesdlg.h"
 #include "settingsdlg.h"
@@ -555,7 +556,7 @@ void MainWindow::onSetTag()
     bool bSet = qobject_cast<QAction*>(QObject::sender())->isChecked();
     uint id;
 
-    if(current_list_for_tag == ui->Books)
+    if(currentListForTag_ == ui->Books)
     {
         auto listItems = checkedItemsBookList();
         if(listItems.isEmpty())
@@ -583,12 +584,12 @@ void MainWindow::onSetTag()
             }
         }
     }
-    else if(current_list_for_tag == ui->AuthorList)
+    else if(currentListForTag_ == ui->AuthorList)
     {
         id = ui->AuthorList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
         setTag(idTag, id, mLibs[idCurrentLib].mAuthors[id].listIdTags, QStringLiteral("author"), bSet);
     }
-    else if(current_list_for_tag == ui->SeriaList)
+    else if(currentListForTag_ == ui->SeriaList)
     {
         id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
         setTag(idTag, id, mLibs[idCurrentLib].mSerials[id].listIdTags, QStringLiteral("seria"), bSet);
@@ -1476,16 +1477,38 @@ void MainWindow::ContextMenu(QPoint point)
     if(QObject::sender() == ui->SeriaList && !ui->SeriaList->itemAt(point))
         return;
     QMenu menu;
-    current_list_for_tag = QObject::sender();
+    currentListForTag_ = QObject::sender();
+    QList<QTreeWidgetItem*> listItems;
     if(QObject::sender() == ui->Books)
     {
         QMenu *save = menu.addMenu(tr("Save as"));
+        listItems  = checkedItemsBookList();
+        if(listItems.isEmpty())
+            listItems = ui->Books->selectedItems();
         foreach (QAction* i, ui->btnExport->menu()->actions())
         {
-            QAction *action = new QAction(i->text(), this);
+            QAction *action = new QAction(i->text(), save);
             action->setData(i->data().toInt());
             connect(action, &QAction::triggered, this, &MainWindow::ExportAction);
             save->addAction(action);
+        }
+        if(listItems.size() == 1){
+            auto item = listItems.at(0);
+            if(item->type() == ITEM_TYPE_BOOK){
+                QMenu *rate = menu.addMenu(tr("Mark"));
+                QString sStyle = QStringLiteral("QWidget:hover {background: %1;}").arg(palette().color(QPalette::QPalette::Highlight).name());
+                for(int i=0; i<=5; i++){
+                    QWidgetAction *labelAction = new QWidgetAction(rate);
+                    QLabel *label = new QLabel(rate);
+                    label->setStyleSheet(sStyle);
+                    label->setMargin(5);
+                    QPixmap mypix (QIcon(QStringLiteral(":/icons/img/icons/stars/%1star.svg").arg(i)).pixmap(QSize(120,20)));
+                    label->setPixmap(mypix);
+                    labelAction->setDefaultWidget(label);
+                    connect(labelAction, &QAction::triggered, this, [this, item, i](){onSetRating(item, i);});
+                    rate->addAction(labelAction);
+                }
+            }
         }
     }
     if(menu.actions().count() > 0)
@@ -1493,9 +1516,6 @@ void MainWindow::ContextMenu(QPoint point)
     if(options.bUseTag){
         if(QObject::sender() == ui->Books){
             QMap<uint, uint> countTags;
-            auto listItems  = checkedItemsBookList();
-            if(listItems.isEmpty())
-                listItems = ui->Books->selectedItems();
             QList<uint> listTags;
             for(int iItem=0; iItem<listItems.size(); iItem++){
                 auto &item = listItems.at(iItem);
@@ -2102,7 +2122,7 @@ void MainWindow::UpdateExportMenu()
 
 void MainWindow::ExportAction()
 {
-    int id=qobject_cast<QAction*>(sender())->data().toInt();
+    int id = qobject_cast<QAction*>(sender())->data().toInt();
     if(options.vExportOptions.at(id).sSendTo == QStringLiteral("device"))
        SendToDevice(options.vExportOptions.at(id));
    else
@@ -2176,6 +2196,24 @@ void MainWindow::onListView()
         aHeadersTree_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersList_);
         ui->Books->header()->setSortIndicatorShown(true);
+    }
+}
+
+void MainWindow::onSetRating(QTreeWidgetItem *item, uchar nRating)
+{
+    auto dbase = QSqlDatabase::database(QStringLiteral("libdb"), false);
+    if(!dbase.isOpen())
+        return;
+    uint idBook = item->data(0, Qt::UserRole).toUInt();
+    QSqlQuery query(dbase);
+    query.prepare(QStringLiteral("UPDATE book SET star=:nRating WHERE id=:idBook;"));
+    query.bindValue(QStringLiteral(":nRating"), nRating);
+    query.bindValue(QStringLiteral(":idBook"), idBook);
+    if(!query.exec())
+        MyDBG << query.lastError().text();
+    else{
+        item->setData(5, Qt::UserRole, nRating);
+        mLibs[idCurrentLib].mBooks[idBook].nStars = nRating;
     }
 }
 

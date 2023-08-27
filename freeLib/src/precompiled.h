@@ -69,6 +69,7 @@
 #include <QVariant>
 #include <QVector>
 #include <QWidget>
+#include <QWidgetAction>
 #include <QXmlStreamReader>
 #include <QtAlgorithms>
 #include <algorithm>

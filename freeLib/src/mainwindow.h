@@ -31,14 +31,14 @@ public:
     
 private:
     Ui::MainWindow *ui;
-    void UpdateBooks();
+    void fillLanguages();
     void UpdateTags();
     void SaveLibPosition();
 
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
     QMenu TagMenu;
-    QObject* current_list_for_tag;
+    QObject* currentListForTag_;
     QMap<uint, QIcon> iconsTags_;
 
     void uncheck_books(QList<qlonglong> list);
@@ -93,6 +93,8 @@ protected:
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
     void changeEvent(QEvent *event) override;
+    void onSetRating(QTreeWidgetItem* item, uchar nRating);
+
 private slots:
     void ExportAction();
     void ManageLibrary();
@@ -110,7 +112,7 @@ private slots:
     void SelectBook();
     void SelectGenre();
     void SelectSeria();
-    void itemChanged(QTreeWidgetItem*,int);
+    void onItemChanged(QTreeWidgetItem*,int);
     void BookDblClick();
     void About();
 //    void LanguageChange();
@@ -121,8 +123,8 @@ private slots:
     void MoveToAuthor(uint id, const QString &FirstLetter);
     void MoveToGenre(uint id);
     void MoveToSeria(uint id, const QString &FirstLetter);
-    void tag_select(int index);
-    void set_tag();
+    void onTagFilterChanged(int index);
+    void onSetTag();
     void ChangingLanguage();
     void ReviewLink(const QUrl &url);
     void SelectLibrary();
