@@ -77,7 +77,7 @@ public:
     uint findSerial(const QString &sSerial) const;
     void loadAnnotation(uint idBook);
     QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr);
-    QString fillParams(const QString &str, uint idBook);
+    QString fillParams(const QString &str, uint idBook, bool bNestedBlock = false);
     QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file);
     void deleteTag(uint idTag);
     static QString nameFromInpx(const QString &sInpx);
