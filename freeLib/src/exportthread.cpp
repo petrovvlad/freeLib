@@ -62,7 +62,7 @@ ExportThread::ExportThread(const ExportOptions *pExportOptions) :
 
 void ExportThread::start(uint idLib, const QString &path)
 {
-    loop_enable = true;
+    stopped_.store(false, std::memory_order_relaxed);
     idLib_ = idLib;
     sExportDir_ = path;
     if(!mLibs[idLib].bLoaded)
@@ -72,7 +72,7 @@ void ExportThread::start(uint idLib, const QString &path)
 void ExportThread::start(const QString &_export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author)
 {
     idLib_ = 0;
-    loop_enable = true;
+    stopped_.store(false, std::memory_order_relaxed);
     book_list = list_books;
     send_type = send;
     IDauthor = id_author;
@@ -323,7 +323,7 @@ void ExportThread::export_books()
     uint count = 0;
     foreach(const QList<uint> &listBooks, books_group)
     {
-        if(!loop_enable)
+        if(stopped_.load(std::memory_order_relaxed))
             break;
         QList<QBuffer*> buffers;
         QString sFileName;;
@@ -331,7 +331,7 @@ void ExportThread::export_books()
         {
             QApplication::processEvents();
             count++;
-            if(!loop_enable)
+            if(stopped_.load(std::memory_order_relaxed))
                 break;
             buffers << new QBuffer(this);
             SBook &book = mLibs[idCurrentLib].mBooks[idBook];
@@ -361,9 +361,9 @@ void ExportThread::export_books()
                         sPartName.chop(1);
                     }
                     if(i == 0)
-                        sFileName = sPartName;
+                        sFileName = sPartName.trimmed();
                     else
-                        sFileName += QStringLiteral("/") + sPartName;
+                        sFileName += QStringLiteral("/") + sPartName.trimmed();
                 }
 
                 sFileName += QStringLiteral(".") + book.sFormat;
@@ -573,10 +573,5 @@ void ExportThread::export_lib()
 
 void ExportThread::break_exp()
 {
-    loop_enable = false;
+    stopped_.store(true, std::memory_order_relaxed);
 }
-
-//void ExportThread::smtpError(SmtpError e)
-//{
-//    qDebug()<<e;
-//}

@@ -190,7 +190,7 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
     sName_ = lib.name;
     nUpdateType_ = nUpdateType;
     idLib_ = id;
-    loop = true;
+    stopped_.store(false, std::memory_order_relaxed);
     bFirstAuthorOnly_ = lib.bFirstAuthor;
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
@@ -247,7 +247,7 @@ void ImportThread::init(uint id, const SLib &lib, const QStringList &files)
     listFiles_ = files;
     sPath_ = RelativeToAbsolutePath(lib.path);
     bFirstAuthorOnly_ = lib.bFirstAuthor;
-    loop = true;
+    stopped_.store(false, std::memory_order_relaxed);
 }
 
 void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_name, qint32 file_size)
@@ -454,7 +454,7 @@ void ImportThread::importFB2(const QString &path, int &count)
         listEntry = dir.entryInfoList(QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable|QDir::Files|QDir::Dirs);
     }
     QString file_name;
-    for(auto iter=listEntry.cbegin(); iter != listEntry.cend() && loop; ++iter)
+    for(auto iter=listEntry.cbegin(); iter != listEntry.cend() && !stopped_.load(std::memory_order_relaxed); ++iter)
     {
         file_name = iter->absoluteFilePath();
         if(iter->isDir())
@@ -515,8 +515,9 @@ void ImportThread::importFB2(const QString &path, int &count)
                 foreach(const QuaZipFileInfo &zip_fi, list  )
                 {
                     QCoreApplication::processEvents();
-                    if(!loop)
+                    if(stopped_.load(std::memory_order_relaxed))
                         break;
+
                     if(zip_fi.uncompressedSize==0)
                         continue;
                     QBuffer buffer;
@@ -605,9 +606,9 @@ void ImportThread::process()
     {
         ushort idGenre = query_.value(0).toUInt();
         QString sKeys = query_.value(1).toString();
-        QStringList kistKeys = sKeys.split(QStringLiteral(";"));
-        for(qsizetype i=0; i<kistKeys.size(); i++){
-            QString sKey = kistKeys.at(i);
+        QStringList listKeys = sKeys.split(QStringLiteral(";"));
+        for(qsizetype i=0; i<listKeys.size(); i++){
+            QString sKey = listKeys.at(i);
             if(!sKey.isEmpty()){
                 genreKeys_[sKey] = idGenre;
             }
@@ -788,7 +789,7 @@ void ImportThread::process()
     foreach(const QString &str , list  )
     {
         QCoreApplication::processEvents();
-        if(!loop)
+        if(stopped_.load(std::memory_order_relaxed))
         {
             break;
         }
@@ -814,10 +815,9 @@ void ImportThread::process()
                 continue;
 
             QCoreApplication::processEvents();
-            if(!loop)
-            {
+            if(stopped_.load(std::memory_order_relaxed))
                 break;
-            }
+
             QStringList substrings = line.split(QChar(4));
             if(substrings.count() == 0)
                 continue;
@@ -1044,6 +1044,6 @@ void ImportThread::process()
 
 void ImportThread::break_import()
 {
-    loop = false;
+    stopped_.store(true, std::memory_order_relaxed);
 }
 
