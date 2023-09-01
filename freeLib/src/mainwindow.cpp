@@ -1496,13 +1496,14 @@ void MainWindow::ContextMenu(QPoint point)
             auto item = listItems.at(0);
             if(item->type() == ITEM_TYPE_BOOK){
                 QMenu *rate = menu.addMenu(tr("Mark"));
+                auto starSize = 16;//rate->fontInfo().pixelSize();
                 QString sStyle = QStringLiteral("QWidget:hover {background: %1;}").arg(palette().color(QPalette::QPalette::Highlight).name());
                 for(int i=0; i<=5; i++){
                     QWidgetAction *labelAction = new QWidgetAction(rate);
                     QLabel *label = new QLabel(rate);
                     label->setStyleSheet(sStyle);
-                    label->setMargin(5);
-                    QPixmap mypix (QIcon(QStringLiteral(":/icons/img/icons/stars/%1star.svg").arg(i)).pixmap(QSize(120,20)));
+                    label->setMargin(starSize/3);
+                    QPixmap mypix (QIcon(QStringLiteral(":/icons/img/icons/stars/%1star.svg").arg(i)).pixmap(QSize(starSize*5, starSize)));
                     label->setPixmap(mypix);
                     labelAction->setDefaultWidget(label);
                     connect(labelAction, &QAction::triggered, this, [this, item, i](){onSetRating(item, i);});
