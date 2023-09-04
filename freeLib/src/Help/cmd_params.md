@@ -7,6 +7,7 @@
 ><b>-t</b>, <b>--tray</b>&ensp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;сворачивать приложение в трей при запуске.  
 ><b>-s</b>, <b>--server</b>&nbsp;&nbsp;запуск OPDS сервера  
 ><b>-v</b>, <b>--version</b> версия freeLib  
+><b>--verbose</b> вывод дополнительной отладочной информации  
 ><b>--lib-ls</b> Список библиотек  
 ><b>--lib-db </b>[path] Задать путь к базе данных  
 ><b>--lib-in</b> [id] Информация о библиотеке  

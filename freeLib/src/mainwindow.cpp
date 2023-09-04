@@ -50,6 +50,7 @@ QString sizeToString(uint size)
 #endif
 
 extern bool bTray;
+extern bool bVerbose;
 
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
@@ -1720,7 +1721,9 @@ void MainWindow::FillAuthors()
 {
     if(idCurrentLib == 0)
         return;
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 timeStart;
+    if(bVerbose)
+        timeStart = QDateTime::currentMSecsSinceEpoch();
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     const bool wasBlocked = ui->AuthorList->blockSignals(true);
     QListWidgetItem *item;
@@ -1760,8 +1763,10 @@ void MainWindow::FillAuthors()
         ui->AuthorList->scrollToItem(selectedItem);
 
     ui->AuthorList->blockSignals(wasBlocked);
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "FillAuthors " << t_end-t_start << "msec";
+    if(bVerbose){
+        qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "FillAuthors " << timeEnd - timeStart << "msec";
+    }
     QApplication::restoreOverrideCursor();
 }
 
@@ -1769,7 +1774,9 @@ void MainWindow::FillSerials()
 {
     if(idCurrentLib == 0)
         return;
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 timeStart;
+    if(bVerbose)
+        timeStart = QDateTime::currentMSecsSinceEpoch();
     const bool wasBlocked = ui->SeriaList->blockSignals(true);
     ui->SeriaList->clear();
     QString sSearch = ui->searchSeries->text();
@@ -1810,15 +1817,19 @@ void MainWindow::FillSerials()
     }
 
     ui->SeriaList->blockSignals(wasBlocked);
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "FillSerials " << t_end-t_start << "msec";
+    if(bVerbose){
+        qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "FillSerials " << timeEnd - timeStart << "msec";
+    }
 }
 
 void MainWindow::FillGenres()
 {
     if(idCurrentLib == 0)
         return;
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 timeStart;
+    if(bVerbose)
+        timeStart = QDateTime::currentMSecsSinceEpoch();
     const bool wasBlocked = ui->GenreList->blockSignals(true);
     ui->GenreList->clear();
     ui->s_genre->clear();
@@ -1879,8 +1890,10 @@ void MainWindow::FillGenres()
     ui->s_genre->model()->sort(0);
 
     ui->GenreList->blockSignals(wasBlocked);
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "FillGenres " << t_end-t_start << "msec";
+    if(bVerbose){
+        qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "FillGenres " << timeEnd - timeStart << "msec";
+    }
 }
 
 void MainWindow::FillListBooks()
@@ -1905,7 +1918,9 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
 {
     if(idCurrentLib == 0)
         return;
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 timeStart;
+    if(bVerbose)
+        timeStart = QDateTime::currentMSecsSinceEpoch();
     QFont bold_font(ui->Books->font());
     bold_font.setBold(true);
     TreeBookItem* ScrollItem = nullptr;
@@ -2052,8 +2067,10 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
     SelectBook();
 
     ui->Books->blockSignals(wasBlocked);
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "FillListBooks " << t_end-t_start << "msec";
+    if(bVerbose){
+        qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "FillListBooks " << timeEnd - timeStart << "msec";
+    }
 }
 
 bool MainWindow::IsBookInList(const SBook &book)

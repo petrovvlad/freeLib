@@ -16,6 +16,7 @@
 QMap<uint, SLib> mLibs;
 QMap <ushort, SGenre> mGenre;
 QString RelativeToAbsolutePath(QString path);
+extern bool bVerbose;
 
 void loadLibrary(uint idLibrary)
 {
@@ -24,7 +25,9 @@ void loadLibrary(uint idLibrary)
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
 
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 timeStart;
+    if(bVerbose)
+        timeStart = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.setForwardOnly(true);
     SLib& lib = mLibs[idLibrary];
@@ -49,10 +52,12 @@ void loadLibrary(uint idLibrary)
         if(lib.mSerials.contains(idSeria))
             lib.mSerials[idSeria].listIdTags << idTag;
     }
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "loadSeria " << t_end-t_start << "msec";
-
-    t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 timeEnd;
+    if(bVerbose){
+        timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "loadSeria " << timeEnd - timeStart << "msec";
+        timeStart = timeEnd;
+    }
     lib.mAuthors.clear();
     lib.mAuthors.insert(0, SAuthor());
     query.prepare(QStringLiteral("SELECT author.id, name1, name2, name3 FROM author WHERE id_lib=:id_lib;"));
@@ -77,8 +82,10 @@ void loadLibrary(uint idLibrary)
             lib.mAuthors[idAuthor].listIdTags << idTag;
     }
 
-    t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "loadAuthor " << t_end-t_start << "msec";
+    if(bVerbose){
+        timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "loadAuthor " << timeEnd - timeStart << "msec";
+    }
 
     lib.mBooks.clear();
     query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, keys FROM book WHERE id_lib=:id_lib;"));
@@ -160,15 +167,19 @@ void loadLibrary(uint idLibrary)
     }
     lib.bLoaded = true;
 
-    t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "loadBooks " << t_end-t_start << "msec";
+    if(bVerbose){
+        timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "loadBooks " << timeEnd - timeStart << "msec";
+    }
 }
 
 void loadGenres()
 {
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
-    qint64 t_start = QDateTime::currentMSecsSinceEpoch();
+    qint64 timeStart;
+    if(bVerbose)
+        timeStart = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
     mGenre.clear();
@@ -189,8 +200,10 @@ void loadGenres()
 #endif
         genre.nSort = static_cast<ushort>(query.value(3).toUInt());
     }
-    qint64 t_end = QDateTime::currentMSecsSinceEpoch();
-    qDebug()<< "loadGenre " << t_end-t_start << "msec";
+    if(bVerbose){
+        qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
+        qDebug()<< "loadGenre " << timeEnd - timeStart << "msec";
+    }
 }
 
 SAuthor::SAuthor()
@@ -475,10 +488,10 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
 QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 {
     QString result = str;
-    for(int i=0; i<result.size(); i++){
-        if(i+1<result.size() && result.at(i) == u'['){
+    for(qsizetype i=0; i<result.size()-1; i++){
+        if(result.at(i) == u'['){
             uint numOpenBrackets = 0;
-            for(int j=i+1 ;j<result.size(); j++){
+            for(qsizetype j=i+1 ;j<result.size(); j++){
                 if(result.at(j) == u'[')
                     numOpenBrackets++;
                 if(result.at(j) == u']'){
