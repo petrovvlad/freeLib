@@ -19,6 +19,7 @@
 
 uint idCurrentLib;
 bool bTray;
+bool bVerbose;
 Options options;
 
 void UpdateLibs()
@@ -74,6 +75,7 @@ std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]
              "-t,\t--tray\t\tMinimize to tray on start\n"
              "-s,\t--server\tStart server\n"
              "-v,\t--version\tShow version and exit\n"
+             "\t--verbose\tVerbose mode\n"
              "\t--lib-ls\tShow libraries\n"
              "\t--lib-db [path]\tSet database path\n"
              "\t--lib-in [id]\tLibrary information\n"
@@ -95,6 +97,7 @@ int main(int argc, char *argv[])
     Q_INIT_RESOURCE(resource);
     bool bServer = false;
     bTray = false;
+    bVerbose = false;
     QCoreApplication *a;
     QString cmdparam;
     
@@ -109,6 +112,9 @@ int main(int argc, char *argv[])
                 cmdhelp();
                 return 0;
             }
+
+            if (cmdparam == u"--verbose")
+                bVerbose = true;
 
             if (cmdparam == u"--server" || cmdparam == u"-s"){
                 bServer = true;

@@ -20,7 +20,6 @@ public:
     void init(uint id, const SLib &lib, uchar nUpdateType);
     void init(uint id, const SLib &lib, const QStringList &files);
     //void SaveLibrary();
-    bool loop;
 signals:
     void Message(QString str);
     void End();
@@ -38,10 +37,11 @@ private:
     QString sInpxFile_;
     QString sName_;
     QString sPath_;
+    uint  idLib_;
     uchar nUpdateType_;
     bool bFirstAuthorOnly_;
     bool bWoDeleted_;
-    uint  idLib_;
+    std::atomic_bool stopped_;
     QList<uint> listIdBookInLib_;
     QStringList listFiles_;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)

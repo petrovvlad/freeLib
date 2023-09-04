@@ -62,7 +62,7 @@ ExportThread::ExportThread(const ExportOptions *pExportOptions) :
 
 void ExportThread::start(uint idLib, const QString &path)
 {
-    loop_enable = true;
+    stopped_.store(false, std::memory_order_relaxed);
     idLib_ = idLib;
     sExportDir_ = path;
     if(!mLibs[idLib].bLoaded)
@@ -72,7 +72,7 @@ void ExportThread::start(uint idLib, const QString &path)
 void ExportThread::start(const QString &_export_dir, const QList<uint> &list_books, SendType send, qlonglong id_author)
 {
     idLib_ = 0;
-    loop_enable = true;
+    stopped_.store(false, std::memory_order_relaxed);
     book_list = list_books;
     send_type = send;
     IDauthor = id_author;
@@ -323,7 +323,7 @@ void ExportThread::export_books()
     uint count = 0;
     foreach(const QList<uint> &listBooks, books_group)
     {
-        if(!loop_enable)
+        if(stopped_.load(std::memory_order_relaxed))
             break;
         QList<QBuffer*> buffers;
         QString sFileName;;
@@ -331,7 +331,7 @@ void ExportThread::export_books()
         {
             QApplication::processEvents();
             count++;
-            if(!loop_enable)
+            if(stopped_.load(std::memory_order_relaxed))
                 break;
             buffers << new QBuffer(this);
             SBook &book = mLibs[idCurrentLib].mBooks[idBook];
@@ -352,20 +352,20 @@ void ExportThread::export_books()
                 sFileName = pExportOptions_->sExportFileName;
                 if(sFileName.isEmpty())
                     sFileName = ExportOptions::sDefaultEexpFileName;
-                //Проверка и уменьшение длины имени файла до nMaxFileName байт
                 QStringList listPartName = mLibs[idCurrentLib].fillParams(sFileName, idBook).split(QStringLiteral("/"));
-                for(auto &sPartName :listPartName){
-                    while(sPartName.toUtf8().size() + book.sFormat.toUtf8().size() + 1 > nMaxFileName){
-                        sPartName.resize(sPartName.size() - 1);
+                //Проверка и уменьшение длины имени файла до nMaxFileName байт
+                for(int i = 0; i<listPartName.size(); i++){
+                    auto &sPartName = listPartName[i];
+                    int nSizeExt = i==listPartName.size()-1 ?book.sFormat.toUtf8().size() + 1 :0;
+                    while(sPartName.toUtf8().size() + nSizeExt > nMaxFileName){
+                        sPartName.chop(1);
                     }
+                    if(i == 0)
+                        sFileName = sPartName.trimmed();
+                    else
+                        sFileName += QStringLiteral("/") + sPartName.trimmed();
                 }
 
-                for(int i = 0; i<listPartName.size(); i++){
-                    if(i == 0)
-                        sFileName = listPartName.at(i);
-                    else
-                        sFileName += QStringLiteral("/") + listPartName.at(i);
-                }
                 sFileName += QStringLiteral(".") + book.sFormat;
                 if(pExportOptions_->bTransliteration)
                     sFileName = Transliteration(sFileName);
@@ -573,10 +573,5 @@ void ExportThread::export_lib()
 
 void ExportThread::break_exp()
 {
-    loop_enable = false;
+    stopped_.store(true, std::memory_order_relaxed);
 }
-
-//void ExportThread::smtpError(SmtpError e)
-//{
-//    qDebug()<<e;
-//}
