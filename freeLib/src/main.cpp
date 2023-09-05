@@ -32,23 +32,23 @@ void UpdateLibs()
         QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
         query.exec(QStringLiteral("SELECT id,name,path,inpx,version,firstauthor,woDeleted FROM lib ORDER BY name"));
         //                                0  1    2    3    4       5           6
-        mLibs.clear();
+        libs.clear();
         while(query.next())
         {
             int idLib = query.value(0).toUInt();
-            mLibs[idLib].name = query.value(1).toString().trimmed();
-            mLibs[idLib].path = query.value(2).toString().trimmed();
-            mLibs[idLib].sInpx = query.value(3).toString().trimmed();
-            mLibs[idLib].sVersion = query.value(4).toString().trimmed();
-            mLibs[idLib].bFirstAuthor = query.value(5).toBool();
-            mLibs[idLib].bWoDeleted = query.value(6).toBool();
+            libs[idLib].name = query.value(1).toString().trimmed();
+            libs[idLib].path = query.value(2).toString().trimmed();
+            libs[idLib].sInpx = query.value(3).toString().trimmed();
+            libs[idLib].sVersion = query.value(4).toString().trimmed();
+            libs[idLib].bFirstAuthor = query.value(5).toBool();
+            libs[idLib].bWoDeleted = query.value(6).toBool();
         }
-        if(mLibs.empty())
+        if(libs.empty())
             idCurrentLib = 0;
         else{
             if(idCurrentLib == 0)
-                idCurrentLib = mLibs.constBegin().key();
-            if(!mLibs.contains(idCurrentLib))
+                idCurrentLib = libs.constBegin().key();
+            if(!libs.contains(idCurrentLib))
                 idCurrentLib = 0;
         }
     }
@@ -151,8 +151,8 @@ int main(int argc, char *argv[])
                 if(cmdparam == u"--lib-ls"){
                     std::cout << "id\tlibrary\n"
                                  "----------------------------------------------------------\n";
-                    auto iLib = mLibs.constBegin();
-                    while(iLib != mLibs.constEnd()){
+                    auto iLib = libs.constBegin();
+                    while(iLib != libs.constEnd()){
                         std::cout << iLib.key() << "\t" << iLib->name.toStdString() << "\n";
                         ++iLib;
                     }
@@ -181,13 +181,13 @@ int main(int argc, char *argv[])
                 // Get library information
                 if(cmdparam == u"--lib-in"){
                     nId = (parseOption(argc-(i), &argv[i], "--lib-in")).toUInt();
-                    if(mLibs.contains(nId)){
+                    if(libs.contains(nId)){
 
                         std::cout
-                                << "Library:\t" << mLibs[nId].name.toStdString() << "\n"
-                                << "Inpx file:\t" << mLibs[nId].sInpx.toStdString() << "\n"
-                                << "Books dir:\t" << mLibs[nId].path.toStdString() << "\n"
-                                << "Version:\t" << mLibs[nId].sVersion.toStdString() << "\n"
+                                << "Library:\t" << libs[nId].name.toStdString() << "\n"
+                                << "Inpx file:\t" << libs[nId].sInpx.toStdString() << "\n"
+                                << "Books dir:\t" << libs[nId].path.toStdString() << "\n"
+                                << "Version:\t" << libs[nId].sVersion.toStdString() << "\n"
                                 << QApplication::translate("LibrariesDlg", "OPDS server").toStdString()
                                 << ":\thttp://localhost:" << options.nOpdsPort << "/opds_" << nId << "\n"
                                 << QApplication::translate("LibrariesDlg", "HTTP server").toStdString()
@@ -204,7 +204,7 @@ int main(int argc, char *argv[])
                     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
                     QString sId = parseOption(argc-(i), &argv[i], "-id");
                     nId = sId.toUInt();
-                    if(mLibs.contains(nId)){
+                    if(libs.contains(nId)){
 
                         QString inpxPath = parseOption(argc-(i), &argv[i], "-inpx");
                         inpxPath = QFileInfo{inpxPath}.absoluteFilePath();
@@ -290,10 +290,10 @@ int main(int argc, char *argv[])
                 if(cmdparam == u"--lib-dl"){
 
                     nId = (parseOption(argc-(i), &argv[i], "--lib-dl")).toUInt();
-                    if(mLibs.contains(nId)){
+                    if(libs.contains(nId)){
                         char a;
                         std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
-                                  << "\"" << mLibs[nId].name.toStdString() << "\"? (y/N)";
+                                  << "\"" << libs[nId].name.toStdString() << "\"? (y/N)";
                         std::cin.get(a);
                         if(a == 'y'){
                             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
@@ -312,10 +312,10 @@ int main(int argc, char *argv[])
                 if(cmdparam == u"--lib-up"){
                     nId = (parseOption(argc-(i), &argv[i], "--lib-up")).toUInt();
 
-                    if(mLibs.contains(nId)){
+                    if(libs.contains(nId)){
                         auto thread = new QThread;
                         auto imp_tr = new ImportThread();
-                        const SLib &lib = mLibs[nId];
+                        const SLib &lib = libs[nId];
 
                         imp_tr->init(nId, lib, UT_NEW);
                         imp_tr->moveToThread(thread);

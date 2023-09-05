@@ -88,8 +88,8 @@ void TagDialog::btnOk()
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     for(int i=0; i<listIdDeleted_.size(); i++){
         uint id = listIdDeleted_.at(i);
-        auto iLib = mLibs.begin();
-        while(iLib != mLibs.end()){
+        auto iLib = libs.begin();
+        while(iLib != libs.end()){
             iLib->deleteTag(id);
             ++iLib;
         }

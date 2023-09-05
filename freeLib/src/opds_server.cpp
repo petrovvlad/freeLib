@@ -196,43 +196,43 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, ushor
 {
     QList<uint> listBooks;
     if(idAuthor !=0 && idSeria != 0){
-        QMultiHash<uint, uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
-        while(i != lib.mAuthorBooksLink.constEnd() && i.key() == idAuthor){
-            if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == idSeria)
+        QMultiHash<uint, uint>::const_iterator i = lib.authorBooksLink.constFind(idAuthor);
+        while(i != lib.authorBooksLink.constEnd() && i.key() == idAuthor){
+            if(!lib.books[i.value()].bDeleted && lib.books[i.value()].idSerial == idSeria)
                 listBooks << i.value();
             ++i;
         }
-        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){ return lib.mBooks[lhs].numInSerial < lib.mBooks[rhs].numInSerial; });
+        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){ return lib.books[lhs].numInSerial < lib.books[rhs].numInSerial; });
     }
     if(idAuthor != 0 && idSeria == 0){
-        auto i = lib.mAuthorBooksLink.constFind(idAuthor);
+        auto i = lib.authorBooksLink.constFind(idAuthor);
         if(sequenceless){
-            while(i != lib.mAuthorBooksLink.constEnd() && i.key() == idAuthor){
-                if(!lib.mBooks[i.value()].bDeleted && lib.mBooks[i.value()].idSerial == 0)
+            while(i != lib.authorBooksLink.constEnd() && i.key() == idAuthor){
+                if(!lib.books[i.value()].bDeleted && lib.books[i.value()].idSerial == 0)
                     listBooks << i.value();
                 ++i;
             }
         }else{
-            while(i != lib.mAuthorBooksLink.constEnd() && i.key() == idAuthor){
-                if(!lib.mBooks[i.value()].bDeleted)
+            while(i != lib.authorBooksLink.constEnd() && i.key() == idAuthor){
+                if(!lib.books[i.value()].bDeleted)
                     listBooks << i.value();
                 ++i;
             }
         }
-        std::sort(listBooks.begin(), listBooks.end(), [lib](uint lhs, uint rhs){ return lib.mBooks[lhs].sName < lib.mBooks[rhs].sName; });
+        std::sort(listBooks.begin(), listBooks.end(), [lib](uint lhs, uint rhs){ return lib.books[lhs].sName < lib.books[rhs].sName; });
     }
     if(idAuthor == 0 && idSeria != 0){
-        auto iBook = lib.mBooks.constBegin();
-        while(iBook != lib.mBooks.constEnd()){
+        auto iBook = lib.books.constBegin();
+        while(iBook != lib.books.constEnd()){
             if(!iBook->bDeleted && iBook->idSerial == idSeria)
                 listBooks << iBook.key();
             ++iBook;
         }
-        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){ return lib.mBooks[lhs].numInSerial < lib.mBooks[rhs].numInSerial; });
+        std::sort(listBooks.begin(), listBooks.end(),[lib](uint lhs, uint rhs){ return lib.books[lhs].numInSerial < lib.books[rhs].numInSerial; });
     }
     if(idGenre != 0){
-        auto iBook = lib.mBooks.constBegin();
-        while(iBook != lib.mBooks.constEnd()){
+        auto iBook = lib.books.constBegin();
+        while(iBook != lib.books.constEnd()){
             if(!iBook->bDeleted){
                 foreach(auto iGenre, iBook->listIdGenres){
                     if(iGenre == idGenre){
@@ -243,17 +243,17 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, ushor
             }
             ++iBook;
         }
-        std::sort(listBooks.begin(), listBooks.end(), [lib](uint lhs, uint rhs){ return lib.mBooks[lhs].sName < lib.mBooks[rhs].sName; });
+        std::sort(listBooks.begin(), listBooks.end(), [lib](uint lhs, uint rhs){ return lib.books[lhs].sName < lib.books[rhs].sName; });
     }
     if(!sSearch.isEmpty()){
-        auto iBook = lib.mBooks.constBegin();
-        while(iBook != lib.mBooks.constEnd()){
+        auto iBook = lib.books.constBegin();
+        while(iBook != lib.books.constEnd()){
             if(!iBook->bDeleted){
                 if(iBook->sName.contains(sSearch, Qt::CaseInsensitive))
                     listBooks << iBook.key();
                 else{
                     foreach(uint idAuthor, iBook->listIdAuthors){
-                        if(lib.mAuthors[idAuthor].getName().contains(sSearch, Qt::CaseInsensitive)){
+                        if(lib.authors[idAuthor].getName().contains(sSearch, Qt::CaseInsensitive)){
                             listBooks << iBook.key();
                             break;
                         }
@@ -263,10 +263,10 @@ QList<uint> opds_server::book_list(SLib &lib, uint idAuthor, uint idSeria, ushor
             ++iBook;
         }
         std::sort(listBooks.begin(), listBooks.end(), [lib](uint lhs, uint rhs){
-            if(lib.mBooks[lhs].idFirstAuthor != lib.mBooks[rhs].idFirstAuthor)
-                return lib.mAuthors[lib.mBooks[lhs].idFirstAuthor].getName() < lib.mAuthors[lib.mBooks[rhs].idFirstAuthor].getName();
+            if(lib.books[lhs].idFirstAuthor != lib.books[rhs].idFirstAuthor)
+                return lib.authors[lib.books[lhs].idFirstAuthor].getName() < lib.authors[lib.books[rhs].idFirstAuthor].getName();
             else
-                return lib.mBooks[lhs].sName < lib.mBooks[rhs].sName;
+                return lib.books[lhs].sName < lib.books[rhs].sName;
 
         });
 
@@ -416,24 +416,24 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
         uint iBook = 0;
         foreach(uint idBook, listBooks){
             if(iBook >= nPage*nMaxBooksPerPage && iBook < (nPage+1)*nMaxBooksPerPage){
-                SBook& book = lib.mBooks[idBook];
+                SBook& book = lib.books[idBook];
                 QString sIdBook = QString::number(idBook);
                 QDomElement entry = doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
                 AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
                 AddTextNode(QStringLiteral("id"), QStringLiteral("tag:book:%1").arg(idBook), entry);
-                QString sSerial = book.idSerial == 0 ?QString() :lib.mSerials[book.idSerial].sName;
+                QString sSerial = book.idSerial == 0 ?QString() :lib.serials[book.idSerial].sName;
                 AddTextNode(QStringLiteral("title"), book.sName + (sSerial.isEmpty() ?QString() :QLatin1String(" (") + sSerial + QLatin1String(")")), entry);
                 foreach(uint idAuthor, book.listIdAuthors){
                     QDomElement author = doc.createElement(QStringLiteral("author"));
                     entry.appendChild(author);
-                    AddTextNode(QStringLiteral("name"), lib.mAuthors[idAuthor].getName(), author);
+                    AddTextNode(QStringLiteral("name"), lib.authors[idAuthor].getName(), author);
                 }
                 foreach(uint idGenre, book.listIdGenres){
                     QDomElement category = doc.createElement(QStringLiteral("category"));
                     entry.appendChild(category);
-                    category.setAttribute(QStringLiteral("term"), mGenre[idGenre].sName);
-                    category.setAttribute(QStringLiteral("label"), mGenre[idGenre].sName);
+                    category.setAttribute(QStringLiteral("term"), genres[idGenre].sName);
+                    category.setAttribute(QStringLiteral("label"), genres[idGenre].sName);
                 }
                 if(book.sFormat == QLatin1String("fb2"))
                 {
@@ -540,7 +540,7 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
         uint iBook = 0;
         foreach(uint idBook, listBooks){
             if(iBook >= nPage*nMaxBooksPerPage && iBook < (nPage+1)*nMaxBooksPerPage){
-                SBook& book = lib.mBooks[idBook];
+                SBook& book = lib.books[idBook];
                 QString sIdBook = QString::number(idBook);
                 QDomElement entry = doc.createElement(QStringLiteral("div"));
                 entry.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
@@ -562,13 +562,13 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
                     el.setAttribute(QStringLiteral("class"), QStringLiteral("cover"));
                 }
                 if(bShowAuthor){
-                    QDomElement el = AddTextNode(QStringLiteral("a"), lib.mAuthors[book.idFirstAuthor].getName(), entry);
+                    QDomElement el = AddTextNode(QStringLiteral("a"), lib.authors[book.idFirstAuthor].getName(), entry);
                     el.setAttribute(QStringLiteral("class"), QStringLiteral("book"));
                     el.setAttribute(QStringLiteral("href"), QStringLiteral("/author/%1").arg(book.idFirstAuthor) +
                                     (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
                 }
 
-                QString sSerial = book.idSerial == 0 ?QString() :lib.mSerials[book.idSerial].sName;
+                QString sSerial = book.idSerial == 0 ?QString() :lib.serials[book.idSerial].sName;
                 QDomElement el = AddTextNode(QStringLiteral("div"), book.sName + (sSerial.isEmpty() ?QString()
                                  :(QLatin1String(" (") + sSerial + QLatin1String("[") + QString::number(book.numInSerial) + QLatin1String("])"))), entry);
                 el.setAttribute(QStringLiteral("class"), QStringLiteral("book"));
@@ -868,7 +868,7 @@ SLib& opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLib
         idLib = idCurrentLib;
     if(pLibUrl != nullptr)
         *pLibUrl = sTypeServer +u"_"_s + QString::number(idLib);
-    SLib &lib = mLibs[idLib];
+    SLib &lib = libs[idLib];
     if(!lib.bLoaded)
         loadLibrary(idLib);
 
@@ -916,7 +916,7 @@ QHttpServerResponse opds_server::FillPageHTTP(QList<uint> listBooks, SLib &lib, 
     uint iBook = 0;
     foreach(uint idBook, listBooks){
         if(iBook >= nPage*nMaxBooksPerPage && iBook < (nPage+1)*nMaxBooksPerPage){
-            SBook& book = lib.mBooks[idBook];
+            SBook& book = lib.books[idBook];
             QString sIdBook = QString::number(idBook);
             QDomElement entry = doc.createElement(u"div"_s);
             entry.setAttribute(u"class"_s, u"author"_s);
@@ -938,12 +938,12 @@ QHttpServerResponse opds_server::FillPageHTTP(QList<uint> listBooks, SLib &lib, 
                 el.setAttribute(u"class"_s, u"cover"_s);
             }
             if(bShowAuthor){
-                QDomElement el = AddTextNode(u"a"_s, lib.mAuthors[book.idFirstAuthor].getName(), entry);
+                QDomElement el = AddTextNode(u"a"_s, lib.authors[book.idFirstAuthor].getName(), entry);
                 el.setAttribute(u"class"_s, u"book"_s);
                 el.setAttribute(u"href"_s, sLibUrl + u"/author/"_s + QString::number(book.idFirstAuthor) + sSession);
             }
 
-            QString sSerial = book.idSerial == 0 ?u""_s :lib.mSerials[book.idSerial].sName;
+            QString sSerial = book.idSerial == 0 ?u""_s :lib.serials[book.idSerial].sName;
             QDomElement el = AddTextNode(u"div"_s, book.sName + (sSerial.isEmpty() || book.numInSerial==0  ?u""_s
                                                                                                             :(u" ("_s + sSerial + u"["_s + QString::number(book.numInSerial) + u"])"_s)), entry);
             el.setAttribute(u"class"_s, u"book"_s);
@@ -1070,24 +1070,24 @@ QString opds_server::FillPageOPDS(QList<uint> listBooks, SLib &lib, const QStrin
     uint iBook = 0;
     foreach(uint idBook, listBooks){
         if(iBook >= nPage*nMaxBooksPerPage && iBook < (nPage+1)*nMaxBooksPerPage){
-            const SBook& book = lib.mBooks[idBook];
+            const SBook& book = lib.books[idBook];
             QString sIdBook = QString::number(idBook);
             QDomElement entry = doc.createElement(u"entry"_s);
             feed.appendChild(entry);
             AddTextNode(u"updated"_s, book.date.toString(Qt::ISODate), entry);
             AddTextNode(u"id"_s, u"tag:book:"_s + QString::number(idBook), entry);
-            QString sSerial = book.idSerial == 0 ?QString() :lib.mSerials[book.idSerial].sName;
+            QString sSerial = book.idSerial == 0 ?QString() :lib.serials[book.idSerial].sName;
             AddTextNode(u"title"_s, book.sName + (sSerial.isEmpty() ?QString() :u" ("_s + sSerial + u")"_s), entry);
             foreach(uint idAuthor, book.listIdAuthors){
                 QDomElement author = doc.createElement(u"author"_s);
                 entry.appendChild(author);
-                AddTextNode(u"name"_s, lib.mAuthors[idAuthor].getName(), author);
+                AddTextNode(u"name"_s, lib.authors[idAuthor].getName(), author);
             }
             foreach(auto idGenre, book.listIdGenres){
                 QDomElement category = doc.createElement(u"category"_s);
                 entry.appendChild(category);
-                category.setAttribute(u"term"_s, mGenre[idGenre].sName);
-                category.setAttribute(u"label"_s, mGenre[idGenre].sName);
+                category.setAttribute(u"term"_s, genres[idGenre].sName);
+                category.setAttribute(u"label"_s, genres[idGenre].sName);
             }
             if(book.sFormat == u"fb2"_s)
             {
@@ -1283,7 +1283,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             opds = false;
         }
     }
-    SLib &lib = mLibs[id_lib];
+    SLib &lib = libs[id_lib];
     if(!lib.bLoaded)
         loadLibrary(id_lib);
 
@@ -1508,7 +1508,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
     {
         QString id_sequence = strings.at(2);
         QList<uint> listBooks = book_list(lib, 0, id_sequence.toUInt(), 0, QLatin1String(""));
-        ts << FillPage(listBooks, lib, tr("Books of sequence") + QLatin1String(" (") + lib.mSerials[id_sequence.toUInt()].sName + QLatin1String(")"), lib_url, url, ts, opds, nPage, session, false);
+        ts << FillPage(listBooks, lib, tr("Books of sequence") + QLatin1String(" (") + lib.serials[id_sequence.toUInt()].sName + QLatin1String(")"), lib_url, url, ts, opds, nPage, session, false);
 
     }
     else if(url.startsWith(QLatin1String("/sequencesindex"), Qt::CaseInsensitive))
@@ -1535,11 +1535,11 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             feed = doc_header(session, true, lib.name, lib_url);
             ts << WriteSuccess();
         }
-        auto iSerial = lib.mSerials.constBegin();
+        auto iSerial = lib.serials.constBegin();
         QMap <QString, int> mCount;
         QSet <QString> setSerials;
         int count = 0;
-        while(iSerial != lib.mSerials.constEnd()){
+        while(iSerial != lib.serials.constEnd()){
             if(iSerial->sName.left(index.length()).toLower() == index.toLower()){
                 count++;
                 QString sNewIndex = iSerial->sName.left(index.length()+1).toLower();
@@ -1584,8 +1584,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     el=AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
                     if(mCount[iIndex] == 1)
                     {
-                        auto iSerial = lib.mSerials.constBegin();
-                        while(iSerial != lib.mSerials.constEnd()){
+                        auto iSerial = lib.serials.constBegin();
+                        while(iSerial != lib.serials.constEnd()){
                             if(setSerials.contains(iIndex) ?iSerial.value().sName.toLower() == iIndex.toLower()
                                     :iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                             {
@@ -1624,8 +1624,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                                 iIndex + QLatin1String("'"), div);
                     if(mCount[iIndex] == 1)
                     {
-                        auto iSerial = lib.mSerials.constBegin();
-                        while(iSerial != lib.mSerials.constEnd()){
+                        auto iSerial = lib.serials.constBegin();
+                        while(iSerial != lib.serials.constEnd()){
                             if(setSerials.contains(iIndex) ?iSerial.value().sName.toLower() == iIndex.toLower()
                                                            :iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                             {
@@ -1658,8 +1658,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         else
         {
             QList<uint> listSerialId;
-            iSerial = lib.mSerials.constBegin();
-            while(iSerial != lib.mSerials.constEnd())
+            iSerial = lib.serials.constBegin();
+            while(iSerial != lib.serials.constEnd())
             {
                 if(iSerial->sName.left((index.length())).toLower() == index.toLower())
                 {
@@ -1667,13 +1667,13 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 }
                 ++iSerial;
             }
-            std::sort(listSerialId.begin(), listSerialId.end(),[lib](uint lhs, uint rhs) {return lib.mSerials[lhs].sName < lib.mSerials[rhs].sName;});
+            std::sort(listSerialId.begin(), listSerialId.end(),[lib](uint lhs, uint rhs) {return lib.serials[lhs].sName < lib.serials[rhs].sName;});
 
             foreach(const auto &iIndex, listSerialId)
             {
                 uint nBooksCount = 0;
-                auto iBook = lib.mBooks.constBegin();
-                while(iBook != lib.mBooks.constEnd())
+                auto iBook = lib.books.constBegin();
+                while(iBook != lib.books.constEnd())
                 {
                     if(iBook->idSerial == iIndex)
                         nBooksCount++;
@@ -1685,7 +1685,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     feed.appendChild(entry);
                     AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
                     AddTextNode(QStringLiteral("id"),"tag:sequences:" + QString::number(iIndex), entry);
-                    AddTextNode(QStringLiteral("title"), lib.mSerials[iIndex].sName, entry);
+                    AddTextNode(QStringLiteral("title"), lib.serials[iIndex].sName, entry);
                     QDomElement el = AddTextNode(QStringLiteral("content"), QString::number(nBooksCount) + QLatin1String(" ") + tr("books"), entry);
                     el.setAttribute(QStringLiteral("type"), QStringLiteral("text"));
                     el = AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
@@ -1698,7 +1698,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     QDomElement div = doc.createElement(QStringLiteral("DIV"));
                     div.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
                     feed.appendChild(div);
-                    QDomElement el = AddTextNode(QStringLiteral("a"), lib.mSerials[iIndex].sName, div);
+                    QDomElement el = AddTextNode(QStringLiteral("a"), lib.serials[iIndex].sName, div);
                     el.setAttribute(QStringLiteral("class"), QStringLiteral("block"));
                     el.setAttribute(QStringLiteral("href"),lib_url + QLatin1String("/sequencebooks/") + QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData()) +
                                     (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
@@ -1718,21 +1718,21 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         if(strings.count() > 2)
         {
             uint idParrentGenre = strings.at(2).toUInt();
-            if(mGenre[idParrentGenre].idParrentGenre > 0){
+            if(genres[idParrentGenre].idParrentGenre > 0){
                 QList<uint> listBooks = book_list(lib, 0, 0, idParrentGenre, QLatin1String(""));
                 ts << FillPage(listBooks, lib, tr("Books by ABC"), lib_url, url, ts, opds, nPage, session, true);
                 return;
             }
-            auto iGenre = mGenre.constBegin();
-            while(iGenre != mGenre.constEnd()){
+            auto iGenre = genres.constBegin();
+            while(iGenre != genres.constEnd()){
                 if(iGenre->idParrentGenre == idParrentGenre)
                     listIdGenres << iGenre.key();
                 ++iGenre;
             }
-            auto iBook = lib.mBooks.constBegin();
-            while(iBook != lib.mBooks.constEnd()){
+            auto iBook = lib.books.constBegin();
+            while(iBook != lib.books.constEnd()){
                 foreach (uint iGenre, iBook->listIdGenres){
-                    if(mGenre[iGenre].idParrentGenre == idParrentGenre){
+                    if(genres[iGenre].idParrentGenre == idParrentGenre){
                         if(mCounts.contains(iGenre))
                             mCounts[iGenre]++;
                         else
@@ -1744,8 +1744,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         }
         else
         {
-            auto iGenre = mGenre.constBegin();
-            while(iGenre != mGenre.constEnd()){
+            auto iGenre = genres.constBegin();
+            while(iGenre != genres.constEnd()){
                 if(iGenre->idParrentGenre == 0)
                     listIdGenres << iGenre.key();
                 ++iGenre;
@@ -1772,8 +1772,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 QDomElement entry = doc.createElement(QStringLiteral("entry"));
                 feed.appendChild(entry);
                 AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
-                AddTextNode(QStringLiteral("id"), QLatin1String("tag:root:genre:") + mGenre[idGenre].sName, entry);
-                AddTextNode(QStringLiteral("title"), mGenre[idGenre].sName, entry);
+                AddTextNode(QStringLiteral("id"), QLatin1String("tag:root:genre:") + genres[idGenre].sName, entry);
+                AddTextNode(QStringLiteral("title"), genres[idGenre].sName, entry);
                 if(strings.count() > 2)
                 {
                     QDomElement el = AddTextNode(QStringLiteral("content"), QString::number(mCounts[idGenre]) + QLatin1String(" ") + tr("books"), entry);
@@ -1781,7 +1781,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 }
                 else
                 {
-                    QDomElement el = AddTextNode(QStringLiteral("content"), tr("Books of genre") + QLatin1String(" ") + mGenre[idGenre].sName, entry);
+                    QDomElement el = AddTextNode(QStringLiteral("content"), tr("Books of genre") + QLatin1String(" ") + genres[idGenre].sName, entry);
                     el.setAttribute(QStringLiteral("type"), QStringLiteral("text"));
                 }
                 QDomElement el=AddTextNode(QStringLiteral("link"),QLatin1String(""),entry);
@@ -1795,7 +1795,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 QDomElement div = doc.createElement(QStringLiteral("DIV"));
                 feed.appendChild(div);
                 div.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
-                QDomElement el = AddTextNode(QStringLiteral("A"), mGenre[idGenre].sName,div);
+                QDomElement el = AddTextNode(QStringLiteral("A"), genres[idGenre].sName,div);
                 el.setAttribute(QStringLiteral("class"), QStringLiteral("block"));
                 el.setAttribute(QStringLiteral("href"), QLatin1String("/genres/") + QString::number(idGenre) + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
                 if(strings.count() > 2)
@@ -1834,12 +1834,12 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             feed = doc_header(session, true, lib.name, lib_url);
             ts << WriteSuccess();
         }
-        auto iAuthor = lib.mAuthors.constBegin();
+        auto iAuthor = lib.authors.constBegin();
         QMap<QString, int> mCount;
 
         QSet <QString> setAuthors;
         int count = 0;
-        while(iAuthor != lib.mAuthors.constEnd())
+        while(iAuthor != lib.authors.constEnd())
         {
             if(iAuthor->getName().left(index.length()).toLower() == index.toLower())
             {
@@ -1884,8 +1884,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     el = AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
                     if(mCount[iIndex] == 1)
                     {
-                        iAuthor = lib.mAuthors.constBegin();
-                        while(iAuthor != lib.mAuthors.constEnd())
+                        iAuthor = lib.authors.constBegin();
+                        while(iAuthor != lib.authors.constEnd())
                         {
                             if(setAuthors.contains(iIndex) ?iAuthor.value().getName().toLower() == iIndex.toLower()
                                     :iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
@@ -1923,8 +1923,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                                 iIndex + QLatin1String("'"), div);
                     if(mCount[iIndex] == 1)
                     {
-                        iAuthor = lib.mAuthors.constBegin();
-                        while(iAuthor != lib.mAuthors.constEnd())
+                        iAuthor = lib.authors.constBegin();
+                        while(iAuthor != lib.authors.constEnd())
                         {
                             if(setAuthors.contains(iIndex) ?iAuthor.value().getName().toLower() == iIndex.toLower()
                                     :iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
@@ -1960,8 +1960,8 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         else
         {
             QList<uint> listAuthorId;
-            iAuthor = lib.mAuthors.constBegin();
-            while(iAuthor != lib.mAuthors.constEnd())
+            iAuthor = lib.authors.constBegin();
+            while(iAuthor != lib.authors.constEnd())
             {
                 if(iAuthor->getName().left(index.length()).toLower() == index.toLower())
                 {
@@ -1969,12 +1969,12 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 }
                 ++iAuthor;
             }
-            std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](uint lhs,uint rhs) {return lib.mAuthors[lhs].getName() < lib.mAuthors[rhs].getName();});
+            std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](uint lhs,uint rhs) {return lib.authors[lhs].getName() < lib.authors[rhs].getName();});
             foreach(uint iIndex, listAuthorId)
             {
                 uint nBooksCount = 0;
-                QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(iIndex);
-                while(i != lib.mAuthorBooksLink.constEnd() && i.key() == iIndex){
+                QMultiHash<uint,uint>::const_iterator i = lib.authorBooksLink.constFind(iIndex);
+                while(i != lib.authorBooksLink.constEnd() && i.key() == iIndex){
                     nBooksCount++;
                     ++i;
                 }
@@ -1985,7 +1985,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     feed.appendChild(entry);
                     AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
                     AddTextNode(QStringLiteral("id"), QLatin1String("tag:author:") + QString::number(iIndex), entry);
-                    AddTextNode(QStringLiteral("title"), lib.mAuthors[iIndex].getName(), entry);
+                    AddTextNode(QStringLiteral("title"), lib.authors[iIndex].getName(), entry);
                     QDomElement el=AddTextNode(QStringLiteral("content"), QString::number(nBooksCount) + QLatin1String(" ") + tr("books"), entry);
                     el.setAttribute(QStringLiteral("type"), QStringLiteral("text"));
                     el=AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
@@ -1998,7 +1998,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                     QDomElement div = doc.createElement(QStringLiteral("DIV"));
                     div.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
                     feed.appendChild(div);
-                    QDomElement el = AddTextNode(QStringLiteral("a"),lib.mAuthors[iIndex].getName(),div);
+                    QDomElement el = AddTextNode(QStringLiteral("a"),lib.authors[iIndex].getName(),div);
                     el.setAttribute(QStringLiteral("class"), QStringLiteral("block"));
                     el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/author/") +
                                     QString::fromLatin1(QUrl::toPercentEncoding(QString::number(iIndex)).constData()) + (session.isEmpty() ?QString() :QLatin1String("?session=") + session));
@@ -2018,14 +2018,14 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         uint idAuthor = strings.at(2).toUInt();
 
         QList<uint> listBooks = book_list(lib, idAuthor, 0, 0, QLatin1String(""), true);
-        ts<<FillPage(listBooks, lib, tr("Books without sequence") + QLatin1String(" (") + lib.mAuthors[idAuthor].getName() + QLatin1String(")"), lib_url, url, ts, opds, nPage, session, false);
+        ts<<FillPage(listBooks, lib, tr("Books without sequence") + QLatin1String(" (") + lib.authors[idAuthor].getName() + QLatin1String(")"), lib_url, url, ts, opds, nPage, session, false);
 
     }
     else if(url.startsWith(QLatin1String("/authorbooks/"), Qt::CaseInsensitive) && strings.count() >= 3)
     {
         uint idAuthor = strings.at(2).toUInt();
         QList<uint> listBooks = book_list(lib,idAuthor, 0, 0, QLatin1String(""), false);
-        ts << FillPage(listBooks,lib,tr("Books by ABC") + QLatin1String(" (") + lib.mAuthors[idAuthor].getName() + QLatin1String(")"), lib_url, url,ts, opds, nPage, session, false);
+        ts << FillPage(listBooks,lib,tr("Books by ABC") + QLatin1String(" (") + lib.authors[idAuthor].getName() + QLatin1String(")"), lib_url, url,ts, opds, nPage, session, false);
     }
     else if(url.startsWith(QLatin1String("/authorsequences/"), Qt::CaseInsensitive) && strings.count() >= 3)
     {
@@ -2036,21 +2036,21 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         {
             feed = doc_header(session);
             AddTextNode(QStringLiteral("id"), QLatin1String("tag:author:") + id, feed);
-            AddTextNode(QStringLiteral("title"), tr("Book sequences") + QLatin1String(" ") + lib.mAuthors[idAuthor].getName(), feed);
+            AddTextNode(QStringLiteral("title"), tr("Book sequences") + QLatin1String(" ") + lib.authors[idAuthor].getName(), feed);
             AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), feed);
             AddTextNode(QStringLiteral("icon"), QStringLiteral("/icon_256x256.png"), feed);
         }
         else
         {
              feed = doc_header(session, true, lib.name, lib_url);
-             QDomElement div = AddTextNode(QStringLiteral("DIV"), tr("Book sequences") + QLatin1String(" ") + lib.mAuthors[idAuthor].getName(), feed);
+             QDomElement div = AddTextNode(QStringLiteral("DIV"), tr("Book sequences") + QLatin1String(" ") + lib.authors[idAuthor].getName(), feed);
              div.setAttribute(QStringLiteral("class"), QStringLiteral("caption"));
         }
 
-        QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
+        QMultiHash<uint,uint>::const_iterator i = lib.authorBooksLink.constFind(idAuthor);
         QMap<uint, uint> mapCountBooks;
-        while(i != lib.mAuthorBooksLink.constEnd() && i.key() == idAuthor){
-            SBook& book = lib.mBooks[i.value()];
+        while(i != lib.authorBooksLink.constEnd() && i.key() == idAuthor){
+            SBook& book = lib.books[i.value()];
             if(book.idSerial > 0){
                 if(mapCountBooks.contains(book.idSerial))
                     mapCountBooks[book.idSerial]++;
@@ -2060,7 +2060,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
             ++i;
         }
         QList<uint> listSerials = mapCountBooks.keys();
-        std::sort(listSerials.begin(), listSerials.end(), [lib](uint lhs,uint rhs) {return QString::localeAwareCompare(lib.mSerials[lhs].sName, lib.mSerials[rhs].sName) < 0;});
+        std::sort(listSerials.begin(), listSerials.end(), [lib](uint lhs,uint rhs) {return QString::localeAwareCompare(lib.serials[lhs].sName, lib.serials[rhs].sName) < 0;});
 
         foreach(uint idSerial, listSerials)
         {
@@ -2070,7 +2070,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 feed.appendChild(entry);
                 AddTextNode(QStringLiteral("updated"), QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
                 AddTextNode(QStringLiteral("id"), QLatin1String("tag:author:") + id + QLatin1String(":sequence:") + QString::number(idSerial), entry);
-                AddTextNode(QStringLiteral("title"), lib.mSerials[idSerial].sName, entry);
+                AddTextNode(QStringLiteral("title"), lib.serials[idSerial].sName, entry);
                 QDomElement el=AddTextNode(QStringLiteral("content"), QString::number(mapCountBooks[idSerial]) + QLatin1String(" ") + tr("books in sequence"), entry);
                 el.setAttribute(QStringLiteral("type"), QStringLiteral("text"));
                 el=AddTextNode(QStringLiteral("link"), QLatin1String(""), entry);
@@ -2084,7 +2084,7 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
                 QDomElement entry = doc.createElement(QStringLiteral("div"));
                 entry.setAttribute(QStringLiteral("class"), QStringLiteral("author"));
                 feed.appendChild(entry);
-                QDomElement el = AddTextNode(QStringLiteral("a"), lib.mSerials[idSerial].sName, entry);
+                QDomElement el = AddTextNode(QStringLiteral("a"), lib.serials[idSerial].sName, entry);
                 el.setAttribute(QStringLiteral("class"), QStringLiteral("block"));
                 el.setAttribute(QStringLiteral("href"), lib_url + QLatin1String("/authorsequence/") + QString::fromLatin1(QUrl::toPercentEncoding(id)) + QLatin1String("/") +
                                 QString::fromLatin1(QUrl::toPercentEncoding(QString::number(idSerial))) +
@@ -2110,13 +2110,13 @@ void opds_server::process(QString url, QTextStream &ts, const QString &session)
         QString id_sequence = strings.at(3);
         uint idSequence = id_sequence.toUInt();
         QList<uint> listBooks = book_list(lib,id_author.toUInt(), idSequence, 0, QLatin1String(""));
-        ts << FillPage(listBooks, lib, tr("Books of sequence") + QLatin1String(" (") + lib.mSerials[idSequence].sName + QLatin1String(")"), lib_url, url, ts, opds, nPage, session, false);
+        ts << FillPage(listBooks, lib, tr("Books of sequence") + QLatin1String(" (") + lib.serials[idSequence].sName + QLatin1String(")"), lib_url, url, ts, opds, nPage, session, false);
     }
     else if(url.startsWith(QLatin1String("/author/"), Qt::CaseInsensitive) && strings.count() >= 3)
     {
         QString sIdAuthor = strings.at(2);
         uint idAuthor = sIdAuthor.toUInt();
-        QString sAuthor = lib.mAuthors[idAuthor].getName();
+        QString sAuthor = lib.authors[idAuthor].getName();
         if(opds)
         {
             QDomElement feed = doc_header(session);
@@ -2378,7 +2378,7 @@ QByteArray opds_server::cover(uint idLib, uint idBook)
 {
     QByteArray baResult;
     SLib &lib = getLib(idLib);
-    SBook &book = mLibs[idLib].mBooks[idBook];
+    SBook &book = libs[idLib].books[idBook];
     if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
         lib.loadAnnotation(idBook);
 
@@ -2420,12 +2420,12 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
 
     QDomElement feed = docHeaderHTTP(sSesionQuery, lib.name, sLibUrl);
 
-    auto iAuthor = lib.mAuthors.constBegin();
+    auto iAuthor = lib.authors.constBegin();
     QMap<QString, int> mCount;
 
     QSet <QString> setAuthors;
     int count = 0;
-    while(iAuthor != lib.mAuthors.constEnd())
+    while(iAuthor != lib.authors.constEnd())
     {
         QString sAuthorName = iAuthor->getName();
         if(sAuthorName.left(sIndex.length()).toLower() == sIndex.toLower())
@@ -2471,8 +2471,8 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
                         iIndex + u"'"_s, div);
             if(mCount[iIndex] == 1)
             {
-                iAuthor = lib.mAuthors.constBegin();
-                while(iAuthor != lib.mAuthors.constEnd())
+                iAuthor = lib.authors.constBegin();
+                while(iAuthor != lib.authors.constEnd())
                 {
                     if(setAuthors.contains(iIndex) ?iAuthor.value().getName().toLower() == iIndex.toLower()
                             :iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
@@ -2503,8 +2503,8 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
     else
     {
         QList<uint> listAuthorId;
-        iAuthor = lib.mAuthors.constBegin();
-        while(iAuthor != lib.mAuthors.constEnd())
+        iAuthor = lib.authors.constBegin();
+        while(iAuthor != lib.authors.constEnd())
         {
             if(iAuthor->getName().left(sIndex.length()).toLower() == sIndex.toLower())
             {
@@ -2512,13 +2512,13 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
             }
             ++iAuthor;
         }
-        std::sort(listAuthorId.begin(), listAuthorId.end(), [lib](uint lhs,uint rhs) {return lib.mAuthors[lhs].getName() < lib.mAuthors[rhs].getName();});
+        std::sort(listAuthorId.begin(), listAuthorId.end(), [lib](uint lhs,uint rhs) {return lib.authors[lhs].getName() < lib.authors[rhs].getName();});
         foreach(uint iIndex, listAuthorId)
         {
             uint nBooksCount = 0;
-            auto i = lib.mAuthorBooksLink.constFind(iIndex);
-            while(i != lib.mAuthorBooksLink.constEnd() && i.key() == iIndex){
-                if(!lib.mBooks[i.value()].bDeleted)
+            auto i = lib.authorBooksLink.constFind(iIndex);
+            while(i != lib.authorBooksLink.constEnd() && i.key() == iIndex){
+                if(!lib.books[i.value()].bDeleted)
                     nBooksCount++;
                 ++i;
             }
@@ -2526,7 +2526,7 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
             QDomElement div = doc.createElement(u"DIV"_s);
             div.setAttribute(u"class"_s, u"author"_s);
             feed.appendChild(div);
-            QDomElement el = AddTextNode(u"a"_s, lib.mAuthors[iIndex].getName(), div);
+            QDomElement el = AddTextNode(u"a"_s, lib.authors[iIndex].getName(), div);
             el.setAttribute(u"class"_s, u"block"_s);
             el.setAttribute(u"href"_s, sLibUrl + u"/author/"_s + QString::number(iIndex) + sSesionQuery);
             AddTextNode(u"div"_s, QString::number(nBooksCount) + u" "_s + tr("books"), div);
@@ -2549,12 +2549,12 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
 
     QDomElement feed = docHeaderOPDS(tr("Books by authors"), u"tag:root:authors"_s, sLibUrl, sSesionQuery);
 
-    auto iAuthor = lib.mAuthors.constBegin();
+    auto iAuthor = lib.authors.constBegin();
     QMap<QString, int> mCount;
 
     QSet <QString> setAuthors;
     int count = 0;
-    while(iAuthor != lib.mAuthors.constEnd())
+    while(iAuthor != lib.authors.constEnd())
     {
         QString sAuthorName = iAuthor->getName();
         if(sAuthorName.left(sIndex.length()).toLower() == sIndex.toLower())
@@ -2593,8 +2593,8 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
             el = AddTextNode(u"link"_s, u""_s, entry);
             if(mCount[iIndex] == 1)
             {
-                iAuthor = lib.mAuthors.constBegin();
-                while(iAuthor != lib.mAuthors.constEnd())
+                iAuthor = lib.authors.constBegin();
+                while(iAuthor != lib.authors.constEnd())
                 {
                     if(setAuthors.contains(iIndex) ?iAuthor.value().getName().toLower() == iIndex.toLower()
                                                     :iAuthor.value().getName().left(iIndex.size()).toLower() == iIndex.toLower())
@@ -2617,8 +2617,8 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
     else
     {
         QList<uint> listAuthorId;
-        iAuthor = lib.mAuthors.constBegin();
-        while(iAuthor != lib.mAuthors.constEnd())
+        iAuthor = lib.authors.constBegin();
+        while(iAuthor != lib.authors.constEnd())
         {
             if(iAuthor->getName().left(sIndex.length()).toLower() == sIndex.toLower())
             {
@@ -2626,13 +2626,13 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
             }
             ++iAuthor;
         }
-        std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](uint lhs,uint rhs) {return lib.mAuthors[lhs].getName() < lib.mAuthors[rhs].getName();});
+        std::sort(listAuthorId.begin(),listAuthorId.end(),[lib](uint lhs,uint rhs) {return lib.authors[lhs].getName() < lib.authors[rhs].getName();});
         foreach(uint iIndex, listAuthorId)
         {
             uint nBooksCount = 0;
-            auto i = lib.mAuthorBooksLink.constFind(iIndex);
-            while(i != lib.mAuthorBooksLink.constEnd() && i.key() == iIndex){
-                if(!lib.mBooks[i.value()].bDeleted)
+            auto i = lib.authorBooksLink.constFind(iIndex);
+            while(i != lib.authorBooksLink.constEnd() && i.key() == iIndex){
+                if(!lib.books[i.value()].bDeleted)
                     nBooksCount++;
                 ++i;
             }
@@ -2641,7 +2641,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
             feed.appendChild(entry);
             AddTextNode(u"updated"_s, QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
             AddTextNode(u"id"_s, u"tag:author:"_s + QString::number(iIndex), entry);
-            AddTextNode(u"title"_s, lib.mAuthors[iIndex].getName(), entry);
+            AddTextNode(u"title"_s, lib.authors[iIndex].getName(), entry);
             QDomElement el = AddTextNode(u"content"_s, QString::number(nBooksCount) + u" "_s + tr("books"), entry);
             el.setAttribute(u"type"_s, u"text"_s);
             el = AddTextNode(u"link"_s, u""_s, entry);
@@ -2666,7 +2666,7 @@ QHttpServerResponse opds_server::authorHTTP(uint idLib, uint idAuthor, const QHt
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
 
-    QString sAuthor = lib.mAuthors[idAuthor].getName();
+    QString sAuthor = lib.authors[idAuthor].getName();
     QString sIdAuthor = QString::number(idAuthor);
     QDomElement feed = docHeaderHTTP(sSesionQuery, lib.name, sLibUrl);
     QDomElement div_auth = doc.createElement(u"DIV"_s);;
@@ -2708,7 +2708,7 @@ QHttpServerResponse opds_server::authorOPDS(uint idLib, uint idAuthor, const QHt
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
 
-    QString sAuthor = lib.mAuthors[idAuthor].getName();
+    QString sAuthor = lib.authors[idAuthor].getName();
     QString sIdAuthor = QString::number(idAuthor);
     QString sCurrentDateTime = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     QDomElement feed = docHeaderOPDS(tr("Books by") + u" "_s + sAuthor, u"tag:author:"_s + sIdAuthor, sLibUrl, sSesionQuery);
@@ -2753,7 +2753,7 @@ QHttpServerResponse opds_server::authorBooksHTTP(uint idLib, uint idAuthor, cons
     SLib &lib = getLib(idLib, u"/http"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, idAuthor, 0, 0, u""_s, false);
-    return FillPageHTTP(listBooks, lib, tr("Books by ABC") + u" ("_s + lib.mAuthors[idAuthor].getName() + u")"_s, sLibUrl, url, false);
+    return FillPageHTTP(listBooks, lib, tr("Books by ABC") + u" ("_s + lib.authors[idAuthor].getName() + u")"_s, sLibUrl, url, false);
 }
 
 QHttpServerResponse opds_server::authorBooksOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request)
@@ -2765,7 +2765,7 @@ QHttpServerResponse opds_server::authorBooksOPDS(uint idLib, uint idAuthor, cons
     SLib &lib = getLib(idLib, u"/opds"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, idAuthor, 0, 0, u""_s, false);
-    QString sPage = FillPageOPDS(listBooks, lib, tr("Books by ABC") + u" ("_s + lib.mAuthors[idAuthor].getName() + u")"_s, u"id:autorbooks:"_s + QString::number(idAuthor), sLibUrl, url);
+    QString sPage = FillPageOPDS(listBooks, lib, tr("Books by ABC") + u" ("_s + lib.authors[idAuthor].getName() + u")"_s, u"id:autorbooks:"_s + QString::number(idAuthor), sLibUrl, url);
 
     QHttpServerResponse result(sPage);
     return result;
@@ -2783,13 +2783,13 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
 
     QDomElement feed = docHeaderHTTP(sSesionQuery, lib.name, sLibUrl);
-    QDomElement div = AddTextNode(u"DIV"_s, tr("Book sequences") + u" "_s + lib.mAuthors[idAuthor].getName(), feed);
+    QDomElement div = AddTextNode(u"DIV"_s, tr("Book sequences") + u" "_s + lib.authors[idAuthor].getName(), feed);
     div.setAttribute(u"class"_s, u"caption"_s);
 
-    auto i = lib.mAuthorBooksLink.constFind(idAuthor);
+    auto i = lib.authorBooksLink.constFind(idAuthor);
     QMap<uint, uint> mapCountBooks;
-    while(i != lib.mAuthorBooksLink.constEnd() && i.key() == idAuthor){
-        SBook& book = lib.mBooks[i.value()];
+    while(i != lib.authorBooksLink.constEnd() && i.key() == idAuthor){
+        SBook& book = lib.books[i.value()];
         if(!book.bDeleted && book.idSerial > 0){
             if(mapCountBooks.contains(book.idSerial))
                 mapCountBooks[book.idSerial]++;
@@ -2799,7 +2799,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
         ++i;
     }
     QList<uint> listSerials = mapCountBooks.keys();
-    std::sort(listSerials.begin(), listSerials.end(), [lib](uint lhs, uint rhs) {return QString::localeAwareCompare(lib.mSerials[lhs].sName, lib.mSerials[rhs].sName) < 0;});
+    std::sort(listSerials.begin(), listSerials.end(), [lib](uint lhs, uint rhs) {return QString::localeAwareCompare(lib.serials[lhs].sName, lib.serials[rhs].sName) < 0;});
 
     QString sIdAuthor = QString::number(idAuthor);
     foreach(uint idSerial, listSerials)
@@ -2808,7 +2808,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
         QDomElement entry = doc.createElement(u"div"_s);
         entry.setAttribute(u"class"_s, u"author"_s);
         feed.appendChild(entry);
-        QDomElement el = AddTextNode(u"a"_s, lib.mSerials[idSerial].sName, entry);
+        QDomElement el = AddTextNode(u"a"_s, lib.serials[idSerial].sName, entry);
         el.setAttribute(u"class"_s, u"block"_s);
         el.setAttribute(u"href"_s, sLibUrl + u"/authorsequence/"_s + sIdAuthor + u"/"_s + QString::number(idSerial) + sSesionQuery);
         AddTextNode(u"div"_s, QString::number(mapCountBooks[idSerial]) + u" "_s + tr("books in sequence"), entry);
@@ -2830,12 +2830,12 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
 
     QString sIdAuthor = QString::number(idAuthor);
     QString sCurrentDateTime = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
-    QDomElement feed = docHeaderOPDS(tr("Book sequences") + u" "_s + lib.mAuthors[idAuthor].getName(), u"tag:author:"_s + sIdAuthor, sLibUrl, sSesionQuery);
+    QDomElement feed = docHeaderOPDS(tr("Book sequences") + u" "_s + lib.authors[idAuthor].getName(), u"tag:author:"_s + sIdAuthor, sLibUrl, sSesionQuery);
 
-    QMultiHash<uint,uint>::const_iterator i = lib.mAuthorBooksLink.constFind(idAuthor);
+    QMultiHash<uint,uint>::const_iterator i = lib.authorBooksLink.constFind(idAuthor);
     QMap<uint, uint> mapCountBooks;
-    while(i != lib.mAuthorBooksLink.constEnd() && i.key() == idAuthor){
-        const SBook& book = lib.mBooks[i.value()];
+    while(i != lib.authorBooksLink.constEnd() && i.key() == idAuthor){
+        const SBook& book = lib.books[i.value()];
         if(!book.bDeleted && book.idSerial > 0){
             if(mapCountBooks.contains(book.idSerial))
                 mapCountBooks[book.idSerial]++;
@@ -2845,7 +2845,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
         ++i;
     }
     QList<uint> listSerials = mapCountBooks.keys();
-    std::sort(listSerials.begin(), listSerials.end(), [lib](uint lhs,uint rhs) {return QString::localeAwareCompare(lib.mSerials[lhs].sName, lib.mSerials[rhs].sName) < 0;});
+    std::sort(listSerials.begin(), listSerials.end(), [lib](uint lhs,uint rhs) {return QString::localeAwareCompare(lib.serials[lhs].sName, lib.serials[rhs].sName) < 0;});
 
     foreach(uint idSerial, listSerials)
     {
@@ -2854,7 +2854,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
         feed.appendChild(entry);
         AddTextNode(u"updated"_s, sCurrentDateTime, entry);
         AddTextNode(u"id"_s, u"tag:author:"_s + sIdAuthor + u":sequence:"_s + sIdSerial, entry);
-        AddTextNode(u"title"_s, lib.mSerials[idSerial].sName, entry);
+        AddTextNode(u"title"_s, lib.serials[idSerial].sName, entry);
         QDomElement el = AddTextNode(u"content"_s, QString::number(mapCountBooks[idSerial]) + u" "_s + tr("books in sequence"), entry);
         el.setAttribute(u"type"_s, u"text"_s);
         el = AddTextNode(u"link"_s, u""_s, entry);
@@ -2874,7 +2874,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
     SLib &lib = getLib(idLib, u"/http"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, idAuthor, idSequence, 0, u""_s);
-    return FillPageHTTP(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.mSerials[idSequence].sName + u")"_s, sLibUrl, url, false);
+    return FillPageHTTP(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.serials[idSequence].sName + u")"_s, sLibUrl, url, false);
 }
 
 QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request)
@@ -2886,7 +2886,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
     SLib &lib = getLib(idLib, u"/opds"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, idAuthor, idSequence, 0, u""_s);
-    QString sPage = FillPageOPDS(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.mSerials[idSequence].sName + u")"_s,
+    QString sPage = FillPageOPDS(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.serials[idSequence].sName + u")"_s,
                                  u"tag:author:"_s + QString::number(idAuthor) + u":sequence:"_s + QString::number(idSequence), sLibUrl, url);
     QHttpServerResponse result(sPage);
     return result;
@@ -2901,7 +2901,7 @@ QHttpServerResponse opds_server::authorSequencelessHTTP(uint idLib, uint idAutho
     SLib &lib = getLib(idLib, u"/http"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, idAuthor, 0, 0, u""_s, true);
-    return FillPageHTTP(listBooks, lib, tr("Books without sequence") + u" ("_s + lib.mAuthors[idAuthor].getName() + u")"_s, sLibUrl, url, false);
+    return FillPageHTTP(listBooks, lib, tr("Books without sequence") + u" ("_s + lib.authors[idAuthor].getName() + u")"_s, sLibUrl, url, false);
 }
 
 QHttpServerResponse opds_server::authorSequencelessOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request)
@@ -2913,7 +2913,7 @@ QHttpServerResponse opds_server::authorSequencelessOPDS(uint idLib, uint idAutho
     SLib &lib = getLib(idLib, u"/opds"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, idAuthor, 0, 0, u""_s, true);
-    QString sPage = FillPageOPDS(listBooks, lib, tr("Books without sequence") + u" ("_s + lib.mAuthors[idAuthor].getName() + u")"_s,
+    QString sPage = FillPageOPDS(listBooks, lib, tr("Books without sequence") + u" ("_s + lib.authors[idAuthor].getName() + u")"_s,
                                  u"tag:author:"_s + QString::number(idAuthor) + u":sequenceless"_s, sLibUrl, url);
     QHttpServerResponse result(sPage);
     return result;
@@ -2932,11 +2932,11 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
 
     QDomElement feed;
     feed = docHeaderHTTP(sSesionQuery, lib.name, sLibUrl);
-    auto iSerial = lib.mSerials.constBegin();
+    auto iSerial = lib.serials.constBegin();
     QMap <QString, int> mCount;
     QSet <QString> stSerials;
     int count = 0;
-    while(iSerial != lib.mSerials.constEnd()){
+    while(iSerial != lib.serials.constEnd()){
         if(iSerial->sName.left(sIndex.length()).toLower() == sIndex.toLower()){
             count++;
             QString sNewIndex = iSerial->sName.left(sIndex.length()+1).toLower();
@@ -2982,8 +2982,8 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
                         iIndex + u"'"_s, div);
             if(mCount[iIndex] == 1)
             {
-                auto iSerial = lib.mSerials.constBegin();
-                while(iSerial != lib.mSerials.constEnd()){
+                auto iSerial = lib.serials.constBegin();
+                while(iSerial != lib.serials.constEnd()){
                     if(stSerials.contains(iIndex) ?iSerial.value().sName.toLower() == iIndex.toLower()
                             :iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                     {
@@ -3013,8 +3013,8 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
     else
     {
         QList<uint> listSerialId;
-        iSerial = lib.mSerials.constBegin();
-        while(iSerial != lib.mSerials.constEnd())
+        iSerial = lib.serials.constBegin();
+        while(iSerial != lib.serials.constEnd())
         {
             if(iSerial->sName.left((sIndex.length())).toLower() == sIndex.toLower())
             {
@@ -3022,13 +3022,13 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
             }
             ++iSerial;
         }
-        std::sort(listSerialId.begin(), listSerialId.end(),[lib](uint lhs, uint rhs) {return lib.mSerials[lhs].sName < lib.mSerials[rhs].sName;});
+        std::sort(listSerialId.begin(), listSerialId.end(),[lib](uint lhs, uint rhs) {return lib.serials[lhs].sName < lib.serials[rhs].sName;});
 
         foreach(const auto &iIndex, listSerialId)
         {
             uint nBooksCount = 0;
-            auto iBook = lib.mBooks.constBegin();
-            while(iBook != lib.mBooks.constEnd())
+            auto iBook = lib.books.constBegin();
+            while(iBook != lib.books.constEnd())
             {
                 if(!iBook->bDeleted && iBook->idSerial == iIndex)
                     nBooksCount++;
@@ -3037,7 +3037,7 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
                 QDomElement div = doc.createElement(u"DIV"_s);
                 div.setAttribute(u"class"_s, u"author"_s);
                 feed.appendChild(div);
-                QDomElement el = AddTextNode(u"a"_s, lib.mSerials[iIndex].sName, div);
+                QDomElement el = AddTextNode(u"a"_s, lib.serials[iIndex].sName, div);
                 el.setAttribute(u"class"_s, u"block"_s);
                 el.setAttribute(u"href"_s ,sLibUrl + u"/sequencebooks/"_s + QString::number(iIndex) + sSesionQuery );
                 AddTextNode(u"div"_s, QString::number(nBooksCount) + u" "_s + tr("books"), div);
@@ -3060,11 +3060,11 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
 
     QDomElement feed = docHeaderOPDS(tr("Books by sequences"), u"tag:root:sequences"_s, sLibUrl, sSesionQuery);
 
-    auto iSerial = lib.mSerials.constBegin();
+    auto iSerial = lib.serials.constBegin();
     QMap <QString, int> mCount;
     QSet <QString> stSerials;
     int count = 0;
-    while(iSerial != lib.mSerials.constEnd()){
+    while(iSerial != lib.serials.constEnd()){
         if(iSerial->sName.left(sIndex.length()).toLower() == sIndex.toLower()){
             count++;
             QString sNewIndex = iSerial->sName.left(sIndex.length()+1).toLower();
@@ -3101,8 +3101,8 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
             el = AddTextNode(u"link"_s, u""_s, entry);
             if(mCount[iIndex] == 1)
             {
-                auto iSerial = lib.mSerials.constBegin();
-                while(iSerial != lib.mSerials.constEnd()){
+                auto iSerial = lib.serials.constBegin();
+                while(iSerial != lib.serials.constEnd()){
                     if(stSerials.contains(iIndex) ?iSerial.value().sName.toLower() == iIndex.toLower()
                             :iSerial.value().sName.left(iIndex.size()).toLower() == iIndex.toLower())
                     {
@@ -3124,8 +3124,8 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
     else
     {
         QList<uint> listSerialId;
-        iSerial = lib.mSerials.constBegin();
-        while(iSerial != lib.mSerials.constEnd())
+        iSerial = lib.serials.constBegin();
+        while(iSerial != lib.serials.constEnd())
         {
             if(iSerial->sName.left((sIndex.length())).toLower() == sIndex.toLower())
             {
@@ -3133,13 +3133,13 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
             }
             ++iSerial;
         }
-        std::sort(listSerialId.begin(), listSerialId.end(),[lib](uint lhs, uint rhs) {return lib.mSerials[lhs].sName < lib.mSerials[rhs].sName;});
+        std::sort(listSerialId.begin(), listSerialId.end(),[lib](uint lhs, uint rhs) {return lib.serials[lhs].sName < lib.serials[rhs].sName;});
 
         foreach(const auto &iIndex, listSerialId)
         {
             uint nBooksCount = 0;
-            auto iBook = lib.mBooks.constBegin();
-            while(iBook != lib.mBooks.constEnd())
+            auto iBook = lib.books.constBegin();
+            while(iBook != lib.books.constEnd())
             {
                 if(!iBook->bDeleted && iBook->idSerial == iIndex)
                     nBooksCount++;
@@ -3149,7 +3149,7 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
             feed.appendChild(entry);
             AddTextNode(u"updated"_s, QDateTime::currentDateTimeUtc().toString(Qt::ISODate), entry);
             AddTextNode(u"id"_s, u"tag:sequences:"_s + QString::number(iIndex), entry);
-            AddTextNode(u"title"_s, lib.mSerials[iIndex].sName, entry);
+            AddTextNode(u"title"_s, lib.serials[iIndex].sName, entry);
             QDomElement el = AddTextNode(u"content"_s, QString::number(nBooksCount) + u" "_s + tr("books"), entry);
             el.setAttribute(u"type"_s, u"text"_s);
             el = AddTextNode(u"link"_s, u""_s, entry);
@@ -3170,7 +3170,7 @@ QHttpServerResponse opds_server::sequenceBooksHTTP(uint idLib, uint idSequence, 
     SLib &lib = getLib(idLib, u"/http"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, 0, idSequence, 0, u""_s);
-    return FillPageHTTP(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.mSerials[idSequence].sName + u")"_s, sLibUrl, url, false);
+    return FillPageHTTP(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.serials[idSequence].sName + u")"_s, sLibUrl, url, false);
 
 }
 
@@ -3183,7 +3183,7 @@ QHttpServerResponse opds_server::sequenceBooksOPDS(uint idLib, uint idSequence, 
     SLib &lib = getLib(idLib, u"/opds"_s, &sLibUrl);
 
     QList<uint> listBooks = book_list(lib, 0, idSequence, 0, u""_s);
-    QString sPage = FillPageOPDS(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.mSerials[idSequence].sName + u")"_s, u"tag:sequences:"_s + QString::number(idSequence), sLibUrl, url);
+    QString sPage = FillPageOPDS(listBooks, lib, tr("Books of sequence") + u" ("_s + lib.serials[idSequence].sName + u")"_s, u"tag:sequences:"_s + QString::number(idSequence), sLibUrl, url);
     QHttpServerResponse result(sPage);
     return result;
 }
@@ -3209,26 +3209,26 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
 
-    Q_ASSERT(!lib.mSerials.contains(0));
+    Q_ASSERT(!lib.serials.contains(0));
     QList<ushort> listIdGenres;
     QMap<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
-        if(mGenre[idParentGenre].idParrentGenre > 0){
+        if(genres[idParentGenre].idParrentGenre > 0){
             QList<uint> listBooks = book_list(lib, 0, 0, idParentGenre, u""_s);
             return FillPageHTTP(listBooks, lib, tr("Books by ABC"), sLibUrl, url, true);
         }
-        auto iGenre = mGenre.constBegin();
-        while(iGenre != mGenre.constEnd()){
+        auto iGenre = genres.constBegin();
+        while(iGenre != genres.constEnd()){
             if(iGenre->idParrentGenre == idParentGenre)
                 listIdGenres << iGenre.key();
             ++iGenre;
         }
-        auto iBook = lib.mBooks.constBegin();
-        while(iBook != lib.mBooks.constEnd()){
+        auto iBook = lib.books.constBegin();
+        while(iBook != lib.books.constEnd()){
             if(!iBook->bDeleted){
                 foreach (auto iGenre, iBook->listIdGenres){
-                    if(mGenre[iGenre].idParrentGenre == idParentGenre){
+                    if(genres[iGenre].idParrentGenre == idParentGenre){
                         if(mCounts.contains(iGenre))
                             mCounts[iGenre]++;
                         else
@@ -3241,8 +3241,8 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
     }
     else
     {
-        auto iGenre = mGenre.constBegin();
-        while(iGenre != mGenre.constEnd()){
+        auto iGenre = genres.constBegin();
+        while(iGenre != genres.constEnd()){
             if(iGenre->idParrentGenre == 0)
                 listIdGenres << iGenre.key();
             ++iGenre;
@@ -3256,7 +3256,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
         QDomElement div = doc.createElement(u"DIV"_s);
         feed.appendChild(div);
         div.setAttribute(u"class"_s, u"author"_s);
-        QDomElement el = AddTextNode(u"A"_s, mGenre[idGenre].sName,div);
+        QDomElement el = AddTextNode(u"A"_s, genres[idGenre].sName,div);
         el.setAttribute(u"class"_s, u"block"_s);
         el.setAttribute(u"href"_s, sLibUrl + u"/genres/"_s + QString::number(idGenre) + sSesionQuery );
         if(idParentGenre != 0)
@@ -3285,23 +3285,23 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
     QMap<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
-        if(mGenre[idParentGenre].idParrentGenre > 0){
+        if(genres[idParentGenre].idParrentGenre > 0){
             QList<uint> listBooks = book_list(lib, 0, 0, idParentGenre, u""_s);
             QString sPage =  FillPageOPDS(listBooks, lib, tr("Books by ABC"), u""_s, sLibUrl, url);
             QHttpServerResponse result(sPage);
             return result;
         }
-        auto iGenre = mGenre.constBegin();
-        while(iGenre != mGenre.constEnd()){
+        auto iGenre = genres.constBegin();
+        while(iGenre != genres.constEnd()){
             if(iGenre->idParrentGenre == idParentGenre)
                 listIdGenres << iGenre.key();
             ++iGenre;
         }
-        auto iBook = lib.mBooks.constBegin();
-        while(iBook != lib.mBooks.constEnd()){
+        auto iBook = lib.books.constBegin();
+        while(iBook != lib.books.constEnd()){
             if(!iBook->bDeleted){
                 foreach (auto iGenre, iBook->listIdGenres){
-                    if(mGenre[iGenre].idParrentGenre == idParentGenre){
+                    if(genres[iGenre].idParrentGenre == idParentGenre){
                         if(mCounts.contains(iGenre))
                             mCounts[iGenre]++;
                         else
@@ -3314,8 +3314,8 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
     }
     else
     {
-        auto iGenre = mGenre.constBegin();
-        while(iGenre != mGenre.constEnd()){
+        auto iGenre = genres.constBegin();
+        while(iGenre != genres.constEnd()){
             if(iGenre->idParrentGenre == 0)
                 listIdGenres << iGenre.key();
             ++iGenre;
@@ -3331,8 +3331,8 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
         QDomElement entry = doc.createElement(u"entry"_s);
         feed.appendChild(entry);
         AddTextNode(u"updated"_s, sCurrentDateTime, entry);
-        AddTextNode(u"id"_s, u"tag:root:genre:"_s + mGenre[idGenre].sName, entry);
-        AddTextNode(u"title"_s, mGenre[idGenre].sName, entry);
+        AddTextNode(u"id"_s, u"tag:root:genre:"_s + genres[idGenre].sName, entry);
+        AddTextNode(u"title"_s, genres[idGenre].sName, entry);
         if(idParentGenre != 0)
         {
             QDomElement el = AddTextNode(u"content"_s, QString::number(mCounts[idGenre]) + u" "_s + tr("books"), entry);
@@ -3340,7 +3340,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
         }
         else
         {
-            QDomElement el = AddTextNode(u"content"_s, tr("Books of genre") + u" "_s + mGenre[idGenre].sName, entry);
+            QDomElement el = AddTextNode(u"content"_s, tr("Books of genre") + u" "_s + genres[idGenre].sName, entry);
             el.setAttribute(u"type"_s, u"text"_s);
         }
         QDomElement el = AddTextNode(u"link"_s, u""_s, entry);
@@ -3405,7 +3405,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     int count = options.vExportOptions.count();
     for(int i=0; i<count; i++)
     {
-        if((options.vExportOptions[i].sOutputFormat.toLower() == sFormat) || (sFormat == u"fb2"_s && options.vExportOptions[i].sOutputFormat == u"-"_s && lib.mBooks[idBook].sFormat == u"fb2"_s))
+        if((options.vExportOptions[i].sOutputFormat.toLower() == sFormat) || (sFormat == u"fb2"_s && options.vExportOptions[i].sOutputFormat == u"-"_s && lib.books[idBook].sFormat == u"fb2"_s))
         {
             pExportOptions = &options.vExportOptions[i];
             break;
@@ -3634,7 +3634,7 @@ void opds_server::convert(uint idLib, uint idBook, const QString &format, const 
 {
     QBuffer outbuff;
     QFileInfo fi_book;
-    SLib &lib = mLibs[idLib];
+    SLib &lib = libs[idLib];
     if(idBook == 0)
     {
         fi_book.setFile(file_name);

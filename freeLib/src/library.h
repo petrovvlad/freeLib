@@ -89,10 +89,10 @@ public:
     bool bFirstAuthor;
     bool bWoDeleted;
     bool bLoaded = false;
-    QHash<uint, SAuthor> mAuthors;
-    QMultiHash<uint, uint> mAuthorBooksLink;
-    QHash<uint, SBook> mBooks;
-    QHash<uint, SSerial> mSerials;
+    QHash<uint, SAuthor> authors;
+    QMultiHash<uint, uint> authorBooksLink;
+    QHash<uint, SBook> books;
+    QHash<uint, SSerial> serials;
     QVector<QString> vLaguages;
 };
 
@@ -100,7 +100,7 @@ void loadLibrary(uint idLibrary);
 void loadGenres();
 
 extern uint idCurrentLib;
-extern QMap<uint, SLib> mLibs;
-extern QMap <ushort, SGenre> mGenre;
+extern QMap<uint, SLib> libs;
+extern QMap <ushort, SGenre> genres;
 
 #endif // LIBRARY_H

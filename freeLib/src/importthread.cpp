@@ -194,7 +194,7 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
     bFirstAuthorOnly_ = lib.bFirstAuthor;
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
-        if(lib.mBooks.isEmpty()){
+        if(lib.books.isEmpty()){
             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
             query.setForwardOnly(true);
             query.prepare(QStringLiteral("SELECT id FROM book WHERE id_lib=:id_lib;"));
@@ -207,15 +207,15 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
                 }
             }
         }else{
-            auto iBook = lib.mBooks.constBegin();
-            while(iBook != lib.mBooks.constEnd()){
+            auto iBook = lib.books.constBegin();
+            while(iBook != lib.books.constEnd()){
                 listIdBookInLib_ << iBook->idInLib;
                 ++iBook;
             }
         }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        if(lib.mAuthors.isEmpty()){
+        if(lib.authors.isEmpty()){
             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
             query.setForwardOnly(true);
             query.prepare(QStringLiteral("SELECT id, name1, name2, name3 FROM author WHERE id_lib=:idLib;"));
@@ -231,8 +231,8 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
                 hashAuthors_[author] = idAuthor;
             }
         }else{
-            auto iAuthor = lib.mAuthors.constBegin();
-            while(iAuthor != lib.mAuthors.constEnd()){
+            auto iAuthor = lib.authors.constBegin();
+            while(iAuthor != lib.authors.constEnd()){
                 hashAuthors_[iAuthor.value()] = iAuthor.key();
                 ++iAuthor;
             }
