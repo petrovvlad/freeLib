@@ -19,7 +19,7 @@ ExportFrame::ExportFrame(QWidget *parent) :
     ui->toolBox->setCurrentIndex(0);
     onOutputFormatChanged(0);
     onConnectionTypeChanged(0);
-    connect(ui->AddFont, &QPushButton::clicked, this, [=](){this->AddFont();});
+    connect(ui->AddFont, &QPushButton::clicked, this, [this](){this->AddFont();});
     connect(ui->radioDevice, &QRadioButton::toggled, this, &ExportFrame::onRadioDeviceToggled);
     connect(ui->radioEmail, &QRadioButton::toggled, this, &ExportFrame::onRadioEmailToggled);
     connect(ui->OutputFormat, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onOutputFormatChanged);

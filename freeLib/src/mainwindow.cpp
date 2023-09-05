@@ -672,7 +672,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::Settings()
 {
     SettingsDlg *pDlg = new SettingsDlg(this);
-    connect(pDlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
+    connect(pDlg, &SettingsDlg::ChangingLanguage, this, [this](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
     if(pDlg->exec() == QDialog::Accepted){
