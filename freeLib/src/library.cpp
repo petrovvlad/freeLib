@@ -37,7 +37,7 @@ void loadLibrary(uint idLibrary)
     {
         {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
-            QSqlDatabase dbReadAuthors = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral(""));
+            QSqlDatabase dbReadAuthors = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("readauthors"));
 #else
             QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
             QString sDbFile = fi.canonicalFilePath();
