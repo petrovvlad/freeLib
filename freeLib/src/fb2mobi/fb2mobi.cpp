@@ -1682,7 +1682,7 @@ struct fontfamily
         font_bi = -1;
     }
 
-    bool operator ==(const fontfamily &a)
+    bool operator ==(const fontfamily &a) const
     {
         return font == a.font && font_b == a.font_b && font_i == a.font_i && font_bi == a.font_bi;
     }
