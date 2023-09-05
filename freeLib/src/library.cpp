@@ -13,6 +13,9 @@
 
 #include "quazip/quazip/quazipfile.h"
 #include "utilites.h"
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+#include "options.h"
+#endif
 
 QMap<uint, SLib> mLibs;
 QMap <ushort, SGenre> mGenre;
@@ -667,7 +670,7 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         }
     }
 
-    auto in = result.indexOf(u"%n");
+    auto in = result.indexOf(QStringLiteral("%n"));
     if(in >= 0)
     {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
