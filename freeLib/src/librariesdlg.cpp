@@ -49,10 +49,10 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
 
     connect(tbInpx, &QAbstractButton::clicked, this, &LibrariesDlg::InputINPX);
     connect(tbBooksDir, &QAbstractButton::clicked, this, &LibrariesDlg::SelectBooksDir);
-    connect(ui->btnUpdate, &QPushButton::clicked, this, [=](){this->StartImport();});
+    connect(ui->btnUpdate, &QPushButton::clicked, this, [this](){this->StartImport();});
     connect(ui->btnExport, &QAbstractButton::clicked, this, &LibrariesDlg::ExportLib);
     connect(ui->btnAddBook, &QPushButton::clicked, this, &LibrariesDlg::addBook);
-    connect(ui->ExistingLibs, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [=](int index){this->onComboboxLibraryChanged(index);});
+    connect(ui->ExistingLibs, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [this](int index){this->onComboboxLibraryChanged(index);});
     connect(ui->Del, &QAbstractButton::clicked, this, &LibrariesDlg::DeleteLibrary);
     connect(ui->Add, &QAbstractButton::clicked, this, &LibrariesDlg::Add_Library);
     connect(ui->ExistingLibs->lineEdit(), &QLineEdit::editingFinished, this, &LibrariesDlg::ExistingLibsChanged);

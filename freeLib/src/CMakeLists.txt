@@ -1,6 +1,6 @@
 ﻿configure_file(config-freelib.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-freelib.h)
 configure_file(git-info.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/git-info.h)
-set(QT_COMPONENTS Core Network Widgets Gui Sql Xml)
+set(QT_COMPONENTS Core Network Widgets Gui Sql Xml Concurrent)
 
 find_package(QT NAMES Qt6 Qt5 QUIET COMPONENTS Core)
 message(STATUS "Found Qt ${QT_VERSION_MAJOR} VERSION")
@@ -121,6 +121,7 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Network
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Xml
+    Qt${QT_VERSION_MAJOR}::Concurrent
     QuaZip::QuaZip)
 
 if(QT_VERSION_MAJOR EQUAL 6 AND QT_VERSION_MINOR GREATER_EQUAL 4)
@@ -137,6 +138,8 @@ set_target_properties(freelib PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
+
+target_compile_features(freelib PRIVATE cxx_std_17)
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(freelib)

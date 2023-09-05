@@ -72,9 +72,11 @@
 #include <QWidgetAction>
 #include <QXmlStreamReader>
 #include <QtAlgorithms>
+#include <QtConcurrent>
 #include <algorithm>
 #include <iostream>
 #include <typeinfo>
+
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QByteArrayView>

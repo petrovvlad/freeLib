@@ -10,6 +10,7 @@
 #include <QTextBrowser>
 #include <QCloseEvent>
 #include <QWidgetAction>
+#include <QtConcurrent>
 
 #include "librariesdlg.h"
 #include "settingsdlg.h"
@@ -671,7 +672,7 @@ void MainWindow::closeEvent(QCloseEvent *event)
 void MainWindow::Settings()
 {
     SettingsDlg *pDlg = new SettingsDlg(this);
-    connect(pDlg, &SettingsDlg::ChangingLanguage, this, [=](){this->ChangingLanguage();});
+    connect(pDlg, &SettingsDlg::ChangingLanguage, this, [this](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
     if(pDlg->exec() == QDialog::Accepted){
@@ -1025,29 +1026,44 @@ void MainWindow::SelectLibrary()
 
     QAction* action = qobject_cast<QAction*>(sender());
     SaveLibPosition();
-    auto settings = GetSettings();
+    uint idOldLib = idCurrentLib;
     idCurrentLib = action->data().toUInt();
-    settings->setValue(QStringLiteral("LibID"), idCurrentLib);
+    if(idCurrentLib != idOldLib){
+        auto &oldLib = mLibs[idOldLib];
+        auto future = QtConcurrent::run([&oldLib]()
+        {
+            oldLib.mBooks.clear();
+            oldLib.mAuthors.clear();
+            oldLib.mSerials.clear();
+            oldLib.mAuthorBooksLink.clear();
+            oldLib.vLaguages.clear();
+        });
 
-    loadLibrary(idCurrentLib);
-    fillLanguages();
-    FillAuthors();
-    FillSerials();
-    FillGenres();
-    switch(ui->tabWidget->currentIndex()){
-    case TabAuthors:
-        onSerachAuthorsChanded(ui->searchAuthor->text());
-        break;
-    case TabSeries:
-        onSerachSeriesChanded(ui->searchSeries->text());
-        break;
-    case TabGenres:
-        SelectGenre();
-        break;
+        auto settings = GetSettings();
+        settings->setValue(QStringLiteral("LibID"), idCurrentLib);
+
+        loadLibrary(idCurrentLib);
+        fillLanguages();
+        FillAuthors();
+        FillSerials();
+        FillGenres();
+        switch(ui->tabWidget->currentIndex()){
+        case TabAuthors:
+            onSerachAuthorsChanded(ui->searchAuthor->text());
+            break;
+        case TabSeries:
+            onSerachSeriesChanded(ui->searchSeries->text());
+            break;
+        case TabGenres:
+            SelectGenre();
+            break;
+        }
+
+        setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
+                           FillLibrariesMenu();
+
+        future.waitForFinished();
     }
-
-    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||mLibs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + mLibs[idCurrentLib].name));
-    FillLibrariesMenu();
 
     QApplication::restoreOverrideCursor();
 }
