@@ -69,7 +69,7 @@ QString test_language(QString language)
        QStringLiteral("xh")<<QStringLiteral("zu");
     if(l.contains(language.toLower()))
         return language;
-    foreach (const QString &str, l)
+    for(const auto &str: l)
     {
         if(language.startsWith(str))
             return str;
@@ -394,7 +394,7 @@ void fb2mobi::parse_title(const QDomNode &elem)
                            replace(QStringLiteral("\r"), QStringLiteral("")).
                            replace(re2, QStringLiteral("")).
                            split(QStringLiteral(" "));
-    foreach(const QString &i, list)
+    for(const QString &i: list)
     {
         toc_title += (i.trimmed().isEmpty() ?QStringLiteral("") :QString(i.trimmed() + QStringLiteral(" ")));
     }
@@ -727,7 +727,7 @@ void fb2mobi::parse_format(const QDomNode &elem, QString tag , QString css, QStr
         {
 
             QStringList sl = elem_text.split(QStringLiteral(" "));
-            foreach (const QString &str, sl)
+            for(const QString &str: sl)
             {
                 QString hyp = hyphenator.hyphenate_word(str, (pExportOptions_->nHyphenate==1 ?SOFT_HYPHEN :CHILD_HYPHEN), pExportOptions_->nHyphenate == 1);
                 hstring += QStringLiteral(" ") + hyp;
@@ -855,7 +855,7 @@ void fb2mobi::parse_format(const QDomNode &elem, QString tag , QString css, QStr
             else if(pExportOptions_->nFootNotes == 2 && tag == u"p")
             {
                 *buf_current += QStringLiteral("<div class=\"blocknote\">");
-                foreach(const QStringList &note, current_notes)
+                for(const QStringList &note: current_notes)
                 {
                     if(!note[1].isEmpty())
                         *buf_current += QStringLiteral("<p><span class=\"notenum\">%1</span>&#160;%2</p>").arg(note[0], note[1]);
@@ -876,7 +876,7 @@ void fb2mobi::generate_toc()
     {
         buf += QStringLiteral("<div class=\"indent0\"><a href=\"%1\">%2</a></div>").arg("annotation.html", annotation_title);
     }
-    foreach(const STOC &item, toc)
+    for(const STOC &item: toc)
     {
         if(item.level <= toc_max_level)
         {
@@ -887,7 +887,7 @@ void fb2mobi::generate_toc()
                 {
                     QStringList lines = item.title.split(QStringLiteral("\n"));
                     buf += QStringLiteral("<div class=\"indent0\"><a href=\"%1\">").arg(item.href);
-                    foreach(const QString &line, lines)
+                    for(const QString &line: lines)
                     {
                         if(!line.trimmed().isEmpty())
                             buf += save_html(line).trimmed() + QStringLiteral("<br/>");
@@ -942,7 +942,7 @@ void fb2mobi::generate_ncx()
     {
         //считаем количество заголовков каждого уровня
         QMap<int, int> LevelsCount;
-        foreach(const STOC &item, tmp_toc)
+        for(const STOC &item: tmp_toc)
         {
             if(LevelsCount.contains(item.level))
                 LevelsCount[item.level]++;
@@ -992,7 +992,7 @@ void fb2mobi::generate_ncx()
         }
 
     }
-    foreach(const STOC &item, tmp_toc)
+    for(const STOC &item: tmp_toc)
     {
         if(pExportOptions_->bMlToc)
         {
@@ -1069,7 +1069,7 @@ void fb2mobi::generate_ncx_epub()
         i++;
     }
     int current_level = -1;
-    foreach(const STOC &item, toc)
+    for(const STOC &item: toc)
     {
         if(pExportOptions_->bMlToc)
         {
@@ -1171,9 +1171,9 @@ void fb2mobi::generate_opf_epub()
     buf += (book_cover.isEmpty() ?QStringLiteral("") :QStringLiteral("<item id=\"cover-image\" href=\"%1\" media-type=\"%2\"/>").arg(book_cover, MIME_TYPE(QFileInfo(book_cover).suffix())));
     QString spine_files;
     int i = 0;
-    foreach (const html_content &str, html_files)
+    for (const html_content &str: html_files)
     {
-        buf += QStringLiteral("<item id=\"content%2\" media-type=\"application/xhtml+xml\" href=\"%1\"/>").arg(str.file_name,QString::number(i));
+        buf += QStringLiteral("<item id=\"content%2\" media-type=\"application/xhtml+xml\" href=\"%1\"/>").arg(str.file_name, QString::number(i));
         //if(!str.file_name.startsWith("footnotes",Qt::CaseInsensitive))
         {
             spine_files += QStringLiteral("<itemref idref=\"content%2\"/>").arg(i);
@@ -1188,17 +1188,17 @@ void fb2mobi::generate_opf_epub()
 
 
     QFileInfoList fonts = QDir(tmp_dir + QStringLiteral("/OEBPS/fonts")).entryInfoList(QDir::NoDotAndDotDot | QDir::Files);
-    foreach (const QFileInfo &font, fonts)
+    for(const QFileInfo &font: fonts)
     {
-        buf += QStringLiteral("<item id=\"%1\" media-type=\"%2\" href=\"fonts/%1\"/>").arg(font.fileName(),MIME_TYPE(font.suffix()));
+        buf += QStringLiteral("<item id=\"%1\" media-type=\"%2\" href=\"fonts/%1\"/>").arg(font.fileName(), MIME_TYPE(font.suffix()));
     }
     QFileInfoList pics = QDir(tmp_dir + QStringLiteral("/OEBPS/pic")).entryInfoList(QDir::NoDotAndDotDot | QDir::Files);
-    foreach (const QFileInfo &pic, pics)
+    for(const QFileInfo &pic: pics)
     {
-        buf += QStringLiteral("<item id=\"%1\" media-type=\"%2\" href=\"pic/%1\"/>").arg(pic.fileName(),MIME_TYPE(pic.suffix()));
+        buf += QStringLiteral("<item id=\"%1\" media-type=\"%2\" href=\"pic/%1\"/>").arg(pic.fileName(), MIME_TYPE(pic.suffix()));
     }
     int img_count = 0;
-    foreach(const QString &str,image_list)
+    for(const QString &str: image_list)
     {
         if(str == book_cover)
             continue;
@@ -1227,7 +1227,7 @@ void fb2mobi::generate_opf()
     else
     {
         QString abbr = QStringLiteral("");
-        foreach(const QString &str, lib.serials[pBook->idSerial].sName.split(QStringLiteral(" ")))
+        for(const QString &str: lib.serials[pBook->idSerial].sName.split(QStringLiteral(" ")))
         {
             abbr += str.left(1);
         }
@@ -1235,7 +1235,7 @@ void fb2mobi::generate_opf()
         QString title = bookseriestitle;
         title = lib. fillParams(title, idBook_);
         if(pExportOptions_->bSeriaTranslit)
-            title=Transliteration(title);
+            title = Transliteration(title);
 
         buf += QStringLiteral("<dc:Title>%1</dc:Title>").arg(title);
      }
@@ -1252,7 +1252,7 @@ void fb2mobi::generate_opf()
 
     int i = 0;
     QString spine_files;
-    foreach (html_content str, html_files)
+    for(const html_content &str: html_files)
     {
         buf += QStringLiteral("<item id=\"text%2\" media-type=\"text/x-oeb1-document\" href=\"%1\"/>").arg(str.file_name, QString::number(i));
         spine_files += QStringLiteral("<itemref idref=\"text%1\"/>").arg(i);
@@ -1495,7 +1495,7 @@ void fb2mobi::InsertSeriaNumberToCover(const QString &number, CreateCover create
 void recurseAddDir(const QDir &d, QStringList & list)
 {
     QStringList qsl = d.entryList(QDir::NoDotAndDotDot | QDir::Dirs | QDir::Files);
-    foreach (const QString &file, qsl)
+    for(const QString &file: qsl)
     {
         QFileInfo finfo(QStringLiteral("%1/%2").arg(d.path(), file));
         if (finfo.isSymLink())
@@ -1516,11 +1516,11 @@ void ZipDir(QuaZip *zip, const QDir &dir)
     QStringList sl;
     recurseAddDir(dir, sl);
     QFileInfoList files;
-    foreach (QString fn, sl)
+    for(const QString &fn: sl)
         files << QFileInfo(fn);
     QuaZipFile outFile(zip);
     char c;
-    foreach(const QFileInfo &fileInfo, files)
+    for(const QFileInfo &fileInfo: files)
     {
         if (!fileInfo.isFile())
             continue;
@@ -1644,7 +1644,7 @@ QColor GetColor(const QImage &img)
        }
     }
     qlonglong r = 0, g = 0, b = 0;
-    foreach (const QColor &color, result)
+    for(const QColor &color: result)
     {
         r += color.red();
         g += color.green();
@@ -1653,7 +1653,7 @@ QColor GetColor(const QImage &img)
     if(result_prev.count() > 0)
     {
         qlonglong pr = 0, pg = 0, pb = 0;
-        foreach (const QColor &color, result_prev)
+        for(const QColor &color: result_prev)
         {
             pr += color.red();
             pg += color.green();
@@ -1737,7 +1737,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     {
         dir.setPath(QStringLiteral(":/xsl/img"));
         QFileInfoList list = dir.entryInfoList();
-        foreach (const QFileInfo &i, list)
+        for(const QFileInfo &i: list)
         {
             if(i.suffix().toLower() != u"txt")
                 QFile::copy(i.absoluteFilePath(), tmp_dir + QStringLiteral("/OEBPS/pic/") + i.fileName());
@@ -1842,10 +1842,10 @@ QString fb2mobi::convert(QStringList files, uint idBook)
         }
     }
     int font_index = 0;
-    foreach (const fontfamily &set_i, fonts_set)
+    for(const fontfamily &set_i: fonts_set)
     {
         QStringList keys = set_i.tags.keys();
-        foreach (const QString &key, keys)
+        for(const QString &key: keys)
         {
             css.write(QStringLiteral("\n%2 {\n"
                 "    font-family: \"font%1\";\n"
@@ -1858,7 +1858,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     css.close();
     join_seria = files.count() > 1;
     int i = 0;
-    foreach (const QString &file, files)
+    for(const QString &file: files)
     {
         fb2file.setFile(file);
         if(fb2file.suffix().toLower() != u"fb2")
@@ -1876,7 +1876,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     }
     QFile f;
     QTextStream ts(&f);
-    foreach (const html_content &html, html_files)
+    for(const html_content &html: html_files)
     {
         QString html_file = tmp_dir + QStringLiteral("/OEBPS/%1").arg(html.file_name);
         f.setFileName(html_file);
@@ -1939,7 +1939,7 @@ QString fb2mobi::convert(QStringList files, uint idBook)
         QString abbr = QStringLiteral("");
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
         if(pBook->idSerial != 0){
-            foreach(const QString &str, libs[idLib_].serials[pBook->idSerial].sName.split(' ', Qt::SkipEmptyParts))
+            for(const QString &str: libs[idLib_].serials[pBook->idSerial].sName.split(' ', Qt::SkipEmptyParts))
                 abbr += str.at(0);
         }
 #else

@@ -113,7 +113,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
     QStringList out_file;
     int i = 0;
     QFile file;
-    foreach (QBuffer* buf, outbuff)
+    for(QBuffer* buf: outbuff)
     {
         out_file << tmp_dir + QStringLiteral("/freeLib/book%1.").arg(QString::number(i)) + fi.suffix();
         i++;
@@ -241,7 +241,7 @@ void ExportThread::export_books()
     if(pExportOptions_->bOriginalFileName && send_type != ST_Mail && pExportOptions_->sOutputFormat == u"-")
     {
         QString LibPath = libs[idCurrentLib].path;
-        foreach(uint idBook, book_list)
+        for(auto idBook: book_list)
         {
             QString archive, file;
             SBook &book = libs[idCurrentLib].books[idBook];
@@ -296,7 +296,7 @@ void ExportThread::export_books()
              pExportOptions_->sOutputFormat == u"AZW3" || pExportOptions_->sOutputFormat == u"MOBI7") &&
             pExportOptions_->bJoinSeries;
 
-    foreach(uint idBook, book_list)
+    for(auto idBook: book_list)
     {
         SBook &book = libs[idCurrentLib].books[idBook];
         if(bNeedGroupSeries && book.idSerial != 0){
@@ -321,13 +321,13 @@ void ExportThread::export_books()
 
     auto nMaxFileName = pathconf(sExportDir_.toUtf8().data(), _PC_NAME_MAX);
     uint count = 0;
-    foreach(const QList<uint> &listBooks, books_group)
+    for(const auto &listBooks: books_group)
     {
         if(stopped_.load(std::memory_order_relaxed))
             break;
         QList<QBuffer*> buffers;
         QString sFileName;;
-        foreach(uint idBook, listBooks)
+        for(auto idBook: listBooks)
         {
             QApplication::processEvents();
             count++;
@@ -376,11 +376,11 @@ void ExportThread::export_books()
 
         if(convert(buffers, idCurrentLib, sFileName, count, listBooks[0]))
         {
-            foreach(uint idBook, listBooks)
+            for(auto idBook: listBooks)
                 successful_export_books << idBook;
         }
         emit Progress(count * 100 / book_list.count(), count);
-        foreach (QBuffer* buf, buffers)
+        for(auto buf: buffers)
             delete buf;
     }
 }

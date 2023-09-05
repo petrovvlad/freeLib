@@ -709,7 +709,7 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 
         QString abbr = QStringLiteral("");
         if(book.idSerial != 0){
-            foreach(const QString &str, serials[book.idSerial].sName.split(QStringLiteral(" ")))
+            for(const QString &str: serials[book.idSerial].sName.split(QStringLiteral(" ")))
             {
                 if(!str.isEmpty())
                     abbr += str.at(0);

@@ -774,7 +774,7 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
     QList<QTreeWidgetItem*> items;
     if(ui->Books->topLevelItemCount() == 0)
         return;
-    foreach (qlonglong id, list)
+    for(auto id: list)
     {
         for(int i=0; i<ui->Books->topLevelItemCount(); i++)
             items << ui->Books->topLevelItem(i);
@@ -998,7 +998,7 @@ void MainWindow::StartSearch()
                 listBooks_ << iBook.key();
             }else
             {
-                foreach (auto id, iBook->listIdGenres) {
+                for(auto id: iBook->listIdGenres) {
                    if(id == idGenre){
                        nCount++;
                        listBooks_ << iBook.key();
@@ -1084,7 +1084,7 @@ void MainWindow::SelectGenre()
     auto iBook = lib.books.constBegin();
     while(iBook != lib.books.constEnd()){
         if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
-            foreach (auto iGenre, iBook->listIdGenres) {
+            for(auto iGenre: iBook->listIdGenres) {
                 if(iGenre == idGenre){
                     listBooks_ << iBook.key();
                     break;
@@ -1201,14 +1201,14 @@ void MainWindow::SelectBook()
     }
 
     QString sAuthors;
-    foreach (auto idAuthor, book.listIdAuthors)
+    for(auto idAuthor: book.listIdAuthors)
     {
         QString sAuthor = lib.authors[idAuthor].getName();
         sAuthors += (sAuthors.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='author_%3%1'>%2</a>")
                 .arg(QString::number(idAuthor), sAuthor.replace(',', ' '), sAuthor.at(0));
     }
     QString sGenres;
-    foreach (auto idGenre, book.listIdGenres)
+    for(auto idGenre: book.listIdGenres)
     {
         QString sGenre = genres[idGenre].sName;
         sGenres += (sGenres.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='genre_%3%1'>%2</a>")
@@ -1412,7 +1412,7 @@ void MainWindow::checkLetter(const QChar cLetter)
 {
     QList<QToolButton*> allButtons = findChildren<QToolButton *>();
     bool find=false;
-    foreach(QToolButton *tb,allButtons)
+    for(QToolButton *tb: allButtons)
     {
         QString sButtonLetter = tb->text();
         if(!sButtonLetter.isEmpty() && sButtonLetter.at(0) == cLetter)
@@ -1502,7 +1502,7 @@ void MainWindow::ContextMenu(QPoint point)
         listItems  = checkedItemsBookList();
         if(listItems.isEmpty())
             listItems = ui->Books->selectedItems();
-        foreach (QAction* i, ui->btnExport->menu()->actions())
+        for (QAction* i: ui->btnExport->menu()->actions())
         {
             QAction *action = new QAction(i->text(), save);
             action->setData(i->data().toInt());
@@ -1756,7 +1756,7 @@ void MainWindow::FillAuthors()
         {
             QList<uint> booksId = currentLib.authorBooksLink.values(iAuthor.key());
             int count =0;
-            foreach( uint idBook, booksId) {
+            for( uint idBook: booksId) {
                 SBook &book = currentLib.books[idBook];
                 if(IsBookInList(book))
                     count++;
@@ -1860,7 +1860,7 @@ void MainWindow::FillGenres()
     while(iBook != lib.books.constEnd()){
         if(IsBookInList(*iBook))
         {
-            foreach (auto iGenre, iBook->listIdGenres) {
+            for(auto iGenre: iBook->listIdGenres) {
                 if(mCounts.contains(iGenre))
                     mCounts[iGenre]++;
                 else
@@ -1953,7 +1953,7 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
     ui->Books->clear();
     SLib &lib = libs[idCurrentLib];
 
-    foreach( uint idBook, listBook) {
+    for( uint idBook: listBook) {
         SBook &book = lib.books[idBook];
         if(IsBookInList(book))
         {
@@ -2141,7 +2141,7 @@ void MainWindow::UpdateExportMenu()
     {
         ui->btnExport->setDefaultAction(menu->actions().constFirst());
     }
-    foreach (QAction *action, menu->actions())
+    for(QAction *action: menu->actions())
     {
         connect(action, &QAction::triggered, this, &MainWindow::ExportAction);
     }

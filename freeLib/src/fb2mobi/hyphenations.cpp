@@ -68,7 +68,7 @@ void hyphenations::init(const QString &language)
   //      exceptions+=ts.readAll().trimmed().replace("\n"," ").split(" ");
   //      file.close();
     }
-    foreach (const QString &str, pattern)
+    for(const QString &str: pattern)
     {
         if(!str.trimmed().isEmpty())
         {
@@ -110,7 +110,7 @@ QString hyphenations::hyphenate_word(QString word_original, const QString &separ
     QStringList words = word_original.split('-');
     //qDebug()<<words;
     bool last_word_empty = false;
-    foreach (QString word, words)
+    for(QString &word: words)
     {
         //qDebug()<<word;
         if(word.length() < 3 /*&& hyphenation_only*/)
@@ -149,7 +149,7 @@ QString hyphenations::hyphenate_word(QString word_original, const QString &separ
                 break;
             }
         }
-        word=word.left(word.length() - end_points.length());
+        word = word.left(word.length() - end_points.length());
         if(begin_points == word)
             return word;
         //qDebug()<<"3";
