@@ -12,6 +12,7 @@
 #include <QWidgetAction>
 #include <QtConcurrent>
 
+
 #include "librariesdlg.h"
 #include "settingsdlg.h"
 #include "exportdlg.h"
@@ -26,6 +27,8 @@
 #include "statisticsdialog.h"
 #include "utilites.h"
 
+
+using namespace std::chrono_literals;
 #if QT_VERSION < QT_VERSION_CHECK(5, 10, 0)
 QString sizeToString(uint size)
 {
@@ -1030,14 +1033,18 @@ void MainWindow::SelectLibrary()
     idCurrentLib = action->data().toUInt();
     if(idCurrentLib != idOldLib){
         auto &oldLib = libs[idOldLib];
-        auto future = QtConcurrent::run([&oldLib]()
-        {
-            oldLib.books.clear();
-            oldLib.authors.clear();
-            oldLib.serials.clear();
-            oldLib.authorBooksLink.clear();
-            oldLib.vLaguages.clear();
-        });
+        QFuture<void> future;
+        if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
+            future = QtConcurrent::run([&oldLib]()
+            {
+                oldLib.bLoaded = false;
+                oldLib.books.clear();
+                oldLib.authors.clear();
+                oldLib.serials.clear();
+                oldLib.authorBooksLink.clear();
+                oldLib.vLaguages.clear();
+            });
+        }
 
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("LibID"), idCurrentLib);

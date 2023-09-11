@@ -7,6 +7,7 @@
 #include <QFileInfo>
 #include <QBuffer>
 #include <QVariant>
+#include <chrono>
 
 class SAuthor
 {
@@ -94,6 +95,7 @@ public:
     QHash<uint, SBook> books;
     QHash<uint, SSerial> serials;
     QVector<QString> vLaguages;
+    std::chrono::time_point<std::chrono::system_clock> timeHttp{};
 };
 
 void loadLibrary(uint idLibrary);

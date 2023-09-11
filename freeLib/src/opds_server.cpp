@@ -871,7 +871,7 @@ SLib& opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLib
     SLib &lib = libs[idLib];
     if(!lib.bLoaded)
         loadLibrary(idLib);
-
+    lib.timeHttp = std::chrono::system_clock::now();
     return lib;
 }
 
