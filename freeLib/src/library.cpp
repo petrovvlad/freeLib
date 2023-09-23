@@ -104,8 +104,8 @@ void loadLibrary(uint idLibrary)
         QSqlDatabase::removeDatabase(QStringLiteral("readauthors"));
     });
 
-#ifdef _GLIBCXX_HAVE_PLATFORM_WAIT
-    std::atomic_uint anCount[2] = {0,0};
+#ifdef __cpp_lib_atomic_wait
+    std::atomic_unsigned_lock_free anCount[2] = {0, 0};
     std::atomic_uint anTotalCount{0};
     std::atomic_bool abFinished{false};
 
@@ -145,14 +145,14 @@ void loadLibrary(uint idLibrary)
                 }
                 if(++i == sizeBufffer){
                     i = 0;
-                    anTotalCount.fetch_add(sizeBufffer, std::memory_order_relaxed);
+                    anTotalCount += sizeBufffer;
                     anCount[nBuff].store(sizeBufffer);
                     anCount[nBuff].notify_one();
                     nBuff = (nBuff==0) ?1 :0;
                 }
             }
             if(i > 0){
-                anTotalCount.fetch_add(i);
+                anTotalCount += i;
                 anCount[nBuff].store(i);
                 anCount[nBuff].notify_all();
             }
@@ -164,7 +164,7 @@ void loadLibrary(uint idLibrary)
     lib.books.clear();
     uint nBuff = 0;
     uint nTotalCount{0};
-    while(!abFinished.load() || nTotalCount != anTotalCount.load(std::memory_order_relaxed)){
+    while(!abFinished || nTotalCount != anTotalCount){
         anCount[nBuff].wait(0);
         uint nCount = anCount[nBuff].load();
         for(uint i =0; i<nCount; i++){
@@ -306,7 +306,7 @@ void loadLibrary(uint idLibrary)
         ++iBook;
     }
 
-#ifdef _GLIBCXX_HAVE_PLATFORM_WAIT
+#ifdef __cpp_lib_atomic_wait
     futureReadBooks.waitForFinished();
 #endif
     future.waitForFinished();
