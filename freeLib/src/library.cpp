@@ -17,8 +17,8 @@
 #include "options.h"
 #endif
 
-QMap<uint, SLib> mLibs;
-QMap <ushort, SGenre> mGenre;
+QMap<uint, SLib> libs;
+QMap <ushort, SGenre> genres;
 QString RelativeToAbsolutePath(QString path);
 extern bool bVerbose;
 
@@ -35,7 +35,7 @@ void loadLibrary(uint idLibrary)
 
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.setForwardOnly(true);
-    SLib& lib = mLibs[idLibrary];
+    SLib& lib = libs[idLibrary];
     auto future = QtConcurrent::run([idLibrary, &lib]()
     {
         {
@@ -47,8 +47,8 @@ void loadLibrary(uint idLibrary)
             QSqlDatabase dbReadAuthors = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("readauthors"));
             dbReadAuthors.setDatabaseName(sDbFile);
 #endif
-            lib.mAuthors.clear();
-            lib.mAuthors.insert(0, SAuthor());
+            lib.authors.clear();
+            lib.authors.insert(0, SAuthor());
             if (!dbReadAuthors.open())
             {
                 MyDBG << dbReadAuthors.lastError().text();
@@ -57,7 +57,7 @@ void loadLibrary(uint idLibrary)
             QSqlQuery query(dbReadAuthors);
             query.setForwardOnly(true);
 
-            lib.mSerials.clear();
+            lib.serials.clear();
             query.prepare(QStringLiteral("SELECT id, name FROM seria WHERE id_lib=:id_lib;"));
             //                                   0   1
             query.bindValue(QStringLiteral(":id_lib"), idLibrary);
@@ -66,7 +66,7 @@ void loadLibrary(uint idLibrary)
             while (query.next()) {
                 uint idSerial = query.value(0).toUInt();
                 QString sName = query.value(1).toString();
-                lib.mSerials[idSerial].sName = sName;
+                lib.serials[idSerial].sName = sName;
             }
             query.prepare(QStringLiteral("SELECT seria_tag.id_seria, seria_tag.id_tag FROM seria_tag INNER JOIN seria ON seria.id = seria_tag.id_seria WHERE seria.id_lib = :id_lib"));
             query.bindValue(QStringLiteral(":id_lib"),idLibrary);
@@ -75,8 +75,8 @@ void loadLibrary(uint idLibrary)
             while (query.next()) {
                 uint idSeria = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
-                if(lib.mSerials.contains(idSeria))
-                    lib.mSerials[idSeria].listIdTags << idTag;
+                if(lib.serials.contains(idSeria))
+                    lib.serials[idSeria].listIdTags << idTag;
             }
 
             query.prepare(QStringLiteral("SELECT author.id, name1, name2, name3 FROM author WHERE id_lib=:id_lib;"));
@@ -85,7 +85,7 @@ void loadLibrary(uint idLibrary)
             query.exec();
             while (query.next()) {
                 uint idAuthor = query.value(0).toUInt();
-                SAuthor &author = lib.mAuthors[idAuthor];
+                SAuthor &author = lib.authors[idAuthor];
                 author.sFirstName = query.value(2).toString().trimmed();;
                 author.sLastName = query.value(1).toString().trimmed();;
                 author.sMiddleName = query.value(3).toString().trimmed();;
@@ -97,15 +97,15 @@ void loadLibrary(uint idLibrary)
             while (query.next()) {
                 uint idAuthor = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
-                if(lib.mAuthors.contains(idAuthor))
-                    lib.mAuthors[idAuthor].listIdTags << idTag;
+                if(lib.authors.contains(idAuthor))
+                    lib.authors[idAuthor].listIdTags << idTag;
             }
         }
         QSqlDatabase::removeDatabase(QStringLiteral("readauthors"));
     });
 
-#ifdef _GLIBCXX_HAVE_PLATFORM_WAIT
-    std::atomic_uint anCount[2] = {0,0};
+#ifdef __cpp_lib_atomic_wait
+    std::atomic_uint_fast32_t anCount[2] = {0, 0};
     std::atomic_uint anTotalCount{0};
     std::atomic_bool abFinished{false};
 
@@ -145,14 +145,14 @@ void loadLibrary(uint idLibrary)
                 }
                 if(++i == sizeBufffer){
                     i = 0;
-                    anTotalCount.fetch_add(sizeBufffer, std::memory_order_relaxed);
+                    anTotalCount += sizeBufffer;
                     anCount[nBuff].store(sizeBufffer);
                     anCount[nBuff].notify_one();
                     nBuff = (nBuff==0) ?1 :0;
                 }
             }
             if(i > 0){
-                anTotalCount.fetch_add(i);
+                anTotalCount += i;
                 anCount[nBuff].store(i);
                 anCount[nBuff].notify_all();
             }
@@ -161,10 +161,10 @@ void loadLibrary(uint idLibrary)
         QSqlDatabase::removeDatabase(QStringLiteral("readdb"));
     });
 
-    lib.mBooks.clear();
+    lib.books.clear();
     uint nBuff = 0;
     uint nTotalCount{0};
-    while(!abFinished.load() || nTotalCount != anTotalCount.load(std::memory_order_relaxed)){
+    while(!abFinished || nTotalCount != anTotalCount){
         anCount[nBuff].wait(0);
         uint nCount = anCount[nBuff].load();
         for(uint i =0; i<nCount; i++){
@@ -174,7 +174,7 @@ void loadLibrary(uint idLibrary)
             if(sName.isEmpty())
                 continue;
             uint id = buff[k].toUInt();
-            SBook &book = lib.mBooks[id];
+            SBook &book = lib.books[id];
             book.sName = sName;
             book.nStars = qvariant_cast<uchar>(buff[k+2]);
             book.idSerial = buff[k + 3].toUInt();
@@ -202,7 +202,7 @@ void loadLibrary(uint idLibrary)
     }
     delete[] buff;
 #else
-    lib.mBooks.clear();
+    lib.books.clear();
     query.prepare(QStringLiteral("SELECT id, name, star, id_seria, num_in_seria, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, keys FROM book WHERE id_lib=:id_lib;"));
     //                                    0  1     2     3         4             5         6     7     8        9     10      11        12       13               14
     query.bindValue(QStringLiteral(":id_lib"),idLibrary);
@@ -213,7 +213,7 @@ void loadLibrary(uint idLibrary)
         if(sName.isEmpty())
             continue;
         uint id = query.value(0).toUInt();
-        SBook &book = lib.mBooks[id];
+        SBook &book = lib.books[id];
         book.sName = sName;
         book.nStars = qvariant_cast<uchar>(query.value(2));
         book.idSerial = query.value(3).toUInt();
@@ -266,8 +266,8 @@ void loadLibrary(uint idLibrary)
                 uint idBook = query.value(0).toUInt();
                 ushort idGenre = query.value(1).toUInt();
                 if(idGenre == 0) idGenre = 1112; // Прочие/Неотсортированное
-                if(lib.mBooks.contains(idBook))
-                    lib.mBooks[idBook].listIdGenres << idGenre;
+                if(lib.books.contains(idBook))
+                    lib.books[idBook].listIdGenres << idGenre;
             }
             query.prepare(QStringLiteral("SELECT book_tag.id_book, book_tag.id_tag FROM book_tag INNER JOIN book ON book.id = book_tag.id_book WHERE book.id_lib = :id_lib"));
             query.bindValue(QStringLiteral(":id_lib"),idLibrary);
@@ -276,14 +276,14 @@ void loadLibrary(uint idLibrary)
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
-                if(lib.mBooks.contains(idBook))
-                    lib.mBooks[idBook].listIdTags << idTag;
+                if(lib.books.contains(idBook))
+                    lib.books[idBook].listIdTags << idTag;
             }
         }
         QSqlDatabase::removeDatabase(QStringLiteral("readdb"));
     });
 
-    lib.mAuthorBooksLink.clear();
+    lib.authorBooksLink.clear();
     query.prepare(QStringLiteral("SELECT id_book, id_author FROM book_author WHERE id_lib=:id_lib;"));
     //                                     0       1
     query.bindValue(QStringLiteral(":id_lib"), idLibrary);
@@ -292,21 +292,21 @@ void loadLibrary(uint idLibrary)
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idAuthor = query.value(1).toUInt();
-        if(lib.mBooks.contains(idBook) && lib.mAuthors.contains(idAuthor)){
-            lib.mAuthorBooksLink.insert(idAuthor,idBook);
-            lib.mBooks[idBook].listIdAuthors << idAuthor;
+        if(lib.books.contains(idBook) && lib.authors.contains(idAuthor)){
+            lib.authorBooksLink.insert(idAuthor,idBook);
+            lib.books[idBook].listIdAuthors << idAuthor;
         }
     }
-    auto iBook = lib.mBooks.begin();
-    while(iBook != lib.mBooks.end()){
+    auto iBook = lib.books.begin();
+    while(iBook != lib.books.end()){
         if(iBook->listIdAuthors.isEmpty()){
             iBook->listIdAuthors << 0;
-            lib.mAuthorBooksLink.insert(0, iBook.key());
+            lib.authorBooksLink.insert(0, iBook.key());
         }
         ++iBook;
     }
 
-#ifdef _GLIBCXX_HAVE_PLATFORM_WAIT
+#ifdef __cpp_lib_atomic_wait
     futureReadBooks.waitForFinished();
 #endif
     future.waitForFinished();
@@ -327,14 +327,14 @@ void loadGenres()
         timeStart = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
-    mGenre.clear();
+    genres.clear();
     query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index, keys FROM genre;"));
     //                                   0   1     2          3           4
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
         ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
-        SGenre &genre = mGenre[idGenre];
+        SGenre &genre = genres[idGenre];
         genre.sName = query.value(1).toString();
         genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
         QString sKeys = query.value(4).toString();
@@ -378,8 +378,8 @@ QString SAuthor::getName() const
 uint SLib::findAuthor(SAuthor &author) const
 {
     uint idAuthor = 0;
-    auto iAuthor = mAuthors.constBegin();
-    while(iAuthor != mAuthors.constEnd() ){
+    auto iAuthor = authors.constBegin();
+    while(iAuthor != authors.constEnd() ){
         if(author.sFirstName == iAuthor->sFirstName && author.sMiddleName == iAuthor->sMiddleName && author.sLastName == iAuthor->sLastName){
             idAuthor = iAuthor.key();
             break;
@@ -392,8 +392,8 @@ uint SLib::findAuthor(SAuthor &author) const
 uint SLib::findSerial(const QString &sSerial) const
 {
     uint idSerial = 0;
-    auto iSerial = mSerials.constBegin();
-    while(iSerial != mSerials.constEnd()){
+    auto iSerial = serials.constBegin();
+    while(iSerial != serials.constEnd()){
         if(sSerial == iSerial->sName){
             idSerial = iSerial.key();
             break;
@@ -407,7 +407,7 @@ void SLib::loadAnnotation(uint idBook)
 {
     QBuffer buffer;
     getBookFile(idBook, &buffer);
-    SBook& book = mBooks[idBook];
+    SBook& book = books[idBook];
 
     if(book.sFormat == u"epub"){
         QuaZip zip(&buffer);
@@ -523,7 +523,7 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
 {
     QString file,archive;
     QFileInfo fi;
-    SBook &book = mBooks[idBook];
+    SBook &book = books[idBook];
     QString LibPath = RelativeToAbsolutePath(path);
     if(book.sArchive.isEmpty()){
         file = QStringLiteral("%1/%2.%3").arg(LibPath, book.sFile, book.sFormat);
@@ -654,9 +654,9 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         }
     }
 
-    SBook& book = mBooks[idBook];
+    SBook& book = books[idBook];
 
-    const SAuthor& sFirstAuthor = mAuthors[book.idFirstAuthor];
+    const SAuthor& sFirstAuthor = authors[book.idFirstAuthor];
 
     if(result.contains(QStringLiteral("%s"))){
         if(book.idSerial == 0){
@@ -666,30 +666,10 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
                 result.replace(QStringLiteral("%s"), QStringLiteral(""));
 
         }else {
-            result.replace(QStringLiteral("%s"), mSerials[book.idSerial].sName);
+            result.replace(QStringLiteral("%s"), serials[book.idSerial].sName);
         }
     }
 
-    auto in = result.indexOf(QStringLiteral("%n"));
-    if(in >= 0)
-    {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        int len = QStringView{result}.sliced(in + 2, 1).toInt();
-#else
-        int len = result.midRef(in + 2, 1).toInt();
-#endif
-        if(book.numInSerial == 0){
-            if(bNestedBlock)
-                return QStringLiteral("");
-            else
-                result.replace("%n" + QString::number(len), QStringLiteral(""));
-        }else{
-            QString sNumInSeria = QString::number(book.numInSerial);
-            QString zerro;
-            result.replace(QStringLiteral("%n") + (len>0 ?QString::number(len) :QStringLiteral("")),
-                           (len>0 ?zerro.fill(u'0', len-sNumInSeria.length()) :QStringLiteral("")) + sNumInSeria);
-        }
-    }
 
     if(bNestedBlock){
         if(result.contains(QStringLiteral("%fi")) || result.contains(QStringLiteral("%nf")))
@@ -709,7 +689,7 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 
         QString abbr = QStringLiteral("");
         if(book.idSerial != 0){
-            foreach(const QString &str, mSerials[book.idSerial].sName.split(QStringLiteral(" ")))
+            for(const QString &str: serials[book.idSerial].sName.split(QStringLiteral(" ")))
             {
                 if(!str.isEmpty())
                     abbr += str.at(0);
@@ -734,6 +714,27 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         result.replace(QStringLiteral("//"), QStringLiteral("/"));
     }
 
+    auto in = result.indexOf(QStringLiteral("%n"));
+    if(in >= 0)
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        int len = QStringView{result}.sliced(in + 2, 1).toInt();
+#else
+        int len = result.midRef(in + 2, 1).toInt();
+#endif
+        if(book.numInSerial == 0){
+            if(bNestedBlock)
+                return QStringLiteral("");
+            else
+                result.replace("%n" + QString::number(len), QStringLiteral(""));
+        }else{
+            QString sNumInSeria = QString::number(book.numInSerial);
+            QString zerro;
+            result.replace(QStringLiteral("%n") + (len>0 ?QString::number(len) :QStringLiteral("")),
+                           (len>0 ?zerro.fill(u'0', len-sNumInSeria.length()) :QStringLiteral("")) + sNumInSeria);
+        }
+    }
+
     return result;
 }
 
@@ -749,18 +750,18 @@ QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_
 
 void SLib::deleteTag(uint idTag)
 {
-    auto iBook = mBooks.begin();
-    while(iBook != mBooks.end()){
+    auto iBook = books.begin();
+    while(iBook != books.end()){
         iBook->listIdTags.removeOne(idTag);
         ++iBook;
     }
-    auto iSerial = mSerials.begin();
-    while(iSerial != mSerials.end()){
+    auto iSerial = serials.begin();
+    while(iSerial != serials.end()){
         iSerial->listIdTags.removeOne(idTag);
         ++iSerial;
     }
-    auto iAuthor = mAuthors.begin();
-    while(iAuthor != mAuthors.end()){
+    auto iAuthor = authors.begin();
+    while(iAuthor != authors.end()){
         iAuthor->listIdTags.removeOne(idTag);
         ++iAuthor;
     }

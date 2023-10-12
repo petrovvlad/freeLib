@@ -118,9 +118,9 @@ void LibrariesDlg::UpdateLibList()
         return;
     bool block = ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->clear();
-    auto i = mLibs.constBegin();
+    auto i = libs.constBegin();
     int index = 0;
-    while(i != mLibs.constEnd()){
+    while(i != libs.constEnd()){
         uint idLib = i.key();
         if(idLib > 0){
             ui->ExistingLibs->addItem(i->name, idLib);
@@ -138,7 +138,7 @@ void LibrariesDlg::StartImport()
 {
     SLib *lib;
     if(idCurrentLib_ != 0)
-        lib = &mLibs[idCurrentLib_];
+        lib = &libs[idCurrentLib_];
     else
         lib = new SLib;
     lib->name = ui->ExistingLibs->currentText().trimmed();
@@ -147,7 +147,7 @@ void LibrariesDlg::StartImport()
     lib->bFirstAuthor = ui->firstAuthorOnly->isChecked();
     lib->bWoDeleted = ui->checkwoDeleted->isChecked();
     StartImport(*lib);
-    if(lib != &mLibs[idCurrentLib_])
+    if(lib != &libs[idCurrentLib_])
         delete lib;
 }
 
@@ -199,10 +199,10 @@ void LibrariesDlg::SelectLibrary()
     bool firstAuthor = false;
     bool bWoDeleted = false;
     if(idCurrentLib_ > 0){
-        dir = mLibs[idCurrentLib_].path;
-        inpx = mLibs[idCurrentLib_].sInpx;
-        firstAuthor = mLibs[idCurrentLib_].bFirstAuthor;
-        bWoDeleted = mLibs[idCurrentLib_].bWoDeleted;
+        dir = libs[idCurrentLib_].path;
+        inpx = libs[idCurrentLib_].sInpx;
+        firstAuthor = libs[idCurrentLib_].bFirstAuthor;
+        bWoDeleted = libs[idCurrentLib_].bWoDeleted;
     }
 
     ui->BookDir->setText(dir);
@@ -234,7 +234,7 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
         idCurrentLib_ = query.lastInsertId().toInt();
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
-        SLib &newLib = mLibs[idCurrentLib_];
+        SLib &newLib = libs[idCurrentLib_];
         newLib.name = lib.name;
         newLib.path = lib.path;
         newLib.sInpx = lib.sInpx;
@@ -268,7 +268,7 @@ void LibrariesDlg::DeleteLibrary()
     if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
         qDebug()<<query.lastError().databaseText();
     query.exec(QStringLiteral("VACUUM"));
-    mLibs.remove(idCurrentLib_);
+    libs.remove(idCurrentLib_);
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
         ui->ExistingLibs->setCurrentIndex(0);
@@ -302,7 +302,7 @@ void LibrariesDlg::EndUpdate()
         qDebug() << query.lastError().text();
     else{
         if(query.next())
-            mLibs[idCurrentLib_].sVersion = query.value(0).toString();
+            libs[idCurrentLib_].sVersion = query.value(0).toString();
     }
 
 
@@ -353,7 +353,7 @@ void LibrariesDlg::addBook()
         QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
         SLib *pLib;
         if(idCurrentLib_ != 0)
-            pLib = &mLibs[idCurrentLib_];
+            pLib = &libs[idCurrentLib_];
         else
             pLib = new SLib;
         pLib->name = ui->ExistingLibs->currentText().trimmed();

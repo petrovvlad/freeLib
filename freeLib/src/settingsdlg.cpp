@@ -573,7 +573,7 @@ void SettingsDlg::onBtnSaveExportClicked()
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
-    foreach (QString font, fonts_list)
+    for(const QString &font: fonts_list)
     {
         QString font_file = font;
         if(QFile::exists(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + font_file))
@@ -629,7 +629,7 @@ void SettingsDlg::onBtnOpenExportClicked()
     QDir().mkpath(db_path);
     QStringList files = zip.getFileNameList();
 
-    foreach(const QString &ffile,files)
+    for(const QString &ffile: files)
     {
 
         QFileInfo fi(ffile);

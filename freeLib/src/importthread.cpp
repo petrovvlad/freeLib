@@ -194,7 +194,7 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
     bFirstAuthorOnly_ = lib.bFirstAuthor;
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
-        if(lib.mBooks.isEmpty()){
+        if(lib.books.isEmpty()){
             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
             query.setForwardOnly(true);
             query.prepare(QStringLiteral("SELECT id FROM book WHERE id_lib=:id_lib;"));
@@ -207,15 +207,15 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
                 }
             }
         }else{
-            auto iBook = lib.mBooks.constBegin();
-            while(iBook != lib.mBooks.constEnd()){
+            auto iBook = lib.books.constBegin();
+            while(iBook != lib.books.constEnd()){
                 listIdBookInLib_ << iBook->idInLib;
                 ++iBook;
             }
         }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        if(lib.mAuthors.isEmpty()){
+        if(lib.authors.isEmpty()){
             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
             query.setForwardOnly(true);
             query.prepare(QStringLiteral("SELECT id, name1, name2, name3 FROM author WHERE id_lib=:idLib;"));
@@ -231,8 +231,8 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
                 hashAuthors_[author] = idAuthor;
             }
         }else{
-            auto iAuthor = lib.mAuthors.constBegin();
-            while(iAuthor != lib.mAuthors.constEnd()){
+            auto iAuthor = lib.authors.constBegin();
+            while(iAuthor != lib.authors.constEnd()){
                 hashAuthors_[iAuthor.value()] = iAuthor.key();
                 ++iAuthor;
             }
@@ -306,14 +306,14 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
                                 sLanguage, QStringLiteral(""), idLib_, arh_name);
 
     bool first_author = true;
-    foreach(const SAuthor &author, listAuthors)
+    for(const SAuthor &author: listAuthors)
     {
         addAuthor(author, idLib_, id_book, first_author);
         first_author = false;
         if(bFirstAuthorOnly_)
             break;
     }
-    foreach(const auto sGenre, listGenres)
+    for(const auto &sGenre: listGenres)
         AddGenre(id_book, sGenre, idLib_);
 }
 
@@ -424,14 +424,14 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
                                 sLanguage, QStringLiteral(""), idLib_, arh_name);
 
     bool first_author = true;
-    foreach(const SAuthor &author, listAuthors)
+    for(const SAuthor &author: listAuthors)
     {
         addAuthor(author, idLib_, id_book, first_author);
         if(bFirstAuthorOnly_)
             break;
         first_author = false;
     }
-    foreach(const auto sGenre, listGenres)
+    for(const auto &sGenre: listGenres)
         AddGenre(id_book, sGenre, idLib_);
 }
 
@@ -512,7 +512,7 @@ void ImportThread::importFB2(const QString &path, int &count)
 
                 QuaZipFile zip_file(&uz);
                 QList<QuaZipFileInfo> list = uz.getFileInfoList();
-                foreach(const QuaZipFileInfo &zip_fi, list  )
+                for(const QuaZipFileInfo &zip_fi: list  )
                 {
                     QCoreApplication::processEvents();
                     if(stopped_.load(std::memory_order_relaxed))
@@ -633,8 +633,7 @@ void ImportThread::process()
 
     if(!listFiles_.isEmpty()){
         int count = 0;
-        QString sFile;
-        foreach (sFile, listFiles_)
+        for(const auto &sFile: listFiles_)
             importFB2(sFile, count);
         if(count>0)
             query_.exec(QStringLiteral("COMMIT;"));
@@ -723,7 +722,7 @@ void ImportThread::process()
     field_index[_TAG_AUTHOR]    =-1; //TagAuthor
 
     QuaZipFile zip_file(&uz);
-    foreach(const QString &str , list  )
+    for(const QString &str: list)
     {
         if(QString(str).toUpper() == u"STRUCTURE.INFO")
         {
@@ -735,11 +734,11 @@ void ImportThread::process()
             outbuff.setData(zip_file.readAll());
             zip_file.close();
             QStringList lines = (QString::fromUtf8(outbuff.data())).split(QStringLiteral("\n"));
-            foreach(const QString &line, lines)
+            for(const QString &line: lines)
             {
                 QStringList substrings = line.toUpper().split(QStringLiteral(";"));
                 int i = 0;
-                foreach(const QString &substring, substrings)
+                for(const QString &substring: substrings)
                 {
                     if(substring == u"TITLE")
                         field_index[_NAME] = i;
@@ -786,7 +785,7 @@ void ImportThread::process()
     }
     dbase.transaction();
 
-    foreach(const QString &str , list  )
+    for(const QString &str: list)
     {
         QCoreApplication::processEvents();
         if(stopped_.load(std::memory_order_relaxed))
@@ -809,7 +808,7 @@ void ImportThread::process()
         zip_file.close();
         QStringList lines = (QString::fromUtf8(outbuff.data())).split('\n');
         qlonglong count=0;
-        foreach(const QString &line, lines)
+        for(const QString &line: lines)
         {
             if(line.isEmpty())
                 continue;
@@ -943,7 +942,7 @@ void ImportThread::process()
                 QStringList Authors = substrings[field_index[_AUTHORS]].split(':');
 #endif
                 int author_count = 0;
-                foreach(const QString &sAuthor, Authors)
+                for(const QString &sAuthor: Authors)
                 {
 #if QT_VERSION < QT_VERSION_CHECK(5, 14, 0)
                     if(sAuthor.isEmpty())
@@ -1014,7 +1013,7 @@ void ImportThread::process()
 #endif
 
                     bool first = true;
-                    foreach(const QString &janre, Janres)
+                    for(const QString &janre: Janres)
                     {
                         if(!first && janre.trimmed().isEmpty())
                             continue;

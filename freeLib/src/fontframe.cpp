@@ -195,7 +195,7 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
     if(!dir.exists()){
         dir.setPath(FREELIB_DATA_DIR + QStringLiteral("/fonts"));
     }
-    foreach(const QString &str, dir.entryList(QStringList() << QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
+    for(const QString &str: dir.entryList(QStringList() << QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
     {
         ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
         ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
@@ -207,7 +207,7 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
     dir.setPath(QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts"));
-    foreach(const QString &str, dir.entryList(QStringList()<< QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
+    for(const QString &str: dir.entryList(QStringList()<< QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
     {
         ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
         ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
