@@ -105,7 +105,7 @@ void loadLibrary(uint idLibrary)
     });
 
 #ifdef __cpp_lib_atomic_wait
-    std::atomic_unsigned_lock_free anCount[2] = {0, 0};
+    std::atomic_uint_fast32_t anCount[2] = {0, 0};
     std::atomic_uint anTotalCount{0};
     std::atomic_bool abFinished{false};
 
@@ -670,26 +670,6 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         }
     }
 
-    auto in = result.indexOf(QStringLiteral("%n"));
-    if(in >= 0)
-    {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        int len = QStringView{result}.sliced(in + 2, 1).toInt();
-#else
-        int len = result.midRef(in + 2, 1).toInt();
-#endif
-        if(book.numInSerial == 0){
-            if(bNestedBlock)
-                return QStringLiteral("");
-            else
-                result.replace("%n" + QString::number(len), QStringLiteral(""));
-        }else{
-            QString sNumInSeria = QString::number(book.numInSerial);
-            QString zerro;
-            result.replace(QStringLiteral("%n") + (len>0 ?QString::number(len) :QStringLiteral("")),
-                           (len>0 ?zerro.fill(u'0', len-sNumInSeria.length()) :QStringLiteral("")) + sNumInSeria);
-        }
-    }
 
     if(bNestedBlock){
         if(result.contains(QStringLiteral("%fi")) || result.contains(QStringLiteral("%nf")))
@@ -732,6 +712,27 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         result.replace(QStringLiteral("////"), QStringLiteral("/"));
         result.replace(QStringLiteral("///"), QStringLiteral("/"));
         result.replace(QStringLiteral("//"), QStringLiteral("/"));
+    }
+
+    auto in = result.indexOf(QStringLiteral("%n"));
+    if(in >= 0)
+    {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        int len = QStringView{result}.sliced(in + 2, 1).toInt();
+#else
+        int len = result.midRef(in + 2, 1).toInt();
+#endif
+        if(book.numInSerial == 0){
+            if(bNestedBlock)
+                return QStringLiteral("");
+            else
+                result.replace("%n" + QString::number(len), QStringLiteral(""));
+        }else{
+            QString sNumInSeria = QString::number(book.numInSerial);
+            QString zerro;
+            result.replace(QStringLiteral("%n") + (len>0 ?QString::number(len) :QStringLiteral("")),
+                           (len>0 ?zerro.fill(u'0', len-sNumInSeria.length()) :QStringLiteral("")) + sNumInSeria);
+        }
     }
 
     return result;
