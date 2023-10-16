@@ -697,9 +697,9 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         }
         result.replace(QStringLiteral("%abbrs"), abbr.toLower());
 
-        result.replace(QStringLiteral("%fi"), sFirstAuthor.sFirstName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sFirstName.at(0) + QStringLiteral(".")));
-        result.replace(QStringLiteral("%mi"), sFirstAuthor.sMiddleName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sMiddleName.at(0) + QStringLiteral(".")));
-        result.replace(QStringLiteral("%li"), sFirstAuthor.sLastName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sLastName.at(0) + QStringLiteral(".")));
+        result.replace(QStringLiteral("%fi"), sFirstAuthor.sFirstName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sFirstName.at(0)));
+        result.replace(QStringLiteral("%mi"), sFirstAuthor.sMiddleName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sMiddleName.at(0)));
+        result.replace(QStringLiteral("%li"), sFirstAuthor.sLastName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sLastName.at(0)));
         result.replace(QStringLiteral("%nf"), sFirstAuthor.sFirstName);
         result.replace(QStringLiteral("%nm"), sFirstAuthor.sMiddleName);
         result.replace(QStringLiteral("%nl"), sFirstAuthor.sLastName);
