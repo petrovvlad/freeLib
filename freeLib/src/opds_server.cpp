@@ -682,6 +682,9 @@ QString OPDS_MIME_TYPE(QString type)
 
 bool opds_server::checkAuth(const QHttpServerRequest &request, QUrl &url)
 {
+    auto timeExpire = QDateTime::currentDateTime().addSecs(-60*60);
+    erase_if(sessions, [&timeExpire](const auto it) { return it.value() < timeExpire; });
+
     bool bResult = false;
     url = request.url();
     if(options.bOpdsNeedPassword){
@@ -695,37 +698,35 @@ bool opds_server::checkAuth(const QHttpServerRequest &request, QUrl &url)
             if (auth.size() > 6 && auth.first(6).toLower() == "basic "_ba) {
                 auto token = auth.sliced(6);
                 auto userPass = QByteArray::fromBase64(token);
+                auto colon = userPass.indexOf(':');
+                if (colon > 0)
+                {
+                    QByteArrayView view = userPass;
+                    QString sUser = QString::fromUtf8(view.first(colon));
+                    QString password = QString::fromUtf8(view.sliced(colon + 1));
+                    if(!options.baOpdsPasswordSalt.isEmpty() && !options.baOpdsPasswordHash.isEmpty()){
+                        auto hashPassword = passwordToHash(password, options.baOpdsPasswordSalt);
 
-                if (auto colon = userPass.indexOf(':'); colon > 0) {
-                    auto user = userPass.first(colon);
-                    auto password = userPass.sliced(colon + 1);
-
-                    if (user == options.sOpdsUser && password == options.sOpdsPassword){
-                        bResult = true;
-                        static QString chars = u"abdefhiknrstyzABDEFGHKNQRSTYZ23456789"_s;
-                        const int sessionNumberLen = 16;
-                        sSession = u""_s;
-                        srand(time(NULL));
-                        for(int i=0; i<sessionNumberLen; i++)
-                            sSession += chars[rand() % 32];
-                        sessions.insert(sSession, QDateTime::currentDateTime());
-                        if(urlquery.hasQueryItem(u"session"_s))
-                            urlquery.removeQueryItem(u"session"_s);
-                        urlquery.addQueryItem(u"session"_s, sSession);
-                        url.setQuery(urlquery);
+                        if (sUser == options.sOpdsUser && hashPassword == options.baOpdsPasswordHash){
+                            bResult = true;
+                            static QString chars = u"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"_s;
+                            const int sessionNumberLen = 16;
+                            sSession = u""_s;
+                            srand(time(nullptr));
+                            for(int i=0; i<sessionNumberLen; i++)
+                                sSession += chars[rand() % chars.size()];
+                            sessions.insert(sSession, QDateTime::currentDateTime());
+                            if(urlquery.hasQueryItem(u"session"_s))
+                                urlquery.removeQueryItem(u"session"_s);
+                            urlquery.addQueryItem(u"session"_s, sSession);
+                            url.setQuery(urlquery);
+                        }
                     }
                 }
             }
         }
     }else
         bResult = true;
-
-    auto timeExpire = QDateTime::currentDateTime().addSecs(-60*60);
-    for(const QString &key: sessions.keys())
-    {
-        if(sessions.value(key) < timeExpire)
-            sessions.remove(key);
-    }
 
     return bResult;
 }
@@ -3548,10 +3549,11 @@ void opds_server::slotRead()
                 QStringList auth_str = QString(QByteArray::fromBase64(ba)).split(QStringLiteral(":"));
                 if(auth_str.count() == 2)
                 {
-                    auth = (options.sOpdsUser == auth_str.at(0) && options.sOpdsPassword == auth_str.at(1));
+                    auto hashPassword = passwordToHash(auth_str.at(1), options.baOpdsPasswordSalt);
+                    auth = (options.sOpdsUser == auth_str.at(0) && options.baOpdsPasswordHash == hashPassword);
                 }
             }
-            if(TCPtokens.at(1).contains(QLatin1String("session=")) && !auth)
+            if(TCPtokens.at(1).contains(QLatin1String("session=")))
             {
                 int pos = TCPtokens.at(1).indexOf(QLatin1String("session="));
                 session = TCPtokens.at(1).mid(pos + 8, session_number_len);

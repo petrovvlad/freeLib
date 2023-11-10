@@ -38,6 +38,7 @@
 #include <QNetworkProxy>
 #include <QObject>
 #include <QPainter>
+#include <QPasswordDigestor>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QResizeEvent>
@@ -76,7 +77,6 @@
 #include <algorithm>
 #include <iostream>
 #include <typeinfo>
-
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QByteArrayView>

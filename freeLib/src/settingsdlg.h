@@ -13,7 +13,6 @@
 
 #include "options.h"
 
-
 class FileItemDelegate : public QItemDelegate
 {
     Q_OBJECT
@@ -25,20 +24,20 @@ public:
 
     QWidget *createEditor(QWidget *parent, const QStyleOptionViewItem &/*option*/, const QModelIndex &/*index*/) const
     {
-        QWidget *frame=new QWidget(parent);
+        QWidget *frame = new QWidget(parent);
         frame->setAttribute(Qt::WA_TranslucentBackground);
         QHBoxLayout *layout=new QHBoxLayout(frame);
         QLineEdit *editor=new QLineEdit(frame);
         editor->setObjectName(QStringLiteral("editor"));
-        QToolButton *button=new QToolButton(frame);
+        QToolButton *button = new QToolButton(frame);
         button->setText(QStringLiteral("..."));
         layout->addWidget(editor,1);
         editor->setSizePolicy(QSizePolicy::Expanding,QSizePolicy::Expanding);
-        layout->addWidget(button,0);
+        layout->addWidget(button, 0);
         //layout->setStretch(1,0);
         layout->setSpacing(0);
         layout->setContentsMargins(0, 0, 0, 0);
-        connect(editor,&QLineEdit::editingFinished, this, &FileItemDelegate::editingFinished);
+        connect(editor, &QLineEdit::editingFinished, this, &FileItemDelegate::editingFinished);
         connect(button, &QAbstractButton::clicked, this, &FileItemDelegate::SelectFile);
 
         return frame;
@@ -69,7 +68,7 @@ public:
 private slots:
     void editingFinished()
     {
-        commitData((QWidget*)sender()->parent());
+        emit commitData((QWidget*)sender()->parent());
         //emit closeEditor((QWidget*)sender()->parent());
     }
     void SelectFile()

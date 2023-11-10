@@ -4,13 +4,19 @@
 #include <QFileInfo>
 #include <QStringBuilder>
 #include <QSharedPointer>
+#include <QPasswordDigestor>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
+#include <QRandomGenerator>
+#endif
+
+#include "utilites.h"
 
 static const quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
 QString encodeStr(const QString& str)
 {
     QByteArray arr(str.toUtf8());
-    quint32 index=0;
-    for(int i =0; i<arr.size(); i++)
+    quint32 index = 0;
+    for(int i = 0; i<arr.size(); i++)
     {
         arr[i] = arr[i] ^ key[index];
         index++;
@@ -35,6 +41,32 @@ QString decodeStr(const QString &str)
             index = 0;
     }
     return QString::fromUtf8(arr);
+}
+
+QByteArray generateSalt()
+{
+    QByteArray salt;
+    salt.resize(nPasswordSaltSize);  // Размер соли
+
+    // Заполняем соль случайными данными
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    QRandomGenerator::global()->fillRange(reinterpret_cast<quint64*>(salt.data()), salt.size()/sizeof(quint64));
+#else
+    qsrand(QTime::currentTime().msec());
+    for(int i=0; i<salt.size(); i++)
+        salt[i] = qrand();
+#endif
+    return salt;
+}
+
+QByteArray passwordToHash(const QString& password, const QByteArray &salt)
+{
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    QByteArray derivedKey = QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha512, password.toUtf8(), salt, 4096, nPasswordHashSize);
+#else
+    QByteArray derivedKey = QPasswordDigestor::deriveKeyPbkdf1(QCryptographicHash::Sha1, password.toUtf8(), salt, 4096, nPasswordHashSize);
+#endif
+    return derivedKey;
 }
 
 void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePasswords)
@@ -241,7 +273,8 @@ void Options::setDefault(){
     bOpdsShowAnotation = true;
     bOpdsNeedPassword = false;
     sOpdsUser = QStringLiteral("");
-    sOpdsPassword = QStringLiteral("");
+    baOpdsPasswordSalt.clear();
+    baOpdsPasswordHash.clear();
     nOpdsPort = nDefaultOpdsPort;
     nOpdsBooksPerPage = 15;
     nHttpExport = 0;
@@ -283,8 +316,27 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     bOpdsShowCover = pSettings->value(QStringLiteral("srv_covers"), true).toBool();
     bOpdsShowAnotation = pSettings->value(QStringLiteral("srv_annotation"), true).toBool();
     bOpdsNeedPassword = pSettings->value(QStringLiteral("HTTP_need_pasword"), false).toBool();
-    sOpdsUser = pSettings->value(QStringLiteral("HTTP_user")).toString();
-    sOpdsPassword = pSettings->value(QStringLiteral("HTTP_password")).toString();
+    sOpdsUser = pSettings->value(u"HTTP_user"_s).toString();
+    QString sSaltHashPassword = pSettings->value(u"httpPassword"_s).toString();
+    if(!sSaltHashPassword.isEmpty()){
+        auto vPassword = sSaltHashPassword.split(u":"_s);
+        if(vPassword.size() == 2){
+            baOpdsPasswordSalt = QByteArray::fromBase64(vPassword[0].toLatin1());
+            baOpdsPasswordHash = QByteArray::fromBase64(vPassword[1].toLatin1());
+            if(baOpdsPasswordSalt.size() != nPasswordSaltSize || baOpdsPasswordHash.size() != nPasswordHashSize){
+                baOpdsPasswordSalt.clear();
+                baOpdsPasswordHash.clear();
+            }
+        }
+    }else{
+        QString sOpdsPassword = pSettings->value(u"HTTP_password"_s).toString();
+        if(!sOpdsPassword.isEmpty()){
+            baOpdsPasswordSalt = generateSalt();
+            baOpdsPasswordHash = passwordToHash(sOpdsPassword, baOpdsPasswordSalt);
+            pSettings->setValue(u"httpPassword"_s, QString(baOpdsPasswordSalt.toBase64()) + u":"_s + QString(baOpdsPasswordHash.toBase64()));
+            pSettings->remove(u"HTTP_password"_s);
+        }
+    }
     nOpdsPort = pSettings->value(QStringLiteral("OPDS_port"), nDefaultOpdsPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
     nHttpExport = pSettings->value(QStringLiteral("httpExport"), 0).toInt();
@@ -295,7 +347,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     sProxyPassword = pSettings->value(QStringLiteral("proxy_user")).toString();
 
     int count = pSettings->beginReadArray(QStringLiteral("application"));
-    for(int i=0;i<count;i++)
+    for(int i=0; i<count; i++)
     {
         pSettings->setArrayIndex(i);
         QString sExt = pSettings->value(QStringLiteral("ext")).toString();
@@ -305,7 +357,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     pSettings->endArray();
 
     count = pSettings->beginReadArray(QStringLiteral("tools"));
-    for(int i=0;i<count;i++)
+    for(int i=0; i<count; i++)
     {
         pSettings->setArrayIndex(i);
         QString sName = pSettings->value(QStringLiteral("name")).toString();
@@ -357,7 +409,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(QStringLiteral("httpExport"), options.nHttpExport);
     pSettings->setValue(QStringLiteral("HTTP_need_pasword"), options.bOpdsNeedPassword);
     pSettings->setValue(QStringLiteral("HTTP_user"), options.sOpdsUser);
-    pSettings->setValue(QStringLiteral("HTTP_password"), options.sOpdsPassword);
+    pSettings->setValue(u"httpPassword"_s, QString(baOpdsPasswordSalt.toBase64()) + u":"_s + QString(baOpdsPasswordHash.toBase64()));
     pSettings->setValue(QStringLiteral("srv_annotation"), options.bOpdsShowAnotation);
     pSettings->setValue(QStringLiteral("srv_covers"), options.bOpdsShowCover);
     pSettings->setValue(QStringLiteral("OPDS_port"), options.nOpdsPort);
