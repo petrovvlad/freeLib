@@ -38,7 +38,6 @@
 #include <QNetworkProxy>
 #include <QObject>
 #include <QPainter>
-#include <QPasswordDigestor>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QResizeEvent>
@@ -88,4 +87,8 @@
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 #include <QRandomGenerator>
+#endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+#include "qpassworddigestor.h"
 #endif

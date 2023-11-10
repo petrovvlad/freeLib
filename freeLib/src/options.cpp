@@ -4,7 +4,9 @@
 #include <QFileInfo>
 #include <QStringBuilder>
 #include <QSharedPointer>
-#include <QPasswordDigestor>
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+#include "qpassworddigestor.h"
+#endif
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 #include <QRandomGenerator>
 #endif
@@ -61,10 +63,21 @@ QByteArray generateSalt()
 
 QByteArray passwordToHash(const QString& password, const QByteArray &salt)
 {
+    const int iterations = 4046;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-    QByteArray derivedKey = QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha512, password.toUtf8(), salt, 4096, nPasswordHashSize);
+    QByteArray derivedKey = QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha512, password.toUtf8(), salt, iterations, nPasswordHashSize);
 #else
-    QByteArray derivedKey = QPasswordDigestor::deriveKeyPbkdf1(QCryptographicHash::Sha1, password.toUtf8(), salt, 4096, nPasswordHashSize);
+    QCryptographicHash hash(QCryptographicHash::Sha256);
+    hash.addData(password.toUtf8());
+    hash.addData( salt);
+    QByteArray key = hash.result();
+    for (int i = 1; i < iterations; i++) {
+        hash.reset();
+        hash.addData(
+            key);
+        key = hash.result();
+    }
+    QByteArray derivedKey = key.left(nPasswordHashSize);
 #endif
     return derivedKey;
 }
