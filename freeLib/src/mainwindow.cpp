@@ -689,7 +689,7 @@ void MainWindow::Settings()
         }
         if(options.bOpdsEnable != pDlg->options_.bOpdsEnable || options.nOpdsPort != pDlg->options_.nOpdsPort ||
            options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || options.sOpdsUser != pDlg->options_.sOpdsUser ||
-           options.sOpdsPassword != pDlg->options_.sOpdsPassword)
+           options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash)
         {
             if(pOpds_ == nullptr && options.bOpdsEnable)
                 pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );

@@ -11,7 +11,6 @@
 #include "config-freelib.h"
 #include "utilites.h"
 
-
 SettingsDlg::SettingsDlg(QWidget *parent) :
     QDialog(parent),
     ui(new Ui::SettingsDlg)
@@ -171,7 +170,9 @@ void SettingsDlg::LoadSettings()
     ui->OPDS_port->setValue(options_.nOpdsPort);
     ui->HTTP_need_pasword->setChecked(options_.bOpdsNeedPassword);
     ui->HTTP_user->setText(options_.sOpdsUser);
-    ui->HTTP_password->setText(options_.sOpdsPassword);
+    if(options_.baOpdsPasswordSalt.isEmpty())
+        options_.baOpdsPasswordSalt = generateSalt();
+    ui->HTTP_password->setPassword(options_.baOpdsPasswordSalt, options_.baOpdsPasswordHash);
     ui->srv_annotation->setChecked(options_.bOpdsShowAnotation);
     ui->srv_covers->setChecked(options_.bOpdsShowCover);
     ui->books_per_page->setValue(options_.nOpdsBooksPerPage);
@@ -348,7 +349,8 @@ void SettingsDlg::btnOK()
     options.bOpdsShowAnotation = ui->srv_annotation->isChecked();
     options.bOpdsShowCover = ui->srv_covers->isChecked();
     options.sOpdsUser = ui->HTTP_user->text();
-    options.sOpdsPassword = ui->HTTP_password->text();
+    options.baOpdsPasswordHash = ui->HTTP_password->getPasswordHash();
+    options.baOpdsPasswordSalt = ui->HTTP_password->getPasswordSalt();
     options.nOpdsPort = ui->OPDS_port->value();
     options.nOpdsBooksPerPage = ui->books_per_page->value();
     options.nProxyType = ui->proxy_type->currentIndex();

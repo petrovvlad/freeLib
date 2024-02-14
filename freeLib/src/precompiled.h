@@ -77,7 +77,6 @@
 #include <iostream>
 #include <typeinfo>
 
-
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QByteArrayView>
 #endif
@@ -88,4 +87,8 @@
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
 #include <QRandomGenerator>
+#endif
+
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+#include "qpassworddigestor.h"
 #endif

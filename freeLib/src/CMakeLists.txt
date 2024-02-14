@@ -44,6 +44,7 @@ set(PROJECT_SOURCES
         coverlabel.cpp      coverlabel.h
         starsdelegate.cpp   starsdelegate.h
         utilites.cpp        utilites.h
+        passwordlineedit.cpp            passwordlineedit.h
         genresortfilterproxymodel.cpp   genresortfilterproxymodel.h
         fb2mobi/hyphenations.cpp        fb2mobi/hyphenations.h
         fb2mobi/fb2mobi.cpp             fb2mobi/fb2mobi.h

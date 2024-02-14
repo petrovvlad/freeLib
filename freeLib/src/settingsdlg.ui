@@ -589,7 +589,7 @@
              <widget class="QLineEdit" name="HTTP_user"/>
             </item>
             <item row="0" column="3">
-             <widget class="QLineEdit" name="HTTP_password">
+             <widget class="PasswordLineEdit" name="HTTP_password">
               <property name="echoMode">
                <enum>QLineEdit::Password</enum>
               </property>

@@ -7,6 +7,16 @@
 #include <QSettings>
 #include <QVector>
 
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+constexpr qsizetype nPasswordSaltSize = 24;
+constexpr quint64 nPasswordHashSize = 48;
+#else
+constexpr int nPasswordSaltSize = 8;
+constexpr quint64 nPasswordHashSize = 20;
+#endif
+QByteArray generateSalt();
+QByteArray passwordToHash(const QString& password,const  QByteArray& salt);
+
 enum SendType{ST_Device, ST_Mail};
 
 struct ToolsOptions
@@ -100,7 +110,8 @@ struct Options
     QString sUiLanguageName;
     QString sDatabasePath;
     QString sOpdsUser;
-    QString sOpdsPassword;
+    QByteArray baOpdsPasswordHash;
+    QByteArray baOpdsPasswordSalt;
     QString sProxyHost;
     QString sProxyUser;
     QString sProxyPassword;
