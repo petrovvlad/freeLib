@@ -39,4 +39,4 @@ sudo make install
 ```
 
 #### Обсуждение
-канал Matrix:  [#freeLib:matrix.p-vlad.gq](https://matrix.to/#/#freeLib:matrix.p-vlad.gq)
+канал Matrix:  [#freeLib:matrix.p-vlad.ru](https://matrix.to/#/#freeLib:matrix.p-vlad.ru)
