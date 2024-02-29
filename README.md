@@ -38,5 +38,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build
 sudo make install
 ```
 
+Для конвертации книг в EPUB, AZW3, MOBI необходимо установить kindlegen.
+
 #### Обсуждение
 канал Matrix:  [#freeLib:matrix.p-vlad.ru](https://matrix.to/#/#freeLib:matrix.p-vlad.ru)
