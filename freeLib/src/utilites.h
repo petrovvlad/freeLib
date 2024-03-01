@@ -44,6 +44,7 @@ void setProxy();
 QSharedPointer<QSettings> GetSettings(bool bReopen = false);
 void setLocale(const QString &sLocale);
 bool setCurrentZipFileName(QuaZip *zip, const QString &name);
+bool kindlegenInstalled();
 
 
 #endif // UTILITES_H
