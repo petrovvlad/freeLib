@@ -102,6 +102,7 @@ private:
     Ui::SettingsDlg *ui;
 
     void LoadSettings();
+    void updateKindelegenWarring(int iExportOpton);
 private slots:
     void btnOK();
     void SaveTools();

@@ -9,6 +9,7 @@
 #include <QTranslator>
 #include <QTextCodec>
 #include <QLibraryInfo>
+#include <QProcess>
 
 #include "options.h"
 #include "config-freelib.h"
@@ -372,4 +373,18 @@ bool setCurrentZipFileName(QuaZip *zip, const QString &name)
         result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     }
     return result;
+}
+
+bool kindlegenInstalled()
+{
+    //Проверка наличия kindlegen в /usr/bin
+    QFileInfo fi("/usr/bin/kindlegen");
+    if(fi.isExecutable())
+        return true;
+
+    //Проверка установленного kindlegen через pkg-config
+    QProcess process;
+    process.start("pkg-config", QStringList() << "--exists" << "kindlegen");
+    process.waitForFinished();
+    return process.exitCode() == 0;
 }

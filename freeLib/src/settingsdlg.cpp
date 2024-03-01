@@ -56,7 +56,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->Language->clear();
     ui->Language->addItem(QStringLiteral("english"), "en_US");
     ui->Language->setCurrentIndex(0);
-    for(const QString &str: qAsConst(dirContent))
+    for(const QString &str: std::as_const(dirContent))
     {
         QString lang = str.right(str.length()-9);
         lang = lang.left(lang.length()-3);
@@ -68,7 +68,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->ABC->addItem(QStringLiteral("english"));
     ui->ABC->setCurrentIndex(0);
 
-    for(const QString &str: qAsConst(dirContent))
+    for(const QString &str: std::as_const(dirContent))
     {
         QString lang = str.right(str.length() - 4);
         lang = lang.left(lang.length() - 4);
@@ -224,6 +224,21 @@ void SettingsDlg::LoadSettings()
     }
     ui->DelExport->setEnabled(count > 1);
     ui->ExportName->setCurrentIndex(iDefault);
+    updateKindelegenWarring(iDefault);
+}
+
+void SettingsDlg::updateKindelegenWarring(int iExportOpton)
+{
+    if( iExportOpton >= 0 && iExportOpton < options_.vExportOptions.size() )
+    {
+        const ExportOptions *pExportOptions = &options_.vExportOptions.at(iExportOpton);
+        bool bKindlgenLableVisible = !kindlegenInstalled() &&
+                                     (pExportOptions->sOutputFormat == u"EPUB" ||
+                                      pExportOptions->sOutputFormat == u"MOBI" ||
+                                      pExportOptions->sOutputFormat == u"AZW3" ||
+                                      pExportOptions->sOutputFormat == u"MOBI7");
+        ui->label_kindlegen->setVisible(bKindlgenLableVisible);
+    }
 }
 
 void SettingsDlg::UpdateWebExportList()
@@ -473,6 +488,7 @@ void SettingsDlg::onDelExportClicked()
 
 void SettingsDlg::onExportNameCurrentIndexChanged(int index)
 {
+    updateKindelegenWarring(index);
     ui->stackedWidget->setCurrentIndex(index);
     ui->DefaultExport->setChecked(ui->ExportName->currentData().toBool());
 }

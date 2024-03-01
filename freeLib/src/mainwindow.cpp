@@ -2110,6 +2110,7 @@ bool MainWindow::IsBookInList(const SBook &book)
 
 void MainWindow::UpdateExportMenu()
 {
+    bool bKindlegenInstalled = kindlegenInstalled();
     QMenu* menu = ui->btnExport->menu();
     if(menu)
     {
@@ -2125,12 +2126,19 @@ void MainWindow::UpdateExportMenu()
     for(int i = 0; i<count; i++)
     {
         const ExportOptions &exportOptions = options.vExportOptions.at(i);
-        QAction *action = new QAction(exportOptions.sName, this);
-        action->setData(i);
-        menu->addAction(action);
-        if(exportOptions.bDefault)
+        if(bKindlegenInstalled ||
+            (exportOptions.sOutputFormat != u"EPUB") &&
+            (exportOptions.sOutputFormat != u"MOBI") &&
+            (exportOptions.sOutputFormat != u"AZW3") &&
+            (exportOptions.sOutputFormat != u"MOBI7"))
         {
-            ui->btnExport->setDefaultAction(action);
+            QAction *action = new QAction(exportOptions.sName, this);
+            action->setData(i);
+            menu->addAction(action);
+            if(exportOptions.bDefault)
+            {
+                ui->btnExport->setDefaultAction(action);
+            }
         }
     }
     if(count == 0)
