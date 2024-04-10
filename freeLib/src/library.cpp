@@ -105,7 +105,7 @@ void loadLibrary(uint idLibrary)
     });
 
 #ifdef __cpp_lib_atomic_wait
-    std::atomic_uint_fast32_t anCount[2] = {0, 0};
+    std::atomic_int_fast32_t anCount[2] = {0, 0};
     std::atomic_uint anTotalCount{0};
     std::atomic_bool abFinished{false};
 
@@ -151,11 +151,9 @@ void loadLibrary(uint idLibrary)
                     nBuff = (nBuff==0) ?1 :0;
                 }
             }
-            if(i > 0){
-                anTotalCount += i;
-                anCount[nBuff].store(i);
-                anCount[nBuff].notify_all();
-            }
+            anTotalCount += i;
+            anCount[nBuff].store(i);
+            anCount[nBuff].notify_all();
             abFinished.store(true);
         }
         QSqlDatabase::removeDatabase(QStringLiteral("readdb"));
@@ -165,7 +163,7 @@ void loadLibrary(uint idLibrary)
     uint nBuff = 0;
     uint nTotalCount{0};
     while(!abFinished || nTotalCount != anTotalCount){
-        anCount[nBuff].wait(0);
+        anCount[nBuff].wait(-1);
         uint nCount = anCount[nBuff].load();
         for(uint i =0; i<nCount; i++){
             nTotalCount++;
@@ -196,7 +194,7 @@ void loadLibrary(uint idLibrary)
             book.idFirstAuthor = buff[k + 13].toUInt();
             book.sKeywords = buff[k + 14].toString();
         }
-        anCount[nBuff].store(0);
+        anCount[nBuff].store(-1);
         anCount[nBuff].notify_all();
         nBuff = (nBuff==0) ?1 :0;
     }
@@ -681,7 +679,7 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         if(result.contains(QStringLiteral("%li")) || result.contains(QStringLiteral("%nl")))
             if(sFirstAuthor.sLastName.isEmpty())
                 return QStringLiteral("");
-        if(result.contains(QStringLiteral("%s")) || result.contains(QStringLiteral("%abbrs")))
+        if(result.contains(QStringLiteral("%abbrs")))
             if(book.idSerial == 0)
                 return QStringLiteral("");
     }else{
