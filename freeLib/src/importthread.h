@@ -27,8 +27,9 @@ public slots:
     void process();
     void break_import();
 protected:
-    void importFB2(const QString &path,int &count);
-    void importFB2_main(const QString &path);
+    void importBooksFromPath(const QString &sPath);
+    void importBooksFromPath(const QString &sPath,int &count);
+    void importBooksFromZip(const QString &sPath, const QString &sArchName, int &count);
 
     void readFB2(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
     void readEPUB(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
