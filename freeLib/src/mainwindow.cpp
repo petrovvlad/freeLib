@@ -439,10 +439,6 @@ MainWindow::~MainWindow()
     settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
     settings->setValue(QStringLiteral("MainWnd/VSplitterSizes"), ui->splitterV->saveState());
     settings->setValue(QStringLiteral("MainWnd/HSplitterSizes"), ui->splitterH->saveState());
-    QString TempDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
-        TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    QDir(TempDir + QStringLiteral("/freeLib/")).removeRecursively();
 
     delete ui;
 }
