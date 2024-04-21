@@ -11,7 +11,6 @@
 #include <QDir>
 
 #include "quazip/quazip/quazipfile.h"
-#include "options.h"
 #include "utilites.h"
 
 QString RelativeToAbsolutePath(QString path);
@@ -256,14 +255,20 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     {
         file_name = file_name.right(file_name.length() - sPath_.length());
         if(!file_name.isEmpty() && (file_name.at(0) == '/' || file_name.at(0) == '\\'))
-                file_name = file_name.right(file_name.length()-1);
+            file_name = file_name.right(file_name.length()-1);
     }
     else
     {
-        arh_name = arh_name.right(arh_name.length() - sPath_.length());
+        QString sTempZipDir = QDir::tempPath() + QStringLiteral("/freeLib/zip/") ;
+        if(arh_name.startsWith(sTempZipDir)){
+            arh_name = arh_name.right(arh_name.length() - sTempZipDir.length());
+            arh_name.replace(QStringLiteral(".zip.dir/"), QStringLiteral(".zip/"));
+        }else
+            arh_name = arh_name.right(arh_name.length() - sPath_.length());
         if(!arh_name.isEmpty() && (arh_name.at(0) == '/' || arh_name.at(0) == '\\'))
-                arh_name = arh_name.right(arh_name.length()-1);
+            arh_name = arh_name.right(arh_name.length()-1);
     }
+
     QFileInfo fi(file_name);
     file_name = file_name.left(file_name.length()-fi.suffix().length()-1);
     query_.exec(QStringLiteral("SELECT id FROM book where id_lib=%1 and file='%2' and archive='%3'").arg(QString::number(idLib_), file_name, arh_name));
@@ -323,14 +328,20 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
     {
         file_name = file_name.right(file_name.length() - sPath_.length());
         if(file_name.at(0) == '/' || file_name.at(0) == '\\')
-                file_name=file_name.right(file_name.length()-1);
+            file_name=file_name.right(file_name.length()-1);
     }
     else
     {
-        arh_name = arh_name.right(arh_name.length() - sPath_.length());
+        QString sTempZipDir = QDir::tempPath() + QStringLiteral("/freeLib/zip/") ;
+        if(arh_name.startsWith(sTempZipDir)){
+            arh_name = arh_name.right(arh_name.length() - sTempZipDir.length());
+            arh_name.replace(QStringLiteral(".zip.dir/"), QStringLiteral(".zip/"));
+        }else
+            arh_name = arh_name.right(arh_name.length() - sPath_.length());
         if(arh_name.at(0) == '/' || arh_name.at(0) == '\\')
-                arh_name=arh_name.right(arh_name.length()-1);
+            arh_name = arh_name.right(arh_name.length()-1);
     }
+
     file_name = file_name.left(file_name.length()-5);
     query_.exec(QStringLiteral("SELECT id FROM book where id_lib=%1 and file='%2' and archive='%3'").arg(QString::number(idLib_), file_name, arh_name));
     if(query_.next()) //если книга найдена, то просто снимаем пометку удаления
@@ -435,31 +446,31 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
         AddGenre(id_book, sGenre, idLib_);
 }
 
-void ImportThread::importFB2_main(const QString &path)
+void ImportThread::importBooksFromPath(const QString &sPath)
 {
     int count = 0;
-    importFB2(path, count);
+    importBooksFromPath(sPath, count);
+    QDir(QDir::tempPath() + QStringLiteral("/freeLib/zip/")).removeRecursively();
     if(count>0)
         query_.exec(QStringLiteral("COMMIT;"));
 }
 
-void ImportThread::importFB2(const QString &path, int &count)
+void ImportThread::importBooksFromPath(const QString &sPath, int &count)
 {
-    QFileInfo fi(path);
+    QFileInfo fi(sPath);
     QFileInfoList listEntry;
     if(fi.isFile())
         listEntry << fi;
     else{
-        QDir dir(path);
+        QDir dir(sPath);
         listEntry = dir.entryInfoList(QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable|QDir::Files|QDir::Dirs);
     }
-    QString file_name;
     for(auto iter=listEntry.cbegin(); iter != listEntry.cend() && !stopped_.load(std::memory_order_relaxed); ++iter)
     {
-        file_name = iter->absoluteFilePath();
+        QString sFileName = iter->absoluteFilePath();
         if(iter->isDir())
         {
-            importFB2(file_name, count);
+            importBooksFromPath(sFileName, count);
         }
         else
         {
@@ -473,7 +484,7 @@ void ImportThread::importFB2(const QString &path, int &count)
                 if(file.exists())
                 {
                     file.open(QFile::ReadOnly);
-                    readFB2(file.readAll(), file_name, QStringLiteral(""), iter->size());
+                    readFB2(file.readAll(), sFileName, QStringLiteral(""), iter->size());
                     count++;
                 }
             }
@@ -481,87 +492,32 @@ void ImportThread::importFB2(const QString &path, int &count)
             {
                 if(count == 0)
                     query_.exec(QStringLiteral("BEGIN;"));
-                QFile file(file_name);
+                QFile file(sFileName);
                 file.open(QFile::ReadOnly);
                 QByteArray ba = file.readAll();
                 if(iter->suffix().toLower() == u"fb2")
-                    readFB2(ba, file_name, QStringLiteral(""));
+                    readFB2(ba, sFileName, QStringLiteral(""));
                 else
-                    readEPUB(ba, file_name, QStringLiteral(""));
+                    readEPUB(ba, sFileName, QStringLiteral(""));
                 count++;
             }
             else if(iter->suffix().toLower() == u"zip")
             {
+                QString sArchName;
                 if(nUpdateType_ == UT_NEW)
                 {
                     emit Message(iter->fileName());
-                    QString arh_name = file_name.right(file_name.length() - sPath_.length());
-                    if(arh_name.at(0) == '/' || arh_name.at(0) == '\\')
-                            arh_name = arh_name.right(arh_name.length()-1);
-                    query_.exec(QStringLiteral("SELECT * FROM book where archive='%1' LIMIT 1").arg(arh_name));
+                    sArchName = sFileName.right(sFileName.length() - sPath_.length());
+                    if(sArchName.at(0) == '/' || sArchName.at(0) == '\\')
+                            sArchName = sArchName.right(sArchName.length()-1);
+                    query_.exec(QStringLiteral("SELECT * FROM book where archive='%1' LIMIT 1").arg(sArchName));
                     if(query_.next())
                         continue;
                 }
-                QuaZip uz(file_name);
-                uz.setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-                if (!uz.open(QuaZip::mdUnzip))
-                {
-                    qDebug()<<("Error open archive!")<<" "<<file_name;
-                    continue;
-                }
+                QDir dir(sPath);
 
-                QuaZipFile zip_file(&uz);
-                QList<QuaZipFileInfo> list = uz.getFileInfoList();
-                for(const QuaZipFileInfo &zip_fi: list  )
-                {
-                    QCoreApplication::processEvents();
-                    if(stopped_.load(std::memory_order_relaxed))
-                        break;
-
-                    if(zip_fi.uncompressedSize==0)
-                        continue;
-                    QBuffer buffer;
-                    if(count == 0)
-                        query_.exec(QStringLiteral("BEGIN;"));
-                    if(zip_fi.name.right(3).toLower() == u"fb2")
-                    {
-                        setCurrentZipFileName(&uz, zip_fi.name);
-                        zip_file.open(QIODevice::ReadOnly);
-                        buffer.setData(zip_file.read(16*1024));
-                        zip_file.close();
-                        readFB2(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
-                    }
-                    else if(zip_fi.name.right(4).toLower() == u"epub")
-                    {
-                        setCurrentZipFileName(&uz, zip_fi.name);
-                        zip_file.open(QIODevice::ReadOnly);
-                        buffer.setData(zip_file.readAll());
-                        zip_file.close();
-                        readEPUB(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
-                    }
-                    else if(zip_fi.name.right(3).toLower() != u"fbd")
-                    {
-                        QFileInfo fi(zip_fi.name);
-                        if(!fi.completeBaseName().isEmpty() && fi.completeBaseName().at(0) != '.')
-                        {
-                            QString fbd = fi.path() + QStringLiteral("/") + fi.completeBaseName() + QStringLiteral(".fbd");
-                            if(setCurrentZipFileName(&uz, fbd))
-                            {
-                                setCurrentZipFileName(&uz, zip_fi.name);
-                                zip_file.open(QIODevice::ReadOnly);
-                                buffer.setData(zip_file.readAll());
-                                readFB2(buffer.data(), zip_fi.name, file_name, zip_fi.uncompressedSize);
-                            }
-                        }
-                    }
-
-                    count++;
-                    if(count == 1000)
-                    {
-                        query_.exec(QStringLiteral("COMMIT;"));
-                        count = 0;
-                    }
-                }
+                sArchName = dir.relativeFilePath(sFileName) ;
+                importBooksFromZip(sPath + QStringLiteral("/"), sArchName, count);
             }
             if(count == 1000)
             {
@@ -570,6 +526,92 @@ void ImportThread::importFB2(const QString &path, int &count)
             }
         }
         QCoreApplication::processEvents();
+    }
+}
+
+void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArchName, int &count)
+{
+    QString sZipFileName = sPath + sArchName;
+    QuaZip uz(sZipFileName);
+    uz.setFileNameCodec(QTextCodec::codecForName("IBM 866"));
+    if (!uz.open(QuaZip::mdUnzip))
+    {
+        qDebug() << "Error open archive! " << sPath + sArchName;
+        return;
+    }
+
+    QuaZipFile fileInZip(&uz);
+    QList<QuaZipFileInfo> list = uz.getFileInfoList();
+    for(const QuaZipFileInfo &fiZip: list  )
+    {
+        QCoreApplication::processEvents();
+        if(stopped_.load(std::memory_order_relaxed))
+            break;
+
+        if(fiZip.uncompressedSize == 0)
+            continue;
+        QBuffer buffer;
+        if(count == 0)
+            query_.exec(u"BEGIN;"_s);
+        if(fiZip.name.right(3).toLower() == u"fb2")
+        {
+            setCurrentZipFileName(&uz, fiZip.name);
+            fileInZip.open(QIODevice::ReadOnly);
+            buffer.setData(fileInZip.read(16*1024));
+            fileInZip.close();
+            readFB2(buffer.data(), fiZip.name, sZipFileName/*path*/, fiZip.uncompressedSize);
+        }
+        else if(fiZip.name.right(4).toLower() == u"epub")
+        {
+            setCurrentZipFileName(&uz, fiZip.name);
+            fileInZip.open(QIODevice::ReadOnly);
+            buffer.setData(fileInZip.readAll());
+            fileInZip.close();
+            readEPUB(buffer.data(), fiZip.name, sZipFileName, fiZip.uncompressedSize);
+        }
+        else if(fiZip.name.right(4).toLower() == u".zip")
+        {
+            setCurrentZipFileName(&uz, fiZip.name);
+            fileInZip.open(QIODevice::ReadOnly);
+            buffer.setData(fileInZip.readAll());
+            fileInZip.close();
+            QString sZipDir;
+            if(sPath.startsWith(QDir::tempPath() + QStringLiteral("/freeLib/zip/")))
+                sZipDir = sPath + sArchName + QStringLiteral(".dir") + QStringLiteral("/");
+            else
+                sZipDir = QDir::tempPath() + QStringLiteral("/freeLib/zip/") + sArchName + QStringLiteral(".dir") + QStringLiteral("/");
+            QDir dirZip(sZipDir);
+            dirZip.mkpath(sZipDir);
+            QFile fileZiped(sZipDir + fiZip.name);
+            fileZiped.open(QIODevice::WriteOnly);
+            fileZiped.write(buffer.data());
+            fileZiped.close();
+            importBooksFromZip(sZipDir , fiZip.name, count);
+
+            fileZiped.remove();
+        }
+        else if(fiZip.name.right(3).toLower() != u"fbd")
+        {
+            QFileInfo fi(fiZip.name);
+            if(!fi.completeBaseName().isEmpty() && fi.completeBaseName().at(0) != '.')
+            {
+                QString fbd = fi.path() + u"/"_s + fi.completeBaseName() + u".fbd"_s;
+                if(setCurrentZipFileName(&uz, fbd))
+                {
+                    setCurrentZipFileName(&uz, fiZip.name);
+                    fileInZip.open(QIODevice::ReadOnly);
+                    buffer.setData(fileInZip.readAll());
+                    readFB2(buffer.data(), fiZip.name, sZipFileName, fiZip.uncompressedSize);
+                }
+            }
+        }
+
+        count++;
+        if(count == 1000)
+        {
+            query_.exec(u"COMMIT;"_s);
+            count = 0;
+        }
     }
 }
 
@@ -634,7 +676,7 @@ void ImportThread::process()
     if(!listFiles_.isEmpty()){
         int count = 0;
         for(const auto &sFile: listFiles_)
-            importFB2(sFile, count);
+            importBooksFromPath(sFile, count);
         if(count>0)
             query_.exec(QStringLiteral("COMMIT;"));
         emit End();
@@ -653,7 +695,7 @@ void ImportThread::process()
 
     if(sInpxFile_.isEmpty())
     {
-        importFB2_main(sPath_);
+        importBooksFromPath(sPath_);
         query_.exec(QStringLiteral("DELETE FROM book WHERE id_lib=%1 AND deleted=TRUE;").arg(QString::number(idLib_)));
         query_.exec(QStringLiteral("VACUUM"));
         emit End();

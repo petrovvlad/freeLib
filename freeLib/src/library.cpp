@@ -519,10 +519,11 @@ void SLib::loadAnnotation(uint idBook)
 
 QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData)
 {
-    QString file,archive;
+    QString file, archive;
     QFileInfo fi;
     SBook &book = books[idBook];
     QString LibPath = RelativeToAbsolutePath(path);
+    bool bZipInZip = false;
     if(book.sArchive.isEmpty()){
         file = QStringLiteral("%1/%2.%3").arg(LibPath, book.sFile, book.sFormat);
     }else{
@@ -530,9 +531,11 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
         QString sArchive = book.sArchive;
         sArchive.replace(QStringLiteral(".inp"), QStringLiteral(".zip"));
         archive = QStringLiteral("%1/%2").arg(LibPath, sArchive);
+
+        if(sArchive.contains(QStringLiteral(".zip/")))
+            bZipInZip = true;
     }
 
-    archive = archive.replace('\\', '/');
     if(archive.isEmpty())
     {
         QFile book_file(file);
@@ -566,10 +569,64 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
     }
     else
     {
+        if(bZipInZip){
+            QString sTempZipDir = QDir::tempPath() + QStringLiteral("/freeLib/zip/") ;
+
+            QStringList sZipChain;
+            qsizetype posNext = 0;
+            qsizetype posPrev = 0;
+            while(posNext != -1){
+                posNext = book.sArchive.indexOf(QStringLiteral(".zip"), posPrev);
+                if(posNext != -1){
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+                    sZipChain << book.sArchive.sliced(posPrev, posNext + 4 - posPrev);
+#else
+                    QStringRef sZip = book.sArchive.leftRef(posNext + 4);
+                    sZipChain << sZip.right(sZip.length() - posPrev).toString();
+#endif
+
+                    posPrev = posNext + 5;
+                }
+            }
+            for(int i=1; i<sZipChain.count(); i++){
+                if(i==1){
+                    sTempZipDir = QDir::tempPath() + QStringLiteral("/freeLib/zip/");
+                    archive = QStringLiteral("%1/%2").arg(LibPath, sZipChain[0]);
+                }else{
+                    archive = QDir::tempPath() + QStringLiteral("/freeLib/zip");
+                    for(int j=0; j<i; j++)
+                        archive += QStringLiteral("/") + sZipChain[j];
+                    archive += QStringLiteral(".tmp");
+                }
+                sTempZipDir += sZipChain[i-1] + QStringLiteral("/");
+                QDir dirZip(sTempZipDir);
+                dirZip.mkpath(sTempZipDir);
+                QuaZip uz(archive);
+                if (!uz.open(QuaZip::mdUnzip))
+                {
+                    qDebug() << "Error open archive! " << archive;
+                    return fi;
+                }
+                QuaZipFile zip_file(&uz);
+                setCurrentZipFileName(&uz, sZipChain[i]);
+                if(!zip_file.open(QIODevice::ReadOnly))
+                {
+                    qDebug()<<"Error open file: " << sZipChain[i];
+                }
+                QBuffer buffer;
+                buffer.setData(zip_file.readAll());
+                zip_file.close();
+                archive = sTempZipDir + sZipChain[i] + ".tmp";
+                QFile tempZipFile(archive);
+                tempZipFile.open(QIODevice::WriteOnly);
+                tempZipFile.write(buffer.data());
+                tempZipFile.close();
+            }
+        }
         QuaZip uz(archive);
         if (!uz.open(QuaZip::mdUnzip))
         {
-            qDebug()<<("Error open archive!")<<" "<<archive;
+            qDebug() << "Error open archive! " << archive;
             return fi;
         }
 
@@ -583,10 +640,10 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
             }
         }
         QuaZipFile zip_file(&uz);
-        setCurrentZipFileName(&uz,file);
+        setCurrentZipFileName(&uz, file);
         if(!zip_file.open(QIODevice::ReadOnly))
         {
-            qDebug()<<"Error open file: "<<file;
+            qDebug()<<"Error open file: " << file;
         }
         if(pBuffer != nullptr)
         {
@@ -606,6 +663,8 @@ QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo,
         }
 
         fi.setFile(archive + QStringLiteral("/") + file);
+        if(bZipInZip)
+            QDir(QDir::tempPath() + QStringLiteral("/freeLib/zip/")).removeRecursively();
     }
     return fi;
 }

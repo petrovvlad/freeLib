@@ -439,10 +439,6 @@ MainWindow::~MainWindow()
     settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
     settings->setValue(QStringLiteral("MainWnd/VSplitterSizes"), ui->splitterV->saveState());
     settings->setValue(QStringLiteral("MainWnd/HSplitterSizes"), ui->splitterH->saveState());
-    QString TempDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
-        TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    QDir(TempDir + QStringLiteral("/freeLib/")).removeRecursively();
 
     delete ui;
 }
@@ -1224,16 +1220,33 @@ void MainWindow::SelectBook()
     QFile file_html(QStringLiteral(":/preview.html"));
     file_html.open(QIODevice::ReadOnly);
     QString content(file_html.readAll());
+    QString sFilePath;
     qint64 size = 0;
-    QFileInfo arh;
     if(!fi.fileName().isEmpty())
     {
-        arh = fi;
-        while(!arh.exists())
+        QFileInfo arh;
+        if(fi.absolutePath().startsWith(QDir::tempPath() + QStringLiteral("/freeLib/zip/"))){
+            sFilePath = fi.path();
+            sFilePath.chop(4);
+            sFilePath.replace(QDir::tempPath() + QStringLiteral("/freeLib/zip/"), lib.path + QStringLiteral("/"));
+            arh.setFile(sFilePath);
+            while(!arh.exists())
+            {
+                arh.setFile(arh.absolutePath());
+                if(arh.fileName().isEmpty())
+                    break;
+            }
+        }
+        else
         {
-            arh.setFile(arh.absolutePath());
-            if(arh.fileName().isEmpty())
-                break;
+            arh = fi;
+            while(!arh.exists())
+            {
+                arh.setFile(arh.absolutePath());
+                if(arh.fileName().isEmpty())
+                    break;
+            }
+            sFilePath = arh.filePath();
         }
         size = arh.size();
     }
@@ -1247,7 +1260,7 @@ void MainWindow::SelectBook()
             replace(QStringLiteral("#author#"), sAuthors).
             replace(QStringLiteral("#genre#"), sGenres).
             replace(QStringLiteral("#series#"), seria).
-            replace(QStringLiteral("#file_path#"), arh.filePath()).
+            replace(QStringLiteral("#file_path#"), sFilePath).
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
             replace(QStringLiteral("#file_size#"), size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : QStringLiteral("")).
 #else

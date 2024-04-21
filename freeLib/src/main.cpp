@@ -372,12 +372,6 @@ int main(int argc, char *argv[])
     setLocale(options.sUiLanguageName);
     if(options.vExportOptions.isEmpty())
         options.setExportDefault();
-    
-    QDir::setCurrent(HomeDir);
-    QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
-    QDir dirTmp(sDirTmp);
-    if(!dirTmp.exists())
-        dirTmp.mkpath(sDirTmp);
 
     std::unique_ptr<QSplashScreen> splash;
     if(!bServer && options.bShowSplash){
@@ -395,6 +389,12 @@ int main(int argc, char *argv[])
 
     if(!openDB(QStringLiteral("libdb")))
         return 1;
+
+    QDir::setCurrent(HomeDir);
+    QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
+    QDir dirTmp(sDirTmp);
+    if(!dirTmp.exists())
+        dirTmp.mkpath(sDirTmp);
 
     a->processEvents();
     setProxy();
@@ -431,5 +431,7 @@ int main(int argc, char *argv[])
     int result = a->exec();
     if(pMainWindow)
         delete pMainWindow;
+
+    QDir(QDir::tempPath() + QStringLiteral("/freeLib/")).removeRecursively();
     return result;
 }
