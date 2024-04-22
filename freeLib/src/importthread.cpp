@@ -10,7 +10,12 @@
 #include <QDebug>
 #include <QDir>
 
+#ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazipfile.h>
+#endif
+
 #include "utilites.h"
 
 QString RelativeToAbsolutePath(QString path);

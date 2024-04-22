@@ -1,5 +1,11 @@
+#ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazip.h>
+#include <quazip/quazipfile.h>
+#endif
+
 #include <QApplication>
 #include <QBuffer>
 #include <QButtonGroup>
@@ -90,5 +96,5 @@
 #endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-#include "qpassworddigestor.h"
+#include <QPasswordDigestor>
 #endif

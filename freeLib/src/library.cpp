@@ -11,7 +11,12 @@
 #include <QDir>
 #include <QtConcurrent>
 
+#ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazipfile.h>
+#endif
+
 #include "utilites.h"
 #if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
 #include "options.h"
