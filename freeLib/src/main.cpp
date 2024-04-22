@@ -360,8 +360,7 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    a->setOrganizationName(QStringLiteral("freeLib"));
-    a->setApplicationName(QStringLiteral("freeLib"));
+    a->setApplicationName(u"freeLib"_s);
 
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)

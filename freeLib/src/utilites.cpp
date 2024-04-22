@@ -297,11 +297,10 @@ QSharedPointer<QSettings> GetSettings(bool bReopen)
     static QSharedPointer<QSettings> pSettings;
     if(bReopen || !pSettings)
     {
-        QString sFile = QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg");
-        if(QFile::exists(sFile)){
-            pSettings = QSharedPointer<QSettings> (new QSettings(sFile, QSettings::IniFormat));
-        }else
-            pSettings = QSharedPointer<QSettings> (new QSettings());
+        QString sFile = QApplication::applicationDirPath() + u"/freeLib.cfg"_s;
+        if(!QFile::exists(sFile))
+            sFile = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + u"/freeLib.conf"_s;
+        pSettings = QSharedPointer<QSettings> (new QSettings(sFile, QSettings::IniFormat));
         #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         pSettings->setIniCodec("UTF-8");
         #endif
