@@ -140,7 +140,13 @@ set_target_properties(freelib PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
-target_compile_features(freelib PRIVATE cxx_std_17)
+if("cxx_std_20" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+    message(STATUS "Using C++20 standard")
+    target_compile_features(freelib PRIVATE cxx_std_20)
+else()
+    message(STATUS "Using C++17 standard")
+    target_compile_features(freelib PRIVATE cxx_std_17)
+endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(freelib)
