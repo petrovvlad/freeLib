@@ -164,17 +164,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
     connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
     #ifdef Q_OS_MACX
-        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
+        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
     #endif
     #ifdef Q_OS_LINUX
-        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
-        setWindowIcon(QIcon(QStringLiteral(":/library.png")));
+        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
+        setWindowIcon(QIcon(u":/library.png"_s));
     #endif
     #ifdef Q_OS_WIN
-        ui->actionExit->setShortcut(QKeySequence(Qt::ALT|Qt::Key_F4));
+        ui->actionExit->setShortcut(QKeySequence(Qt::ALT, Qt::Key_F4));
     #endif
     #ifdef Q_OS_WIN32
-        ui->actionExit->setShortcut(QKeySequence(Qt::ALT|Qt::Key_F4));
+        ui->actionExit->setShortcut(QKeySequence(Qt::ALT, Qt::Key_F4));
     #endif
     connect(ui->AuthorList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectAuthor);
     connect(ui->Books, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectBook);
