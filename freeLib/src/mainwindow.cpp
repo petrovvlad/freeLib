@@ -1179,7 +1179,7 @@ void MainWindow::SelectBook()
     QDateTime book_date;
     QFileInfo fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
     if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotation(idBook);
+        lib.loadAnnotationAndCover(idBook);
     if(fi.fileName().isEmpty())
     {
         QString file;

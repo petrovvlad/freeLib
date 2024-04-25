@@ -390,10 +390,14 @@ int main(int argc, char *argv[])
         return 1;
 
     QDir::setCurrent(HomeDir);
-    QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
+    QString sDirTmp = QDir::tempPath() + u"/freeLib"_s;
     QDir dirTmp(sDirTmp);
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
+    QString sDirCovers = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + u"/covers"_s;
+    QDir dirCovers(sDirCovers);
+    if(!dirCovers.exists())
+        dirCovers.mkpath(sDirCovers);
 
     a->processEvents();
     setProxy();

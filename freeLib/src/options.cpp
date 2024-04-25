@@ -358,6 +358,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     sProxyHost = pSettings->value(QStringLiteral("proxy_host")).toString();
     sProxyUser = pSettings->value(QStringLiteral("proxy_password")).toString();
     sProxyPassword = pSettings->value(QStringLiteral("proxy_user")).toString();
+    nCacheSize = pSettings->value(u"CacheSize"_s, 10).toLongLong()*1024*1024;
 
     int count = pSettings->beginReadArray(QStringLiteral("application"));
     for(int i=0; i<count; i++)
