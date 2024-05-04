@@ -533,8 +533,7 @@
               <string>Edit matadata</string>
              </property>
              <property name="icon">
-              <iconset theme="document-edit">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset theme="document-edit"/>
              </property>
             </widget>
            </item>
@@ -547,8 +546,7 @@
               <string notr="true">...</string>
              </property>
              <property name="icon">
-              <iconset theme="checkbox">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset theme="checkbox"/>
              </property>
             </widget>
            </item>
@@ -559,6 +557,9 @@
              </property>
              <property name="text">
               <string notr="true">...</string>
+             </property>
+             <property name="popupMode">
+              <enum>QToolButton::MenuButtonPopup</enum>
              </property>
             </widget>
            </item>
@@ -571,8 +572,7 @@
               <string notr="true">...</string>
              </property>
              <property name="icon">
-              <iconset theme="settings-configure">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset theme="settings-configure"/>
              </property>
             </widget>
            </item>
@@ -598,8 +598,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset theme="view-list-tree">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset theme="view-list-tree"/>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -618,8 +617,7 @@
               <string>...</string>
              </property>
              <property name="icon">
-              <iconset theme="view-list-details">
-               <normaloff>.</normaloff>.</iconset>
+              <iconset theme="view-list-details"/>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -918,7 +916,7 @@
      <x>0</x>
      <y>0</y>
      <width>1297</width>
-     <height>25</height>
+     <height>22</height>
     </rect>
    </property>
    <widget class="QMenu" name="menuHelp">

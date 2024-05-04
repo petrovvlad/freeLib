@@ -11,7 +11,7 @@
 #include <QCloseEvent>
 #include <QWidgetAction>
 #include <QtConcurrent>
-
+#include <QActionGroup>
 
 #include "librariesdlg.h"
 #include "settingsdlg.h"
@@ -85,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnWidth(8,50);
     ui->Books->setColumnWidth(9,50);
 
+    pLibGroup_ = new QActionGroup(this);
     pCover = new CoverLabel(this);
     ui->horizontalLayout_3->addWidget(pCover);
 
@@ -1062,8 +1063,7 @@ void MainWindow::SelectLibrary()
             break;
         }
 
-        setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||libs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + libs[idCurrentLib].name));
-                           FillLibrariesMenu();
+        setWindowTitle(u"freeLib"_s + ((idCurrentLib == 0||libs[idCurrentLib].name.isEmpty() ?u""_s :u" — "_s) + libs[idCurrentLib].name));
 
         future.waitForFinished();
     }
@@ -1733,24 +1733,34 @@ void MainWindow::MoveToAuthor(uint id, const QString &FirstLetter)
 
 void MainWindow::FillLibrariesMenu()
 {
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
         return;
-    QMenu *lib_menu = new QMenu(this);
+    QMenu *menu = ui->actionLibraries->menu();
+    if(menu){
+        menu->clear();
+    }else{
+        menu = new QMenu(this);
+        ui->actionLibraries->setMenu(menu);
+        ui->btnLibrary->setMenu(menu);
+    }
+
     auto i = libs.constBegin();
     while(i != libs.constEnd()){
         uint idLib = i.key();
         if(idLib>0){
-            QAction *action = new QAction(i->name, this);
+            QAction *action = new QAction(i->name, menu);
             action->setData(idLib);
             action->setCheckable(true);
-            lib_menu->insertAction(nullptr,action);
+            menu->insertAction(nullptr, action);
+            pLibGroup_->addAction(action);
             connect(action, &QAction::triggered, this, &MainWindow::SelectLibrary);
-            action->setChecked(idLib == idCurrentLib);
+            if(idLib == idCurrentLib)
+                action->setChecked(true);
         }
         ++i;
     }
-    ui->actionLibraries->setMenu(lib_menu);
-    ui->actionLibraries->setEnabled(lib_menu->actions().count()>0);
+    menu->setEnabled( menu->actions().count()>1 );
+    ui->actionLibraries->setEnabled( menu->actions().count()>0 );
 }
 
 void MainWindow::FillAuthors()

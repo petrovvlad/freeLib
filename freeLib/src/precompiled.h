@@ -6,6 +6,11 @@
 #include <quazip/quazipfile.h>
 #endif
 
+#ifdef USE_DEJVULIBRE
+#include <libdjvu/ddjvuapi.h>
+#endif
+
+#include <QActionGroup>
 #include <QApplication>
 #include <QBuffer>
 #include <QButtonGroup>
