@@ -20,6 +20,9 @@
 
 #include "utilites.h"
 #include "options.h"
+#ifdef USE_DEJVULIBRE
+#include "djvu.h"
+#endif
 
 QMap<uint, SLib> libs;
 QMap <ushort, SGenre> genres;
@@ -438,7 +441,7 @@ void SLib::loadAnnotationAndCover(uint idBook)
         QuaZip zip(&buffer);
         zip.open(QuaZip::mdUnzip);
         QBuffer info;
-        setCurrentZipFileName(&zip, QStringLiteral("META-INF/container.xml"));
+        setCurrentZipFileName(&zip, u"META-INF/container.xml"_s);
         QuaZipFile zip_file(&zip);
         zip_file.open(QIODevice::ReadOnly);
         info.setData(zip_file.readAll());
@@ -457,7 +460,7 @@ void SLib::loadAnnotationAndCover(uint idBook)
                 {
                     if(roots.childNodes().at(j).nodeName().toLower() == u"rootfile")
                     {
-                        QString path = roots.childNodes().at(j).attributes().namedItem(QStringLiteral("full-path")).toAttr().value();
+                        QString path = roots.childNodes().at(j).attributes().namedItem(u"full-path"_s).toAttr().value();
                         QBuffer opf_buf;
                         QFileInfo fi(path);
                         rel_path = fi.path();
@@ -468,7 +471,7 @@ void SLib::loadAnnotationAndCover(uint idBook)
 
                         QDomDocument opf;
                         opf.setContent(opf_buf.data());
-                        QDomNode meta = opf.documentElement().namedItem(QStringLiteral("metadata"));
+                        QDomNode meta = opf.documentElement().namedItem(u"metadata"_s);
                         for(int m=0; m<meta.childNodes().count(); m++)
                         {
                             if(meta.childNodes().at(m).nodeName().right(11) == u"description")
@@ -547,6 +550,26 @@ void SLib::loadAnnotationAndCover(uint idBook)
         }else
             book.sImg = sImg;
         book.sAnnotation = title_info.elementsByTagName(u"annotation"_s).at(0).toElement().text();
+    }else if(book.sFormat == u"djvu" || book.sFormat == u"djv"){
+        if(!QFile::exists(sImg)){
+            QString sDjVuFile = QDir::tempPath() + u"/book.djvu"_s;
+            QFile fileDjVu(sDjVuFile);
+            if(!fileDjVu.open(QIODevice::ReadWrite))
+                return;
+            fileDjVu.write(buffer.buffer());
+            fileDjVu.close();
+            DjVu djvu;
+            if(djvu.openDocument(sDjVuFile)){
+                QImage cover = djvu.getCover();
+                if(!cover.isNull()){
+                    book.sImg = sImg;
+                    cover.save(sImg);
+                    cleanCache();
+                }
+            }
+            fileDjVu.remove();
+        }else
+            book.sImg = sImg;
     }
 }
 

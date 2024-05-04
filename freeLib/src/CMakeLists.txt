@@ -22,6 +22,9 @@ endif()
 
 find_package(ZLIB REQUIRED)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(DjVuLibre QUIET)
+
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp      mainwindow.h    mainwindow.ui
@@ -73,6 +76,15 @@ if(NOT QuaZip-Qt${QT_VERSION_MAJOR}_FOUND)
     set(QUAZIP_INSTALL OFF)
     set(BUILD_SHARED_LIBS OFF)
     add_subdirectory(quazip)
+endif()
+
+if(DJVULIBRE_FOUND)
+    message(STATUS "Found DjVuLibre")
+    set(PROJECT_SOURCES
+        ${PROJECT_SOURCES}
+        djvu.cpp            djvu.h
+    )
+    add_definitions(-DUSE_DEJVULIBRE=1)
 endif()
 
 #configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
@@ -127,6 +139,10 @@ target_link_libraries(freelib PRIVATE
 
 if(QT_VERSION_MAJOR EQUAL 6 AND QT_VERSION_MINOR GREATER_EQUAL 4)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
+endif()
+
+if(DJVULIBRE_FOUND)
+    target_link_libraries(freelib PRIVATE djvulibre)
 endif()
 
 target_precompile_headers(freelib
