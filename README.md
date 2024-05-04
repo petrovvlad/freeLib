@@ -22,21 +22,24 @@ freeLib - каталогизатор для библиотек LibRusEc и Flibu
 Установить необходимые компоненты: 
 в Ubuntu ≥ 23.04
 ```
-sudo apt update && sudo apt-get install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev
 ```
 в Ubuntu < 23.04
 ```
-sudo apt update && sudo apt-get install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev
+sudo apt update && sudo apt install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev
 ```
-
+Для отображения обложек djvu файлов установить библиотеку [DjVuLibre](https://djvu.sourceforge.net/)
+```
+sudo apt install libdjvulibre-dev
+```
 Скачать исходники программы:
 ```
 git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
 ```
-Собрать  и установить:
+Собрать и установить:
 ```
-mkdir freeLib/build && cd freeLib/build
-cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build . -j2
+mkdir freeLib/build && cd freeLib/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build . -j2 && \
 sudo make install
 ```
 
