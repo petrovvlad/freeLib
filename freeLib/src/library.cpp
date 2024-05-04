@@ -550,7 +550,9 @@ void SLib::loadAnnotationAndCover(uint idBook)
         }else
             book.sImg = sImg;
         book.sAnnotation = title_info.elementsByTagName(u"annotation"_s).at(0).toElement().text();
-    }else if(book.sFormat == u"djvu" || book.sFormat == u"djv"){
+    }
+#ifdef USE_DEJVULIBRE
+    else if(book.sFormat == u"djvu" || book.sFormat == u"djv"){
         if(!QFile::exists(sImg)){
             QString sDjVuFile = QDir::tempPath() + u"/book.djvu"_s;
             QFile fileDjVu(sDjVuFile);
@@ -571,6 +573,8 @@ void SLib::loadAnnotationAndCover(uint idBook)
         }else
             book.sImg = sImg;
     }
+#endif
+
 }
 
 QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData)
