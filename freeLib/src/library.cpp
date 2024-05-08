@@ -362,7 +362,7 @@ SAuthor::SAuthor()
 
 SAuthor::SAuthor(const QString &sName)
 {
-    QStringList listNames = sName.split(QStringLiteral(","));
+    QStringList listNames = sName.split(u","_s);
     if(listNames.count() > 0)
         sLastName = listNames[0].trimmed();
     if(listNames.count() > 1)
@@ -415,7 +415,7 @@ void cleanCache()
     QDir dirCovers(QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + u"/covers"_s);
     QFileInfoList fiList = dirCovers.entryInfoList(nameFilters, QDir::Files, QDir::Time);
     uint nCount = fiList.count();
-    uint i=0;
+    uint i = 0;
     if(options.bOpdsEnable){
         uint nCountOpds = std::min(nCount, options.nOpdsBooksPerPage*2U);
         for(; i<nCountOpds; i++)
@@ -554,22 +554,24 @@ void SLib::loadAnnotationAndCover(uint idBook)
 #ifdef USE_DEJVULIBRE
     else if(book.sFormat == u"djvu" || book.sFormat == u"djv"){
         if(!QFile::exists(sImg)){
-            QString sDjVuFile = QDir::tempPath() + u"/book.djvu"_s;
-            QFile fileDjVu(sDjVuFile);
-            if(!fileDjVu.open(QIODevice::ReadWrite))
-                return;
-            fileDjVu.write(buffer.buffer());
-            fileDjVu.close();
-            DjVu djvu;
-            if(djvu.openDocument(sDjVuFile)){
-                QImage cover = djvu.getCover();
-                if(!cover.isNull()){
-                    book.sImg = sImg;
-                    cover.save(sImg);
-                    cleanCache();
+            static DjVu djvu;
+            if(djvu.loadLibrary()){
+                QString sDjVuFile = QDir::tempPath() + u"/"_s + QString::number(idBook) + u".djvu"_s;
+                QFile fileDjVu(sDjVuFile);
+                if(!fileDjVu.open(QIODevice::ReadWrite))
+                    return;
+                fileDjVu.write(buffer.buffer());
+                fileDjVu.close();
+                if(djvu.openDocument(sDjVuFile)){
+                    QImage cover = djvu.getCover();
+                    if(!cover.isNull()){
+                        book.sImg = sImg;
+                        cover.save(sImg);
+                        cleanCache();
+                    }
                 }
+                fileDjVu.remove();
             }
-            fileDjVu.remove();
         }else
             book.sImg = sImg;
     }

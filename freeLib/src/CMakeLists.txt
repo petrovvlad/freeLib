@@ -141,10 +141,6 @@ if(QT_VERSION_MAJOR EQUAL 6 AND QT_VERSION_MINOR GREATER_EQUAL 4)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
 endif()
 
-if(DJVULIBRE_FOUND)
-    target_link_libraries(freelib PRIVATE djvulibre)
-endif()
-
 target_precompile_headers(freelib
   PRIVATE
     precompiled.h
