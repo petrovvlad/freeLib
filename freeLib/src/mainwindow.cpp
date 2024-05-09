@@ -98,6 +98,33 @@ MainWindow::MainWindow(QWidget *parent) :
     if(settings->contains(QStringLiteral("MainWnd/HSplitterSizes")))
         ui->splitterH->restoreState(settings->value(QStringLiteral("MainWnd/HSplitterSizes")).toByteArray());
 
+    settings->beginGroup(u"Columns"_s);
+    QVariant varHeaders = settings->value(u"headersTree"_s);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    if(varHeaders.type() == QVariant::ByteArray)
+#else
+    if(varHeaders.metaType().id() == QMetaType::QByteArray)
+#endif
+        aHeadersTree_ = varHeaders.toByteArray();
+    else{
+        ui->Books->setColumnHidden(1, true);
+        ui->Books->setColumnHidden(2, true);
+        ui->Books->setColumnHidden(9, true);
+    }
+    varHeaders = settings->value(u"headersList"_s);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    if(varHeaders.type() == QVariant::ByteArray)
+#else
+    if(varHeaders.metaType().id() == QMetaType::QByteArray)
+#endif
+        aHeadersList_ = varHeaders.toByteArray();
+    settings->endGroup();
+    if(bTreeView_)
+        ui->Books->header()->restoreState(aHeadersTree_);
+    else
+        ui->Books->header()->restoreState(aHeadersList_);
+    ui->Books->header()->setSortIndicatorShown(true);
+
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
     ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
@@ -239,33 +266,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
     connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
-
-    settings->beginGroup(QStringLiteral("Columns"));
-    QVariant varHeaders = settings->value(QStringLiteral("headersTree"));
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    if(varHeaders.type() == QVariant::ByteArray)
-#else
-    if(varHeaders.metaType().id() == QMetaType::QByteArray)
-#endif
-        aHeadersTree_ = varHeaders.toByteArray();
-    else{
-        ui->Books->setColumnHidden(1, true);
-        ui->Books->setColumnHidden(2, true);
-        ui->Books->setColumnHidden(9, true);
-    }
-    varHeaders = settings->value(QStringLiteral("headersList"));
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    if(varHeaders.type() == QVariant::ByteArray)
-#else
-    if(varHeaders.metaType().id() == QMetaType::QByteArray)
-#endif
-        aHeadersList_ = varHeaders.toByteArray();
-    settings->endGroup();
-    if(bTreeView_)
-        ui->Books->header()->restoreState(aHeadersTree_);
-    else
-        ui->Books->header()->restoreState(aHeadersList_);
-    ui->Books->header()->setSortIndicatorShown(true);
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
