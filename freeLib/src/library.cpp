@@ -899,10 +899,9 @@ QString SLib::nameFromInpx(const QString &sInpx)
         QuaZip uz(sInpx);
         if(!uz.open(QuaZip::mdUnzip))
         {
-            qDebug()<<"Error open INPX file: " << sInpx;
-            //return sName;
+            MyDBG << "Error open INPX file: " << sInpx;
         } else
-            if(setCurrentZipFileName(&uz, QStringLiteral("COLLECTION.INFO")))
+            if(setCurrentZipFileName(&uz, u"COLLECTION.INFO"_s))
             {
                 QBuffer outbuff;
                 QuaZipFile zip_file(&uz);
@@ -912,6 +911,6 @@ QString SLib::nameFromInpx(const QString &sInpx)
                 sName = QString::fromUtf8(outbuff.data().left(outbuff.data().indexOf('\n')));
             }
     }
-    return sName;
+    return sName.simplified();
 }
 

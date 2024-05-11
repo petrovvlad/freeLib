@@ -315,10 +315,6 @@ int main(int argc, char *argv[])
 
                     imp_tr->init(nId, lib, UT_NEW);
                     imp_tr->moveToThread(thread);
-                    QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
-                                     {
-                                         std::cout << msg.toStdString() << std::endl;
-                                     });
                     QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
                     QObject::connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
                     QObject::connect(imp_tr, &ImportThread::End, []()

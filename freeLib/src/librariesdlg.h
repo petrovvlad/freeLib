@@ -17,8 +17,6 @@ class LibrariesDlg : public QDialog
 public:
     explicit LibrariesDlg(QWidget *parent = 0);
     ~LibrariesDlg();
-    //int exec();
-    void AddNewLibrary(SLib &lib);
     void StartImport(const SLib &lib);
     bool bLibChanged;
     
@@ -32,7 +30,7 @@ private:
     uint idCurrentLib_;
 
 private slots:
-    void LogMessage(const QString &msg);
+    void progressImport(uint nBooksAdded, float fProgress);
     void InputINPX();
     void SelectBooksDir();
     void StartImport();

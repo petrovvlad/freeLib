@@ -2,9 +2,9 @@
 #define IMPORTTHREAD_H
 
 #include <QSqlDatabase>
+#include <QSqlQuery>
 
 #include "library.h"
-#include "qsqlquery.h"
 
 //способы обновления
 #define UT_FULL 10
@@ -19,17 +19,16 @@ public:
     explicit ImportThread(QObject *parent = 0);
     void init(uint id, const SLib &lib, uchar nUpdateType);
     void init(uint id, const SLib &lib, const QStringList &files);
-    //void SaveLibrary();
 signals:
-    void Message(QString str);
+    void progress(uint nAddedBooks, float fProgress);
     void End();
 public slots:
     void process();
     void break_import();
 protected:
     void importBooksFromPath(const QString &sPath);
-    void importBooksFromPath(const QString &sPath,int &count);
-    void importBooksFromZip(const QString &sPath, const QString &sArchName, int &count);
+    void importBooksFromList(const QFileInfoList &listFiles);
+    void importBooksFromZip(const QString &sPath, const QString &sArchName, uint &nBooksCount);
 
     void readFB2(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
     void readEPUB(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
