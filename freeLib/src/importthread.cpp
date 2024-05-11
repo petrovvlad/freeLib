@@ -1037,19 +1037,19 @@ void ImportThread::process()
                 if(substrings.count() >= field_index[_JANRES] + 1)
                 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-                    const QStringList Genres = substrings[field_index[_JANRES]].split(':', Qt::SkipEmptyParts);
+                    const QStringList listGenres = substrings[field_index[_JANRES]].split(':', Qt::SkipEmptyParts);
 #else
-                    QStringList Janres;
+                    QStringList listGenres;
                     QStringList tmpList = substrings[field_index[_JANRES]].split(QStringLiteral(":"));
                     for(int i=0; i<tmpList.size(); i++){
                         QString str = tmpList.at(i);
                         if(!str.isEmpty())
-                            Janres << str;
+                            listGenres << str;
                     }
 #endif
 
                     bool first = true;
-                    for(const QString &genre: Genres)
+                    for(const QString &genre: listGenres)
                     {
                         if(!first && genre.trimmed().isEmpty())
                             continue;
