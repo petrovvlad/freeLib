@@ -597,7 +597,6 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>don`t add deleted books</source>
-        <oldsource>don`t add deleted</oldsource>
         <translation>не добавлять удаленные книги</translation>
     </message>
     <message>
@@ -663,6 +662,10 @@ Kernel: %3 %4</source>
     <message>
         <source>Select destination directory</source>
         <translation>Выберите директорию</translation>
+    </message>
+    <message>
+        <source>Books adds:</source>
+        <translation>Добавлено книг:</translation>
     </message>
 </context>
 <context>
@@ -1163,7 +1166,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>default</source>
-        <translation>по-умолчанию</translation>
+        <translation>по умолчанию</translation>
     </message>
     <message>
         <source>Browse dir:</source>
@@ -1229,7 +1232,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Default</source>
-        <translation>по-умолчанию</translation>
+        <translation>по умолчанию</translation>
     </message>
     <message>
         <source>Postprocessing tools</source>
@@ -1242,7 +1245,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Load default</source>
-        <translation>Настройки по-умолчанию</translation>
+        <translation>Настройки по умолчанию</translation>
     </message>
     <message>
         <source>Uncheck successfully export</source>
@@ -1364,7 +1367,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <source>Are you sure you want to load the default settings?</source>
-        <translation>Вы уверены, что хотите загрузить настройки по-умолчанию?</translation>
+        <translation>Вы уверены, что хотите загрузить настройки по умолчанию?</translation>
     </message>
     <message>
         <source>Save profile</source>
