@@ -94,22 +94,25 @@ void LibrariesDlg::InputINPX()
 {
     QString sOldFileName = ui->inpx->text();
     QString sDir;
+    QString sBookDir = ui->BookDir->text();
     if(!sOldFileName.isEmpty())
         sDir = QFileInfo(sOldFileName).absolutePath();
     else{
-        QString sBookDir = ui->BookDir->text();
         if(!sBookDir.isEmpty())
             sDir = sBookDir;
     }
-    QString sNewFileName = QFileDialog::getOpenFileName(this, tr("Add library"), sDir, tr("Library") + QStringLiteral(" (*.inpx)"));
+    QString sNewFileName = QFileDialog::getOpenFileName(this, tr("Add library"), sDir, tr("Library") + u" (*.inpx)"_s);
     if(!sNewFileName.isEmpty())
     {
         ui->inpx->setText(sNewFileName);
-        ui->BookDir->setText(QFileInfo(sNewFileName).absolutePath());
-        QString sLib = UniqueName( SLib::nameFromInpx(sNewFileName) );
-        if(!sLib.isEmpty())
-            ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), sLib);
-        if(sOldFileName != sOldFileName){
+        if(sBookDir.isEmpty())
+            ui->BookDir->setText(QFileInfo(sNewFileName).absolutePath());
+        if(ui->ExistingLibs->itemText(ui->ExistingLibs->currentIndex()).startsWith(tr("new"))){
+            QString sLibName = UniqueName( SLib::nameFromInpx(sNewFileName) );
+            if(!sLibName.isEmpty())
+                ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), sLibName);
+        }
+        if(sOldFileName != sNewFileName){
             ui->progressBar->setVisible(false);
             ui->labelStatus->setVisible(false);
         }
@@ -118,10 +121,11 @@ void LibrariesDlg::InputINPX()
 
 void LibrariesDlg::SelectBooksDir()
 {
-    QString sOldDir = ui->BookDir->text();
-    QDir::setCurrent(sOldDir);
-    QString sNewDir = QFileDialog :: getExistingDirectory(this, tr("Select books directory"));
-    if( sOldDir != sNewDir && !sNewDir.isEmpty()){
+    QString sDir = ui->BookDir->text();
+    if(sDir.isEmpty())
+        sDir = QFileInfo(ui->inpx->text()).absolutePath();
+    QString sNewDir = QFileDialog :: getExistingDirectory(this, tr("Select books directory"), sDir);
+    if( sDir != sNewDir && !sNewDir.isEmpty()){
         ui->BookDir->setText(sNewDir);
         ui->progressBar->setVisible(false);
         ui->labelStatus->setVisible(false);
