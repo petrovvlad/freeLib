@@ -66,6 +66,7 @@ private:
     QMenu *pTrayMenu_;
     QAction *pHideAction_;
     QAction *pShowAction_;
+    QActionGroup *pLibGroup_;
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
     ushort idCurrentGenre_;

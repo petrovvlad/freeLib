@@ -11,7 +11,7 @@
 #include <QCloseEvent>
 #include <QWidgetAction>
 #include <QtConcurrent>
-
+#include <QActionGroup>
 
 #include "librariesdlg.h"
 #include "settingsdlg.h"
@@ -85,6 +85,7 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->setColumnWidth(8,50);
     ui->Books->setColumnWidth(9,50);
 
+    pLibGroup_ = new QActionGroup(this);
     pCover = new CoverLabel(this);
     ui->horizontalLayout_3->addWidget(pCover);
 
@@ -96,6 +97,33 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->splitterV->restoreState(settings->value(QStringLiteral("MainWnd/VSplitterSizes")).toByteArray());
     if(settings->contains(QStringLiteral("MainWnd/HSplitterSizes")))
         ui->splitterH->restoreState(settings->value(QStringLiteral("MainWnd/HSplitterSizes")).toByteArray());
+
+    settings->beginGroup(u"Columns"_s);
+    QVariant varHeaders = settings->value(u"headersTree"_s);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    if(varHeaders.type() == QVariant::ByteArray)
+#else
+    if(varHeaders.metaType().id() == QMetaType::QByteArray)
+#endif
+        aHeadersTree_ = varHeaders.toByteArray();
+    else{
+        ui->Books->setColumnHidden(1, true);
+        ui->Books->setColumnHidden(2, true);
+        ui->Books->setColumnHidden(9, true);
+    }
+    varHeaders = settings->value(u"headersList"_s);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    if(varHeaders.type() == QVariant::ByteArray)
+#else
+    if(varHeaders.metaType().id() == QMetaType::QByteArray)
+#endif
+        aHeadersList_ = varHeaders.toByteArray();
+    settings->endGroup();
+    if(bTreeView_)
+        ui->Books->header()->restoreState(aHeadersTree_);
+    else
+        ui->Books->header()->restoreState(aHeadersList_);
+    ui->Books->header()->setSortIndicatorShown(true);
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
     QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
@@ -164,17 +192,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
     connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
     #ifdef Q_OS_MACX
-        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
+        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
     #endif
     #ifdef Q_OS_LINUX
-        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL|Qt::Key_Q));
-        setWindowIcon(QIcon(QStringLiteral(":/library.png")));
+        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
+        setWindowIcon(QIcon(u":/library.png"_s));
     #endif
     #ifdef Q_OS_WIN
-        ui->actionExit->setShortcut(QKeySequence(Qt::ALT|Qt::Key_F4));
+        ui->actionExit->setShortcut(QKeySequence(Qt::ALT, Qt::Key_F4));
     #endif
     #ifdef Q_OS_WIN32
-        ui->actionExit->setShortcut(QKeySequence(Qt::ALT|Qt::Key_F4));
+        ui->actionExit->setShortcut(QKeySequence(Qt::ALT, Qt::Key_F4));
     #endif
     connect(ui->AuthorList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectAuthor);
     connect(ui->Books, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectBook);
@@ -238,33 +266,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
     connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
-
-    settings->beginGroup(QStringLiteral("Columns"));
-    QVariant varHeaders = settings->value(QStringLiteral("headersTree"));
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    if(varHeaders.type() == QVariant::ByteArray)
-#else
-    if(varHeaders.metaType().id() == QMetaType::QByteArray)
-#endif
-        aHeadersTree_ = varHeaders.toByteArray();
-    else{
-        ui->Books->setColumnHidden(1, true);
-        ui->Books->setColumnHidden(2, true);
-        ui->Books->setColumnHidden(9, true);
-    }
-    varHeaders = settings->value(QStringLiteral("headersList"));
-#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
-    if(varHeaders.type() == QVariant::ByteArray)
-#else
-    if(varHeaders.metaType().id() == QMetaType::QByteArray)
-#endif
-        aHeadersList_ = varHeaders.toByteArray();
-    settings->endGroup();
-    if(bTreeView_)
-        ui->Books->header()->restoreState(aHeadersTree_);
-    else
-        ui->Books->header()->restoreState(aHeadersList_);
-    ui->Books->header()->setSortIndicatorShown(true);
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
@@ -1062,8 +1063,7 @@ void MainWindow::SelectLibrary()
             break;
         }
 
-        setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib == 0||libs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + libs[idCurrentLib].name));
-                           FillLibrariesMenu();
+        setWindowTitle(u"freeLib"_s + ((idCurrentLib == 0||libs[idCurrentLib].name.isEmpty() ?u""_s :u" — "_s) + libs[idCurrentLib].name));
 
         future.waitForFinished();
     }
@@ -1179,7 +1179,7 @@ void MainWindow::SelectBook()
     QDateTime book_date;
     QFileInfo fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
     if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotation(idBook);
+        lib.loadAnnotationAndCover(idBook);
     if(fi.fileName().isEmpty())
     {
         QString file;
@@ -1733,24 +1733,34 @@ void MainWindow::MoveToAuthor(uint id, const QString &FirstLetter)
 
 void MainWindow::FillLibrariesMenu()
 {
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
         return;
-    QMenu *lib_menu = new QMenu(this);
+    QMenu *menu = ui->actionLibraries->menu();
+    if(menu){
+        menu->clear();
+    }else{
+        menu = new QMenu(this);
+        ui->actionLibraries->setMenu(menu);
+        ui->btnLibrary->setMenu(menu);
+    }
+
     auto i = libs.constBegin();
     while(i != libs.constEnd()){
         uint idLib = i.key();
         if(idLib>0){
-            QAction *action = new QAction(i->name, this);
+            QAction *action = new QAction(i->name, menu);
             action->setData(idLib);
             action->setCheckable(true);
-            lib_menu->insertAction(nullptr,action);
+            menu->insertAction(nullptr, action);
+            pLibGroup_->addAction(action);
             connect(action, &QAction::triggered, this, &MainWindow::SelectLibrary);
-            action->setChecked(idLib == idCurrentLib);
+            if(idLib == idCurrentLib)
+                action->setChecked(true);
         }
         ++i;
     }
-    ui->actionLibraries->setMenu(lib_menu);
-    ui->actionLibraries->setEnabled(lib_menu->actions().count()>0);
+    menu->setEnabled( menu->actions().count()>1 );
+    ui->actionLibraries->setEnabled( menu->actions().count()>0 );
 }
 
 void MainWindow::FillAuthors()

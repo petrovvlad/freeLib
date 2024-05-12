@@ -8,8 +8,14 @@
 #include <QDebug>
 #include <QRegularExpression>
 
+#ifdef QUAZIP_STATIC
 #include "../quazip/quazip/quazip.h"
 #include "../quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazip.h>
+#include <quazip/quazipfile.h>
+#endif
+
 #include "../mobiEdit/mobiedit.h"
 #include "config-freelib.h"
 #include "utilites.h"

@@ -22,6 +22,9 @@ endif()
 
 find_package(ZLIB REQUIRED)
 
+set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
+find_package(DjVuLibre QUIET)
+
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp      mainwindow.h    mainwindow.ui
@@ -73,6 +76,15 @@ if(NOT QuaZip-Qt${QT_VERSION_MAJOR}_FOUND)
     set(QUAZIP_INSTALL OFF)
     set(BUILD_SHARED_LIBS OFF)
     add_subdirectory(quazip)
+endif()
+
+if(DJVULIBRE_FOUND)
+    message(STATUS "Found DjVuLibre")
+    set(PROJECT_SOURCES
+        ${PROJECT_SOURCES}
+        djvu.cpp            djvu.h
+    )
+    add_definitions(-DUSE_DEJVULIBRE=1)
 endif()
 
 #configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
@@ -140,7 +152,13 @@ set_target_properties(freelib PROPERTIES
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
 
-target_compile_features(freelib PRIVATE cxx_std_17)
+if("cxx_std_20" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
+    message(STATUS "Using C++20 standard")
+    target_compile_features(freelib PRIVATE cxx_std_20)
+else()
+    message(STATUS "Using C++17 standard")
+    target_compile_features(freelib PRIVATE cxx_std_17)
+endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(freelib)

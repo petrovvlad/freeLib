@@ -59,6 +59,9 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     ui->add_new->setChecked(true);
 
     SelectLibrary();
+
+    ui->progressBar->setVisible(false);
+    ui->labelStatus->setVisible(false);
 }
 
 LibrariesDlg::~LibrariesDlg()
@@ -81,41 +84,57 @@ void LibrariesDlg::Add_Library()
     emit ui->ExistingLibs->currentIndexChanged(ui->ExistingLibs->count()-1);
 }
 
-void LibrariesDlg::LogMessage(const QString &msg)
+void LibrariesDlg::progressImport(uint nBooksAdded, float fProgress)
 {
-    while(ui->Log->count() > 100)
-        delete ui->Log->takeItem(0);
-    ui->Log->addItem(msg);
-    ui->Log->setCurrentRow(ui->Log->count()-1);
+    ui->progressBar->setValue(fProgress * ui->progressBar->maximum());
+    ui->labelStatus->setText(tr("Books adds:") + u" "_s + QString::number(nBooksAdded));
 }
 
 void LibrariesDlg::InputINPX()
 {
-    QDir::setCurrent(QFileInfo(ui->inpx->text()).absolutePath());
-    QString fileName = QFileDialog::getOpenFileName(this, tr("Add library"),QLatin1String(""), tr("Library") + QStringLiteral(" (*.inpx)"));
-    if(!fileName.isEmpty())
+    QString sOldFileName = ui->inpx->text();
+    QString sDir;
+    QString sBookDir = ui->BookDir->text();
+    if(!sOldFileName.isEmpty())
+        sDir = QFileInfo(sOldFileName).absolutePath();
+    else{
+        if(!sBookDir.isEmpty())
+            sDir = sBookDir;
+    }
+    QString sNewFileName = QFileDialog::getOpenFileName(this, tr("Add library"), sDir, tr("Library") + u" (*.inpx)"_s);
+    if(!sNewFileName.isEmpty())
     {
-        ui->inpx->setText(fileName);
-        ui->BookDir->setText(QFileInfo(fileName).absolutePath());
-        QString sLib = SLib::nameFromInpx(fileName);
-        if(!sLib.isEmpty())
-            ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), sLib);
+        ui->inpx->setText(sNewFileName);
+        if(sBookDir.isEmpty())
+            ui->BookDir->setText(QFileInfo(sNewFileName).absolutePath());
+        if(ui->ExistingLibs->itemText(ui->ExistingLibs->currentIndex()).startsWith(tr("new"))){
+            QString sLibName = UniqueName( SLib::nameFromInpx(sNewFileName) );
+            if(!sLibName.isEmpty())
+                ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), sLibName);
+        }
+        if(sOldFileName != sNewFileName){
+            ui->progressBar->setVisible(false);
+            ui->labelStatus->setVisible(false);
+        }
     }
 }
 
 void LibrariesDlg::SelectBooksDir()
 {
-    QDir::setCurrent(ui->BookDir->text());
-    QString dir = QFileDialog :: getExistingDirectory(this, tr("Select books directory"));
-    if(!dir.isEmpty())
-        ui->BookDir->setText(dir);
+    QString sDir = ui->BookDir->text();
+    if(sDir.isEmpty())
+        sDir = QFileInfo(ui->inpx->text()).absolutePath();
+    QString sNewDir = QFileDialog :: getExistingDirectory(this, tr("Select books directory"), sDir);
+    if( sDir != sNewDir && !sNewDir.isEmpty()){
+        ui->BookDir->setText(sNewDir);
+        ui->progressBar->setVisible(false);
+        ui->labelStatus->setVisible(false);
+    }
 }
 
 void LibrariesDlg::UpdateLibList()
 
 {
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
-        return;
     bool block = ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->clear();
     auto i = libs.constBegin();
@@ -130,7 +149,7 @@ void LibrariesDlg::UpdateLibList()
         }
         ++i;
     }
-    ui->ExistingLibs->setEnabled(ui->ExistingLibs->count()>0);
+    ui->ExistingLibs->setEnabled( ui->ExistingLibs->count()>0 );
     ui->ExistingLibs->blockSignals(block);
 }
 
@@ -158,6 +177,7 @@ void LibrariesDlg::StartImport(const SLib &lib)
     uchar nUdateType = (ui->add_new->isChecked() ?UT_NEW :ui->del_old->isChecked() ?UT_DEL_AND_NEW :UT_FULL);
     SaveLibrary(lib);
     ui->btnUpdate->setDisabled(true);
+    ui->btnExport->setDisabled(true);
     ui->BookDir->setDisabled(true);
     ui->inpx->setDisabled(true);
     ui->ExistingLibs->setDisabled(true);
@@ -172,7 +192,7 @@ void LibrariesDlg::StartImport(const SLib &lib)
     pImportThread_ = new ImportThread();
     pImportThread_->init(idCurrentLib_, lib, nUdateType);
     pImportThread_->moveToThread(pThread_);
-    connect(pImportThread_, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
+    connect(pImportThread_, &ImportThread::progress, this, &LibrariesDlg::progressImport);
     connect(pThread_, &QThread::started, pImportThread_, &ImportThread::process);
     connect(pImportThread_, &ImportThread::End, pThread_, &QThread::quit);
     connect(pThread_, &QThread::finished, pThread_, &QObject::deleteLater);
@@ -180,17 +200,10 @@ void LibrariesDlg::StartImport(const SLib &lib)
     connect(this, &LibrariesDlg::break_import, pImportThread_, &ImportThread::break_import);
 
     pThread_->start();
-}
-
-void LibrariesDlg::AddNewLibrary(SLib &lib)
-{
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
-    {
-        openDB(QStringLiteral("libdb"));
-    }
-    idCurrentLib_ = 0;
-    StartImport(lib);
-    exec();
+    ui->progressBar->setValue(0);
+    ui->progressBar->setVisible(true);
+    ui->labelStatus->setText(u""_s);
+    ui->labelStatus->setVisible(true);
 }
 
 void LibrariesDlg::SelectLibrary()
@@ -216,6 +229,8 @@ void LibrariesDlg::SelectLibrary()
     ui->btnUpdate->setDisabled(idCurrentLib_ == 0);
     ui->OPDS->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
     ui->HTTP->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+    ui->progressBar->setVisible(false);
+    ui->labelStatus->setVisible(false);
 
     auto settings = GetSettings();
     settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
@@ -226,11 +241,10 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     if(idCurrentLib_ == 0)
     {
-        LogMessage(tr("Add library"));
-        bool result = query.exec(QStringLiteral("INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)")
-                                 .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?"1" :"0", lib.bWoDeleted ?"1" :"0"));
+        bool result = query.exec(u"INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)"_s
+                                 .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?u"1"_s :u"0"_s, lib.bWoDeleted ?u"1"_s :u"0"_s));
         if(!result)
-            qDebug()<<query.lastError().databaseText();
+            MyDBG << query.lastError().databaseText();
         idCurrentLib_ = query.lastInsertId().toInt();
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
@@ -243,11 +257,10 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
     }
     else
     {
-        LogMessage(tr("Update library"));
-        bool result = query.exec(QStringLiteral("UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6")
-                                 .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?QStringLiteral("1"): QStringLiteral("0"), lib.bWoDeleted ? QStringLiteral("1"): QStringLiteral("0")).arg(idCurrentLib_));
+        bool result = query.exec(u"UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6"_s
+                                 .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?u"1"_s: u"0"_s, lib.bWoDeleted ?u"1"_s :u"0"_s).arg(idCurrentLib_));
         if(!result)
-            qDebug()<<query.lastError().databaseText();
+            MyDBG << query.lastError().databaseText();
     }
 
     UpdateLibList();
@@ -282,8 +295,8 @@ void LibrariesDlg::DeleteLibrary()
 
 void LibrariesDlg::EndUpdate()
 {
-    LogMessage(tr("Ending"));
     ui->btnUpdate->setDisabled(false);
+    ui->btnExport->setDisabled(false);
     ui->btnCancel->setText(tr("Close"));
     ui->BookDir->setDisabled(false);
     ui->inpx->setDisabled(false);
@@ -295,11 +308,11 @@ void LibrariesDlg::EndUpdate()
     ui->checkwoDeleted->setDisabled(false);
     bLibChanged = true;
 
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.prepare(QStringLiteral("SELECT version FROM lib WHERE id=:idLib;"));
-    query.bindValue(QStringLiteral(":idLib"),idCurrentLib_);
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    query.prepare(u"SELECT version FROM lib WHERE id=:idLib;"_s);
+    query.bindValue(u":idLib"_s, idCurrentLib_);
     if(!query.exec())
-        qDebug() << query.lastError().text();
+        MyDBG << query.lastError().text();
     else{
         if(query.next())
             libs[idCurrentLib_].sVersion = query.value(0).toString();
@@ -338,7 +351,7 @@ void LibrariesDlg::ExistingLibsChanged()
 void LibrariesDlg::ExportLib()
 {
     QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
-    if (!dirName.isEmpty())
+    if( !dirName.isEmpty() )
     {
         ExportDlg ed(this);
         ed.exec(idCurrentLib_, dirName);
@@ -398,7 +411,7 @@ void LibrariesDlg::addBook()
         pImportThread_ = new ImportThread();
         pImportThread_->init(idCurrentLib_, *pLib, listFiles);
         pImportThread_->moveToThread(pThread_);
-        connect(pImportThread_, &ImportThread::Message, this, &LibrariesDlg::LogMessage);
+        connect(pImportThread_, &ImportThread::progress, this, &LibrariesDlg::progressImport);
         connect(pThread_, &QThread::started, pImportThread_, &ImportThread::process);
         connect(pImportThread_, &ImportThread::End, pThread_, &QThread::quit);
         connect(pThread_, &QThread::finished, pThread_, &QObject::deleteLater);
@@ -406,6 +419,10 @@ void LibrariesDlg::addBook()
         connect(this, &LibrariesDlg::break_import, pImportThread_, &ImportThread::break_import);
 
         pThread_->start();
+        ui->progressBar->setValue(0);
+        ui->progressBar->setVisible(true);
+        ui->labelStatus->setText(u""_s);
+        ui->labelStatus->setVisible(true);
     }
 }
 

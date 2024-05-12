@@ -315,10 +315,6 @@ int main(int argc, char *argv[])
 
                     imp_tr->init(nId, lib, UT_NEW);
                     imp_tr->moveToThread(thread);
-                    QObject::connect(imp_tr, &ImportThread::Message, [](const QString &msg)
-                                     {
-                                         std::cout << msg.toStdString() << std::endl;
-                                     });
                     QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
                     QObject::connect(imp_tr, &ImportThread::End, thread, &QThread::quit);
                     QObject::connect(imp_tr, &ImportThread::End, []()
@@ -360,8 +356,7 @@ int main(int argc, char *argv[])
 #endif
     }
 
-    a->setOrganizationName(QStringLiteral("freeLib"));
-    a->setApplicationName(QStringLiteral("freeLib"));
+    a->setApplicationName(u"freeLib"_s);
 
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
@@ -391,10 +386,14 @@ int main(int argc, char *argv[])
         return 1;
 
     QDir::setCurrent(HomeDir);
-    QString sDirTmp = QStringLiteral("%1/freeLib").arg(QStandardPaths::standardLocations(QStandardPaths::TempLocation).constFirst());
+    QString sDirTmp = QDir::tempPath() + u"/freeLib"_s;
     QDir dirTmp(sDirTmp);
     if(!dirTmp.exists())
         dirTmp.mkpath(sDirTmp);
+    QString sDirCovers = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + u"/covers"_s;
+    QDir dirCovers(sDirCovers);
+    if(!dirCovers.exists())
+        dirCovers.mkpath(sDirCovers);
 
     a->processEvents();
     setProxy();

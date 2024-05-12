@@ -17,7 +17,11 @@
 #include "SmtpClient/src/smtpclient.h"
 #include "SmtpClient/src/mimeattachment.h"
 #include "SmtpClient/src/mimetext.h"
+#ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazipfile.h>
+#endif
 
 #include "fb2mobi/fb2mobi.h"
 #include "library.h"

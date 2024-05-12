@@ -116,6 +116,7 @@ struct Options
     QString sProxyUser;
     QString sProxyPassword;
 
+    qint64 nCacheSize;
     int nHttpExport;
     quint16 nOpdsPort;
     quint16 nOpdsBooksPerPage;

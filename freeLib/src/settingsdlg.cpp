@@ -6,7 +6,12 @@
 #include <QStringBuilder>
 #include <QMessageBox>
 
+#ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazipfile.h>
+#endif
+
 #include "exportframe.h"
 #include "config-freelib.h"
 #include "utilites.h"
