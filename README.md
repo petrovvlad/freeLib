@@ -1,6 +1,8 @@
 # freeLib
 [![License: GPL v3](https://img.shields.io/badge/License-GPLv3-blue.svg)](https://www.gnu.org/licenses/gpl-3.0)
+![build on Ubuntu 20.04](https://github.com/petrovvlad/freeLib/actions/workflows/build%20on%20Ubuntu%2020.04.yml/badge.svg?branch=develop)
 ![build on Ubuntu 22.04](https://github.com/petrovvlad/freeLib/actions/workflows/build%20on%20Ubuntu%2022.04.yml/badge.svg?branch=develop)
+
 freeLib - каталогизатор для библиотек LibRusEc и Flibusta
 
 Это форк общедоступного freeLib 5.0 , разработка которого прекращена. 
