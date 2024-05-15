@@ -900,6 +900,7 @@ QHttpServerResponse opds_server::responseUnauthorized()
 
 QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor)
 {
+    bool bKindleInstallsed = kindlegenInstalled();
     auto nMaxBooksPerPage = options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
@@ -959,21 +960,25 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
                 el = AddTextNode(u"a"_s, u"epub"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
                 el.setAttribute(u"class"_s, u"author"_s);
-                el=AddTextNode(u"a"_s, u"mobi"_s, entry);
-                el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
-                el = AddTextNode(u"a"_s, u"azw3"_s, entry);
-                el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/azw3"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                if(bKindleInstallsed){
+                    el=AddTextNode(u"a"_s, u"mobi"_s, entry);
+                    el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
+                    el.setAttribute(u"class"_s, u"author"_s);
+                    el = AddTextNode(u"a"_s, u"azw3"_s, entry);
+                    el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/azw3"_s + sSesionQuery);
+                    el.setAttribute(u"class"_s, u"author"_s);
+                }
             }
             else if(book.sFormat == u"epub"_s)
             {
                 QDomElement el = AddTextNode(u"a"_s, u"epub"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
                 el.setAttribute(u"class"_s, u"author"_s);
-                el = AddTextNode(u"a"_s, u"mobi"_s, entry);
-                el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                if(bKindleInstallsed){
+                    el = AddTextNode(u"a"_s, u"mobi"_s, entry);
+                    el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
+                    el.setAttribute(u"class"_s, u"author"_s);
+                }
             }
             else if(book.sFormat == u"mobi"_s)
             {
@@ -983,7 +988,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
             }
             else
             {
-                QDomElement el = AddTextNode(u"a"_s, book.sFormat,entry);
+                QDomElement el = AddTextNode(u"a"_s, book.sFormat, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/download"_s + sSesionQuery);
                 el.setAttribute(u"class"_s, u"author"_s);
             }

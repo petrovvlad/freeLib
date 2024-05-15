@@ -2150,7 +2150,6 @@ void MainWindow::UpdateExportMenu()
     {
         const ExportOptions &exportOptions = options.vExportOptions.at(i);
         if(bKindlegenInstalled ||
-            (exportOptions.sOutputFormat != u"EPUB") &&
             (exportOptions.sOutputFormat != u"MOBI") &&
             (exportOptions.sOutputFormat != u"AZW3") &&
             (exportOptions.sOutputFormat != u"MOBI7"))
