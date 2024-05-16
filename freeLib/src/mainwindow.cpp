@@ -1522,7 +1522,7 @@ void MainWindow::ContextMenu(QPoint point)
         listItems  = checkedItemsBookList();
         if(listItems.isEmpty())
             listItems = ui->Books->selectedItems();
-        for (QAction* i: ui->btnExport->menu()->actions())
+        for( const QAction* i: ui->btnExport->menu()->actions() )
         {
             QAction *action = new QAction(i->text(), save);
             action->setData(i->data().toInt());
@@ -2144,7 +2144,7 @@ void MainWindow::UpdateExportMenu()
         menu = new QMenu(this);
         ui->btnExport->setMenu(menu);
     }
-    ui->btnExport->setDefaultAction(nullptr);
+    //ui->btnExport->setDefaultAction(nullptr);
     int count = options.vExportOptions.size();
     for(int i = 0; i<count; i++)
     {
@@ -2154,8 +2154,9 @@ void MainWindow::UpdateExportMenu()
             (exportOptions.sOutputFormat != u"AZW3") &&
             (exportOptions.sOutputFormat != u"MOBI7"))
         {
-            QAction *action = new QAction(exportOptions.sName, this);
+            QAction *action = new QAction(exportOptions.sName, menu/*this*/);
             action->setData(i);
+
             menu->addAction(action);
             if(exportOptions.bDefault)
             {
@@ -2185,9 +2186,17 @@ void MainWindow::UpdateExportMenu()
     QFont font(ui->btnExport->defaultAction()->font());
     font.setBold(true);
     ui->btnExport->defaultAction()->setFont(font);
+
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("document-send"), QIcon(sIconsPath + QStringLiteral("send.svg"))));
+    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
+    ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+
+    //костыль предотвращающий изменение иконки
+    connect(ui->btnExport->defaultAction(), &QAction::changed, this, [this](){
+        bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
+        QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
+        ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+    });
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);
 }
 
