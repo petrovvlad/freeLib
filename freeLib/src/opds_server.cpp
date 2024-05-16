@@ -2390,26 +2390,15 @@ QByteArray opds_server::cover(uint idLib, uint idBook)
 
     QString sCover;
     if(book.sImg.isEmpty()){
-        int http_settings = options.nHttpExport - 1;
-        if(http_settings == -1)
-        {
-            int count = options.vExportOptions.count();
-            for(int i=0; i<count; i++)
-            {
-                if(options.vExportOptions[i].bDefault)
-                {
-                    http_settings = i;
-                    break;
-                }
-            }
-        }
-        pExportOptions_ = &options.vExportOptions[http_settings];
-        fb2mobi fb(pExportOptions_, idLib);
-        sCover = fb.convert(idBook);
+        QImage img = lib.createCover(idBook);
+        sCover = QDir::tempPath() + u"/freeLib/cover.png"_s;
+        img.save(sCover, "png");
     }else
         sCover = book.sImg;
 
     baResult = image(sCover);
+    if( sCover == QDir::tempPath() + u"/freeLib/cover.png"_s)
+        QFile::remove(sCover);
     return baResult;
 }
 

@@ -579,6 +579,55 @@ void SLib::loadAnnotationAndCover(uint idBook)
 
 }
 
+void paintText(QPainter* painter, QRect rect, int flags, const QString &sText)
+{
+    QFont font(painter->font());
+    QRect bound;
+    do
+    {
+        font.setPixelSize( font.pixelSize() - 1);
+        painter->setFont(font);
+        bound = painter->boundingRect(rect, flags, sText);
+    }while((bound.width()>rect.width() || bound.height()>rect.height()) && font.pixelSize()>5);
+    painter->drawText(rect, flags, sText);
+}
+
+QImage SLib::createCover(uint idBook)
+{
+    SBook &book = books[idBook];
+
+    QImage img(u":/xsl/img/cover.jpg"_s);
+    img = img.convertToFormat(QImage::Format_RGB32);
+    QPainter* painter = new QPainter(&img);
+    QFont font;
+    int delta = img.rect().height() / 50;
+    int delta2 = img.rect().height() / 100;
+    int r_width = img.rect().width()-delta * 2;
+    int r_heigth = img.rect().height()-delta * 2;
+    int r_heigthTopBottom = r_heigth / 4;
+
+    font.setPixelSize(img.height() / 15);
+    painter->setFont(font);
+    paintText(painter, QRect(delta, delta, r_width, r_heigthTopBottom-delta2), Qt::AlignHCenter|Qt::AlignTop|Qt::TextWordWrap,
+              authors[book.idFirstAuthor].getName());
+
+    font.setPixelSize(img.height() / 12);
+    font.setBold(true);
+    painter->setFont(font);
+    paintText(painter, QRect(delta, delta+r_heigthTopBottom+delta2, r_width, r_heigth-r_heigthTopBottom*2-delta2*2),
+              Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, book.sName);
+
+    font.setBold(false);
+    font.setPixelSize(img.height() / 17);
+    painter->setFont(font);
+    paintText(painter, QRect(delta,delta+r_heigth-r_heigthTopBottom+delta2,r_width,r_heigthTopBottom-delta2),
+              Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
+              (book.idSerial ==0 ?u""_s :serials[book.idSerial].sName) +
+                  (book.numInSerial>0 ?u"\n"_s + QString::number(book.numInSerial) :u""_s));
+    delete painter;
+    return img;
+}
+
 QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData)
 {
     QString file, archive;

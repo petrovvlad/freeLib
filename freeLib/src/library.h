@@ -77,6 +77,7 @@ public:
     uint findAuthor(SAuthor& author) const;
     uint findSerial(const QString &sSerial) const;
     void loadAnnotationAndCover(uint idBook);
+    QImage createCover(uint idBook);
     QFileInfo getBookFile(uint idBook, QBuffer *pBuffer=nullptr, QBuffer *pBufferInfo=nullptr, QDateTime *fileData=nullptr);
     QString fillParams(const QString &str, uint idBook, bool bNestedBlock = false);
     QString fillParams(const QString &str, uint idBook, const QFileInfo &book_file);
