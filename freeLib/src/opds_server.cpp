@@ -493,7 +493,8 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
                     if(fi_book.suffix().toLower() == QLatin1String("fb2"))
                     {
                         if(book.sAnnotation.isEmpty()){
-                            lib.loadAnnotationAndCover(idBook);
+                            QBuffer buffer;
+                            lib.loadAnnotationAndCover(idBook, buffer);
                         }
                         el = AddTextNode(QStringLiteral("content"), book.sAnnotation, entry);
                         el.setAttribute(QStringLiteral("type"), QStringLiteral("text/html"));
@@ -627,8 +628,10 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
                     fi_book = lib.getBookFile(idBook, &outbuff);
                     if(fi_book.suffix().toLower() == QLatin1String("fb2"))
                     {
-                        if(book.sAnnotation.isEmpty())
-                            lib.loadAnnotationAndCover(idBook);
+                        if(book.sAnnotation.isEmpty()){
+                            QBuffer buffer;
+                            lib.loadAnnotationAndCover(idBook, buffer);
+                        }
                         QDomDocument an;
                         an.setContent(QStringLiteral("<dev>%1</dev>").arg(book.sAnnotation));
                         QDomNode an_node = doc.importNode(an.childNodes().at(0), true);
@@ -900,6 +903,7 @@ QHttpServerResponse opds_server::responseUnauthorized()
 
 QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor)
 {
+    bool bKindleInstallsed = kindlegenInstalled();
     auto nMaxBooksPerPage = options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
@@ -959,21 +963,25 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
                 el = AddTextNode(u"a"_s, u"epub"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
                 el.setAttribute(u"class"_s, u"author"_s);
-                el=AddTextNode(u"a"_s, u"mobi"_s, entry);
-                el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
-                el = AddTextNode(u"a"_s, u"azw3"_s, entry);
-                el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/azw3"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                if(bKindleInstallsed){
+                    el=AddTextNode(u"a"_s, u"mobi"_s, entry);
+                    el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
+                    el.setAttribute(u"class"_s, u"author"_s);
+                    el = AddTextNode(u"a"_s, u"azw3"_s, entry);
+                    el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/azw3"_s + sSesionQuery);
+                    el.setAttribute(u"class"_s, u"author"_s);
+                }
             }
             else if(book.sFormat == u"epub"_s)
             {
                 QDomElement el = AddTextNode(u"a"_s, u"epub"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
                 el.setAttribute(u"class"_s, u"author"_s);
-                el = AddTextNode(u"a"_s, u"mobi"_s, entry);
-                el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                if(bKindleInstallsed){
+                    el = AddTextNode(u"a"_s, u"mobi"_s, entry);
+                    el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
+                    el.setAttribute(u"class"_s, u"author"_s);
+                }
             }
             else if(book.sFormat == u"mobi"_s)
             {
@@ -983,7 +991,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
             }
             else
             {
-                QDomElement el = AddTextNode(u"a"_s, book.sFormat,entry);
+                QDomElement el = AddTextNode(u"a"_s, book.sFormat, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/download"_s + sSesionQuery);
                 el.setAttribute(u"class"_s, u"author"_s);
             }
@@ -996,7 +1004,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
                 if(fi_book.suffix().toLower() == u"fb2"_s)
                 {
                     if(book.sAnnotation.isEmpty())
-                        lib.loadAnnotationAndCover(idBook);
+                        lib.loadAnnotationAndCover(idBook, outbuff);
                     QDomDocument an;
                     an.setContent(u"<div>"_s + book.sAnnotation + u"</div>"_s);
                     QDomNode an_node = doc.importNode(an.childNodes().at(0), true);
@@ -1146,7 +1154,7 @@ QString opds_server::FillPageOPDS(const QList<uint> &listBooks, SLib &lib, const
                 if(fi_book.suffix().toLower() == u"fb2"_s)
                 {
                     if(book.sAnnotation.isEmpty()){
-                        lib.loadAnnotationAndCover(idBook);
+                        lib.loadAnnotationAndCover(idBook, outbuff);
                     }
                     el = AddTextNode(u"content"_s, book.sAnnotation, entry);
                     el.setAttribute(u"type"_s, u"text/html"_s);
@@ -2380,31 +2388,21 @@ QByteArray opds_server::cover(uint idLib, uint idBook)
     QByteArray baResult;
     SLib &lib = getLib(idLib);
     SBook &book = libs[idLib].books[idBook];
+    QBuffer buffer;
     if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotationAndCover(idBook);
+        lib.loadAnnotationAndCover(idBook, buffer);
 
     QString sCover;
     if(book.sImg.isEmpty()){
-        int http_settings = options.nHttpExport - 1;
-        if(http_settings == -1)
-        {
-            int count = options.vExportOptions.count();
-            for(int i=0; i<count; i++)
-            {
-                if(options.vExportOptions[i].bDefault)
-                {
-                    http_settings = i;
-                    break;
-                }
-            }
-        }
-        pExportOptions_ = &options.vExportOptions[http_settings];
-        fb2mobi fb(pExportOptions_, idLib);
-        sCover = fb.convert(idBook);
+        QImage img = lib.createCover(idBook);
+        sCover = QDir::tempPath() + u"/freeLib/cover.png"_s;
+        img.save(sCover, "png");
     }else
         sCover = book.sImg;
 
     baResult = image(sCover);
+    if( sCover == QDir::tempPath() + u"/freeLib/cover.png"_s)
+        QFile::remove(sCover);
     return baResult;
 }
 

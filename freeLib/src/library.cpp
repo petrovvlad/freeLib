@@ -430,18 +430,21 @@ void cleanCache()
 
 }
 
-void SLib::loadAnnotationAndCover(uint idBook)
+void SLib::loadAnnotationAndCover(uint idBook, QBuffer &buffer)
 {
-    QBuffer buffer;
-    getBookFile(idBook, &buffer);
     SBook& book = books[idBook];
     QString sImg = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) + u"/covers/"_s + QString::number(idBook) + u".jpg"_s;
 
     if(book.sFormat == u"epub"){
+        if(buffer.size()==0)
+            getBookFile(idBook, &buffer);
         QuaZip zip(&buffer);
         zip.open(QuaZip::mdUnzip);
         QBuffer info;
-        setCurrentZipFileName(&zip, u"META-INF/container.xml"_s);
+        if(!setCurrentZipFileName(&zip, u"META-INF/container.xml"_s)){
+            MyDBG << "Error open file: " << u"META-INF/container.xml"_s;
+            return;
+        }
         QuaZipFile zip_file(&zip);
         zip_file.open(QIODevice::ReadOnly);
         info.setData(zip_file.readAll());
@@ -464,12 +467,17 @@ void SLib::loadAnnotationAndCover(uint idBook)
                         QBuffer opf_buf;
                         QFileInfo fi(path);
                         rel_path = fi.path();
+                        if(rel_path == ".")
+                            rel_path = u""_s;
+                        else
+                            rel_path = rel_path + u"/"_s;
                         setCurrentZipFileName(&zip, path);
                         zip_file.open(QIODevice::ReadOnly);
                         opf_buf.setData(zip_file.readAll());
                         zip_file.close();
 
                         QDomDocument opf;
+                        QString sCoverImg;
                         opf.setContent(opf_buf.data());
                         QDomNode meta = opf.documentElement().namedItem(u"metadata"_s);
                         for(int m=0; m<meta.childNodes().count(); m++)
@@ -480,35 +488,54 @@ void SLib::loadAnnotationAndCover(uint idBook)
                             }
                             else if(meta.childNodes().at(m).nodeName().right(4) == u"meta")
                             {
-                                if(meta.childNodes().at(m).attributes().namedItem(u"name"_s).toAttr().value() == u"cover")
+                                auto itemMetadataAtributes = meta.childNodes().at(m).attributes();
+                                if(itemMetadataAtributes.namedItem(u"name"_s).toAttr().value() == u"cover")
                                 {
                                     if(!QFile::exists(sImg))
                                     {
-                                        QString cover = meta.childNodes().at(m).attributes().namedItem(u"content"_s).toAttr().value();
+                                        QString cover = itemMetadataAtributes.namedItem(u"content"_s).toAttr().value();
                                         QDomNode manifest = opf.documentElement().namedItem(u"manifest"_s);
                                         for(int man=0; man<manifest.childNodes().count(); man++)
                                         {
-                                            if(manifest.childNodes().at(man).attributes().namedItem(u"id"_s).toAttr().value() == cover)
+                                            auto itemManifestAtributes = manifest.childNodes().at(man).attributes();
+                                            if(itemManifestAtributes.namedItem(u"id"_s).toAttr().value() == cover)
                                             {
-                                                cover = rel_path + u"/"_s + manifest.childNodes().at(man).attributes().namedItem(u"href"_s).toAttr().value();
-
-                                                setCurrentZipFileName(&zip, cover);
-                                                zip_file.open(QIODevice::ReadOnly);
-                                                QByteArray ba = zip_file.readAll();
-                                                zip_file.close();
-
-                                                book.sImg = sImg;
-                                                QFile fileImage(book.sImg);
-                                                if(fileImage.open(QFile::WriteOnly)){
-                                                    fileImage.write(ba);
-                                                    fileImage.close();
-                                                    cleanCache();
-                                                }
+                                                sCoverImg = rel_path +itemManifestAtributes.namedItem(u"href"_s).toAttr().value();
                                                 break;
                                             }
                                         }
                                     }else
                                         book.sImg = sImg;
+                                }
+                            }
+                        }
+                        if(sCoverImg.isEmpty()){
+                            QDomNode manifest = opf.documentElement().namedItem(u"manifest"_s);
+                            for(int m=0; m<manifest.childNodes().count(); m++)
+                            {
+                                auto itemAtribites = manifest.childNodes().at(m).attributes();
+                                if(itemAtribites.namedItem(u"id"_s).toAttr().value().startsWith(u"cover"_s) && itemAtribites.namedItem(u"media-type"_s).toAttr().value().startsWith(u"image/"_s))
+                                {
+                                    sCoverImg = rel_path +itemAtribites.namedItem(u"href"_s).toAttr().value();
+                                    break;
+                                }
+
+                            }
+                        }
+                        if(!sCoverImg.isEmpty()){
+                            sCoverImg = sCoverImg.replace(u"%40"_s, u"@"_s);
+                            setCurrentZipFileName(&zip, sCoverImg);
+                            if(!zip_file.open(QIODevice::ReadOnly))
+                                MyDBG << "Error open file: " << sCoverImg;
+                            else{
+                                QByteArray ba = zip_file.readAll();
+                                zip_file.close();
+                                book.sImg = sImg;
+                                QFile fileImage(book.sImg);
+                                if(fileImage.open(QFile::WriteOnly)){
+                                    fileImage.write(ba);
+                                    fileImage.close();
+                                    cleanCache();
                                 }
                             }
                         }
@@ -520,6 +547,8 @@ void SLib::loadAnnotationAndCover(uint idBook)
         zip.close();
         info.close();
     }else if(book.sFormat == u"fb2"){
+        if(buffer.size()==0)
+            getBookFile(idBook, &buffer);
         QDomDocument doc;
         doc.setContent(buffer.data());
         QDomElement title_info = doc.elementsByTagName(u"title-info"_s).at(0).toElement();
@@ -554,13 +583,15 @@ void SLib::loadAnnotationAndCover(uint idBook)
 #ifdef USE_DEJVULIBRE
     else if(book.sFormat == u"djvu" || book.sFormat == u"djv"){
         if(!QFile::exists(sImg)){
+            if(buffer.size()==0)
+                getBookFile(idBook, &buffer);
             static DjVu djvu;
             if(djvu.loadLibrary()){
                 QString sDjVuFile = QDir::tempPath() + u"/"_s + QString::number(idBook) + u".djvu"_s;
                 QFile fileDjVu(sDjVuFile);
                 if(!fileDjVu.open(QIODevice::ReadWrite))
                     return;
-                fileDjVu.write(buffer.buffer());
+                fileDjVu.write(buffer.data());
                 fileDjVu.close();
                 if(djvu.openDocument(sDjVuFile)){
                     QImage cover = djvu.getCover();
@@ -577,6 +608,55 @@ void SLib::loadAnnotationAndCover(uint idBook)
     }
 #endif
 
+}
+
+void paintText(QPainter* painter, QRect rect, int flags, const QString &sText)
+{
+    QFont font(painter->font());
+    QRect bound;
+    do
+    {
+        font.setPixelSize( font.pixelSize() - 1);
+        painter->setFont(font);
+        bound = painter->boundingRect(rect, flags, sText);
+    }while((bound.width()>rect.width() || bound.height()>rect.height()) && font.pixelSize()>5);
+    painter->drawText(rect, flags, sText);
+}
+
+QImage SLib::createCover(uint idBook)
+{
+    SBook &book = books[idBook];
+
+    QImage img(u":/xsl/img/cover.jpg"_s);
+    img = img.convertToFormat(QImage::Format_RGB32);
+    QPainter* painter = new QPainter(&img);
+    QFont font;
+    int delta = img.rect().height() / 50;
+    int delta2 = img.rect().height() / 100;
+    int r_width = img.rect().width()-delta * 2;
+    int r_heigth = img.rect().height()-delta * 2;
+    int r_heigthTopBottom = r_heigth / 4;
+
+    font.setPixelSize(img.height() / 15);
+    painter->setFont(font);
+    paintText(painter, QRect(delta, delta, r_width, r_heigthTopBottom-delta2), Qt::AlignHCenter|Qt::AlignTop|Qt::TextWordWrap,
+              authors[book.idFirstAuthor].getName());
+
+    font.setPixelSize(img.height() / 12);
+    font.setBold(true);
+    painter->setFont(font);
+    paintText(painter, QRect(delta, delta+r_heigthTopBottom+delta2, r_width, r_heigth-r_heigthTopBottom*2-delta2*2),
+              Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, book.sName);
+
+    font.setBold(false);
+    font.setPixelSize(img.height() / 17);
+    painter->setFont(font);
+    paintText(painter, QRect(delta, delta+r_heigth-r_heigthTopBottom+delta2, r_width, r_heigthTopBottom-delta2),
+              Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
+              (book.idSerial ==0 ?u""_s :serials[book.idSerial].sName) +
+                  (book.numInSerial>0 ?u"\n"_s + QString::number(book.numInSerial) :u""_s));
+    delete painter;
+    return img;
 }
 
 QFileInfo SLib::getBookFile(uint idBook, QBuffer *pBuffer, QBuffer *pBufferInfo, QDateTime *fileData)

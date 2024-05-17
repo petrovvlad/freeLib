@@ -2,7 +2,6 @@
 #include "settingsdlg.h"
 #include "ui_settingsdlg.h"
 
-#include <QToolButton>
 #include <QStringBuilder>
 #include <QMessageBox>
 
@@ -238,8 +237,7 @@ void SettingsDlg::updateKindelegenWarring(int iExportOpton)
     {
         const ExportOptions *pExportOptions = &options_.vExportOptions.at(iExportOpton);
         bool bKindlgenLableVisible = !kindlegenInstalled() &&
-                                     (pExportOptions->sOutputFormat == u"EPUB" ||
-                                      pExportOptions->sOutputFormat == u"MOBI" ||
+                                     (pExportOptions->sOutputFormat == u"MOBI" ||
                                       pExportOptions->sOutputFormat == u"AZW3" ||
                                       pExportOptions->sOutputFormat == u"MOBI7");
         ui->label_kindlegen->setVisible(bKindlgenLableVisible);

@@ -1171,22 +1171,27 @@ void MainWindow::SelectBook()
         pCover->setBook(nullptr);
         return;
     }
-    uint idBook = item->data(0,Qt::UserRole).toUInt();
+    uint idBook = item->data(0, Qt::UserRole).toUInt();
     idCurrentBook_ = idBook;
     SLib& lib = libs[idCurrentLib];
     SBook &book = lib.books[idBook];
     ui->btnOpenBook->setEnabled(true);
     QDateTime book_date;
-    QFileInfo fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
+    QBuffer buffer;
+    QFileInfo fi;
+    if(book.sFormat == u"fb2" || book.sFormat == u"epub" || book.sFormat == u"djvu"){
+        fi = lib.getBookFile(idBook, &buffer, nullptr, &book_date);
+    }else
+        fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
     if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotationAndCover(idBook);
+        lib.loadAnnotationAndCover(idBook, buffer);
     if(fi.fileName().isEmpty())
     {
         QString file;
         QString sLibPath = lib.path;
         if(book.sArchive.trimmed().isEmpty() )
         {
-            file = QStringLiteral("%1/%2.%3").arg(sLibPath, book.sFile, book.sFormat);
+            file = u"%1/%2.%3"_s.arg(sLibPath, book.sFile, book.sFormat);
         }
         else
         {
@@ -1217,7 +1222,7 @@ void MainWindow::SelectBook()
         sGenres += (sGenres.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='genre_%3%1'>%2</a>")
                 .arg(QString::number(idGenre), sGenre, sGenre.at(0));
     }
-    QFile file_html(QStringLiteral(":/preview.html"));
+    QFile file_html(u":/preview.html"_s);
     file_html.open(QIODevice::ReadOnly);
     QString content(file_html.readAll());
     QString sFilePath;
@@ -1251,7 +1256,10 @@ void MainWindow::SelectBook()
         size = arh.size();
     }
 
-    pCover->setBook(&book);
+    if(!book.sImg.isEmpty())
+        pCover->setBook(&book);
+    else
+        pCover->setImage(lib.createCover(idBook));
 
     QLocale locale;
     QColor colorBInfo = palette().color(QPalette::AlternateBase);
@@ -1522,7 +1530,7 @@ void MainWindow::ContextMenu(QPoint point)
         listItems  = checkedItemsBookList();
         if(listItems.isEmpty())
             listItems = ui->Books->selectedItems();
-        for (QAction* i: ui->btnExport->menu()->actions())
+        for( const QAction* i: ui->btnExport->menu()->actions() )
         {
             QAction *action = new QAction(i->text(), save);
             action->setData(i->data().toInt());
@@ -2144,19 +2152,19 @@ void MainWindow::UpdateExportMenu()
         menu = new QMenu(this);
         ui->btnExport->setMenu(menu);
     }
-    ui->btnExport->setDefaultAction(nullptr);
+    //ui->btnExport->setDefaultAction(nullptr);
     int count = options.vExportOptions.size();
     for(int i = 0; i<count; i++)
     {
         const ExportOptions &exportOptions = options.vExportOptions.at(i);
         if(bKindlegenInstalled ||
-            (exportOptions.sOutputFormat != u"EPUB") &&
             (exportOptions.sOutputFormat != u"MOBI") &&
             (exportOptions.sOutputFormat != u"AZW3") &&
             (exportOptions.sOutputFormat != u"MOBI7"))
         {
-            QAction *action = new QAction(exportOptions.sName, this);
+            QAction *action = new QAction(exportOptions.sName, menu/*this*/);
             action->setData(i);
+
             menu->addAction(action);
             if(exportOptions.bDefault)
             {
@@ -2186,9 +2194,17 @@ void MainWindow::UpdateExportMenu()
     QFont font(ui->btnExport->defaultAction()->font());
     font.setBold(true);
     ui->btnExport->defaultAction()->setFont(font);
+
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->btnExport->setIcon(QIcon::fromTheme(QStringLiteral("document-send"), QIcon(sIconsPath + QStringLiteral("send.svg"))));
+    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
+    ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+
+    //костыль предотвращающий изменение иконки
+    connect(ui->btnExport->defaultAction(), &QAction::changed, this, [this](){
+        bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
+        QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
+        ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+    });
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);
 }
 

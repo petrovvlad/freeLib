@@ -10,6 +10,7 @@
 #include <QDebug>
 #include <QFileDialog>
 #include <QSettings>
+#include <QToolButton>
 
 #include "options.h"
 

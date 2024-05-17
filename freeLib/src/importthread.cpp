@@ -631,6 +631,7 @@ void ImportThread::process()
     query_.setForwardOnly(true);
     QHash<QString, uint> tags;
     tags.clear();
+    query_.exec(u"PRAGMA cache_size = 2000"_s);
     query_.exec(QStringLiteral("SELECT id,name FROM tag"));
     while(query_.next())
     {
