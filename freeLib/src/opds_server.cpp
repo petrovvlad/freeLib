@@ -1001,7 +1001,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
                 if(fi_book.suffix().toLower() == u"fb2"_s)
                 {
                     if(book.sAnnotation.isEmpty())
-                        lib.loadAnnotationAndCover(idBook);
+                        lib.loadAnnotationAndCover(idBook, outbuff);
                     QDomDocument an;
                     an.setContent(u"<div>"_s + book.sAnnotation + u"</div>"_s);
                     QDomNode an_node = doc.importNode(an.childNodes().at(0), true);
@@ -1151,7 +1151,7 @@ QString opds_server::FillPageOPDS(const QList<uint> &listBooks, SLib &lib, const
                 if(fi_book.suffix().toLower() == u"fb2"_s)
                 {
                     if(book.sAnnotation.isEmpty()){
-                        lib.loadAnnotationAndCover(idBook);
+                        lib.loadAnnotationAndCover(idBook, outbuff);
                     }
                     el = AddTextNode(u"content"_s, book.sAnnotation, entry);
                     el.setAttribute(u"type"_s, u"text/html"_s);
@@ -2385,8 +2385,9 @@ QByteArray opds_server::cover(uint idLib, uint idBook)
     QByteArray baResult;
     SLib &lib = getLib(idLib);
     SBook &book = libs[idLib].books[idBook];
+    QBuffer buffer;
     if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotationAndCover(idBook);
+        lib.loadAnnotationAndCover(idBook, buffer);
 
     QString sCover;
     if(book.sImg.isEmpty()){
