@@ -20,6 +20,14 @@ void CoverLabel::setBook(const SBook *pBook)
         hide();
 }
 
+void CoverLabel::setImage(const QImage &image)
+{
+    pix = QPixmap::fromImage(image);
+    pix.setDevicePixelRatio(devicePixelRatioF());
+    QLabel::setPixmap(scaledPixmap());
+    show();
+}
+
 QPixmap CoverLabel::scaledPixmap() const
 {
     return pix.scaledToHeight(this->size().height()*devicePixelRatioF(), Qt::SmoothTransformation);

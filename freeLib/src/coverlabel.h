@@ -12,6 +12,7 @@ class CoverLabel : public QLabel
 public:
     CoverLabel(QWidget *parent);
     void setBook(const SBook *pBook);
+    void setImage(const QImage &image);
     QPixmap scaledPixmap() const;
     virtual QSize sizeHint() const;
 protected:

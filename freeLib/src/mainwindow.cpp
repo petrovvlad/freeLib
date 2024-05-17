@@ -1171,22 +1171,27 @@ void MainWindow::SelectBook()
         pCover->setBook(nullptr);
         return;
     }
-    uint idBook = item->data(0,Qt::UserRole).toUInt();
+    uint idBook = item->data(0, Qt::UserRole).toUInt();
     idCurrentBook_ = idBook;
     SLib& lib = libs[idCurrentLib];
     SBook &book = lib.books[idBook];
     ui->btnOpenBook->setEnabled(true);
     QDateTime book_date;
-    QFileInfo fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
+    QBuffer buffer;
+    QFileInfo fi;
+    if(book.sFormat == u"fb2" || book.sFormat == u"epub" || book.sFormat == u"djvu"){
+        fi = lib.getBookFile(idBook, &buffer, nullptr, &book_date);
+    }else
+        fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
     if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotationAndCover(idBook);
+        lib.loadAnnotationAndCover(idBook, buffer);
     if(fi.fileName().isEmpty())
     {
         QString file;
         QString sLibPath = lib.path;
         if(book.sArchive.trimmed().isEmpty() )
         {
-            file = QStringLiteral("%1/%2.%3").arg(sLibPath, book.sFile, book.sFormat);
+            file = u"%1/%2.%3"_s.arg(sLibPath, book.sFile, book.sFormat);
         }
         else
         {
@@ -1217,7 +1222,7 @@ void MainWindow::SelectBook()
         sGenres += (sGenres.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='genre_%3%1'>%2</a>")
                 .arg(QString::number(idGenre), sGenre, sGenre.at(0));
     }
-    QFile file_html(QStringLiteral(":/preview.html"));
+    QFile file_html(u":/preview.html"_s);
     file_html.open(QIODevice::ReadOnly);
     QString content(file_html.readAll());
     QString sFilePath;
@@ -1251,7 +1256,10 @@ void MainWindow::SelectBook()
         size = arh.size();
     }
 
-    pCover->setBook(&book);
+    if(!book.sImg.isEmpty())
+        pCover->setBook(&book);
+    else
+        pCover->setImage(lib.createCover(idBook));
 
     QLocale locale;
     QColor colorBInfo = palette().color(QPalette::AlternateBase);
