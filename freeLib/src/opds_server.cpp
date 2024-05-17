@@ -493,7 +493,8 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
                     if(fi_book.suffix().toLower() == QLatin1String("fb2"))
                     {
                         if(book.sAnnotation.isEmpty()){
-                            lib.loadAnnotationAndCover(idBook);
+                            QBuffer buffer;
+                            lib.loadAnnotationAndCover(idBook, buffer);
                         }
                         el = AddTextNode(QStringLiteral("content"), book.sAnnotation, entry);
                         el.setAttribute(QStringLiteral("type"), QStringLiteral("text/html"));
@@ -627,8 +628,10 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
                     fi_book = lib.getBookFile(idBook, &outbuff);
                     if(fi_book.suffix().toLower() == QLatin1String("fb2"))
                     {
-                        if(book.sAnnotation.isEmpty())
-                            lib.loadAnnotationAndCover(idBook);
+                        if(book.sAnnotation.isEmpty()){
+                            QBuffer buffer;
+                            lib.loadAnnotationAndCover(idBook, buffer);
+                        }
                         QDomDocument an;
                         an.setContent(QStringLiteral("<dev>%1</dev>").arg(book.sAnnotation));
                         QDomNode an_node = doc.importNode(an.childNodes().at(0), true);
