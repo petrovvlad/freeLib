@@ -27,14 +27,14 @@ endif()
 message(STATUS "Found Git HEAD Revision: ${GIT_HEAD}\n")
 
 if(UNIX AND NOT APPLE)
-    file(COPY freeLib/src/xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
+    file(COPY src/xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
 
     include(GNUInstallDirs)
     set(DATA_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/freelib")
 endif()
 
-add_subdirectory(freeLib/src/)
-add_subdirectory(freeLib/data/)
+add_subdirectory(src/)
+add_subdirectory(data/)
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/xsl/fonts DESTINATION ${DATA_INSTALL_DIR})
 set_target_properties(freelib PROPERTIES
