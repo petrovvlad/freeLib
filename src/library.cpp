@@ -18,6 +18,10 @@
 #endif
 
 #include "utilites.h"
+#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
+#include "options.h"
+#endif
+
 
 QMap<uint, SLib> libs;
 QMap <ushort, SGenre> genres;
