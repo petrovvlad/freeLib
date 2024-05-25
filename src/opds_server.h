@@ -75,7 +75,7 @@ private:
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
 
     QByteArray cover(uint id, uint idBook);
-    QHttpServerResponse convert(uint idLib, uint idBook, const QString &sFormat, const QString &sFileName, bool opds);
+    QHttpServerResponse convert(uint idLib, uint idBook, const QString &sFormat, bool opds);
 #else
     QDomElement doc_header(const QString &session, bool html=false, const QString &lib_name = QString(), const QString &lib_url = QString());
     QString FillPage(QList<uint> listBooks, SLib& lib, const QString &sTitle, const QString &lib_url, const QString &current_url, QTextStream& ts, bool opds, uint nPage, const QString &session, bool bShowAuthor);

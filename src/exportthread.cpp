@@ -26,6 +26,7 @@
 #include "fb2mobi/fb2mobi.h"
 #include "library.h"
 #include "utilites.h"
+#include "bookfile.h"
 
 QString ValidateFileName(QString str)
 {
@@ -272,16 +273,15 @@ void ExportThread::export_books()
             if(uz.getEntriesCount() > 1)
             {
                 uz.close();
-                QString out_dir = dir.absolutePath() % QStringLiteral("/") % archive.left( archive.length() - 4 );
+                QString out_dir = dir.absolutePath() % u"/"_s % archive.left( archive.length() - 4 );
                 QDir().mkpath(out_dir);
-                QBuffer buff;
-                libs[idCurrentLib].getBookFile(idBook, &buff);
+                BookFile fileBook(idCurrentLib, idBook);
 
-                QFile::remove(out_dir % QStringLiteral("/") % file);
+                QFile::remove(out_dir % u"/"_s % file);
                 QFile outfile;
-                outfile.setFileName(out_dir % QStringLiteral("/") % file);
+                outfile.setFileName(out_dir % u"/"_s % file);
                 outfile.open(QFile::WriteOnly);
-                outfile.write(buff.data());
+                outfile.write(fileBook.data());
                 outfile.close();
             }
             else
@@ -339,8 +339,10 @@ void ExportThread::export_books()
                 break;
             buffers << new QBuffer(this);
             SBook &book = libs[idCurrentLib].books[idBook];
-            fi = libs[idCurrentLib].getBookFile(idBook, buffers.last());
-            if(fi.fileName().isEmpty())
+            BookFile fileBook(idCurrentLib, idBook);
+            QByteArray baBook = fileBook.data();
+            buffers.last()->setData(baBook);
+            if(baBook.size() == 0)
             {
                 emit Progress(count * 100 / book_list.count(), count);
                 continue;
