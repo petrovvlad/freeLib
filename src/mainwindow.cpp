@@ -504,6 +504,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
             btn->setCheckable(true);
             btn->setAutoExclusive(true);
             btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            btn->setFocusPolicy(Qt::NoFocus);
             layout_abc->addWidget(btn);
             connect(btn, &QAbstractButton::clicked, this, &MainWindow::btnSearch);
             if(!FirstButton)
@@ -525,6 +526,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
         btn->setCheckable(true);
         btn->setAutoExclusive(true);
         btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        btn->setFocusPolicy(Qt::NoFocus);
         layout_abc->addWidget(btn);
         connect(btn, &QAbstractButton::clicked, this, &MainWindow::btnSearch);
         if(!FirstButton && abc.at(i) == 'A')
