@@ -60,8 +60,9 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
 
     SelectLibrary();
 
-    ui->progressBar->setVisible(false);
-    ui->labelStatus->setVisible(false);
+    ui->progressBar->hide();
+    ui->labelStatus->hide();
+    ui->btnBreak->hide();
 }
 
 LibrariesDlg::~LibrariesDlg()
@@ -185,7 +186,8 @@ void LibrariesDlg::StartImport(const SLib &lib)
     ui->Add->setDisabled(true);
     ui->firstAuthorOnly->setDisabled(true);
     ui->checkwoDeleted->setDisabled(true);
-    ui->btnCancel->setText(tr("Break"));
+    ui->btnClose->hide();
+    ui->btnBreak->show();
     ui->update_group->hide();
 
     pThread_ = new QThread;
@@ -198,12 +200,13 @@ void LibrariesDlg::StartImport(const SLib &lib)
     connect(pThread_, &QThread::finished, pThread_, &QObject::deleteLater);
     connect(pImportThread_, &ImportThread::End, this, &LibrariesDlg::EndUpdate);
     connect(this, &LibrariesDlg::break_import, pImportThread_, &ImportThread::break_import);
+    connect(ui->btnBreak, &QAbstractButton::clicked, this, &LibrariesDlg::onBreak);
 
     pThread_->start();
     ui->progressBar->setValue(0);
-    ui->progressBar->setVisible(true);
+    ui->progressBar->show();
     ui->labelStatus->setText(u""_s);
-    ui->labelStatus->setVisible(true);
+    ui->labelStatus->show();
 }
 
 void LibrariesDlg::SelectLibrary()
@@ -229,8 +232,8 @@ void LibrariesDlg::SelectLibrary()
     ui->btnUpdate->setDisabled(idCurrentLib_ == 0);
     ui->OPDS->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
     ui->HTTP->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
-    ui->progressBar->setVisible(false);
-    ui->labelStatus->setVisible(false);
+    ui->progressBar->hide();
+    ui->labelStatus->hide();
 
     auto settings = GetSettings();
     settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
@@ -297,7 +300,8 @@ void LibrariesDlg::EndUpdate()
 {
     ui->btnUpdate->setDisabled(false);
     ui->btnExport->setDisabled(false);
-    ui->btnCancel->setText(tr("Close"));
+    ui->btnClose->show();
+    ui->btnBreak->hide();
     ui->BookDir->setDisabled(false);
     ui->inpx->setDisabled(false);
     ui->Del->setDisabled(false);
@@ -329,7 +333,7 @@ void LibrariesDlg::terminateImport()
 
 void LibrariesDlg::reject()
 {
-    if (ui->btnCancel->text() == tr("Close"))
+    if(ui->btnClose->isVisible())
     {
         if(idCurrentLib_ != idCurrentLib){
             bLibChanged = true;
@@ -337,10 +341,11 @@ void LibrariesDlg::reject()
         }
         QDialog::reject();
     }
-    else
-    {
-        terminateImport();
-    }
+}
+
+void LibrariesDlg::onBreak()
+{
+    terminateImport();
 }
 
 void LibrariesDlg::ExistingLibsChanged()
@@ -386,7 +391,6 @@ void LibrariesDlg::addBook()
         ui->Add->setDisabled(true);
         ui->firstAuthorOnly->setDisabled(true);
         ui->checkwoDeleted->setDisabled(true);
-        ui->btnCancel->setText(tr("Break"));
         ui->update_group->hide();
 
         for(qsizetype i = 0 ; i < listFiles.size(); ++i) {

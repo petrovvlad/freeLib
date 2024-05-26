@@ -40,6 +40,7 @@ private slots:
     void EndUpdate();
     void terminateImport();
     void reject();
+    void onBreak();
     void ExistingLibsChanged();
     void ExportLib();
     void addBook();

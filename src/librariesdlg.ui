@@ -3,14 +3,14 @@
  <class>LibrariesDlg</class>
  <widget class="QDialog" name="LibrariesDlg">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::WindowModality::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
     <x>0</x>
     <y>0</y>
     <width>705</width>
-    <height>441</height>
+    <height>473</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -21,6 +21,9 @@
   </property>
   <property name="windowTitle">
    <string>Add/Edit library</string>
+  </property>
+  <property name="locale">
+   <locale language="Russian" country="Russia"/>
   </property>
   <property name="modal">
    <bool>true</bool>
@@ -65,7 +68,7 @@
         <bool>true</bool>
        </property>
        <property name="textInteractionFlags">
-        <set>Qt::LinksAccessibleByKeyboard|Qt::LinksAccessibleByMouse</set>
+        <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
        </property>
       </widget>
      </item>
@@ -192,7 +195,7 @@
       <item>
        <widget class="QRadioButton" name="del_old">
         <property name="text">
-         <string>Delete old and add new</string>
+         <string>Dele&amp;te old and add new</string>
         </property>
        </widget>
       </item>
@@ -248,16 +251,32 @@
       <string/>
      </property>
      <property name="alignment">
-      <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+      <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
      </property>
     </widget>
+   </item>
+   <item>
+    <spacer name="verticalSpacer">
+     <property name="orientation">
+      <enum>Qt::Orientation::Vertical</enum>
+     </property>
+     <property name="sizeType">
+      <enum>QSizePolicy::Policy::Expanding</enum>
+     </property>
+     <property name="sizeHint" stdset="0">
+      <size>
+       <width>20</width>
+       <height>10</height>
+      </size>
+     </property>
+    </spacer>
    </item>
    <item>
     <layout class="QHBoxLayout" name="horizontalLayout">
      <item>
       <spacer name="horizontalSpacer">
        <property name="orientation">
-        <enum>Qt::Horizontal</enum>
+        <enum>Qt::Orientation::Horizontal</enum>
        </property>
        <property name="sizeHint" stdset="0">
         <size>
@@ -304,7 +323,14 @@
       </widget>
      </item>
      <item>
-      <widget class="QPushButton" name="btnCancel">
+      <widget class="QPushButton" name="btnBreak">
+       <property name="text">
+        <string>Break</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QPushButton" name="btnClose">
        <property name="minimumSize">
         <size>
          <width>90</width>
@@ -335,18 +361,18 @@
  <resources/>
  <connections>
   <connection>
-   <sender>btnCancel</sender>
+   <sender>btnClose</sender>
    <signal>clicked()</signal>
    <receiver>LibrariesDlg</receiver>
    <slot>reject()</slot>
    <hints>
     <hint type="sourcelabel">
-     <x>685</x>
-     <y>475</y>
+     <x>650</x>
+     <y>432</y>
     </hint>
     <hint type="destinationlabel">
-     <x>346</x>
-     <y>172</y>
+     <x>352</x>
+     <y>227</y>
     </hint>
    </hints>
   </connection>
