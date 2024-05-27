@@ -29,6 +29,7 @@ set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp      mainwindow.h    mainwindow.ui
         library.cpp         library.h
+        bookfile.cpp        bookfile.h
         librariesdlg.cpp    librariesdlg.h  librariesdlg.ui
         settingsdlg.cpp     settingsdlg.h   settingsdlg.ui
         exportframe.cpp     exportframe.h   exportframe.ui

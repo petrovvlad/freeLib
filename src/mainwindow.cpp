@@ -26,6 +26,7 @@
 #include "opds_server.h"
 #include "statisticsdialog.h"
 #include "utilites.h"
+#include "bookfile.h"
 
 
 using namespace std::chrono_literals;
@@ -503,6 +504,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
             btn->setCheckable(true);
             btn->setAutoExclusive(true);
             btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+            btn->setFocusPolicy(Qt::NoFocus);
             layout_abc->addWidget(btn);
             connect(btn, &QAbstractButton::clicked, this, &MainWindow::btnSearch);
             if(!FirstButton)
@@ -524,6 +526,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
         btn->setCheckable(true);
         btn->setAutoExclusive(true);
         btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
+        btn->setFocusPolicy(Qt::NoFocus);
         layout_abc->addWidget(btn);
         connect(btn, &QAbstractButton::clicked, this, &MainWindow::btnSearch);
         if(!FirstButton && abc.at(i) == 'A')
@@ -824,33 +827,35 @@ void MainWindow::BookDblClick()
     QTreeWidgetItem* item = ui->Books->selectedItems()[0];
     if(item->type() != ITEM_TYPE_BOOK)
         return;
-    QBuffer outbuff;
-    QFileInfo fi = libs[idCurrentLib].getBookFile(item->data(0, Qt::UserRole).toUInt(), &outbuff);
-    if(fi.fileName().isEmpty())
-        return;
-    QString TempDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
-        TempDir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    QDir dir(TempDir + QStringLiteral("/freeLib"));
-    dir.mkpath(dir.path());
-    QFile file(dir.path() + QStringLiteral("/") + fi.fileName());
-    file.open(QFile::WriteOnly);
-    file.write(outbuff.data());
-    file.close();
-
-    QString sExt = fi.suffix().toLower();
-    if(options.applications.contains(sExt)){
+    uint idBook = item->data(0, Qt::UserRole).toUInt();
+    SLib& lib = libs[idCurrentLib];
+    SBook &book = lib.books[idBook];
+    QString sFileName;
+    if(book.sArchive.isEmpty()){
+        sFileName = lib.path % u"/"_s % book.sFile % u"."_s % book.sFormat;
+    }else{
+        BookFile fileBook(idCurrentLib, idBook);
+        QByteArray baBook = fileBook.data();
+        if(baBook.size() == 0)
+            return;
+        sFileName = QDir::tempPath() % u"/freeLib/"_s % fileBook.fileName();
+        QFile file(sFileName);
+        file.open(QFile::WriteOnly);
+        file.write(baBook);
+        file.close();
+    }
+    if(options.applications.contains(book.sFormat)){
         if(
 #ifdef Q_OS_MACX
         QProcess::startDetached("open",QStringList()<<options.applications.value(fi.suffix().toLower())<<"--args"<<file.fileName())&&
                 QFileInfo(options.applications.value(sExt)).exists()
 #else
-        QProcess::startDetached(options.applications.value(sExt), QStringList() << file.fileName())
+        QProcess::startDetached(options.applications.value(book.sFormat), QStringList() << sFileName)
 #endif
         )
             return;
     }
-    QDesktopServices::openUrl(QUrl::fromLocalFile(file.fileName()));
+    QDesktopServices::openUrl(QUrl::fromLocalFile(sFileName));
 }
 
 void MainWindow::CheckBooks()
@@ -1159,7 +1164,7 @@ void MainWindow::SelectBook()
     {
         ExportBookListBtn(false);
         ui->Review->setHtml(QStringLiteral(""));
-        pCover->setBook(nullptr);
+        pCover->setImage(QImage());;
         return;
     }
     ExportBookListBtn(true);
@@ -1168,43 +1173,22 @@ void MainWindow::SelectBook()
     {
         ui->btnOpenBook->setEnabled(false);
         ui->Review->setHtml(QStringLiteral(""));
-        pCover->setBook(nullptr);
+        pCover->setImage(QImage());;
         return;
     }
     uint idBook = item->data(0, Qt::UserRole).toUInt();
     idCurrentBook_ = idBook;
     SLib& lib = libs[idCurrentLib];
     SBook &book = lib.books[idBook];
+    BookFile file(idCurrentLib, idBook);
+    file.open();
     ui->btnOpenBook->setEnabled(true);
-    QDateTime book_date;
-    QBuffer buffer;
-    QFileInfo fi;
-    if(book.sFormat == u"fb2" || book.sFormat == u"epub" || book.sFormat == u"djvu"){
-        fi = lib.getBookFile(idBook, &buffer, nullptr, &book_date);
-    }else
-        fi = lib.getBookFile(idBook, nullptr, nullptr, &book_date);
-    if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotationAndCover(idBook, buffer);
-    if(fi.fileName().isEmpty())
-    {
-        QString file;
-        QString sLibPath = lib.path;
-        if(book.sArchive.trimmed().isEmpty() )
-        {
-            file = u"%1/%2.%3"_s.arg(sLibPath, book.sFile, book.sFormat);
-        }
-        else
-        {
-            QString sArchive = book.sArchive;
-            sArchive.replace(QStringLiteral(".inp"), QStringLiteral(".zip"));
-            file = sLibPath + QStringLiteral("/") + sArchive;
-        }
-        file = file.replace('\\', '/');
-    }
+    if(book.sAnnotation.isEmpty())
+        book.sAnnotation = file.annotation();
 
     QString seria;
     if(book.idSerial > 0){
-        seria = QStringLiteral("<a href=seria_%3%1>%2</a>").arg(QString::number(book.idSerial),
+        seria = u"<a href=seria_%3%1>%2</a>"_s.arg(QString::number(book.idSerial),
                 lib.serials[book.idSerial].sName, lib.serials[book.idSerial].sName.at(0).toUpper());
     }
 
@@ -1212,71 +1196,38 @@ void MainWindow::SelectBook()
     for(auto idAuthor: book.listIdAuthors)
     {
         QString sAuthor = lib.authors[idAuthor].getName();
-        sAuthors += (sAuthors.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='author_%3%1'>%2</a>")
+        sAuthors += (sAuthors.isEmpty() ?u""_s :u"; "_s) + u"<a href='author_%3%1'>%2</a>"_s
                 .arg(QString::number(idAuthor), sAuthor.replace(',', ' '), sAuthor.at(0));
     }
     QString sGenres;
     for(auto idGenre: book.listIdGenres)
     {
         QString sGenre = genres[idGenre].sName;
-        sGenres += (sGenres.isEmpty() ?QStringLiteral("") :QStringLiteral("; ")) + QStringLiteral("<a href='genre_%3%1'>%2</a>")
+        sGenres += (sGenres.isEmpty() ?u""_s :u"; "_s) + u"<a href='genre_%3%1'>%2</a>"_s
                 .arg(QString::number(idGenre), sGenre, sGenre.at(0));
     }
     QFile file_html(u":/preview.html"_s);
     file_html.open(QIODevice::ReadOnly);
     QString content(file_html.readAll());
-    QString sFilePath;
-    qint64 size = 0;
-    if(!fi.fileName().isEmpty())
-    {
-        QFileInfo arh;
-        if(fi.absolutePath().startsWith(QDir::tempPath() + QStringLiteral("/freeLib/zip/"))){
-            sFilePath = fi.path();
-            sFilePath.chop(4);
-            sFilePath.replace(QDir::tempPath() + QStringLiteral("/freeLib/zip/"), lib.path + QStringLiteral("/"));
-            arh.setFile(sFilePath);
-            while(!arh.exists())
-            {
-                arh.setFile(arh.absolutePath());
-                if(arh.fileName().isEmpty())
-                    break;
-            }
-        }
-        else
-        {
-            arh = fi;
-            while(!arh.exists())
-            {
-                arh.setFile(arh.absolutePath());
-                if(arh.fileName().isEmpty())
-                    break;
-            }
-            sFilePath = arh.filePath();
-        }
-        size = arh.size();
-    }
-
-    if(!book.sImg.isEmpty())
-        pCover->setBook(&book);
-    else
-        pCover->setImage(lib.createCover(idBook));
+    auto size = file.fileSize();
+    pCover->setImage(file.cover());
 
     QLocale locale;
     QColor colorBInfo = palette().color(QPalette::AlternateBase);
-    content.replace(QStringLiteral("#annotation#"), book.sAnnotation).
-            replace(QStringLiteral("#title#"), book.sName).
-            replace(QStringLiteral("#author#"), sAuthors).
-            replace(QStringLiteral("#genre#"), sGenres).
-            replace(QStringLiteral("#series#"), seria).
-            replace(QStringLiteral("#file_path#"), sFilePath).
+    content.replace(u"#annotation#"_s, book.sAnnotation).
+            replace(u"#title#"_s, book.sName).
+            replace(u"#author#"_s, sAuthors).
+            replace(u"#genre#"_s, sGenres).
+            replace(u"#series#"_s, seria).
+            replace(u"#file_path#"_s, file.filePath()).
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-            replace(QStringLiteral("#file_size#"), size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : QStringLiteral("")).
+            replace(u"#file_size#"_s, size>0 ?locale.formattedDataSize(file.fileSize(), 1, QLocale::DataSizeTraditionalFormat) : u""_s).
 #else
             replace(QLatin1String("#file_size#"), size>0 ?sizeToString(size) : QLatin1String("")).
 #endif
-            replace(QStringLiteral("#file_data#"), book_date.toString(QStringLiteral("dd.MM.yyyy hh:mm:ss"))).
-            replace(QStringLiteral("#file_name#"), fi.fileName()).
-            replace(QStringLiteral("#infobcolor"), colorBInfo.name());
+            replace(u"#file_data#"_s, file.birthTime().toString(u"dd.MM.yyyy hh:mm:ss"_s)).
+            replace(u"#file_name#"_s, file.fileName()).
+            replace(u"#infobcolor"_s, colorBInfo.name());
     ui->Review->setHtml(content);
 }
 

@@ -1,3 +1,2 @@
-freeLib/src/Help/* linguist-documentation
-freeLib/src/quazip/doc/* linguist-documentation
-freeLib/src/quazip/doc/* linguist-documentation
+src/Help/* linguist-documentation
+src/quazip/doc/* linguist-documentation

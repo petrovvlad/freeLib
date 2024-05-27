@@ -1569,10 +1569,8 @@ QString fb2mobi::convert(uint idBook)
     dir.mkpath(tmp_dir + QStringLiteral("/OEBPS"));
 
     QBuffer outbuff;
-    QFileInfo fi_book;
-    outputFormat = QStringLiteral("EPUB");
-    fi_book = libs[idLib_].getBookFile(idBook, &outbuff);
-    if(fi_book.suffix().toLower() != u"fb2")
+    outputFormat = u"EPUB"_s;
+    if(libs[idLib_].books[idBook].sFormat != u"fb2")
         return QStringLiteral("");
     SBook book_tmp = libs[idLib_].books[idBook];
     pBook = &book_tmp;

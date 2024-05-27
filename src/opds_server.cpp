@@ -12,6 +12,7 @@
 #include "config-freelib.h"
 #include "fb2mobi/fb2mobi.h"
 #include "utilites.h"
+#include "bookfile.h"
 
 #define SAVE_INDEX  4
 #define MAX_COLUMN_COUNT    3
@@ -487,14 +488,11 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
 
                 if(options.bOpdsShowAnotation)
                 {
-                    QBuffer outbuff;
-                    QFileInfo fi_book;
-                    fi_book = lib.getBookFile(idBook, &outbuff);
-                    if(fi_book.suffix().toLower() == QLatin1String("fb2"))
+                    if(book.sFormat == QLatin1String("fb2"))
                     {
                         if(book.sAnnotation.isEmpty()){
-                            QBuffer buffer;
-                            lib.loadAnnotationAndCover(idBook, buffer);
+                            BookFile file(&lib, idBook);
+                            book.sAnnotation = file.annotation();
                         }
                         el = AddTextNode(QStringLiteral("content"), book.sAnnotation, entry);
                         el.setAttribute(QStringLiteral("type"), QStringLiteral("text/html"));
@@ -623,14 +621,11 @@ QString opds_server::FillPage(QList<uint> listBooks, SLib& lib, const QString &s
 
                 if(options.bOpdsShowAnotation)
                 {
-                    QBuffer outbuff;
-                    QFileInfo fi_book;
-                    fi_book = lib.getBookFile(idBook, &outbuff);
-                    if(fi_book.suffix().toLower() == QLatin1String("fb2"))
+                    if(book.sFormat == QLatin1String("fb2"))
                     {
                         if(book.sAnnotation.isEmpty()){
-                            QBuffer buffer;
-                            lib.loadAnnotationAndCover(idBook, buffer);
+                            BookFile file(&lib, idBook);
+                            book.sAnnotation = file.annotation();
                         }
                         QDomDocument an;
                         an.setContent(QStringLiteral("<dev>%1</dev>").arg(book.sAnnotation));
@@ -998,18 +993,14 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
 
             if(options.bOpdsShowAnotation)
             {
-                QBuffer outbuff;
-                QFileInfo fi_book;
-                fi_book = lib.getBookFile(idBook, &outbuff);
-                if(fi_book.suffix().toLower() == u"fb2"_s)
-                {
-                    if(book.sAnnotation.isEmpty())
-                        lib.loadAnnotationAndCover(idBook, outbuff);
-                    QDomDocument an;
-                    an.setContent(u"<div>"_s + book.sAnnotation + u"</div>"_s);
-                    QDomNode an_node = doc.importNode(an.childNodes().at(0), true);
-                    entry.appendChild(an_node);
+                if(book.sAnnotation.isEmpty()){
+                    BookFile file(&lib, idBook);
+                    book.sAnnotation = file.annotation();
                 }
+                QDomDocument an;
+                an.setContent(u"<div>"_s + book.sAnnotation + u"</div>"_s);
+                QDomNode an_node = doc.importNode(an.childNodes().at(0), true);
+                entry.appendChild(an_node);
             }
         }
         iBook++;
@@ -1079,7 +1070,7 @@ QString opds_server::FillPageOPDS(const QList<uint> &listBooks, SLib &lib, const
     uint iBook = 0;
     for(uint idBook: listBooks){
         if(iBook >= nPage*nMaxBooksPerPage && iBook < (nPage+1)*nMaxBooksPerPage){
-            const SBook& book = lib.books[idBook];
+            SBook& book = lib.books[idBook];
             QString sIdBook = QString::number(idBook);
             QDomElement entry = doc.createElement(u"entry"_s);
             feed.appendChild(entry);
@@ -1148,17 +1139,12 @@ QString opds_server::FillPageOPDS(const QList<uint> &listBooks, SLib &lib, const
 
             if(options.bOpdsShowAnotation)
             {
-                QBuffer outbuff;
-                QFileInfo fi_book;
-                fi_book = lib.getBookFile(idBook, &outbuff);
-                if(fi_book.suffix().toLower() == u"fb2"_s)
-                {
-                    if(book.sAnnotation.isEmpty()){
-                        lib.loadAnnotationAndCover(idBook, outbuff);
-                    }
-                    el = AddTextNode(u"content"_s, book.sAnnotation, entry);
-                    el.setAttribute(u"type"_s, u"text/html"_s);
+                if(book.sAnnotation.isEmpty()){
+                    BookFile file(&lib, idBook);
+                    book.sAnnotation = file.annotation();
                 }
+                el = AddTextNode(u"content"_s, book.sAnnotation, entry);
+                el.setAttribute(u"type"_s, u"text/html"_s);
             }
         }
         iBook++;
@@ -2386,23 +2372,11 @@ QByteArray opds_server::image(const QString &sFile)
 QByteArray opds_server::cover(uint idLib, uint idBook)
 {
     QByteArray baResult;
-    SLib &lib = getLib(idLib);
-    SBook &book = libs[idLib].books[idBook];
-    QBuffer buffer;
-    if(book.sAnnotation.isEmpty() && book.sImg.isEmpty())
-        lib.loadAnnotationAndCover(idBook, buffer);
-
-    QString sCover;
-    if(book.sImg.isEmpty()){
-        QImage img = lib.createCover(idBook);
-        sCover = QDir::tempPath() + u"/freeLib/cover.png"_s;
-        img.save(sCover, "png");
-    }else
-        sCover = book.sImg;
-
-    baResult = image(sCover);
-    if( sCover == QDir::tempPath() + u"/freeLib/cover.png"_s)
-        QFile::remove(sCover);
+    BookFile file(idLib, idBook);
+    QImage img = file.cover();
+    QBuffer buffer(&baResult);
+    buffer.open(QIODevice::WriteOnly);
+    img.save(&buffer, "png");
     return baResult;
 }
 
@@ -3174,12 +3148,12 @@ QHttpServerResponse opds_server::sequenceBooksOPDS(uint idLib, uint idSequence, 
 
 QHttpServerResponse opds_server::bookHTTP(uint idLib, uint idBook, const QString &sFormat)
 {
-    return convert(idLib, idBook, sFormat, u""_s, false);
+    return convert(idLib, idBook, sFormat, false);
 }
 
 QHttpServerResponse opds_server::bookOPDS(uint idLib, uint idBook, const QString &sFormat)
 {
-    return convert(idLib, idBook, sFormat, u""_s, true);
+    return convert(idLib, idBook, sFormat, true);
 }
 
 QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, const QHttpServerRequest &request)
@@ -3360,24 +3334,15 @@ QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest
     return FillPageOPDS(listBooks, lib, tr("Books search"), u""_s, sLibUrl, url);
 }
 
-QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString &sFormat, const QString &sFileName, bool opds)
+QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString &sFormat, bool opds)
 {
-    QBuffer outbuff;
     QByteArray baContentType;
     QString sContentDisposition;
-    QFileInfo fiBook;
     SLib &lib = getLib(idLib);
-    if(idBook == 0)
-    {
-        fiBook.setFile(sFileName);
-        QFile file(sFileName);
-        file.open(QFile::ReadOnly);
-        outbuff.setData(file.readAll());
-    }
-    else
-    {
-        fiBook = lib.getBookFile(idBook, &outbuff);
-    }
+    QByteArray baBook;
+    BookFile bookFile(&lib, idBook);
+    auto &book = lib.books[idBook];
+    baBook = bookFile.data();
 
     ExportOptions *pExportOptions = nullptr;
     int count = options.vExportOptions.count();
@@ -3390,14 +3355,14 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
         }
     }
 
-    if(outbuff.size() != 0)
+    if(baBook.size() != 0)
     {
         QString sBookFileName;
         if(pExportOptions != nullptr)
             sBookFileName = pExportOptions->sExportFileName;
         if(sBookFileName.isEmpty())
             sBookFileName = QString(ExportOptions::sDefaultEexpFileName);
-        sBookFileName = lib.fillParams(sBookFileName, idBook) + u"."_s + (sFormat == u"download"_s ? fiBook.suffix().toLower() :sFormat);
+        sBookFileName = lib.fillParams(sBookFileName, idBook) + u"."_s + (sFormat == u"download"_s ? book.sFormat :sFormat);
         if(pExportOptions != nullptr && pExportOptions->bTransliteration)
             sBookFileName = Transliteration(sBookFileName);
         sBookFileName.replace(u' ', u'_');
@@ -3410,16 +3375,13 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
         QFileInfo book_file(sBookFileName);
         sBookFileName = book_file.fileName();
         if(pExportOptions != nullptr && pExportOptions->bOriginalFileName)
-            sBookFileName = fiBook.completeBaseName() + u"."_s + sFormat;;
+            sBookFileName = book.sFile + u"."_s + sFormat;;
         if(sFormat == u"epub"_s || sFormat == u"mobi"_s || sFormat == u"azw3"_s)
         {
             QFile file;
-            QString sTmpDir;
-            sTmpDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation);
-            QDir().mkpath(sTmpDir + u"/freeLib"_s);
-            file.setFileName(sTmpDir + u"/freeLib/book0."_s + fiBook.suffix());
+            file.setFileName(QDir::tempPath() + u"/freeLib/book0."_s + book.sFormat);
             file.open(QFile::WriteOnly);
-            file.write(outbuff.data());
+            file.write(baBook);
             file.close();
             QFileInfo fi(file);
 
@@ -3427,8 +3389,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
             QString sOutFile = conv.convert(QStringList() << fi.absoluteFilePath(), idBook);
             file.setFileName(sOutFile);
             file.open(QFile::ReadOnly);
-            outbuff.close();
-            outbuff.setData(file.readAll());
+            baBook = file.readAll();
             if(opds)
             {
                 if(sFormat == u"epub"_s)
@@ -3458,7 +3419,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
             sContentDisposition = u"attachment; filename=\""_s + sBookFileName + u"\""_s;
         }
     }
-    QHttpServerResponse result(outbuff.data());
+    QHttpServerResponse result(baBook);
     result.addHeader("Content-Type"_ba, baContentType);
     if(!sContentDisposition.isEmpty())
         result.addHeader("Content-Disposition"_ba, sContentDisposition.toUtf8());
@@ -3613,6 +3574,7 @@ void opds_server::convert(uint idLib, uint idBook, const QString &format, const 
     QBuffer outbuff;
     QFileInfo fi_book;
     SLib &lib = libs[idLib];
+    QByteArray baBook;
     if(idBook == 0)
     {
         fi_book.setFile(file_name);
@@ -3622,7 +3584,10 @@ void opds_server::convert(uint idLib, uint idBook, const QString &format, const 
     }
     else
     {
-        fi_book = lib.getBookFile(idBook, &outbuff);
+        BookFile bookFile(&lib, idBook);
+        auto &book = lib.books[idBook];
+        baBook = bookFile.data();
+
     }
 
     if(outbuff.size() != 0)

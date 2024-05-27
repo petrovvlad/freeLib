@@ -2,7 +2,7 @@ cmake_minimum_required(VERSION 3.5)
 
 set(FREELIB_VERSION_MAJOR "6")
 set(FREELIB_VERSION_MINOR "0")
-set(FREELIB_VERSION_PATCH "97")
+set(FREELIB_VERSION_PATCH "99")
 set(FREELIB_VERSION "${FREELIB_VERSION_MAJOR}.${FREELIB_VERSION_MINOR}.${FREELIB_VERSION_PATCH}")
 project(freeLib VERSION "${FREELIB_VERSION}" LANGUAGES CXX)
 
@@ -27,14 +27,14 @@ endif()
 message(STATUS "Found Git HEAD Revision: ${GIT_HEAD}\n")
 
 if(UNIX AND NOT APPLE)
-    file(COPY freeLib/src/xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
+    file(COPY src/xsl/fonts DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/xsl)
 
     include(GNUInstallDirs)
     set(DATA_INSTALL_DIR "${CMAKE_INSTALL_DATADIR}/freelib")
 endif()
 
-add_subdirectory(freeLib/src/)
-add_subdirectory(freeLib/data/)
+add_subdirectory(src/)
+add_subdirectory(data/)
 
 install(DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}/xsl/fonts DESTINATION ${DATA_INSTALL_DIR})
 set_target_properties(freelib PROPERTIES

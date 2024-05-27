@@ -9,23 +9,15 @@ CoverLabel::CoverLabel(QWidget *parent)
     setScaledContents(false);
 }
 
-void CoverLabel::setBook(const SBook *pBook)
+void CoverLabel::setImage(const QImage &image)
 {
-    if(pBook != nullptr && !pBook->sImg.isEmpty()){
-        pix = QPixmap(pBook->sImg);
+    if(!image.isNull()){
+        pix = QPixmap::fromImage(image);
         pix.setDevicePixelRatio(devicePixelRatioF());
         QLabel::setPixmap(scaledPixmap());
         show();
     }else
         hide();
-}
-
-void CoverLabel::setImage(const QImage &image)
-{
-    pix = QPixmap::fromImage(image);
-    pix.setDevicePixelRatio(devicePixelRatioF());
-    QLabel::setPixmap(scaledPixmap());
-    show();
 }
 
 QPixmap CoverLabel::scaledPixmap() const
