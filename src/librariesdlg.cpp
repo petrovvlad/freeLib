@@ -366,7 +366,7 @@ void LibrariesDlg::ExportLib()
 void LibrariesDlg::addBook()
 {
     QStringList listFiles = QFileDialog::getOpenFileNames(this, tr("Select books to add"), ui->BookDir->text(),
-                                                      tr("Books (*.fb2 *.epub *.zip)"), nullptr, QFileDialog::ReadOnly);
+                                                      tr("Books") + u" (*.fb2 *.epub *.zip)"_s, nullptr, QFileDialog::ReadOnly);
     if(!listFiles.isEmpty()){
         QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
         SLib *pLib;

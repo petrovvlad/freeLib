@@ -14,10 +14,10 @@
    <string notr="true">Frame</string>
   </property>
   <property name="frameShape">
-   <enum>QFrame::NoFrame</enum>
+   <enum>QFrame::Shape::NoFrame</enum>
   </property>
   <property name="frameShadow">
-   <enum>QFrame::Raised</enum>
+   <enum>QFrame::Shadow::Raised</enum>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_8">
    <property name="spacing">
@@ -64,18 +64,15 @@
          </property>
          <layout class="QFormLayout" name="formLayout_2">
           <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldsStayAtSizeHint</enum>
+           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
           </property>
           <property name="formAlignment">
-           <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+           <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
           </property>
           <item row="0" column="0">
            <widget class="QLabel" name="label_12">
             <property name="text">
              <string>Convert to:</string>
-            </property>
-            <property name="buddy">
-             <cstring>GB2</cstring>
             </property>
            </widget>
           </item>
@@ -138,7 +135,7 @@
          <item>
           <widget class="QRadioButton" name="radioDevice">
            <property name="text">
-            <string>Send to device</string>
+            <string>Send to de&amp;vice</string>
            </property>
            <property name="checked">
             <bool>true</bool>
@@ -155,7 +152,7 @@
          <item>
           <spacer name="horizontalSpacer">
            <property name="orientation">
-            <enum>Qt::Horizontal</enum>
+            <enum>Qt::Orientation::Horizontal</enum>
            </property>
            <property name="sizeHint" stdset="0">
             <size>
@@ -260,7 +257,7 @@
            <item>
             <spacer name="verticalSpacer">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -295,7 +292,7 @@
               <item>
                <layout class="QFormLayout" name="formLayout">
                 <property name="fieldGrowthPolicy">
-                 <enum>QFormLayout::ExpandingFieldsGrow</enum>
+                 <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
                 </property>
                 <item row="0" column="0">
                  <widget class="QLabel" name="label_16">
@@ -392,7 +389,7 @@
                        <string>Port:</string>
                       </property>
                       <property name="alignment">
-                       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                       </property>
                      </widget>
                     </item>
@@ -434,14 +431,14 @@
                        <string>Password:</string>
                       </property>
                       <property name="alignment">
-                       <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                       </property>
                      </widget>
                     </item>
                     <item>
                      <widget class="QLineEdit" name="Password">
                       <property name="echoMode">
-                       <enum>QLineEdit::Password</enum>
+                       <enum>QLineEdit::EchoMode::Password</enum>
                       </property>
                       <property name="placeholderText">
                        <string>password</string>
@@ -470,7 +467,7 @@
            <item>
             <spacer name="verticalSpacer_4">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -509,14 +506,14 @@
        <item>
         <widget class="QToolBox" name="toolBox">
          <property name="currentIndex">
-          <number>0</number>
+          <number>3</number>
          </property>
          <widget class="QWidget" name="page_2">
           <property name="geometry">
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>667</width>
+            <width>261</width>
             <height>332</height>
            </rect>
           </property>
@@ -542,7 +539,7 @@
            <item>
             <widget class="QFrame" name="GB2">
              <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
+              <enum>QFrame::Shape::StyledPanel</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_13">
               <property name="leftMargin">
@@ -659,7 +656,7 @@
               <item>
                <spacer name="verticalSpacer_6">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -679,7 +676,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>343</width>
+            <width>347</width>
             <height>304</height>
            </rect>
           </property>
@@ -702,7 +699,7 @@
            <item>
             <widget class="QFrame" name="GB5">
              <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
+              <enum>QFrame::Shape::StyledPanel</enum>
              </property>
              <layout class="QHBoxLayout" name="horizontalLayout_14" stretch="0,0">
               <property name="leftMargin">
@@ -723,9 +720,6 @@
                  <widget class="QLabel" name="label_27">
                   <property name="text">
                    <string>Show footnotes:</string>
-                  </property>
-                  <property name="buddy">
-                   <cstring>GB5</cstring>
                   </property>
                  </widget>
                 </item>
@@ -758,7 +752,7 @@
                   <item>
                    <spacer name="horizontalSpacer_2">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -801,7 +795,7 @@
                   <item>
                    <spacer name="horizontalSpacer_4">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -844,7 +838,7 @@
                   <item>
                    <spacer name="horizontalSpacer_5">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -901,7 +895,7 @@
                   <item>
                    <spacer name="horizontalSpacer_7">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -916,7 +910,7 @@
                 <item>
                  <spacer name="verticalSpacer_5">
                   <property name="orientation">
-                   <enum>Qt::Vertical</enum>
+                   <enum>Qt::Orientation::Vertical</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -945,7 +939,7 @@
                   <item>
                    <spacer name="horizontalSpacer_8">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -970,8 +964,7 @@
                      <string notr="true">...</string>
                     </property>
                     <property name="icon">
-                     <iconset theme="document-open">
-                      <normaloff>.</normaloff>.</iconset>
+                     <iconset theme="document-open"/>
                     </property>
                    </widget>
                   </item>
@@ -983,7 +976,7 @@
                 <item>
                  <spacer name="verticalSpacer_7">
                   <property name="orientation">
-                   <enum>Qt::Vertical</enum>
+                   <enum>Qt::Orientation::Vertical</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -1028,7 +1021,7 @@
            <item>
             <widget class="QFrame" name="frame">
              <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
+              <enum>QFrame::Shape::StyledPanel</enum>
              </property>
              <layout class="QVBoxLayout" name="fontLayout">
               <property name="spacing">
@@ -1051,7 +1044,7 @@
                 <item>
                  <spacer name="horizontalSpacer_3">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -1073,7 +1066,7 @@
               <item>
                <spacer name="verticalSpacer_2">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -1116,7 +1109,7 @@
            <item>
             <widget class="QFrame" name="GB6">
              <property name="frameShape">
-              <enum>QFrame::StyledPanel</enum>
+              <enum>QFrame::Shape::StyledPanel</enum>
              </property>
              <layout class="QVBoxLayout" name="verticalLayout_7">
               <property name="leftMargin">
@@ -1166,9 +1159,6 @@
                   <property name="text">
                    <string>Maximum caption level:</string>
                   </property>
-                  <property name="buddy">
-                   <cstring>GB6</cstring>
-                  </property>
                  </widget>
                 </item>
                 <item>
@@ -1184,7 +1174,7 @@
                 <item>
                  <spacer name="horizontalSpacer_6">
                   <property name="orientation">
-                   <enum>Qt::Horizontal</enum>
+                   <enum>Qt::Orientation::Horizontal</enum>
                   </property>
                   <property name="sizeHint" stdset="0">
                    <size>
@@ -1199,7 +1189,7 @@
               <item>
                <spacer name="verticalSpacer_3">
                 <property name="orientation">
-                 <enum>Qt::Vertical</enum>
+                 <enum>Qt::Orientation::Vertical</enum>
                 </property>
                 <property name="sizeHint" stdset="0">
                  <size>
@@ -1239,7 +1229,6 @@
   <tabstop>Password</tabstop>
   <tabstop>PauseMail</tabstop>
   <tabstop>AddFont</tabstop>
-  <tabstop>tabWidget</tabstop>
  </tabstops>
  <resources/>
  <connections/>

@@ -62,7 +62,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+        <string notr="true">&lt;a href=\"localhost\"&gt;localhost&lt;/a&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
@@ -104,7 +104,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+        <string notr="true">&lt;a href=\"localhost\"&gt;localhost&lt;/a&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
@@ -195,7 +195,7 @@
       <item>
        <widget class="QRadioButton" name="del_old">
         <property name="text">
-         <string>Dele&amp;te old and add new</string>
+         <string>Delete old and add new</string>
         </property>
        </widget>
       </item>
@@ -225,7 +225,7 @@
    <item>
     <widget class="QCheckBox" name="checkwoDeleted">
      <property name="text">
-      <string>don`t add deleted books</string>
+      <string>don't add deleted books</string>
      </property>
     </widget>
    </item>
