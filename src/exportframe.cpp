@@ -8,6 +8,8 @@
 #include <QMessageBox>
 #include <QTextStream>
 
+#include "utilites.h"
+
 ExportFrame::ExportFrame(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::ExportFrame)
@@ -44,6 +46,14 @@ ExportFrame::ExportFrame(QWidget *parent) :
     layout->setContentsMargins(0, 0, 0, 0);
     connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
     connect(ui->toolBox, &QToolBox::currentChanged, this, &ExportFrame::onTabWidgetCurrentChanged);
+
+    QRegularExpression rx(u"\\b[^@\\s]+@[^@\\s]+\\.[^@\\s]+\\b"_s, QRegularExpression::CaseInsensitiveOption);
+    validatorEMail.setRegularExpression(rx);
+
+    ui->from_email->setValidator(&validatorEMail);
+    ui->Email->setValidator(&validatorEMail);
+    connect(ui->from_email, &QLineEdit::textChanged, this, [this](){validateEmail(this->ui->from_email);});
+    connect(ui->Email, &QLineEdit::textChanged, this, [this](){validateEmail(this->ui->Email);});
 }
 
 ExportFrame::~ExportFrame()
@@ -350,4 +360,14 @@ void ExportFrame::onBtnDefaultCSSclicked()
     QTextStream in(&file);
     ui->UserCSStext->setPlainText(in.readAll());
     file.close();
+}
+
+void ExportFrame::validateEmail(QLineEdit *leEmail)
+{
+    if(!leEmail->hasAcceptableInput())
+        leEmail->setStyleSheet(u"QLineEdit { color: red;}"_s);
+    else{
+        auto sColor = palette().color(QPalette::WindowText).name();
+        leEmail->setStyleSheet(u"QLineEdit { color: %1;}"_s.arg(sColor));
+    }
 }
