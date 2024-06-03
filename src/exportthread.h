@@ -25,7 +25,7 @@ public:
 private:
     void export_books();
     void export_lib();
-    bool convert(QList<QBuffer*> outbuff, uint idLib, const QString &file_name, int count,  uint idBook );
+    bool convert(const QList<QBuffer*> &outbuff, uint idLib, const QString &file_name, int count,  uint idBook );
 
     QList<uint> book_list;
     const ExportOptions* pExportOptions_;

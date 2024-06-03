@@ -141,16 +141,15 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
 
     while(ui->fontLayout->count() > 2)
         delete ui->fontLayout->itemAt(0)->widget();
-    int count = pExportOptions->vFontExportOptions.count();
-    for(int i=0; i<count; i++)
+    for(const auto &fontExportOptions :std::as_const(pExportOptions->vFontExportOptions))
     {
-        AddFont(pExportOptions->vFontExportOptions.at(i).bUse,
-                pExportOptions->vFontExportOptions.at(i).nTag,
-                pExportOptions->vFontExportOptions.at(i).sFont,
-                pExportOptions->vFontExportOptions.at(i).sFontB,
-                pExportOptions->vFontExportOptions.at(i).sFontI,
-                pExportOptions->vFontExportOptions.at(i).sFontBI,
-                pExportOptions->vFontExportOptions.at(i).nFontSize);
+        AddFont(fontExportOptions.bUse,
+                fontExportOptions.nTag,
+                fontExportOptions.sFont,
+                fontExportOptions.sFontB,
+                fontExportOptions.sFontI,
+                fontExportOptions.sFontBI,
+                fontExportOptions.nFontSize);
     }
 
     onOriginalFileNameClicked();

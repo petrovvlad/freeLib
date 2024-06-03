@@ -1007,9 +1007,11 @@ QHttpServerResponse opds_server::FillPageHTTP(const QList<uint> &listBooks, SLib
     }
     auto listQueryItems = urlquery.queryItems();
     if(nPage >= 1){
-        for(int i=0; i<listQueryItems.size(); i++){
-            if(listQueryItems[i].first == u"page"_s)
-                listQueryItems[i].second = QString::number(nPage-1);
+        for(auto &queryItem :listQueryItems){
+            if(queryItem.first == u"page"_s){
+                queryItem.second = QString::number(nPage-1);
+                break;
+            }
         }
         urlquery.setQueryItems(listQueryItems);
         QUrl urlPrevious = url.toString(QUrl::RemoveQuery);
@@ -1078,12 +1080,12 @@ QString opds_server::FillPageOPDS(const QList<uint> &listBooks, SLib &lib, const
             AddTextNode(u"id"_s, u"tag:book:"_s + QString::number(idBook), entry);
             QString sSerial = book.idSerial == 0 ?QString() :lib.serials[book.idSerial].sName;
             AddTextNode(u"title"_s, book.sName + (sSerial.isEmpty() ?QString() :u" ("_s + sSerial + u")"_s), entry);
-            for(uint idAuthor: book.listIdAuthors){
+            for(uint idAuthor: std::as_const(book.listIdAuthors)){
                 QDomElement author = doc.createElement(u"author"_s);
                 entry.appendChild(author);
                 AddTextNode(u"name"_s, lib.authors[idAuthor].getName(), author);
             }
-            for(auto idGenre: book.listIdGenres){
+            for(auto idGenre: std::as_const(book.listIdGenres)){
                 QDomElement category = doc.createElement(u"category"_s);
                 entry.appendChild(category);
                 category.setAttribute(u"term"_s, genres[idGenre].sName);
@@ -1152,9 +1154,11 @@ QString opds_server::FillPageOPDS(const QList<uint> &listBooks, SLib &lib, const
 
     auto listQueryItems = urlquery.queryItems();
     if(nPage >= 1){
-        for(int i=0; i<listQueryItems.size(); i++){
-                 if(listQueryItems[i].first == u"page"_s)
-                    listQueryItems[i].second = QString::number(nPage-1);
+        for(auto &queryItem :listQueryItems){
+            if(queryItem.first == u"page"_s){
+                queryItem.second = QString::number(nPage-1);
+                break;
+            }
         }
         urlquery.setQueryItems(listQueryItems);
         QUrl urlPrevious = url.toString(QUrl::RemoveQuery);
@@ -2217,7 +2221,7 @@ void opds_server::stop_server()
     {
         OPDS_server_status = 0;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
-        auto listTcpServsrs = httpServer_.servers();
+        const auto listTcpServsrs = httpServer_.servers();
         for(auto server: listTcpServsrs) {
             server->close();
         }
@@ -2394,7 +2398,7 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
     QDomElement feed = docHeaderHTTP(sSesionQuery, lib.name, sLibUrl);
 
     auto iAuthor = lib.authors.constBegin();
-    QMap<QString, int> mCount;
+    QHash<QString, int> mCount;
 
     QSet <QString> setAuthors;
     int count = 0;
@@ -2425,7 +2429,7 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
         tag_table = doc.createElement(u"TABLE"_s);
         feed.appendChild(tag_table);
 
-        for(const QString &iIndex: listKeys)
+        for(const QString &iIndex: std::as_const(listKeys))
         {
             if(nCurrentColumn == 0)
             {

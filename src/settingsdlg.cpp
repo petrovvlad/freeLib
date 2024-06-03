@@ -575,7 +575,7 @@ void SettingsDlg::onBtnSaveExportClicked()
 #endif
     ExportOptions exportOptions;
 
-    QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
+    const QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
     exportOptions.sName = ui->ExportName->currentText();
     exportOptions.Save(settings, false);
     settings->sync();
@@ -648,12 +648,12 @@ void SettingsDlg::onBtnOpenExportClicked()
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
     QDir().mkpath(db_path);
-    QStringList files = zip.getFileNameList();
+    const QStringList files = zip.getFileNameList();
 
-    for(const QString &ffile: files)
+    for(const QString &file: files)
     {
 
-        QFileInfo fi(ffile);
+        QFileInfo fi(file);
         if(fi.path() == QStringLiteral("Fonts"))
         {
             if(QFile::exists(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + fi.fileName()))
@@ -666,7 +666,7 @@ void SettingsDlg::onBtnOpenExportClicked()
 
             {
                 QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/") + fi.fileName();
-                setCurrentZipFileName(&zip, ffile);
+                setCurrentZipFileName(&zip, file);
                 QuaZipFile zip_file(&zip);
                 zip_file.open(QIODevice::ReadOnly);
                 QFile font_file(font_name);

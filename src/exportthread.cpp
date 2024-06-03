@@ -90,7 +90,7 @@ QString BuildFileName(QString filename)
             .replace('<', '.').replace('>', '.').replace('\"', '\'');
 }
 
-bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &file_name, int count, uint idBook)
+bool ExportThread::convert(const QList<QBuffer *> &outbuff, uint idLib, const QString &file_name, int count, uint idBook)
 {
     SLib& lib = libs[idLib];
     Q_CHECK_PTR(pExportOptions_);
@@ -118,7 +118,7 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
     QStringList out_file;
     int i = 0;
     QFile file;
-    for(QBuffer* buf: outbuff)
+    for(const QBuffer* buf: outbuff)
     {
         out_file << tmp_dir + QStringLiteral("/freeLib/book%1.").arg(QString::number(i)) + fi.suffix();
         i++;
@@ -241,12 +241,11 @@ bool ExportThread::convert(QList<QBuffer*> outbuff, uint idLib, const QString &f
 void ExportThread::export_books()
 {
     QDir dir = sExportDir_;
-    QFileInfo fi;
 
     if(pExportOptions_->bOriginalFileName && send_type != ST_Mail && pExportOptions_->sOutputFormat == u"-")
     {
         QString LibPath = libs[idCurrentLib].path;
-        for(auto idBook: book_list)
+        for(auto idBook: std::as_const(book_list))
         {
             QString archive, file;
             SBook &book = libs[idCurrentLib].books[idBook];
@@ -300,9 +299,9 @@ void ExportThread::export_books()
              pExportOptions_->sOutputFormat == u"AZW3" || pExportOptions_->sOutputFormat == u"MOBI7") &&
             pExportOptions_->bJoinSeries;
 
-    for(auto idBook: book_list)
+    for(auto idBook: std::as_const(book_list))
     {
-        SBook &book = libs[idCurrentLib].books[idBook];
+        const SBook &book = libs[idCurrentLib].books[idBook];
         if(bNeedGroupSeries && book.idSerial != 0){
             auto iBookGroup = books_group.begin();
             while(iBookGroup != books_group.end()){
@@ -325,7 +324,7 @@ void ExportThread::export_books()
 
     auto nMaxFileName = pathconf(sExportDir_.toUtf8().data(), _PC_NAME_MAX);
     uint count = 0;
-    for(const auto &listBooks: books_group)
+    for(const auto &listBooks: std::as_const(books_group))
     {
         if(stopped_.load(std::memory_order_relaxed))
             break;
@@ -386,7 +385,7 @@ void ExportThread::export_books()
                 successful_export_books << idBook;
         }
         emit Progress(count * 100 / book_list.count(), count);
-        for(auto buf: buffers)
+        for(auto buf: std::as_const(buffers))
             delete buf;
     }
 }
@@ -475,58 +474,56 @@ void ExportThread::export_lib()
     inpx.open(QFile::WriteOnly);
     if(!inpx.isOpen())
     {
-        qDebug()<<"Error create file: "+impx_file;
+        qDebug()<<"Error create file: " + impx_file;
         return;
     }
 
 
     const SLib &lib = libs[idLib_];
     uint nCount = 0;
-    auto iBook = lib.books.constBegin();
-    while(iBook != lib.books.constEnd()){
+    for(const auto &book :lib.books){
         QString sBookTags;
-        for(uint i=0; i<iBook->listIdTags.size(); i++)
-            sBookTags += tagsName[iBook->listIdTags[i]] + ":";
+        for(auto idTag: book.listIdTags)
+            sBookTags += tagsName[idTag] + ":";
 
         QString sAuthors;
         QString sAuthorTags;
-        for(qsizetype i=0; i<iBook->listIdAuthors.size(); i++){
-            const SAuthor &author = lib.authors[iBook->listIdAuthors[i]];
+        for(auto idAuthor : book.listIdAuthors){
+            const SAuthor &author = lib.authors[idAuthor];
             sAuthors += author.sLastName % "," % author.sFirstName % ","  % author.sMiddleName % ":";
             //FIXME Разделить метки по авторам через ::
-            for(uint j=0; j<author.listIdTags.size(); j++)
-                sAuthorTags += tagsName[author.listIdTags[j]] + ":";
+            for(auto idTag :author.listIdTags)
+                sAuthorTags += tagsName[idTag] + ":";
         }
 
         QString sSerialTags;
-        if(iBook->idSerial != 0){
-            const auto &listTags = lib.serials[iBook->idSerial].listIdTags;
-            uint count = listTags.size();
-            for(uint i=0; i<count; i++){
-                sSerialTags += tagsName[listTags[i]] + ":";
+        if(book.idSerial != 0){
+            const auto &listTags = lib.serials[book.idSerial].listIdTags;
+            for(auto idTag :listTags){
+                sSerialTags += tagsName[idTag] + ":";
             }
         }
-        QString sLine = (QStringLiteral("%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8").arg(
+        QString sLine = (u"%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8"_s.arg(
                              sAuthors,                                                   //AUTHOR
-                             iBook->sName,                                               //TITLE
-                             iBook->idSerial !=0 ?lib.serials[iBook->idSerial].sName :QStringLiteral(""),     //SERIES
-                             QString::number(iBook->numInSerial),                                            //SERNO
-                             iBook->listIdGenres.size()>0 ?genres[iBook->listIdGenres.constFirst()].listKeys.constFirst() + QStringLiteral(":") :QStringLiteral(""),//GENRE
-                             QString::number(iBook->idInLib),                                      //LIBID
-                             iBook->sFile,                                                         //FILE
-                             iBook->sArchive                                                       //FOLDER
+                             book.sName,                                               //TITLE
+                             book.idSerial !=0 ?lib.serials[book.idSerial].sName :u""_s,     //SERIES
+                             QString::number(book.numInSerial),                                            //SERNO
+                             book.listIdGenres.size()>0 ?genres[book.listIdGenres.constFirst()].listKeys.constFirst() + u":"_s :u""_s,//GENRE
+                             QString::number(book.idInLib),                                      //LIBID
+                             book.sFile,                                                         //FILE
+                             book.sArchive                                                       //FOLDER
                          ) %
-                         QStringLiteral("\4%1\4%2\4%3\4%4\4%5\4%6\4%7").arg
+                         u"\4%1\4%2\4%3\4%4\4%5\4%6\4%7"_s.arg
                         (
-                            iBook->sFormat,                         //EXT
-                            QString::number(iBook->nSize),          //SIZE
-                            lib.vLaguages[iBook->idLanguage],       //LANG
-                            QString::number(iBook->nStars),         //STARS
-                            iBook->date.toString(QStringLiteral("yyyy-MM-dd")),  //DATE
-                            iBook->bDeleted ?"1" :"",                            //DEL
-                            iBook->sKeywords                                     //KEYWORDS
+                            book.sFormat,                         //EXT
+                            QString::number(book.nSize),          //SIZE
+                            lib.vLaguages[book.idLanguage],       //LANG
+                            QString::number(book.nStars),         //STARS
+                            book.date.toString(u"yyyy-MM-dd"_s),  //DATE
+                            book.bDeleted ?"1" :"",                            //DEL
+                            book.sKeywords                                     //KEYWORDS
                         ) %
-                        QStringLiteral("\4%1\4%2\4%3\r\n").arg
+                        u"\4%1\4%2\4%3\r\n"_s.arg
                         (
                              sBookTags,     //TAG
                              sAuthorTags,   //TAGAUTHOR
@@ -534,7 +531,6 @@ void ExportThread::export_lib()
                         ));
 
         inpx.write(sLine.toUtf8());
-        ++iBook;
         nCount++;
         if(uint(nCount / 1000) * 1000 == nCount)
             emit Progress( nCount * 100 / lib.books.count(), nCount );

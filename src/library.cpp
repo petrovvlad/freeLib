@@ -382,6 +382,14 @@ QString SAuthor::getName() const
 uint SLib::findAuthor(SAuthor &author) const
 {
     uint idAuthor = 0;
+#ifdef __cpp_lib_ranges
+    auto it = std::ranges::find_if(authors, [author](const auto &a){
+        return author.sFirstName == a.sFirstName && author.sMiddleName == a.sMiddleName && author.sLastName == a.sLastName;
+    });
+    if(it != authors.cend())
+        idAuthor = it.key();
+
+#else
     auto iAuthor = authors.constBegin();
     while(iAuthor != authors.constEnd() ){
         if(author.sFirstName == iAuthor->sFirstName && author.sMiddleName == iAuthor->sMiddleName && author.sLastName == iAuthor->sLastName){
@@ -390,12 +398,20 @@ uint SLib::findAuthor(SAuthor &author) const
         }
         iAuthor++;
     }
+#endif
     return idAuthor;
 }
 
 uint SLib::findSerial(const QString &sSerial) const
 {
     uint idSerial = 0;
+#ifdef __cpp_lib_ranges
+    auto it = std::ranges::find_if(serials, [sSerial](const auto &s){
+        return sSerial == s.sName;
+    });
+    if(it != serials.cend())
+        idSerial = it.key();
+#else
     auto iSerial = serials.constBegin();
     while(iSerial != serials.constEnd()){
         if(sSerial == iSerial->sName){
@@ -404,6 +420,7 @@ uint SLib::findSerial(const QString &sSerial) const
         }
         iSerial++;
     }
+#endif
     return idSerial;
 }
 
@@ -484,13 +501,14 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 
         QString abbr = QStringLiteral("");
         if(book.idSerial != 0){
-            for(const QString &str: serials[book.idSerial].sName.split(QStringLiteral(" ")))
+            const auto listSerials =  serials[book.idSerial].sName.split(QStringLiteral(" "));
+            for(const QString &sSerial: listSerials)
             {
-                if(!str.isEmpty())
-                    abbr += str.at(0);
+                if(!sSerial.isEmpty())
+                    abbr += sSerial.at(0);
             }
         }
-        result.replace(QStringLiteral("%abbrs"), abbr.toLower());
+        result.replace(u"%abbrs"_s, abbr.toLower());
 
         result.replace(QStringLiteral("%fi"), sFirstAuthor.sFirstName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sFirstName.at(0)));
         result.replace(QStringLiteral("%mi"), sFirstAuthor.sMiddleName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sMiddleName.at(0)));

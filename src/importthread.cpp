@@ -47,7 +47,7 @@ uint ImportThread::AddSeria(const QString &str, qlonglong libID, const QVariantL
     if(str.trimmed().isEmpty())
         return 0;
     QString name = str.trimmed();
-    query_.exec(QLatin1String("SELECT id FROM seria WHERE name='") + name + QStringLiteral("' and id_lib=") + QString::number(libID));
+    query_.exec(u"SELECT id FROM seria WHERE name='"_s % name % u"' and id_lib="_s % QString::number(libID));
     if(query_.next())
     {
         uint id = query_.value(0).toLongLong();
@@ -297,9 +297,10 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     for(int i=0; i<authors.count(); i++)
     {
         SAuthor author;
-        author.sFirstName = authors.at(i).toElement().elementsByTagName(QStringLiteral("first-name")).at(0).toElement().text().trimmed();
-        author.sLastName = authors.at(i).toElement().elementsByTagName(QStringLiteral("last-name")).at(0).toElement().text().trimmed();
-        author.sMiddleName = authors.at(i).toElement().elementsByTagName(QStringLiteral("middle-name")).at(0).toElement().text().trimmed();
+        auto element = authors.at(i).toElement();
+        author.sFirstName = element.elementsByTagName(QStringLiteral("first-name")).at(0).toElement().text().trimmed();
+        author.sLastName = element.elementsByTagName(QStringLiteral("last-name")).at(0).toElement().text().trimmed();
+        author.sMiddleName = element.elementsByTagName(QStringLiteral("middle-name")).at(0).toElement().text().trimmed();
         listAuthors << author;
     }
     QStringList listGenres;
@@ -482,7 +483,7 @@ void ImportThread::importBooksFromList(const QFileInfoList &listFiles)
 
     for(size_t i=0; i<listFiles.count() && !stopped_.load(std::memory_order_relaxed); i++)
     {
-        auto fileInfo = listFiles[i];
+        auto &fileInfo = listFiles[i];
         QString sFileName = fileInfo.absoluteFilePath();
         QString sSuffix = fileInfo.suffix().toLower();
         if(sSuffix != u"fbd" &&
@@ -645,9 +646,8 @@ void ImportThread::process()
     {
         ushort idGenre = query_.value(0).toUInt();
         QString sKeys = query_.value(1).toString();
-        QStringList listKeys = sKeys.split(QStringLiteral(";"));
-        for(qsizetype i=0; i<listKeys.size(); i++){
-            QString sKey = listKeys.at(i);
+        const QStringList listKeys = sKeys.split(QStringLiteral(";"));
+        for(const auto &sKey :listKeys){
             if(!sKey.isEmpty()){
                 genreKeys_[sKey] = idGenre;
             }
@@ -1015,11 +1015,12 @@ void ImportThread::process()
                         for(int i=0; i<listAuthor.count(); i++)
                         {
                             SAuthor author;
-                            author.sFirstName = listAuthor.at(i).toElement().elementsByTagName(QStringLiteral("first-name")).at(0).toElement().text();
-                            author.sLastName = listAuthor.at(i).toElement().elementsByTagName(QStringLiteral("last-name")).at(0).toElement().text();
-                            author.sMiddleName = listAuthor.at(i).toElement().elementsByTagName(QStringLiteral("middle-name")).at(0).toElement().text();
+                            auto element = listAuthor.at(i).toElement();
+                            author.sFirstName = element.elementsByTagName(u"first-name"_s).at(0).toElement().text();
+                            author.sLastName = element.elementsByTagName(u"last-name"_s).at(0).toElement().text();
+                            author.sMiddleName = element.elementsByTagName(u"middle-name"_s).at(0).toElement().text();
                             sAuthorLow = author.getName().toLower();
-                            if(!sAuthorLow.contains(QStringLiteral("неизвест")) && !sAuthorLow.isEmpty()){
+                            if(!sAuthorLow.contains(u"неизвест"_s) && !sAuthorLow.isEmpty()){
                                 bool bFirstAuthor = author_count == 0;
                                 addAuthor(author, idLib_, id_book, bFirstAuthor, bFirstAuthor ?&authorTags :nullptr);
                                 author_count++;
@@ -1073,6 +1074,9 @@ void ImportThread::process()
             emit progress(nBooksCount, (float)(i - iStart + 1)/(float)(listInpFiles.count() - iStart));
     }
     dbase.commit();
+    if(!stopped_)
+        emit progress(nBooksCount, 1.0f);
+
     emit End();
     dbase.close();
 }

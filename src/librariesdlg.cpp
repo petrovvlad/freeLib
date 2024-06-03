@@ -393,22 +393,21 @@ void LibrariesDlg::addBook()
         ui->checkwoDeleted->setDisabled(true);
         ui->update_group->hide();
 
-        for(qsizetype i = 0 ; i < listFiles.size(); ++i) {
-            QString sFile = listFiles.at(i);
+        for(auto &sFile :listFiles){
             if(!sFile.startsWith(pLib->path)){
                 //перенос файлов книг в папку библиотеки
                 QFileInfo fiSrc = QFileInfo(sFile);
                 QString baseName = fiSrc.baseName(); // получаем имя файла без расширения
                 QString extension = fiSrc.completeSuffix(); // получаем расширение файла
-                QFileInfo fiDst = QFileInfo(pLib->path + "/" + baseName + "." + extension);
+                QFileInfo fiDst = QFileInfo(pLib->path % "/" % baseName % "." % extension);
                 uint j = 1;
                 while(fiDst.exists()){
                     QString sNewName = QStringLiteral("%1 (%2).%3").arg(baseName, QString::number(j), extension);
-                    fiDst = QFileInfo(pLib->path + "/" + sNewName);
+                    fiDst = QFileInfo(pLib->path % "/" % sNewName);
                     j++;
                 }
                 QFile::copy(sFile, fiDst.absoluteFilePath());
-                listFiles[i] = fiDst.absoluteFilePath();
+                sFile = fiDst.absoluteFilePath();
             }    
         }
         pThread_ = new QThread;

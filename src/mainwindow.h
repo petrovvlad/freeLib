@@ -41,7 +41,7 @@ private:
     QObject* currentListForTag_;
     QMap<uint, QIcon> iconsTags_;
 
-    void uncheck_books(QList<qlonglong> list);
+    void uncheck_books(const QList<qlonglong> &list);
     QToolButton *FirstButton;
     QToolButton *btn_Hash;
     void UpdateExportMenu();

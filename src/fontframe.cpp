@@ -103,7 +103,7 @@ QString GetFontNameFromFile(const QString &lpszFilePath)
         {
             f.read((char*)&tblDir, sizeof(TT_TABLE_DIRECTORY));
             csTemp=QString::fromLatin1(tblDir.szTag, 4);
-            if(csTemp.toLower() == QLatin1String("name"))
+            if(csTemp.toLower() == u"name")
             {
                 tblDir.uLength = SWAPLONG(tblDir.uLength);
                 tblDir.uOffset = SWAPLONG(tblDir.uOffset);
@@ -191,28 +191,33 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
         onTagCurrentIndexChanged(tag);
 
 
-    QDir dir(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts"));
+    QDir dir(QApplication::applicationDirPath() + u"/xsl/fonts"_s);
     if(!dir.exists()){
         dir.setPath(FREELIB_DATA_DIR + QStringLiteral("/fonts"));
     }
-    for(const QString &str: dir.entryList(QStringList() << QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
+
+    auto listFiles = dir.entryList(QStringList() << u"*.ttf"_s, QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name);
+    for(const QString &str: std::as_const(listFiles))
     {
-        ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
-        ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
-        ui->font_i->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
-        ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        QString sName = GetFontNameFromFile(dir.absoluteFilePath(str));
+        ui->font->addItem(sName, str);
+        ui->font_b->addItem(sName, str);
+        ui->font_i->addItem(sName, str);
+        ui->font_bi->addItem(sName, str);
     }
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
     dir.setPath(QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts"));
-    for(const QString &str: dir.entryList(QStringList()<< QStringLiteral("*.ttf"), QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name))
+    listFiles = dir.entryList(QStringList() << u"*.ttf"_s, QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name);
+    for(const QString &str: std::as_const(listFiles))
     {
-        ui->font->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
-        ui->font_b->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
-        ui->font_i->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
-        ui->font_bi->addItem(GetFontNameFromFile(dir.absoluteFilePath(str)), str);
+        QString sName = GetFontNameFromFile(dir.absoluteFilePath(str));
+        ui->font->addItem(sName, str);
+        ui->font_b->addItem(sName, str);
+        ui->font_i->addItem(sName, str);
+        ui->font_bi->addItem(sName, str);
     }
 
     if(font != u"..." && !font.isEmpty())
