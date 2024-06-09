@@ -222,12 +222,11 @@ void loadLibrary(uint idLibrary)
         book.idSerial = query.value(3).toUInt();
         book.numInSerial = query.value(4).toUInt();
         QString sLaguage = query.value(5).toString().toLower();
-        int idLaguage = lib.vLaguages.indexOf(sLaguage);
-        if(idLaguage < 0){
-            idLaguage =lib.vLaguages.count();
-            lib.vLaguages << sLaguage;
-        }
-        book.idLanguage = static_cast<uchar>(idLaguage);
+        auto iLang = std::find(lib.vLaguages.cbegin(), lib.vLaguages.cend(), sLaguage);
+        int idLanguage = iLang - lib.vLaguages.cbegin();
+        if(idLanguage == lib.vLaguages.size())
+            lib.vLaguages.push_back(sLaguage);
+        book.idLanguage = static_cast<uchar>(idLanguage);
         book.sFile = query.value(6).toString();
         book.nSize = query.value(7).toUInt();
         book.bDeleted = query.value(8).toBool();

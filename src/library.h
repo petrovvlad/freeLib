@@ -1,14 +1,13 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
-#include <QMultiMap>
-//#include <QList>
 #include <QDateTime>
 #include <QFileInfo>
 #include <QBuffer>
 #include <QVariant>
 #include <chrono>
 
+#include "utilites.h"
 class SAuthor
 {
 public:
