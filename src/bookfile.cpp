@@ -14,6 +14,7 @@ BookFile::BookFile(uint idLib, uint idBook)
 }
 
 BookFile::BookFile(SLib *pLib, uint idBook)
+    :bOpen_(false)
 {
     pLib_ = pLib;
     idBook_ = idBook;
