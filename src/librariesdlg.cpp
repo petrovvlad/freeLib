@@ -138,17 +138,15 @@ void LibrariesDlg::UpdateLibList()
 {
     bool block = ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->clear();
-    auto i = libs.constBegin();
     int index = 0;
-    while(i != libs.constEnd()){
-        uint idLib = i.key();
+    for(const auto &iLib :libs){
+        uint idLib = iLib.first;
         if(idLib > 0){
-            ui->ExistingLibs->addItem(i->name, idLib);
+            ui->ExistingLibs->addItem(iLib.second.name, idLib);
             if(idLib == idCurrentLib_)
                 ui->ExistingLibs->setCurrentIndex(index);
             ++index;
         }
-        ++i;
     }
     ui->ExistingLibs->setEnabled( ui->ExistingLibs->count()>0 );
     ui->ExistingLibs->blockSignals(block);
@@ -284,7 +282,7 @@ void LibrariesDlg::DeleteLibrary()
     if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
         qDebug()<<query.lastError().databaseText();
     query.exec(QStringLiteral("VACUUM"));
-    libs.remove(idCurrentLib_);
+    libs.erase(idCurrentLib_);
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
         ui->ExistingLibs->setCurrentIndex(0);

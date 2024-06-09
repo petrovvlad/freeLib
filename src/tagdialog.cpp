@@ -9,6 +9,7 @@
 #include <QSqlQuery>
 
 #include "library.h"
+#include "utilites.h"
 
 TagDialog::TagDialog(QWidget *parent) :
     QDialog(parent),
@@ -62,12 +63,10 @@ TagDialog::TagDialog(QWidget *parent) :
         ui->tableWidget->insertRow(ui->tableWidget->rowCount());
         ui->tableWidget->setItem(con, 0, itemName);
         QComboBox *combo = new QComboBox(ui->tableWidget);
-        auto iIcon = icons_.constBegin();
-        while(iIcon != icons_.constEnd()){
-            combo->insertItem(index, iIcon.value(), QStringLiteral(""), iIcon.key());
-            if(iIcon.key() == idIcon)
+        for(const auto &iIcon :icons_){
+            combo->insertItem(index, iIcon.second, QStringLiteral(""), iIcon.first);
+            if(iIcon.first == idIcon)
                 combo->setCurrentIndex(index);
-            ++iIcon;
             index++;
         }
         ui->tableWidget->setCellWidget(con, 1, combo);
@@ -85,18 +84,15 @@ TagDialog::~TagDialog()
 
 void TagDialog::btnOk()
 {
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    for(int i=0; i<listIdDeleted_.size(); i++){
-        uint id = listIdDeleted_.at(i);
-        auto iLib = libs.begin();
-        while(iLib != libs.end()){
-            iLib->deleteTag(id);
-            ++iLib;
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    for(auto id :vIdDeleted_){
+        for(auto &iLib :libs){
+            iLib.second.deleteTag(id);
         }
     }
     uint maxId = 0;
     for(int i=0; i<ui->tableWidget->rowCount(); i++)
-        maxId = std::max(maxId, ui->tableWidget->item(i,0)->data(Qt::UserRole).toUInt());
+        maxId = std::max(maxId, ui->tableWidget->item(i, 0)->data(Qt::UserRole).toUInt());
     for(int i=0; i<ui->tableWidget->rowCount(); i++)
     {
         uint id = ui->tableWidget->item(i,0)->data(Qt::UserRole).toUInt();
@@ -124,10 +120,8 @@ void TagDialog::onAddRow()
 
     QComboBox *combo = new QComboBox(ui->tableWidget);
     int index = 0;
-    auto iIcon = icons_.constBegin();
-    while(iIcon != icons_.constEnd()){
-        combo->insertItem(index, iIcon.value(), QLatin1String(""), iIcon.key());
-        ++iIcon;
+    for(const auto &iIcon :icons_){
+        combo->insertItem(index, iIcon.second, u""_s, iIcon.first);
         index++;
     }
     combo->setCurrentIndex(0);
@@ -163,7 +157,7 @@ void TagDialog::onDeleteRow()
 
         if(nCount ==0 || QMessageBox::question(nullptr,tr("Tags"),tr("This tag is used. Do you want to delete this tag anyway?"),QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::Yes){
             ui->tableWidget->removeRow(index);
-            listIdDeleted_ << id;
+            vIdDeleted_.push_back(id);
         }
     }
 }

@@ -453,7 +453,7 @@ void fb2mobi::parse_title(const QDomNode &elem)
         if(!toc_title.isEmpty())
         {
             STOC c_toc = {QStringLiteral("%1#%2").arg(html_files.last().file_name, toc_ref_id), toc_title, current_header_level, body_name, QStringLiteral("")};
-            toc << c_toc;
+            toc.push_back(c_toc);
         }
     }
     else
@@ -943,7 +943,7 @@ void fb2mobi::generate_ncx()
         i++;
     }
     int current_level = -1;
-    QList<STOC> tmp_toc = toc;
+    std::vector<STOC> tmp_toc = toc;
     if(pExportOptions_->bMlToc)
     {
         //считаем количество заголовков каждого уровня
@@ -981,20 +981,20 @@ void fb2mobi::generate_ncx()
         std::sort(levelsList.begin(), levelsList.end());
         for(int i=levelsList.count()-1; i>=0; i--)
         {
-            for(int j=0; j<tmp_toc.count(); j++)
+            for(auto &iTmpToc :tmp_toc)
             {
-               if(tmp_toc[j].level >= levelsList[i])
+               if(iTmpToc.level >= levelsList[i])
                 {
-                    tmp_toc[j].level=-i;
+                    iTmpToc.level=-i;
                 }
             }
         }
-        for(int j=0; j<tmp_toc.count(); j++)
+        for(auto &iTmpToc :tmp_toc)
         {
-            if(tmp_toc[j].level > 0)
-                tmp_toc[j].level = 0;
+            if(iTmpToc.level > 0)
+                iTmpToc.level = 0;
             else
-                tmp_toc[j].level = -tmp_toc[j].level;
+                iTmpToc.level = -iTmpToc.level;
         }
 
     }
@@ -1163,7 +1163,8 @@ void fb2mobi::generate_opf_epub()
     buf += QStringLiteral("<dc:identifier id=\"bookid\">%1</dc:identifier>").arg(isbn.isEmpty() ?QUuid::createUuid().toString() :isbn);
     buf += QStringLiteral("<dc:creator opf:role=\"aut\">%1</dc:creator>").arg(book_author);
 
-    buf += QStringLiteral("<dc:subject>%1</dc:subject> ").arg(genres[pBook->listIdGenres.first()].sName);
+    if(!pBook->vIdGenres.empty())
+        buf += QStringLiteral("<dc:subject>%1</dc:subject> ").arg(genres[pBook->vIdGenres.at(0)].sName);
     if(!book_anntotation.isEmpty()){
         static const QRegularExpression re(QStringLiteral("<[^>]*>"));
         buf += QStringLiteral("<dc:description>%1</dc:description>").arg(book_anntotation.replace(re, QStringLiteral("")).trimmed());
@@ -1335,7 +1336,7 @@ void fb2mobi::generate_html(QFile *file)
         }
         html_files << html_content(tmp.arg(QString::number(index)));
         STOC c_toc = {QStringLiteral("%1#%2").arg(html_files.last().file_name, QStringLiteral("fn%1").arg(toc_index)), tr("Footnotes"), 1, body_name, ""};
-        toc << c_toc;
+        toc.push_back(c_toc);
         QString* str = &html_files.last().content;
         *str += HTMLHEAD;
         *str += QStringLiteral("<a name='fn%1'></a>").arg(QString::number(toc_index));
@@ -1753,9 +1754,9 @@ QString fb2mobi::convert(QStringList files, uint idBook)
     QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
 
 
-    QFile css(tmp_dir + QStringLiteral("/OEBPS/css/main.css"));
+    QFile css(tmp_dir + u"/OEBPS/css/main.css"_s);
     css.open(QFile::Append);
-    int count = pExportOptions_->vFontExportOptions.count();
+    int count = pExportOptions_->vFontExportOptions.size();
     QStringList fonts;
     QList<fontfamily> fonts_set;
     for(int i=0; i<count; i++)
@@ -1807,14 +1808,14 @@ QString fb2mobi::convert(QStringList files, uint idBook)
             }
             quint8 tag_id = fontExportOptions.nTag;
             QString sFontSize = QString::number(fontExportOptions.nFontSize);
-            set.tags[tag_list[tag_id].css] = sFontSize;
+            set.tags[vTags[tag_id].css] = sFontSize;
             bool find = false;
             for (int j=0; j<fonts_set.count(); j++)
             {
                 if(fonts_set[j] == set)
                 {
                     find = true;
-                    fonts_set[j].tags[tag_list[tag_id].css] = sFontSize;
+                    fonts_set[j].tags[vTags[tag_id].css] = sFontSize;
                     break;
                 }
             }

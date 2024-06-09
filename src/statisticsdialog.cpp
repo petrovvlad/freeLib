@@ -23,14 +23,14 @@ StatisticsDialog::StatisticsDialog(QWidget *parent) :
              "</table>"_s.arg(
                 tr("Library name"), lib.name,
                 tr("Version"), lib.sVersion,
-                tr("Book count"), locale.toString(lib.books.count()),
-                tr("Author count"), locale.toString(lib.authors.count() - 1)
+                tr("Book count"), locale.toString(lib.books.size()),
+                tr("Author count"), locale.toString(lib.authors.size() - 1)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
                 ,
 #else
                 ).arg(
 #endif
-                tr("Seria count"), locale.toString(lib.serials.count()));
+                tr("Seria count"), locale.toString(lib.serials.size()));
     ui->textEdit->setText(sText);
 }
 

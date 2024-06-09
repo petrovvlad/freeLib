@@ -72,14 +72,14 @@ void BookFile::open()
                 }
             }
 
-            QList<QByteArray> listData;
+            std::vector<QByteArray> vData;
             for(int i=1; i<sZipChain.count(); i++){
                 QBuffer tmpBuffer;
                 if(i==1){
                     sArchive = sLibPath % u"/"_s % sZipChain[0];
                     uz.setZipName(sArchive);
                 }else{
-                    tmpBuffer.setData(listData.last());
+                    tmpBuffer.setData(vData.back());
                     uz.setIoDevice(&tmpBuffer);
                 }
 
@@ -94,12 +94,14 @@ void BookFile::open()
                 {
                     MyDBG << "Error open file: " << sZipChain[i];
                 }
-                listData << zipFile.readAll();
+                vData.push_back(zipFile.readAll());
                 zipFile.close();
                 uz.close();
             }
-            buffer.setData(listData.last());
-            uz.setIoDevice(&buffer);
+            if(!vData.empty()){
+                buffer.setData(vData.back());
+                uz.setIoDevice(&buffer);
+            }
         }else
             uz.setZipName(sArchive);
         if( !uz.open(QuaZip::mdUnzip) )

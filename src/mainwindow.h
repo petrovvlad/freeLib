@@ -9,6 +9,7 @@
 #include <QMenu>
 #include <QTcpServer>
 #include <QSystemTrayIcon>
+#include <QList>
 
 #include "helpdialog.h"
 #include "options.h"
@@ -41,7 +42,7 @@ private:
     QObject* currentListForTag_;
     QMap<uint, QIcon> iconsTags_;
 
-    void uncheck_books(const QList<qlonglong> &list);
+    void uncheckBooks(const std::vector<uint> &vBooks);
     QToolButton *FirstButton;
     QToolButton *btn_Hash;
     void UpdateExportMenu();
@@ -49,17 +50,17 @@ private:
     void FillSerials();
     void FillGenres();
     void FillListBooks();
-    void FillListBooks(const QList<uint> &listBook, const QList<uint> &listCheckedBooks, uint idCurrentAuthor);
+    void FillListBooks(const std::vector<uint> &vBooks, const std::vector<uint> &vCheckedBooks, uint idCurrentAuthor);
     void FillAlphabet(const QString &sAlphabetName);
     bool IsBookInList(const SBook &book);
     void checkLetter(const QChar cLetter);
-    QList<uint> getCheckedBooks(bool bCheckedOnly = false);
-    void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, QList<uint> *pList);
-    QList<QTreeWidgetItem*> checkedItemsBookList(const QTreeWidgetItem *item = nullptr);
-    void setTag(uint idTag, uint id, QList<uint> &listIdTags, QString sTable, bool bSet);
+    std::vector<uint> getCheckedBooks(bool bCheckedOnly = false);
+    void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, std::vector<uint> *pList);
+    QList<QTreeWidgetItem *> checkedItemsBookList(const QTreeWidgetItem *item = nullptr);
+    void setTag(uint idTag, uint id, std::vector<uint> &vIdTags, QString sTable, bool bSet);
     void updateIcons();
     void updateItemIcon(QTreeWidgetItem *item);
-    QIcon getTagIcon(const QList<uint> &listTags);
+    QIcon getTagIcon(const std::vector<uint> &vIdTags);
 
 
     QSystemTrayIcon *pTrayIcon_;
@@ -72,7 +73,7 @@ private:
     ushort idCurrentGenre_;
     uint idCurrentSerial_;
     uint idCurrentBook_;
-    QList<uint> listBooks_;
+    std::vector<uint> vBooks_;
     CoverLabel *pCover;
     bool bTreeView_;
     QByteArray aHeadersTree_;

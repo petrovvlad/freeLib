@@ -14,7 +14,7 @@
 #include "options.h"
 #include "config-freelib.h"
 
-QList<tag> tag_list;
+std::vector<tag> vTags;
 
 QString RelativeToAbsolutePath(QString path)
 {
@@ -351,16 +351,15 @@ void setLocale(const QString &sLocale)
         translator_qt.reset();
     }
 
-    tag_list.clear();
-    tag_list<<
-        tag(QApplication::translate("SettingsDlg", "Top level captions"), QStringLiteral(".h0"), QStringLiteral("top_caption_font"), 140)<<
-        tag(QApplication::translate("SettingsDlg", "Captions"), QStringLiteral(".h1,.h2,.h3,.h4,.h5,.h6"), QStringLiteral("caption_font"), 120)<<
-        tag(QApplication::translate("SettingsDlg", "Dropcaps"), QStringLiteral("span.dropcaps"), QStringLiteral("dropcaps_font"), 300)<<
-        tag(QApplication::translate("SettingsDlg", "Footnotes"), QStringLiteral(".inlinenote,.blocknote"), QStringLiteral("footnotes_font"), 80)<<
-        tag(QApplication::translate("SettingsDlg", "Annotation"), QStringLiteral(".annotation"), QStringLiteral("annotation_font"), 100)<<
-        tag(QApplication::translate("SettingsDlg", "Poems"), QStringLiteral(".poem"), QStringLiteral("poem_font"), 100)<<
-        tag(QApplication::translate("SettingsDlg", "Epigraph"), QStringLiteral(".epigraph"), QStringLiteral("epigraph_font"), 100)<<
-        tag(QApplication::translate("SettingsDlg", "Book"), QStringLiteral("body"), QStringLiteral("body_font"), 100);
+    vTags.clear();
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Top level captions"), u".h0"_s, u"top_caption_font"_s, 140));
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Captions"), u".h1,.h2,.h3,.h4,.h5,.h6"_s, u"caption_font"_s, 120));
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Dropcaps"), u"span.dropcaps"_s, u"dropcaps_font"_s, 300));
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Footnotes"), u".inlinenote,.blocknote"_s, u"footnotes_font"_s, 80));
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Annotation"), u".annotation"_s, QStringLiteral("annotation_font"), 100));
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Poems"), u".poem"_s, u"poem_font"_s, 100));
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Epigraph"), u".epigraph"_s, u"epigraph_font"_s, 100));
+    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Book"), u"body"_s, u"body_font"_s, 100));
 }
 
 bool setCurrentZipFileName(QuaZip *zip, const QString &name)

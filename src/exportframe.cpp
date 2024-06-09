@@ -141,7 +141,7 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
 
     while(ui->fontLayout->count() > 2)
         delete ui->fontLayout->itemAt(0)->widget();
-    for(const auto &fontExportOptions :std::as_const(pExportOptions->vFontExportOptions))
+    for(const auto &fontExportOptions :pExportOptions->vFontExportOptions)
     {
         AddFont(fontExportOptions.bUse,
                 fontExportOptions.nTag,
@@ -235,16 +235,14 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
         CurrentTool = sCurrentTool;
     while(ui->CurrentTools->count()>1)
         ui->CurrentTools->removeItem(1);
-    auto iTool = options.tools.constBegin();
     int index=0;
-    while(iTool != options.tools.constEnd()){
-        ui->CurrentTools->addItem(iTool.key());
-        if(iTool.key() == CurrentTool)
+    for(const auto &iTool :options.tools){
+        ui->CurrentTools->addItem(iTool.first);
+        if(iTool.first == CurrentTool)
         {
             ui->CurrentTools->setCurrentIndex(ui->CurrentTools->count()-1);
         }
         ++index;
-        ++iTool;
     }
 }
 

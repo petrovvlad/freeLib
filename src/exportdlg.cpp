@@ -34,7 +34,7 @@ void ExportDlg::reject()
     }
 }
 
-void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_author, const ExportOptions &exportOptions)
+void ExportDlg::exec(const std::vector<uint> &vBooks, SendType send, qlonglong id_author, const ExportOptions &exportOptions)
 {
     pExportOptions_ = &exportOptions;
     ui->Exporting->setText(QStringLiteral("0"));
@@ -52,7 +52,7 @@ void ExportDlg::exec(const QList<uint> &list_books, SendType send, qlonglong id_
     }
     thread = new QThread;
     worker= new ExportThread(&exportOptions);
-    worker->start(dir, list_books, send, id_author);
+    worker->start(dir, vBooks, send, id_author);
     worker->moveToThread(thread);
     connect(worker, &ExportThread::Progress, this, &ExportDlg::Process);
     connect(thread, &QThread::started, worker, &ExportThread::process);
@@ -109,7 +109,7 @@ void ExportDlg::EndExport()
 
     thread = 0;
     ui->AbortButton->setText(tr("Close"));
-    succesfull_export_books = worker->successful_export_books;
+    vSuccessfulExportBooks = worker->vSuccessfulExportBooks;
 
     itsOkToClose = true;
     if(ui->CloseAfter->checkState() == Qt::Checked)

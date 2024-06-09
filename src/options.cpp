@@ -131,9 +131,8 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
     pSettings->setValue(QStringLiteral("coverLabel"), sCoverLabel);
     pSettings->setValue(QStringLiteral("content_placement"), nContentPlacement);
 
-//    QStringList fonts_list;
-    pSettings->beginWriteArray(QStringLiteral("fonts"));
-    int countFont = vFontExportOptions.count();
+    pSettings->beginWriteArray(u"fonts"_s);
+    int countFont = vFontExportOptions.size();
     for (int iFont = 0; iFont < countFont; ++iFont)
     {
         pSettings->setArrayIndex(iFont);
@@ -399,7 +398,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
 
 void Options::Save(QSharedPointer<QSettings> pSettings)
 {
-    int countExport = vExportOptions.count();
+    int countExport = vExportOptions.size();
     pSettings->beginWriteArray(QStringLiteral("export"));
     for(int iExport=0; iExport<countExport; iExport++){
         pSettings->setArrayIndex(iExport);
@@ -434,30 +433,25 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(QStringLiteral("proxy_host"), options.sProxyHost);
     pSettings->setValue(QStringLiteral("proxy_password"), options.sProxyPassword);
 
-    pSettings->beginWriteArray(QStringLiteral("application"));
-    auto iApp = options.applications.constBegin();
+    pSettings->beginWriteArray(u"application"_s);
     int index = 0;
-    while(iApp != options.applications.constEnd())
+    for(const auto &iApp :options.applications)
     {
         pSettings->setArrayIndex(index);
-        pSettings->setValue(QStringLiteral("ext"), iApp.key());
-        pSettings->setValue(QStringLiteral("app"), iApp.value());
-        ++iApp;
+        pSettings->setValue(u"ext"_s, iApp.first);
+        pSettings->setValue(u"app"_s, iApp.second);
         ++index;
     }
     pSettings->endArray();
 
-    pSettings->beginWriteArray(QStringLiteral("tools"));
-    auto iTool = options.tools.constBegin();
+    pSettings->beginWriteArray(u"tools"_s);
     index = 0;
-    while(iTool != options.tools.constEnd()){
+    for(const auto &iTool :options.tools){
         pSettings->setArrayIndex(index);
-        pSettings->setValue(QStringLiteral("name"), iTool.key());
-        pSettings->setValue(QStringLiteral("path"), iTool->sPath);
-        pSettings->setValue(QStringLiteral("args"), iTool->sArgs);
-        pSettings->setValue(QStringLiteral("ext"), iTool->sExt);
+        pSettings->setValue(u"name"_s, iTool.second.sPath);
+        pSettings->setValue(u"args"_s, iTool.second.sArgs);
+        pSettings->setValue(u"ext"_s, iTool.second.sExt);
         ++index;
-        ++iTool;
     }
     pSettings->endArray();
 }

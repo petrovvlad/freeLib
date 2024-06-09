@@ -157,9 +157,9 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
 {
     ui->setupUi(this);
 
-    for(int i=0; i<tag_list.count(); i++)
+    for(const auto &iTag :vTags)
     {
-        ui->tag->addItem(tag_list[i].name);
+        ui->tag->addItem(iTag.name);
     }
 
 //    QPalette palette = QApplication::style()->standardPalette();
@@ -375,5 +375,5 @@ int FontFrame::fontSize()
 
 void FontFrame::onTagCurrentIndexChanged(int index)
 {
-    ui->fontSize->setValue(tag_list[index].font_size);
+    ui->fontSize->setValue(vTags[index].font_size);
 }
