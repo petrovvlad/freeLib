@@ -7,6 +7,8 @@
 #include <QSettings>
 #include <QVector>
 
+#include "utilites.h"
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
 constexpr qsizetype nPasswordSaltSize = 24;
 constexpr quint64 nPasswordHashSize = 48;

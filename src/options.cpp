@@ -11,8 +11,6 @@
 #include <QRandomGenerator>
 #endif
 
-#include "utilites.h"
-
 static const quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
 QString encodeStr(const QString& str)
 {
