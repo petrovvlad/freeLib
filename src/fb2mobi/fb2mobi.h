@@ -142,7 +142,7 @@ private:
 
     QString href_pref;
 
-    QList<STOC> toc;
+    std::vector<STOC> toc;
     QStringList image_list;
     QString tmp_dir;
 

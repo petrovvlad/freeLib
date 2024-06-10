@@ -28,6 +28,21 @@ inline QString operator"" _s(const char16_t *str, const std::size_t size)
 using namespace Qt::Literals::StringLiterals;
 #endif
 
+#if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
+template<>
+struct std::hash<QString> {
+    std::size_t operator()(const QString& s) const noexcept {
+        return (size_t) qHash(s);
+    }
+};
+#endif
+
+template <typename T>
+bool contains(const std::vector<T> &v, T id)
+{
+    return std::find(v.begin(), v.end(), id) != v.end();
+}
+
 struct tag
 {
     QString name;
@@ -39,7 +54,7 @@ struct tag
     {
     }
 };
-extern QList<tag> tag_list;
+extern std::vector<tag> vTags;
 
 QString RelativeToAbsolutePath(QString path);
 bool openDB(const QString &sName);

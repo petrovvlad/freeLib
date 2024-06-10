@@ -138,17 +138,15 @@ void LibrariesDlg::UpdateLibList()
 {
     bool block = ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->clear();
-    auto i = libs.constBegin();
     int index = 0;
-    while(i != libs.constEnd()){
-        uint idLib = i.key();
+    for(const auto &iLib :libs){
+        uint idLib = iLib.first;
         if(idLib > 0){
-            ui->ExistingLibs->addItem(i->name, idLib);
+            ui->ExistingLibs->addItem(iLib.second.name, idLib);
             if(idLib == idCurrentLib_)
                 ui->ExistingLibs->setCurrentIndex(index);
             ++index;
         }
-        ++i;
     }
     ui->ExistingLibs->setEnabled( ui->ExistingLibs->count()>0 );
     ui->ExistingLibs->blockSignals(block);
@@ -284,7 +282,7 @@ void LibrariesDlg::DeleteLibrary()
     if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
         qDebug()<<query.lastError().databaseText();
     query.exec(QStringLiteral("VACUUM"));
-    libs.remove(idCurrentLib_);
+    libs.erase(idCurrentLib_);
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
         ui->ExistingLibs->setCurrentIndex(0);
@@ -366,7 +364,7 @@ void LibrariesDlg::ExportLib()
 void LibrariesDlg::addBook()
 {
     QStringList listFiles = QFileDialog::getOpenFileNames(this, tr("Select books to add"), ui->BookDir->text(),
-                                                      tr("Books (*.fb2 *.epub *.zip)"), nullptr, QFileDialog::ReadOnly);
+                                                      tr("Books") + u" (*.fb2 *.epub *.zip)"_s, nullptr, QFileDialog::ReadOnly);
     if(!listFiles.isEmpty()){
         QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
         SLib *pLib;
@@ -393,22 +391,21 @@ void LibrariesDlg::addBook()
         ui->checkwoDeleted->setDisabled(true);
         ui->update_group->hide();
 
-        for(qsizetype i = 0 ; i < listFiles.size(); ++i) {
-            QString sFile = listFiles.at(i);
+        for(auto &sFile :listFiles){
             if(!sFile.startsWith(pLib->path)){
                 //перенос файлов книг в папку библиотеки
                 QFileInfo fiSrc = QFileInfo(sFile);
                 QString baseName = fiSrc.baseName(); // получаем имя файла без расширения
                 QString extension = fiSrc.completeSuffix(); // получаем расширение файла
-                QFileInfo fiDst = QFileInfo(pLib->path + "/" + baseName + "." + extension);
+                QFileInfo fiDst = QFileInfo(pLib->path % "/" % baseName % "." % extension);
                 uint j = 1;
                 while(fiDst.exists()){
                     QString sNewName = QStringLiteral("%1 (%2).%3").arg(baseName, QString::number(j), extension);
-                    fiDst = QFileInfo(pLib->path + "/" + sNewName);
+                    fiDst = QFileInfo(pLib->path % "/" % sNewName);
                     j++;
                 }
                 QFile::copy(sFile, fiDst.absoluteFilePath());
-                listFiles[i] = fiDst.absoluteFilePath();
+                sFile = fiDst.absoluteFilePath();
             }    
         }
         pThread_ = new QThread;

@@ -14,6 +14,7 @@ BookFile::BookFile(uint idLib, uint idBook)
 }
 
 BookFile::BookFile(SLib *pLib, uint idBook)
+    :bOpen_(false)
 {
     pLib_ = pLib;
     idBook_ = idBook;
@@ -72,14 +73,14 @@ void BookFile::open()
                 }
             }
 
-            QList<QByteArray> listData;
+            std::vector<QByteArray> vData;
             for(int i=1; i<sZipChain.count(); i++){
                 QBuffer tmpBuffer;
                 if(i==1){
                     sArchive = sLibPath % u"/"_s % sZipChain[0];
                     uz.setZipName(sArchive);
                 }else{
-                    tmpBuffer.setData(listData.last());
+                    tmpBuffer.setData(vData.back());
                     uz.setIoDevice(&tmpBuffer);
                 }
 
@@ -94,12 +95,14 @@ void BookFile::open()
                 {
                     MyDBG << "Error open file: " << sZipChain[i];
                 }
-                listData << zipFile.readAll();
+                vData.push_back(zipFile.readAll());
                 zipFile.close();
                 uz.close();
             }
-            buffer.setData(listData.last());
-            uz.setIoDevice(&buffer);
+            if(!vData.empty()){
+                buffer.setData(vData.back());
+                uz.setIoDevice(&buffer);
+            }
         }else
             uz.setZipName(sArchive);
         if( !uz.open(QuaZip::mdUnzip) )
@@ -170,13 +173,17 @@ QImage BookFile::coverFb2()
 
     if(doc.isDocument()){
         QDomElement title_info = doc.elementsByTagName(u"title-info"_s).at(0).toElement();
-        QString cover  = title_info.elementsByTagName(u"coverpage"_s).at(0).toElement().elementsByTagName(u"image"_s).at(0).attributes().namedItem(u"l:href"_s).toAttr().value();
-        if(!cover.isEmpty() && cover.at(0) == u'#')
+        auto elmImg =  doc.elementsByTagName(u"title-info"_s).at(0).toElement().elementsByTagName(u"coverpage"_s).at(0).toElement().elementsByTagName(u"image"_s).at(0).attributes();
+        QString sCover  = elmImg.namedItem(u"l:href"_s).toAttr().value();
+        if(sCover.isEmpty())
+            sCover  = elmImg.namedItem(u"xlink:href"_s).toAttr().value();
+        if(!sCover.isEmpty() && sCover.at(0) == u'#')
         {
+            sCover = sCover.right(sCover.length() - 1);
             QDomNodeList binarys = doc.elementsByTagName(u"binary"_s);
             for(int i=0; i<binarys.count(); i++)
             {
-                if(binarys.at(i).attributes().namedItem(QStringLiteral("id")).toAttr().value() == cover.right(cover.length() - 1))
+                if(binarys.at(i).attributes().namedItem(u"id"_s).toAttr().value() == sCover)
                 {
                     QByteArray ba64;
                     ba64.append(binarys.at(i).toElement().text().toLatin1());

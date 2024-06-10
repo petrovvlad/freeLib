@@ -1,37 +1,42 @@
 #ifndef LIBRARY_H
 #define LIBRARY_H
 
-#include <QMultiMap>
-#include <QList>
 #include <QDateTime>
 #include <QFileInfo>
 #include <QBuffer>
 #include <QVariant>
 #include <chrono>
 
+#include "utilites.h"
 class SAuthor
 {
 public:
     SAuthor();
     SAuthor(const QString &sName);
     QString getName() const;
-    QList<uint> listIdTags;
+    std::vector<uint> vIdTags;
     QString sFirstName;
     QString sLastName;
     QString sMiddleName;
+
+    bool operator==(const SAuthor &other) const
+    {
+        return sFirstName == other.sFirstName && sMiddleName == other.sMiddleName && sLastName == other.sLastName;
+    }
+
 };
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-inline bool operator==(const SAuthor &a1, const SAuthor &a2)
+template <>
+struct std::hash<SAuthor>
 {
-    return a1.sFirstName == a2.sFirstName && a1.sMiddleName == a2.sMiddleName && a1.sLastName == a2.sLastName;
-}
-
-inline size_t qHash(const SAuthor &key, size_t seed = 0)
-{
-    return qHashMulti(seed, key.sFirstName, key.sMiddleName, key.sLastName);
-}
+    std::size_t operator()(const SAuthor& k, size_t seed = 0) const noexcept
+    {
+        return qHashMulti(seed, k.sFirstName, k.sMiddleName, k.sLastName);
+    }
+};
 #endif
+
 
 struct SBook
 {
@@ -44,9 +49,9 @@ struct SBook
     QString sFormat;
     QString sFile;
     QString sKeywords;
-    QList<ushort> listIdGenres;
-    QList<uint> listIdAuthors;
-    QList<uint> listIdTags;
+    std::vector<ushort> vIdGenres;
+    std::vector<uint> vIdAuthors;
+    std::vector<uint> vIdTags;
     uint idInLib;
     uint idSerial;
     uint idFirstAuthor;
@@ -60,7 +65,7 @@ struct SBook
 struct SSerial
 {
     QString sName;
-    QList<uint> listIdTags;
+    std::vector<uint> vIdTags;
 };
 
 struct SGenre
@@ -88,11 +93,11 @@ public:
     bool bFirstAuthor;
     bool bWoDeleted;
     bool bLoaded = false;
-    QHash<uint, SAuthor> authors;
-    QMultiHash<uint, uint> authorBooksLink;
-    QHash<uint, SBook> books;
-    QHash<uint, SSerial> serials;
-    QVector<QString> vLaguages;
+    std::unordered_map<uint, SAuthor> authors;
+    std::unordered_multimap<uint, uint> authorBooksLink;
+    std::unordered_map<uint, SBook> books;
+    std::unordered_map<uint, SSerial> serials;
+    std::vector<QString> vLaguages;
     std::chrono::time_point<std::chrono::system_clock> timeHttp{};
 };
 
@@ -100,7 +105,7 @@ void loadLibrary(uint idLibrary);
 void loadGenres();
 
 extern uint idCurrentLib;
-extern QMap<uint, SLib> libs;
-extern QMap <ushort, SGenre> genres;
+extern std::unordered_map<uint, SLib> libs;
+extern std::unordered_map<ushort, SGenre> genres;
 
 #endif // LIBRARY_H

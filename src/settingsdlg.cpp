@@ -186,33 +186,29 @@ void SettingsDlg::LoadSettings()
     ui->proxy_password->setText(options_.sProxyPassword);
     ui->proxy_user->setText(options_.sProxyUser);
 
-    ui->ApplicationList->setRowCount(options_.applications.count());
-    auto iApp = options_.applications.constBegin();
+    ui->ApplicationList->setRowCount(options_.applications.size());
     int index = 0;
-    while(iApp != options_.applications.constEnd()){
-        ui->ApplicationList->setItem(index, 0, new QTableWidgetItem(iApp.key()));
-        ui->ApplicationList->setItem(index, 1, new QTableWidgetItem(iApp.value()));
-        ++iApp;
+    for(const auto &iApp :options_.applications){
+        ui->ApplicationList->setItem(index, 0, new QTableWidgetItem(iApp.first));
+        ui->ApplicationList->setItem(index, 1, new QTableWidgetItem(iApp.second));
         ++index;
     }
 
-    ui->ExportList->setRowCount(options_.tools.count());
-    auto iTool = options_.tools.constBegin();
+    ui->ExportList->setRowCount(options_.tools.size());
     index=0;
-    while(iTool != options_.tools.constEnd()){
-        ui->ExportList->setItem(index, 0, new QTableWidgetItem(iTool.key()));
-        ui->ExportList->setItem(index, 1, new QTableWidgetItem(iTool->sPath));
-        ui->ExportList->setItem(index, 2, new QTableWidgetItem(iTool->sArgs));
-        ui->ExportList->setItem(index, 3, new QTableWidgetItem(iTool->sExt));
+    for(const auto &iTool :options_.tools){
+        ui->ExportList->setItem(index, 0, new QTableWidgetItem(iTool.first));
+        ui->ExportList->setItem(index, 1, new QTableWidgetItem(iTool.second.sPath));
+        ui->ExportList->setItem(index, 2, new QTableWidgetItem(iTool.second.sArgs));
+        ui->ExportList->setItem(index, 3, new QTableWidgetItem(iTool.second.sExt));
         ++index;
-        ++iTool;
     }
 
     ui->ExportName->clear();
     while(ui->stackedWidget->count() > 0)
         ui->stackedWidget->removeWidget(ui->stackedWidget->widget(0));
     int iDefault = 0;
-    count = options_.vExportOptions.count();
+    count = options_.vExportOptions.size();
     for(int i=0; i<count; i++)
     {
         ExportFrame* frame = new ExportFrame(this);
@@ -575,7 +571,7 @@ void SettingsDlg::onBtnSaveExportClicked()
 #endif
     ExportOptions exportOptions;
 
-    QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
+    const QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
     exportOptions.sName = ui->ExportName->currentText();
     exportOptions.Save(settings, false);
     settings->sync();
@@ -648,12 +644,12 @@ void SettingsDlg::onBtnOpenExportClicked()
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
     QDir().mkpath(db_path);
-    QStringList files = zip.getFileNameList();
+    const QStringList files = zip.getFileNameList();
 
-    for(const QString &ffile: files)
+    for(const QString &file: files)
     {
 
-        QFileInfo fi(ffile);
+        QFileInfo fi(file);
         if(fi.path() == QStringLiteral("Fonts"))
         {
             if(QFile::exists(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + fi.fileName()))
@@ -666,7 +662,7 @@ void SettingsDlg::onBtnOpenExportClicked()
 
             {
                 QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/") + fi.fileName();
-                setCurrentZipFileName(&zip, ffile);
+                setCurrentZipFileName(&zip, file);
                 QuaZipFile zip_file(&zip);
                 zip_file.open(QIODevice::ReadOnly);
                 QFile font_file(font_name);

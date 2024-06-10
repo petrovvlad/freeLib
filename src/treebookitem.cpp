@@ -40,8 +40,8 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
         case 0:  //Название книги
             return collator.compare(text(0), other.text(0)) < 0;
         case 1: //Автор
-            return collator.compare(libs[idCurrentLib].authors[bookThis.listIdAuthors.first()].getName(),
-                    libs[idCurrentLib].authors[bookOther.listIdAuthors.first()].getName()) < 0;
+            return collator.compare(libs[idCurrentLib].authors[bookThis.vIdAuthors.at(0)].getName(),
+                    libs[idCurrentLib].authors[bookOther.vIdAuthors.at(0)].getName()) < 0;
         case 2: //Серия
             if(bookThis.idSerial == 0 && bookOther.idSerial != 0)
                 return true;
@@ -58,7 +58,7 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
         case 6: //дата добавления
             return bookThis.date < bookOther.date;
         case 7: //Жанр
-            return collator.compare(genres[bookThis.listIdGenres.first()].sName, genres[bookOther.listIdGenres.first()].sName) < 0;
+            return collator.compare(genres[bookThis.vIdGenres.at(0)].sName, genres[bookOther.vIdGenres.at(0)].sName) < 0;
         case 8: //Язык
             return libs[idCurrentLib].vLaguages[bookThis.idLanguage] < libs[idCurrentLib].vLaguages[bookOther.idLanguage];
         case 9: //Формат

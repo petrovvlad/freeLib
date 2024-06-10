@@ -34,12 +34,12 @@ private slots:
 private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
 
-    QList<uint> book_list(SLib& lib, uint idAuthor, uint idSeria, ushort idGenre,  const QString &sSearch, bool sequenceless);
+    std::vector<uint> book_list(SLib& lib, uint idAuthor, uint idSeria, ushort idGenre,  const QString &sSearch, bool sequenceless);
     void stop_server();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
-    QHttpServerResponse FillPageHTTP(const QList<uint> &listBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor);
-    QString FillPageOPDS(const QList<uint> &listBooks, SLib &lib, const QString &sTitle, const QString &sId, const QString &sLibUrl, const QUrl &url);
+    QHttpServerResponse FillPageHTTP(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor);
+    QString FillPageOPDS(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sId, const QString &sLibUrl, const QUrl &url);
 
     bool checkAuth(const QHttpServerRequest &request, QUrl &url);
     QDomElement docHeaderHTTP(const QString &sSesionQuery, const QString &sLibName, const QString &sLibUrl);
@@ -78,7 +78,7 @@ private:
     QHttpServerResponse convert(uint idLib, uint idBook, const QString &sFormat, bool opds);
 #else
     QDomElement doc_header(const QString &session, bool html=false, const QString &lib_name = QString(), const QString &lib_url = QString());
-    QString FillPage(QList<uint> listBooks, SLib& lib, const QString &sTitle, const QString &lib_url, const QString &current_url, QTextStream& ts, bool opds, uint nPage, const QString &session, bool bShowAuthor);
+    QString FillPage(std::vector<uint> listBooks, SLib& lib, const QString &sTitle, const QString &lib_url, const QString &current_url, QTextStream& ts, bool opds, uint nPage, const QString &session, bool bShowAuthor);
     void convert(uint idLib, uint idBook, const QString &format, const QString &file_name, bool opds, QTextStream &ts);
     QString WriteSuccess(const QString &contentType = QStringLiteral("text/html;charset=utf-8"), bool isGZip=false);
 #endif
@@ -88,7 +88,7 @@ private:
     int port;
     QDomDocument doc;
     int OPDS_server_status;
-    QMap<QString, QDateTime> sessions;
+    std::unordered_map<QString, QDateTime> sessions;
     ExportOptions *pExportOptions_;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     QHttpServer httpServer_;

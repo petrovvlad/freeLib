@@ -39,6 +39,7 @@ private slots:
     void onPostprocessingCopyClicked();
     void onUserCSSclicked();
     void onBtnDefaultCSSclicked();
+    void validateEmail(QLineEdit* leEmail);
 
     void FontMove(QWidget *font_widget, int direction);
     void RemoveFont(QWidget *font_widget);
@@ -47,6 +48,8 @@ private slots:
 
 private:
     Ui::ExportFrame *ui;
+    QRegularExpressionValidator validatorEMail;
+
     void set_userCSS_clicked();
 };
 

@@ -7,6 +7,8 @@
 #include <QSettings>
 #include <QVector>
 
+#include "utilites.h"
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
 constexpr qsizetype nPasswordSaltSize = 24;
 constexpr quint64 nPasswordHashSize = 48;
@@ -93,7 +95,7 @@ struct ExportOptions
     bool bCreateCover;
     bool bCreateCoverAlways;
     bool bAddCoverLabel;
-    QVector<FontExportOptions> vFontExportOptions;
+    std::vector<FontExportOptions> vFontExportOptions;
 };
 
 struct Options
@@ -137,9 +139,9 @@ struct Options
     bool bOpdsShowAnotation;
     bool bOpdsNeedPassword;
 
-    QHash <QString, QString> applications;
-    QHash <QString, ToolsOptions> tools;
-    QVector<ExportOptions> vExportOptions;
+    std::unordered_map<QString, QString> applications;
+    std::unordered_map<QString, ToolsOptions> tools;
+    std::vector<ExportOptions> vExportOptions;
 };
 
 

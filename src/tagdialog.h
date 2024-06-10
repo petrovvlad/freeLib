@@ -19,8 +19,8 @@ public:
 
 private:
     Ui::TagDialog *ui;
-    QMap<uint, QIcon> icons_;
-    QList<uint> listIdDeleted_;
+    std::unordered_map<uint, QIcon> icons_;
+    std::vector<uint> vIdDeleted_;
 
 private slots:
     void btnOk();

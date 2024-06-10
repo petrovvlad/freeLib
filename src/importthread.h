@@ -42,10 +42,10 @@ private:
     bool bFirstAuthorOnly_;
     bool bWoDeleted_;
     std::atomic_bool stopped_;
-    QList<uint> listIdBookInLib_;
+    std::vector<uint> vIdBookInLib_;
     QStringList listFiles_;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    QHash<SAuthor, uint> hashAuthors_;
+    std::unordered_map<SAuthor, uint> hashAuthors_;
 #endif
     QSqlQuery query_;
     QSqlQuery queryInsertBook_;
@@ -54,7 +54,7 @@ private:
     QSqlQuery queryInsertBookGenre_;
     QSqlQuery queryInsertSeria_;
 
-    QHash <QString, ushort> genreKeys_;
+    std::unordered_map <QString, ushort> mGenreKeys_;
     uint AddSeria(const QString &str, qlonglong libID, const QVariantList *pTags = nullptr);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);
     uint AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,

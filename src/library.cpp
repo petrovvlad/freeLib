@@ -23,8 +23,8 @@
 #endif
 
 
-QMap<uint, SLib> libs;
-QMap <ushort, SGenre> genres;
+std::unordered_map<uint, SLib> libs;
+std::unordered_map<ushort, SGenre> genres;
 QString RelativeToAbsolutePath(QString path);
 extern bool bVerbose;
 
@@ -54,7 +54,7 @@ void loadLibrary(uint idLibrary)
             dbReadAuthors.setDatabaseName(sDbFile);
 #endif
             lib.authors.clear();
-            lib.authors.insert(0, SAuthor());
+            lib.authors.emplace(0, SAuthor());//insert(0, SAuthor());
             if (!dbReadAuthors.open())
             {
                 MyDBG << dbReadAuthors.lastError().text();
@@ -82,7 +82,7 @@ void loadLibrary(uint idLibrary)
                 uint idSeria = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
                 if(lib.serials.contains(idSeria))
-                    lib.serials[idSeria].listIdTags << idTag;
+                    lib.serials[idSeria].vIdTags.push_back(idTag);
             }
 
             query.prepare(QStringLiteral("SELECT author.id, name1, name2, name3 FROM author WHERE id_lib=:id_lib;"));
@@ -104,7 +104,7 @@ void loadLibrary(uint idLibrary)
                 uint idAuthor = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
                 if(lib.authors.contains(idAuthor))
-                    lib.authors[idAuthor].listIdTags << idTag;
+                    lib.authors[idAuthor].vIdTags.push_back(idTag);
             }
         }
         QSqlDatabase::removeDatabase(QStringLiteral("readauthors"));
@@ -184,12 +184,11 @@ void loadLibrary(uint idLibrary)
             book.idSerial = buff[k + 3].toUInt();
             book.numInSerial = buff[k + 4].toUInt();
             QString sLaguage = buff[k + 5].toString().toLower();
-            int idLaguage = lib.vLaguages.indexOf(sLaguage);
-            if(idLaguage < 0){
-                idLaguage = lib.vLaguages.count();
-                lib.vLaguages << sLaguage;
-            }
-            book.idLanguage = static_cast<uchar>(idLaguage);
+            auto iLang = std::find(lib.vLaguages.cbegin(), lib.vLaguages.cend(), sLaguage);
+            int idLanguage = iLang - lib.vLaguages.cbegin();
+            if(idLanguage == lib.vLaguages.size())
+                lib.vLaguages.push_back(sLaguage);
+            book.idLanguage = static_cast<uchar>(idLanguage);
             book.sFile = buff[k + 6].toString();
             book.nSize = buff[k + 7].toUInt();
             book.bDeleted = buff[k + 8].toBool();
@@ -223,12 +222,11 @@ void loadLibrary(uint idLibrary)
         book.idSerial = query.value(3).toUInt();
         book.numInSerial = query.value(4).toUInt();
         QString sLaguage = query.value(5).toString().toLower();
-        int idLaguage = lib.vLaguages.indexOf(sLaguage);
-        if(idLaguage < 0){
-            idLaguage =lib.vLaguages.count();
-            lib.vLaguages << sLaguage;
-        }
-        book.idLanguage = static_cast<uchar>(idLaguage);
+        auto iLang = std::find(lib.vLaguages.cbegin(), lib.vLaguages.cend(), sLaguage);
+        int idLanguage = iLang - lib.vLaguages.cbegin();
+        if(idLanguage == lib.vLaguages.size())
+            lib.vLaguages.push_back(sLaguage);
+        book.idLanguage = static_cast<uchar>(idLanguage);
         book.sFile = query.value(6).toString();
         book.nSize = query.value(7).toUInt();
         book.bDeleted = query.value(8).toBool();
@@ -271,7 +269,7 @@ void loadLibrary(uint idLibrary)
                 ushort idGenre = query.value(1).toUInt();
                 if(idGenre == 0) idGenre = 1112; // Прочие/Неотсортированное
                 if(lib.books.contains(idBook))
-                    lib.books[idBook].listIdGenres << idGenre;
+                    lib.books[idBook].vIdGenres.push_back(idGenre);
             }
             query.prepare(QStringLiteral("SELECT book_tag.id_book, book_tag.id_tag FROM book_tag INNER JOIN book ON book.id = book_tag.id_book WHERE book.id_lib = :id_lib"));
             query.bindValue(QStringLiteral(":id_lib"),idLibrary);
@@ -281,7 +279,7 @@ void loadLibrary(uint idLibrary)
                 uint idBook = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
                 if(lib.books.contains(idBook))
-                    lib.books[idBook].listIdTags << idTag;
+                    lib.books[idBook].vIdTags.push_back( idTag );
             }
         }
         QSqlDatabase::removeDatabase(QStringLiteral("readdb"));
@@ -297,17 +295,15 @@ void loadLibrary(uint idLibrary)
         uint idBook = query.value(0).toUInt();
         uint idAuthor = query.value(1).toUInt();
         if(lib.books.contains(idBook) && lib.authors.contains(idAuthor)){
-            lib.authorBooksLink.insert(idAuthor,idBook);
-            lib.books[idBook].listIdAuthors << idAuthor;
+            lib.authorBooksLink.insert({idAuthor, idBook});
+            lib.books[idBook].vIdAuthors.push_back(idAuthor);
         }
     }
-    auto iBook = lib.books.begin();
-    while(iBook != lib.books.end()){
-        if(iBook->listIdAuthors.isEmpty()){
-            iBook->listIdAuthors << 0;
-            lib.authorBooksLink.insert(0, iBook.key());
+    for(auto &book :lib.books){
+        if(book.second.vIdAuthors.empty()){
+            book.second.vIdAuthors.push_back(0);
+            lib.authorBooksLink.insert({0, book.first});
         }
-        ++iBook;
     }
 
 #ifdef __cpp_lib_atomic_wait
@@ -382,28 +378,41 @@ QString SAuthor::getName() const
 uint SLib::findAuthor(SAuthor &author) const
 {
     uint idAuthor = 0;
-    auto iAuthor = authors.constBegin();
-    while(iAuthor != authors.constEnd() ){
-        if(author.sFirstName == iAuthor->sFirstName && author.sMiddleName == iAuthor->sMiddleName && author.sLastName == iAuthor->sLastName){
-            idAuthor = iAuthor.key();
+#ifdef __cpp_lib_ranges
+    auto it = std::ranges::find_if(authors, [&author](const auto &a){
+        return author.sFirstName == a.second.sFirstName && author.sMiddleName == a.second.sMiddleName && author.sLastName == a.second.sLastName;
+    });
+    if(it != authors.cend())
+        idAuthor = it->first;
+
+#else
+    for(const auto &iAuthor :authors){
+        if(author.sFirstName == iAuthor.second.sFirstName && author.sMiddleName == iAuthor.second.sMiddleName && author.sLastName == iAuthor.second.sLastName){
+            idAuthor = iAuthor.first;
             break;
         }
-        iAuthor++;
     }
+#endif
     return idAuthor;
 }
 
 uint SLib::findSerial(const QString &sSerial) const
 {
     uint idSerial = 0;
-    auto iSerial = serials.constBegin();
-    while(iSerial != serials.constEnd()){
-        if(sSerial == iSerial->sName){
-            idSerial = iSerial.key();
+#ifdef __cpp_lib_ranges
+    auto it = std::ranges::find_if(serials, [&sSerial](const auto &s){
+        return sSerial == s.second.sName;
+    });
+    if(it != serials.cend())
+        idSerial = it->first;
+#else
+    for(const auto &iSerial :serials){
+        if(sSerial == iSerial.second.sName){
+            idSerial = iSerial.first;
             break;
         }
-        iSerial++;
     }
+#endif
     return idSerial;
 }
 
@@ -484,13 +493,14 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 
         QString abbr = QStringLiteral("");
         if(book.idSerial != 0){
-            for(const QString &str: serials[book.idSerial].sName.split(QStringLiteral(" ")))
+            const auto listSerials =  serials[book.idSerial].sName.split(QStringLiteral(" "));
+            for(const QString &sSerial: listSerials)
             {
-                if(!str.isEmpty())
-                    abbr += str.at(0);
+                if(!sSerial.isEmpty())
+                    abbr += sSerial.at(0);
             }
         }
-        result.replace(QStringLiteral("%abbrs"), abbr.toLower());
+        result.replace(u"%abbrs"_s, abbr.toLower());
 
         result.replace(QStringLiteral("%fi"), sFirstAuthor.sFirstName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sFirstName.at(0)));
         result.replace(QStringLiteral("%mi"), sFirstAuthor.sMiddleName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sMiddleName.at(0)));
@@ -545,20 +555,23 @@ QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_
 
 void SLib::deleteTag(uint idTag)
 {
-    auto iBook = books.begin();
-    while(iBook != books.end()){
-        iBook->listIdTags.removeOne(idTag);
-        ++iBook;
+    for(auto &book :books){
+        auto &vIdTags = book.second.vIdTags;
+        auto it = std::find(vIdTags.cbegin(), vIdTags.cend(), idTag);
+        if(it!=vIdTags.end())
+            vIdTags.erase(it);
     }
-    auto iSerial = serials.begin();
-    while(iSerial != serials.end()){
-        iSerial->listIdTags.removeOne(idTag);
-        ++iSerial;
+    for(auto &iSerial :serials){
+        auto &vIdTags = iSerial.second.vIdTags;
+        auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
+        if(it != vIdTags.end())
+            vIdTags.erase(it);
     }
-    auto iAuthor = authors.begin();
-    while(iAuthor != authors.end()){
-        iAuthor->listIdTags.removeOne(idTag);
-        ++iAuthor;
+    for(auto &iAuthor :authors){
+        auto &vIdTags = iAuthor.second.vIdTags;
+        auto it = std::find(vIdTags.cbegin(), vIdTags.cend(), idTag);
+        if(it != vIdTags.end())
+            vIdTags.erase(it);
     }
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));

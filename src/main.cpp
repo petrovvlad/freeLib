@@ -47,7 +47,7 @@ void UpdateLibs()
             idCurrentLib = 0;
         else{
             if(idCurrentLib == 0)
-                idCurrentLib = libs.constBegin().key();
+                idCurrentLib = libs.cbegin()->first;
             if(!libs.contains(idCurrentLib))
                 idCurrentLib = 0;
         }
@@ -148,10 +148,8 @@ int main(int argc, char *argv[])
             if(cmdparam == u"--lib-ls"){
                 std::cout << "id\tlibrary\n"
                              "----------------------------------------------------------\n";
-                auto iLib = libs.constBegin();
-                while(iLib != libs.constEnd()){
-                    std::cout << iLib.key() << "\t" << iLib->name.toStdString() << "\n";
-                    ++iLib;
+                for(const auto &iLib :libs){
+                    std::cout << iLib.first << "\t" << iLib.second.name.toStdString() << "\n";
                 }
             }
 
@@ -365,7 +363,7 @@ int main(int argc, char *argv[])
     auto  settings = GetSettings();
     options.Load(settings);
     setLocale(options.sUiLanguageName);
-    if(options.vExportOptions.isEmpty())
+    if(options.vExportOptions.empty())
         options.setExportDefault();
 
     std::unique_ptr<QSplashScreen> splash;

@@ -358,23 +358,26 @@ void MainWindow::UpdateTags()
 void MainWindow::updateIcons()
 {
     bool wasBlocked = ui->SeriaList->blockSignals(true);
-    for(int i=0; i<ui->SeriaList->count(); i++){
+    int nCount = ui->SeriaList->count();
+    for(int i=0; i<nCount; i++){
         auto item = ui->SeriaList->item(i);
         uint idSerial = item->data(Qt::UserRole).toUInt();
-        item->setIcon(getTagIcon(libs[idCurrentLib].serials[idSerial].listIdTags));
+        item->setIcon(getTagIcon(libs[idCurrentLib].serials[idSerial].vIdTags));
     }
     ui->SeriaList->blockSignals(wasBlocked);
 
     wasBlocked = ui->AuthorList->blockSignals(true);
-    for(int i=0; i<ui->AuthorList->count(); i++){
+    nCount = ui->AuthorList->count();
+    for(int i=0; i<nCount; i++){
         auto item = ui->AuthorList->item(i);
         uint idAuthor = item->data(Qt::UserRole).toUInt();
-        item->setIcon(getTagIcon(libs[idCurrentLib].authors[idAuthor].listIdTags));
+        item->setIcon(getTagIcon(libs[idCurrentLib].authors[idAuthor].vIdTags));
     }
     ui->AuthorList->blockSignals(wasBlocked);
 
     wasBlocked = ui->Books->blockSignals(true);
-    for(int i=0; i<ui->Books->topLevelItemCount(); i++){
+    nCount  = ui->Books->topLevelItemCount();
+    for(int i=0; i<nCount; i++){
         auto item1 = ui->Books->topLevelItem(i);
         updateItemIcon(item1);
         for(int j=0; j<item1->childCount(); j++){
@@ -394,24 +397,24 @@ void MainWindow::updateItemIcon(QTreeWidgetItem *item)
     uint id = item->data(0, Qt::UserRole).toUInt();
     switch(item->type()){
     case ITEM_TYPE_BOOK:
-        item->setIcon(0, getTagIcon(libs[idCurrentLib].books[id].listIdTags));
+        item->setIcon(0, getTagIcon(libs[idCurrentLib].books[id].vIdTags));
         break;
     case ITEM_TYPE_SERIA:
-        item->setIcon(0, getTagIcon(libs[idCurrentLib].serials[id].listIdTags));
+        item->setIcon(0, getTagIcon(libs[idCurrentLib].serials[id].vIdTags));
         break;
     case ITEM_TYPE_AUTHOR:
-        item->setIcon(0, getTagIcon(libs[idCurrentLib].authors[id].listIdTags));
+        item->setIcon(0, getTagIcon(libs[idCurrentLib].authors[id].vIdTags));
         break;
     }
 }
 
-QIcon MainWindow::getTagIcon(const QList<uint> &listTags)
+QIcon MainWindow::getTagIcon(const std::vector<uint> &vIdTags)
 {
-    int size = listTags.size();
+    int size = vIdTags.size();
     if(size == 0)
         return QIcon();
     if(size == 1)
-        return iconsTags_[listTags.first()];
+        return iconsTags_[vIdTags.at(0)];
     return iconsTags_[0];
 }
 
@@ -494,7 +497,8 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
     if(!sAlphabet.isEmpty())
     {
         QHBoxLayout *layout_abc = new QHBoxLayout();
-        for(int i=0; i<sAlphabet.length(); i++)
+        int nCount = sAlphabet.length();
+        for(int i=0; i<nCount; i++)
         {
             QToolButton *btn = new QToolButton(this);
             btn->setText(sAlphabet.at(i));
@@ -515,7 +519,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
         layout_abc->setContentsMargins(0, 0, 0, 0);
         layout_abc_all->addItem(layout_abc);
     }
-    QString abc = QStringLiteral("*#ABCDEFGHIJKLMNOPQRSTUVWXYZ");
+    const QString abc = u"*#ABCDEFGHIJKLMNOPQRSTUVWXYZ"_s;
     QHBoxLayout *layout_abc = new QHBoxLayout();
     for(int i=0; i<abc.length(); i++)
     {
@@ -564,23 +568,22 @@ void MainWindow::onSetTag()
     if(currentListForTag_ == ui->Books)
     {
         auto listItems = checkedItemsBookList();
-        if(listItems.isEmpty())
+        if(listItems.empty())
             listItems = ui->Books->selectedItems();
-        for(int iItem=0; iItem<listItems.size(); iItem++){
-            QTreeWidgetItem* item = listItems.at(iItem);
+        for(auto item : std::as_const(listItems)){
             id = item->data(0, Qt::UserRole).toUInt();
             switch (item->type()) {
             case ITEM_TYPE_BOOK:
-                setTag(idTag, id, libs[idCurrentLib].books[id].listIdTags, QStringLiteral("book"), bSet);
+                setTag(idTag, id, libs[idCurrentLib].books[id].vIdTags, u"book"_s, bSet);
                 break;
 
             case ITEM_TYPE_SERIA:
-                setTag(idTag, id, libs[idCurrentLib].serials[id].listIdTags, QStringLiteral("seria"), bSet);
+                setTag(idTag, id, libs[idCurrentLib].serials[id].vIdTags, u"seria"_s, bSet);
 
                 break;
 
             case ITEM_TYPE_AUTHOR:
-                setTag(idTag, id, libs[idCurrentLib].authors[id].listIdTags, QStringLiteral("author"), bSet);
+                setTag(idTag, id, libs[idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
 
                 break;
 
@@ -592,31 +595,32 @@ void MainWindow::onSetTag()
     else if(currentListForTag_ == ui->AuthorList)
     {
         id = ui->AuthorList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, libs[idCurrentLib].authors[id].listIdTags, QStringLiteral("author"), bSet);
+        setTag(idTag, id, libs[idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
     }
     else if(currentListForTag_ == ui->SeriaList)
     {
         id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, libs[idCurrentLib].serials[id].listIdTags, QStringLiteral("seria"), bSet);
+        setTag(idTag, id, libs[idCurrentLib].serials[id].vIdTags, QStringLiteral("seria"), bSet);
     }
 
     //TODO оптимизировать обновление иконок при большом количестве отображаемых авторов/книг
     updateIcons();
 }
 
-void MainWindow::setTag(uint idTag, uint id, QList<uint> &listIdTags,  QString sTable, bool bSet)
+void MainWindow::setTag(uint idTag, uint id, std::vector<uint> &vIdTags,  QString sTable, bool bSet)
 {
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     QString sQuery;
     QIcon icon;
     if(bSet){
-        listIdTags << idTag;
+        vIdTags.push_back(idTag);
         sQuery = QStringLiteral("INSERT INTO %1_tag (id_%1,id_tag) VALUES(%2,%3)").
                 arg(sTable, QString::number(id), QString::number(idTag));
         icon = iconsTags_[idTag];
     }else{
-        int index = listIdTags.indexOf(idTag);
-        listIdTags.removeAt(index);
+        auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
+        if(it != vIdTags.end())
+            vIdTags.erase(it);
         query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
         sQuery = QStringLiteral("DELETE FROM %1_tag WHERE (id_%1=%2) AND (id_tag=%3)").
                 arg(sTable, QString::number(id), QString::number(idTag));
@@ -704,30 +708,30 @@ void MainWindow::Settings()
 /*
     Возвращает список отмеченных книг
 */
-QList<uint> MainWindow::getCheckedBooks(bool bCheckedOnly)
+std::vector<uint> MainWindow::getCheckedBooks(bool bCheckedOnly)
 {
-    QList<uint> listBooks;
-    FillCheckedItemsBookList(nullptr, false, &listBooks);
-    if(listBooks.count() == 0 && !bCheckedOnly)
+    std::vector<uint> vBooks;
+    FillCheckedItemsBookList(nullptr, false, &vBooks);
+    if(vBooks.empty() && !bCheckedOnly)
     {
         if(ui->Books->selectedItems().count() > 0)
         {
             if(ui->Books->selectedItems()[0]->childCount() > 0)
-                FillCheckedItemsBookList(ui->Books->selectedItems()[0], true, &listBooks);
+                FillCheckedItemsBookList(ui->Books->selectedItems()[0], true, &vBooks);
             else
             {
                 if(ui->Books->selectedItems()[0]->type() == ITEM_TYPE_BOOK)
                 {
                     uint idBook = ui->Books->selectedItems()[0]->data(0, Qt::UserRole).toUInt();
-                    listBooks << idBook;
+                    vBooks.push_back(idBook);
                 }
             }
         }
     }
-    return listBooks;
+    return vBooks;
 }
 
-void MainWindow::FillCheckedItemsBookList(const QTreeWidgetItem* item, bool send_all, QList<uint> *pList)
+void MainWindow::FillCheckedItemsBookList(const QTreeWidgetItem* item, bool send_all, std::vector<uint> *pList)
 {
     QTreeWidgetItem* current;
     int count = item ?item->childCount() :ui->Books->topLevelItemCount();
@@ -744,15 +748,15 @@ void MainWindow::FillCheckedItemsBookList(const QTreeWidgetItem* item, bool send
             {
                 if(current->type() == ITEM_TYPE_BOOK)
                 {
-                    uint id_book = current->data(0, Qt::UserRole).toUInt();
-                    *pList << id_book;
+                    uint idBook = current->data(0, Qt::UserRole).toUInt();
+                    pList->push_back(idBook);
                 }
             }
         }
     }
 }
 
-QList<QTreeWidgetItem*> MainWindow::checkedItemsBookList(const QTreeWidgetItem *item)
+QList<QTreeWidgetItem *> MainWindow::checkedItemsBookList(const QTreeWidgetItem *item)
 {
     QList<QTreeWidgetItem*> listItems;
     QTreeWidgetItem* current;
@@ -770,14 +774,14 @@ QList<QTreeWidgetItem*> MainWindow::checkedItemsBookList(const QTreeWidgetItem *
     return listItems;
 }
 
-void MainWindow::uncheck_books(QList<qlonglong> list)
+void MainWindow::uncheckBooks(const std::vector<uint> &vBooks)
 {
     if(!options.bUncheckAfterExport)
         return;
     QList<QTreeWidgetItem*> items;
     if(ui->Books->topLevelItemCount() == 0)
         return;
-    for(auto id: list)
+    for(auto id: vBooks)
     {
         for(int i=0; i<ui->Books->topLevelItemCount(); i++)
             items << ui->Books->topLevelItem(i);
@@ -801,22 +805,22 @@ void MainWindow::uncheck_books(QList<qlonglong> list)
 
 void MainWindow::SendToDevice(const ExportOptions &exportOptions)
 {
-    QList<uint> book_list = getCheckedBooks();
-    if(book_list.count() == 0)
+    std::vector<uint> vBooks = getCheckedBooks();
+    if(vBooks.empty())
         return;
     ExportDlg dlg(this);
-    dlg.exec(book_list, ST_Device, ui->tabWidget->currentIndex() == TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong() :0, exportOptions);
-    uncheck_books(dlg.succesfull_export_books);
+    dlg.exec(vBooks, ST_Device, ui->tabWidget->currentIndex() == TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong() :0, exportOptions);
+    uncheckBooks(dlg.vSuccessfulExportBooks);
 }
 
 void MainWindow::SendMail(const ExportOptions &exportOptions)
 {
-    QList<uint> book_list = getCheckedBooks();
-    if(book_list.count() == 0)
+    std::vector<uint> vBooks = getCheckedBooks();
+    if(vBooks.empty())
         return;
     ExportDlg dlg(this);
-    dlg.exec(book_list, ST_Mail, ui->tabWidget->currentIndex() == TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong() :0, exportOptions);
-    uncheck_books(dlg.succesfull_export_books);
+    dlg.exec(vBooks, ST_Mail, ui->tabWidget->currentIndex() == TabAuthors ?ui->AuthorList->selectedItems()[0]->data(Qt::UserRole).toLongLong() :0, exportOptions);
+    uncheckBooks(dlg.vSuccessfulExportBooks);
 }
 
 
@@ -850,7 +854,7 @@ void MainWindow::BookDblClick()
         QProcess::startDetached("open",QStringList()<<options.applications.value(fi.suffix().toLower())<<"--args"<<file.fileName())&&
                 QFileInfo(options.applications.value(sExt)).exists()
 #else
-        QProcess::startDetached(options.applications.value(book.sFormat), QStringList() << sFileName)
+        QProcess::startDetached(options.applications.at(book.sFormat), QStringList() << sFileName)
 #endif
         )
             return;
@@ -860,11 +864,12 @@ void MainWindow::BookDblClick()
 
 void MainWindow::CheckBooks()
 {
-    QList<uint> book_list = getCheckedBooks(true);
+    std::vector<uint> vBooks = getCheckedBooks(true);
 
     const QSignalBlocker blocker(ui->Books);
-    Qt::CheckState cs = book_list.count() > 0 ?Qt::Unchecked :Qt::Checked;
-    for(int i = 0; i<ui->Books->topLevelItemCount(); i++)
+    Qt::CheckState cs = vBooks.empty() ?Qt::Checked :Qt::Unchecked;
+    int nTopLevelItemCount = ui->Books->topLevelItemCount();
+    for(int i = 0; i<nTopLevelItemCount; i++)
     {
         ui->Books->topLevelItem(i)->setCheckState(0, cs);
         CheckChild(ui->Books->topLevelItem(i));
@@ -876,7 +881,8 @@ void MainWindow::CheckParent(QTreeWidgetItem *parent)
     bool checked = false;
     bool unchecked = false;
     bool partially = false;
-    for(int i = 0; i<parent->childCount(); i++)
+    int nChildCount = parent->childCount();
+    for(int i = 0; i<nChildCount; i++)
     {
         switch(parent->child(i)->checkState(0))
         {
@@ -903,9 +909,10 @@ void MainWindow::CheckParent(QTreeWidgetItem *parent)
 
 void MainWindow::CheckChild(QTreeWidgetItem *parent)
 {
-    if(parent->childCount() > 0)
+    int nChildCount = parent->childCount();
+    if(nChildCount > 0)
     {
-        for(int i=0; i<parent->childCount(); i++)
+        for(int i=0; i<nChildCount; i++)
         {
             parent->child(i)->setCheckState(0, parent->checkState(0));
             if(parent->child(i)->childCount() > 0)
@@ -922,8 +929,8 @@ void MainWindow::onItemChanged(QTreeWidgetItem *item, int)
     QTreeWidgetItem* parent = item->parent();
     if(parent)
         CheckParent(parent);
-    QList<uint> book_list = getCheckedBooks();
-    ExportBookListBtn(book_list.count() != 0);
+    std::vector<uint> vBooks = getCheckedBooks();
+    ExportBookListBtn(!vBooks.empty());
 
     ui->Books->blockSignals(wasBlocked);
 }
@@ -951,28 +958,27 @@ void MainWindow::StartSearch()
     int idLanguage = ui->findLanguage->currentData().toInt();
 
     SLib& lib = libs[idCurrentLib];
-    listBooks_.clear();
+    vBooks_.clear();
     int nCount = 0;
-    auto iBook = lib.books.constBegin();
-    QList<uint> listPosFound;
-    while(iBook != lib.books.constEnd()){
+    std::vector<uint> vPosFound;
+    for(const auto &book :lib.books){
         bool bMatchAuthor = false;
         if(!sAuthor.isEmpty()){
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-            QStringList listAuthor1 = sAuthor.split(' ', Qt::SkipEmptyParts);
+            const QStringList listAuthor1 = sAuthor.split(' ', Qt::SkipEmptyParts);
 #else
-            QStringList listAuthor1 = sAuthor.split(' ');
+            const QStringList listAuthor1 = sAuthor.split(' ');
 #endif
-            for(auto iAuthor = 0; iAuthor<iBook->listIdAuthors.size(); iAuthor++){
-                listPosFound.clear();
-                QStringList listAuthor2 = lib.authors[iBook->listIdAuthors[iAuthor]].getName().split(' ');
+            for(auto idAuthor :book.second.vIdAuthors){
+                vPosFound.clear();
+                const QStringList listAuthor2 = lib.authors[idAuthor].getName().split(' ');
                 bool bMatch = true;
-                for(auto i1=0; i1<listAuthor1.size(); i1++){
-                    int i2 = 0;
+                for(const auto &sAuthor1 : listAuthor1){
+                    uint i2 = 0;
                     while(i2 < listAuthor2.size()){
-                        if(QString::compare(listAuthor1.at(i1), listAuthor2.at(i2), Qt::CaseInsensitive) == 0){
-                            if(!listPosFound.contains(i2)){
-                                listPosFound << i2;
+                        if(sAuthor1.compare(listAuthor2.at(i2), Qt::CaseInsensitive) == 0){
+                            if(!contains(vPosFound, i2)){
+                                vPosFound.push_back(i2);
                                 break;
                             }
                         }
@@ -991,35 +997,34 @@ void MainWindow::StartSearch()
         }else
             bMatchAuthor = true;
 
-        if((options.bShowDeleted || !iBook->bDeleted)&&
-                iBook->date>= dateFrom && iBook->date <= dateTo &&
+        if((options.bShowDeleted || !book.second.bDeleted)&&
+                book.second.date>= dateFrom && book.second.date <= dateTo &&
                 bMatchAuthor &&
-                (sName.isEmpty() || iBook->sName.contains(sName, Qt::CaseInsensitive)) &&
-                (sSeria.isEmpty() || (iBook->idSerial>0 && lib.serials[iBook->idSerial].sName.contains(sSeria, Qt::CaseInsensitive))) &&
-                (idLanguage == -1 ||(iBook->idLanguage == idLanguage)))
+                (sName.isEmpty() || book.second.sName.contains(sName, Qt::CaseInsensitive)) &&
+                (sSeria.isEmpty() || (book.second.idSerial>0 && lib.serials[book.second.idSerial].sName.contains(sSeria, Qt::CaseInsensitive))) &&
+                (idLanguage == -1 ||(book.second.idLanguage == idLanguage)))
         {
             if(idGenre == 0){
                 nCount++;
-                listBooks_ << iBook.key();
+                vBooks_.push_back(book.first);
             }else
             {
-                for(auto id: iBook->listIdGenres) {
+                for(auto id: book.second.vIdGenres) {
                    if(id == idGenre){
                        nCount++;
-                       listBooks_ << iBook.key();
+                       vBooks_.push_back(book.first);
                        break;
                    }
                 }
             }
         }
-        ++iBook;
         if(nCount == nMaxCount)
             break;
     }
     ui->find_books->setText(QString::number(nCount));
 
 
-    FillListBooks(listBooks_, QList<uint>(), 0);
+    FillListBooks(vBooks_, std::vector<uint>(), 0);
 
     QApplication::restoreOverrideCursor();
 }
@@ -1087,22 +1092,20 @@ void MainWindow::SelectGenre()
         return;
     QTreeWidgetItem* cur_item = ui->GenreList->selectedItems()[0];
     ushort idGenre = cur_item->data(0, Qt::UserRole).toUInt();
-    listBooks_.clear();
+    vBooks_.clear();
     SLib& lib = libs[idCurrentLib];
-    auto iBook = lib.books.constBegin();
-    while(iBook != lib.books.constEnd()){
-        if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
-            for(auto iGenre: iBook->listIdGenres) {
+    for(const auto &book :lib.books){
+        if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.second.idLanguage)){
+            for(auto iGenre: book.second.vIdGenres) {
                 if(iGenre == idGenre){
-                    listBooks_ << iBook.key();
+                    vBooks_.push_back(book.first);
                     break;
                 }
             }
         }
-        ++iBook;
     }
     idCurrentGenre_ = idGenre;
-    FillListBooks(listBooks_, QList<uint>(), 0);
+    FillListBooks(vBooks_, std::vector<uint>(), 0);
     auto settings = GetSettings();
     if(options.bStorePosition){
         settings->setValue(QStringLiteral("current_genre_id"), idCurrentGenre_);
@@ -1120,16 +1123,14 @@ void MainWindow::SelectSeria()
         return;
     QListWidgetItem* cur_item = ui->SeriaList->selectedItems().at(0);
     uint idSerial = cur_item->data(Qt::UserRole).toUInt();
-    listBooks_.clear();
+    vBooks_.clear();
     SLib& lib = libs[idCurrentLib];
-    auto iBook = lib.books.constBegin();
-    while(iBook != lib.books.constEnd()){
-        if(iBook->idSerial == idSerial && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == iBook->idLanguage)){
-            listBooks_ << iBook.key();
+    for(const auto &book :lib.books){
+        if(book.second.idSerial == idSerial && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.second.idLanguage)){
+            vBooks_.push_back(book.first);
         }
-        ++iBook;
     }
-    FillListBooks(listBooks_, QList<uint>(), 0);
+    FillListBooks(vBooks_, std::vector<uint>(), 0);
 
     idCurrentSerial_= idSerial;
     if(options.bStorePosition){
@@ -1148,9 +1149,11 @@ void MainWindow::SelectAuthor()
         return;
     QListWidgetItem* cur_item =ui->AuthorList->selectedItems().at(0);
     idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
-    listBooks_.clear();
-    listBooks_ = libs[idCurrentLib].authorBooksLink.values(idCurrentAuthor_);
-    FillListBooks(listBooks_, QList<uint>(), idCurrentAuthor_);
+    vBooks_.clear();
+    for (auto it = libs[idCurrentLib].authorBooksLink.equal_range(idCurrentAuthor_); it.first != it.second; ++it.first) {
+        vBooks_.push_back(it.first->second);
+    }
+    FillListBooks(vBooks_, std::vector<uint>(), idCurrentAuthor_);
 
     if(options.bStorePosition){
         auto settings = GetSettings();
@@ -1193,14 +1196,14 @@ void MainWindow::SelectBook()
     }
 
     QString sAuthors;
-    for(auto idAuthor: book.listIdAuthors)
+    for(auto idAuthor: book.vIdAuthors)
     {
         QString sAuthor = lib.authors[idAuthor].getName();
         sAuthors += (sAuthors.isEmpty() ?u""_s :u"; "_s) + u"<a href='author_%3%1'>%2</a>"_s
                 .arg(QString::number(idAuthor), sAuthor.replace(',', ' '), sAuthor.at(0));
     }
     QString sGenres;
-    for(auto idGenre: book.listIdGenres)
+    for(auto idGenre: book.vIdGenres)
     {
         QString sGenre = genres[idGenre].sName;
         sGenres += (sGenres.isEmpty() ?u""_s :u"; "_s) + u"<a href='genre_%3%1'>%2</a>"_s
@@ -1309,26 +1312,25 @@ void MainWindow::onAddBooks()
     SLib &lib = libs[idCurrentLib];
 
     QStringList listFiles = QFileDialog::getOpenFileNames(this, tr("Select books to add"), lib.path,
-                                                          tr("Books (*.fb2 *.epub *.zip)"), nullptr, QFileDialog::ReadOnly);
+                                                          tr("Books") + u" (*.fb2 *.epub *.zip)"_s, nullptr, QFileDialog::ReadOnly);
     if(!listFiles.isEmpty()){
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
-        for(qsizetype i = 0 ; i < listFiles.size(); ++i) {
-            QString sFile = listFiles.at(i);
+        for(auto &sFile :listFiles){
             if(!sFile.startsWith(lib.path)){
                 //перенос файлов книг в папку библиотеки
                 QFileInfo fiSrc = QFileInfo(sFile);
                 QString baseName = fiSrc.baseName(); // получаем имя файла без расширения
                 QString extension = fiSrc.completeSuffix(); // получаем расширение файла
-                QFileInfo fiDst = QFileInfo(lib.path + "/" + baseName + "." + extension);
+                QFileInfo fiDst = QFileInfo(lib.path % "/" % baseName % "." % extension);
                 uint j = 1;
                 while(fiDst.exists()){
                     QString sNewName = QStringLiteral("%1 (%2).%3").arg(baseName, QString::number(j), extension);
-                    fiDst = QFileInfo(lib.path + "/" + sNewName);
+                    fiDst = QFileInfo(lib.path % u"/"_s % sNewName);
                     j++;
                 }
                 QFile::copy(sFile, fiDst.absoluteFilePath());
-                listFiles[i] = fiDst.absoluteFilePath();
+                sFile = fiDst.absoluteFilePath();
             }
         }
         pThread_ = new QThread;
@@ -1389,7 +1391,7 @@ void MainWindow::DoSearch()
 
 void MainWindow::checkLetter(const QChar cLetter)
 {
-    QList<QToolButton*> allButtons = findChildren<QToolButton *>();
+    const QList<QToolButton*> allButtons = findChildren<QToolButton *>();
     bool find=false;
     for(QToolButton *tb: allButtons)
     {
@@ -1481,7 +1483,8 @@ void MainWindow::ContextMenu(QPoint point)
         listItems  = checkedItemsBookList();
         if(listItems.isEmpty())
             listItems = ui->Books->selectedItems();
-        for( const QAction* i: ui->btnExport->menu()->actions() )
+        const auto actions = ui->btnExport->menu()->actions();
+        for( const QAction* i: actions )
         {
             QAction *action = new QAction(i->text(), save);
             action->setData(i->data().toInt());
@@ -1512,55 +1515,53 @@ void MainWindow::ContextMenu(QPoint point)
         menu.addSeparator();
     if(options.bUseTag){
         if(QObject::sender() == ui->Books){
-            QMap<uint, uint> countTags;
-            QList<uint> listTags;
-            for(int iItem=0; iItem<listItems.size(); iItem++){
-                auto &item = listItems.at(iItem);
+            std::unordered_map<uint, uint> countTags;
+            std::vector<uint> vIdTags;
+            for(const auto item : std::as_const(listItems)){
                 uint id = item->data(0, Qt::UserRole).toUInt();
                 switch(item->type()){
                 case ITEM_TYPE_BOOK:
-                    listTags = libs[idCurrentLib].books[id].listIdTags;
+                    vIdTags = libs[idCurrentLib].books[id].vIdTags;
                     break;
                 case ITEM_TYPE_SERIA:
-                    listTags = libs[idCurrentLib].serials[id].listIdTags;
+                    vIdTags = libs[idCurrentLib].serials[id].vIdTags;
                     break;
                 case ITEM_TYPE_AUTHOR:
-                    listTags = libs[idCurrentLib].authors[id].listIdTags;
+                    vIdTags = libs[idCurrentLib].authors[id].vIdTags;
                 }
-                for(int iTag=0; iTag<listTags.size(); iTag++){
-                    uint idTag = listTags.at(iTag);
-                    if(countTags.contains(idTag))
-                            countTags[idTag] = 1;
-                    else
-                        countTags[idTag]++;
+                for(auto idTag : vIdTags){
+                    countTags[idTag]++;
                 }
             }
-            const auto &actions = TagMenu.actions();
-            for(int iAction=0; iAction<actions.size(); iAction++){
-                uint idTag = actions.at(iAction)->data().toUInt();
+            const auto actions = TagMenu.actions();
+            for(const auto action :actions){
+                uint idTag = action->data().toUInt();
                 if(!countTags.contains(idTag))
-                    actions.at(iAction)->setChecked(false);
+                    action->setChecked(false);
                 else
-                    actions.at(iAction)->setChecked(true);
+                    action->setChecked(true);
             }
+
         }
 
         if(QObject::sender() == ui->AuthorList){
-            const auto &actions = TagMenu.actions();
-            for(int iAction=0; iAction<actions.size(); iAction++){
-                uint idTag = actions.at(iAction)->data().toUInt();
+            const auto actions = TagMenu.actions();
+            for(const auto action :actions){
+                uint idTag = action->data().toUInt();
                 uint idAuthor = ui->AuthorList->itemAt(point)->data(Qt::UserRole).toUInt();
-                actions.at(iAction)->setChecked(libs[idCurrentLib].authors[idAuthor].listIdTags.contains(idTag));
+                action->setChecked(contains(libs[idCurrentLib].authors[idAuthor].vIdTags, idTag) );
             }
+
         }
 
         if(QObject::sender() == ui->SeriaList){
-            const auto &actions = TagMenu.actions();
-            for(int iAction=0; iAction<actions.size(); iAction++){
-                uint idTag = actions.at(iAction)->data().toUInt();
+            const auto actions = TagMenu.actions();
+            for(const auto action :actions){
+                uint idTag = action->data().toUInt();
                 uint idSerial = ui->SeriaList->itemAt(point)->data(Qt::UserRole).toUInt();
-                actions.at(iAction)->setChecked(libs[idCurrentLib].serials[idSerial].listIdTags.contains(idTag));
+                action->setChecked(contains(libs[idCurrentLib].serials[idSerial].vIdTags, idTag));
             }
+
         }
 
         menu.addActions(TagMenu.actions());
@@ -1703,11 +1704,10 @@ void MainWindow::FillLibrariesMenu()
         ui->btnLibrary->setMenu(menu);
     }
 
-    auto i = libs.constBegin();
-    while(i != libs.constEnd()){
-        uint idLib = i.key();
+    for(const auto &iLib :libs){
+        uint idLib = iLib.first;
         if(idLib>0){
-            QAction *action = new QAction(i->name, menu);
+            QAction *action = new QAction(iLib.second.name, menu);
             action->setData(idLib);
             action->setCheckable(true);
             menu->insertAction(nullptr, action);
@@ -1716,7 +1716,6 @@ void MainWindow::FillLibrariesMenu()
             if(idLib == idCurrentLib)
                 action->setChecked(true);
         }
-        ++i;
     }
     menu->setEnabled( menu->actions().count()>1 );
     ui->actionLibraries->setEnabled( menu->actions().count()>0 );
@@ -1736,33 +1735,30 @@ void MainWindow::FillAuthors()
     SLib &currentLib = libs[idCurrentLib];
     QListWidgetItem *selectedItem = nullptr;
     QString sSearch = ui->searchAuthor->text();
-    auto iAuthor = currentLib.authors.constBegin();
     static const QRegularExpression re(QStringLiteral("[A-Za-zа-яА-ЯЁё]"));
 
-    while(iAuthor != currentLib.authors.constEnd()){
+    for(const auto &iAuthor :currentLib.authors){
         if(sSearch == u"*" || (sSearch == u"#" &&
-          !iAuthor->getName().left(1).contains(re)) || iAuthor->getName().startsWith(sSearch, Qt::CaseInsensitive))
+          !iAuthor.second.getName().left(1).contains(re)) || iAuthor.second.getName().startsWith(sSearch, Qt::CaseInsensitive))
         {
-            QList<uint> booksId = currentLib.authorBooksLink.values(iAuthor.key());
             int count =0;
-            for( uint idBook: booksId) {
-                SBook &book = currentLib.books[idBook];
+            for (auto it = currentLib.authorBooksLink.equal_range(iAuthor.first); it.first != it.second; ++it.first) {
+                SBook &book = currentLib.books[it.first->second];
                 if(IsBookInList(book))
                     count++;
             }
             if(count>0){
-                item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(iAuthor->getName()).arg(count));
-                item->setData(Qt::UserRole, iAuthor.key());
+                item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(iAuthor.second.getName()).arg(count));
+                item->setData(Qt::UserRole, iAuthor.first);
                 if(options.bUseTag)
-                    item->setIcon(getTagIcon(iAuthor->listIdTags));
+                    item->setIcon(getTagIcon(iAuthor.second.vIdTags));
                 ui->AuthorList->addItem(item);
-                if(idCurrentAuthor_ == iAuthor.key()){
+                if(idCurrentAuthor_ == iAuthor.first){
                     item->setSelected(true);
                     selectedItem = item;
                 }
             }
         }
-        ++iAuthor;
     }
     if(selectedItem != nullptr)
         ui->AuthorList->scrollToItem(selectedItem);
@@ -1787,38 +1783,34 @@ void MainWindow::FillSerials()
     QString sSearch = ui->searchSeries->text();
     static const QRegularExpression re(QStringLiteral("[A-Za-zа-яА-ЯЁё]"));
 
-    QMap<uint,uint> mCounts;
+    std::unordered_map<uint, uint> mCounts;
     const SLib& lib = libs[idCurrentLib];
 
-    auto iBook = lib.books.constBegin();
-    while(iBook != lib.books.constEnd()){
-        if(iBook->idSerial != 0 &&
-           IsBookInList(*iBook) && (sSearch == u"*" || (sSearch == u"#" &&
-           !lib.serials[iBook->idSerial].sName.left(1).contains(re)) ||
-           lib.serials[iBook->idSerial].sName.startsWith(sSearch, Qt::CaseInsensitive)))
+    for(const auto &book :lib.books){
+        if(book.second.idSerial != 0 &&
+           IsBookInList(book.second) && (sSearch == u"*" || (sSearch == u"#" &&
+                                                                                                                  !lib.serials.at(book.second.idSerial).sName.left(1).contains(re)) ||
+           lib.serials.at(book.second.idSerial).sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
-            if(mCounts.contains(iBook->idSerial))
-                mCounts[iBook->idSerial]++;
+            if(mCounts.contains(book.second.idSerial))
+                mCounts[book.second.idSerial]++;
             else
-                mCounts[iBook->idSerial] = 1;
+                mCounts[book.second.idSerial] = 1;
         }
-        ++iBook;
     }
 
     QListWidgetItem *item;
-    auto iSerial = mCounts.constBegin();
-    while(iSerial != mCounts.constEnd()){
-        item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(lib.serials[iSerial.key()].sName).arg(iSerial.value()));
-        item->setData(Qt::UserRole, iSerial.key());
+    for(const auto &iSerial :mCounts){
+        item = new QListWidgetItem(QStringLiteral("%1 (%2)").arg(lib.serials.at(iSerial.first).sName).arg(iSerial.second));
+        item->setData(Qt::UserRole, iSerial.first);
         if(options.bUseTag)
-            item->setIcon(getTagIcon(lib.serials[iSerial.key()].listIdTags));
+            item->setIcon(getTagIcon(lib.serials.at(iSerial.first).vIdTags));
         ui->SeriaList->addItem(item);
-        if(iSerial.key() == idCurrentSerial_)
+        if(iSerial.first == idCurrentSerial_)
         {
             item->setSelected(true);
             ui->SeriaList->scrollToItem(item);
          }
-        ++iSerial;
     }
 
     ui->SeriaList->blockSignals(wasBlocked);
@@ -1842,27 +1834,20 @@ void MainWindow::FillGenres()
     QFont fontBold(ui->AuthorList->font());
     fontBold.setBold(true);
 
-    QMap<ushort, uint> mCounts;
+    std::unordered_map<ushort, uint> mCounts;
     SLib& lib = libs[idCurrentLib];
 
-    auto iBook = lib.books.constBegin();
-    while(iBook != lib.books.constEnd()){
-        if(IsBookInList(*iBook))
+    for(const auto &book :lib.books){
+        if(IsBookInList(book.second))
         {
-            for(auto iGenre: iBook->listIdGenres) {
-                if(mCounts.contains(iGenre))
+            for(auto iGenre: book.second.vIdGenres)
                     mCounts[iGenre]++;
-                else
-                    mCounts[iGenre] = 1;
-            }
         }
-        ++iBook;
     }
 
-    QMap<ushort, QTreeWidgetItem*> mTopGenresItem;
-    auto iGenre = mCounts.constBegin();
-    while(iGenre != mCounts.constEnd()){
-        auto idGenre = iGenre.key();
+    std::unordered_map<ushort, QTreeWidgetItem*> mTopGenresItem;
+    for(const auto &iGenre :mCounts){
+        auto idGenre = iGenre.first;
         auto idParrentGenre = genres[idGenre].idParrentGenre;
         QTreeWidgetItem *pTopItem;
 
@@ -1880,7 +1865,7 @@ void MainWindow::FillGenres()
 
         QTreeWidgetItem *item = new QTreeWidgetItem(pTopItem);
         const QString &sName = genres[idGenre].sName;
-        item->setText(0, QStringLiteral("%1 (%2)").arg(sName).arg(mCounts[idGenre]));
+        item->setText(0, u"%1 (%2)"_s.arg(sName).arg(mCounts[idGenre]));
         item->setData(0, Qt::UserRole, idGenre);
         ui->s_genre->addItem(QStringLiteral("   ") + sName, idGenre);
         if(idGenre == idCurrentGenre_)
@@ -1888,11 +1873,10 @@ void MainWindow::FillGenres()
             item->setSelected(true);
             ui->GenreList->scrollToItem(item);
         }
-
-        ++iGenre;
     }
 
     ui->s_genre->model()->sort(0);
+    ui->GenreList->model()->sort(0);
 
     ui->GenreList->blockSignals(wasBlocked);
     if(bVerbose){
@@ -1919,7 +1903,7 @@ void MainWindow::FillListBooks()
     }
 }
 
-void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &listCheckedBooks, uint idCurrentAuthor)
+void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vector<uint> &vCheckedBooks, uint idCurrentAuthor)
 {
     if(idCurrentLib == 0)
         return;
@@ -1934,21 +1918,21 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
     TreeBookItem* item_seria = nullptr;
     TreeBookItem* item_book;
     TreeBookItem* item_author;
-    QMap<uint, TreeBookItem*> authors;
+    std::unordered_map<uint, TreeBookItem*> authors;
 
-    QMultiMap<uint, TreeBookItem*> mSerias;
+    std::unordered_map<uint, TreeBookItem*> mSerias;
 
     const bool wasBlocked = ui->Books->blockSignals(true);
     ui->Books->clear();
     SLib &lib = libs[idCurrentLib];
 
-    for( uint idBook: listBook) {
+    for( uint idBook: vBooks) {
         SBook &book = lib.books[idBook];
         if(IsBookInList(book))
         {
             uint idAuthor;
             QString sAuthor;
-            bool bBookChecked = listCheckedBooks.contains(idBook);
+            bool bBookChecked = contains(vCheckedBooks, idBook);
             if(idCurrentAuthor > 0)
                 idAuthor = idCurrentAuthor;
             else
@@ -1967,7 +1951,7 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
                     item_author->setData(3, Qt::UserRole, -1);
 
                     if(options.bUseTag){
-                        item_author->setIcon(0, getTagIcon(lib.authors[idAuthor].listIdTags));
+                        item_author->setIcon(0, getTagIcon(lib.authors[idAuthor].vIdTags));
                     }
                     authors[idAuthor] = item_author;
                 }else{
@@ -1978,18 +1962,18 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
                 }
 
                 if(idSerial > 0){
-                    auto iSerial = mSerias.constFind(idSerial);
-                    while(iSerial != mSerias.constEnd()){
-                        item_seria = iSerial.value();
+                    bool bFound = false;
+                    for(const auto &iSerial :mSerias){
+                        item_seria = iSerial.second;
                         if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor){
                             auto checkedState = item_seria->checkState(0);
                             if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
                                 item_seria->setCheckState(0, Qt::PartiallyChecked);
+                            bFound = true;
                             break;
                         }
-                        ++iSerial;
                     }
-                    if(iSerial == mSerias.constEnd()){
+                    if(!bFound){
                         item_seria = new TreeBookItem(authors[idAuthor], ITEM_TYPE_SERIA);
                         item_seria->setText(0, lib.serials[idSerial].sName);
                         item_author->addChild(item_seria);
@@ -1999,9 +1983,9 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
                         item_seria->setData(0, Qt::UserRole, idSerial);
                         item_seria->setData(3, Qt::UserRole, -1);
                         if(options.bUseTag)
-                            item_seria->setIcon(0, getTagIcon(lib.serials[idSerial].listIdTags));
+                            item_seria->setIcon(0, getTagIcon(lib.serials[idSerial].vIdTags));
 
-                        mSerias.insert(idSerial, item_seria);
+                        mSerias.insert({idSerial, item_seria});
                     }
                     item_book = new TreeBookItem(item_seria, ITEM_TYPE_BOOK);
                 }else
@@ -2012,7 +1996,7 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
             item_book->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
             item_book->setData(0, Qt::UserRole, idBook);
             if(options.bUseTag){
-                item_book->setIcon(0, getTagIcon(book.listIdTags));
+                item_book->setIcon(0, getTagIcon(book.vIdTags));
             }
 
             item_book->setText(0, book.sName);
@@ -2042,8 +2026,8 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
             item_book->setText(6, book.date.toString(QStringLiteral("dd.MM.yyyy")));
             item_book->setTextAlignment(6, Qt::AlignCenter);
 
-            if(!book.listIdGenres.empty()){
-                item_book->setText(7, genres[book.listIdGenres.first()].sName);
+            if(!book.vIdGenres.empty()){
+                item_book->setText(7, genres[book.vIdGenres.at(0)].sName);
                 item_book->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
             }
 
@@ -2078,16 +2062,19 @@ void MainWindow::FillListBooks(const QList<uint> &listBook, const QList<uint> &l
     }
 }
 
+
 bool MainWindow::IsBookInList(const SBook &book)
 {
+
     uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
     uint idSerial = book.idSerial;
 
+
     return (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.idLanguage) &&
             (options.bShowDeleted || !book.bDeleted) &&
-            (!options.bUseTag || idTagFilter == 0 || book.listIdTags.contains(idTagFilter) ||
-            (idSerial>0 && libs[idCurrentLib].serials[idSerial].listIdTags.contains(idTagFilter)) ||
-            (libs[idCurrentLib].authors[book.idFirstAuthor].listIdTags.contains(idTagFilter)));
+           (!options.bUseTag || idTagFilter == 0 || contains(book.vIdTags, idTagFilter)||
+            (idSerial>0 && contains(libs[idCurrentLib].serials[idSerial].vIdTags, idTagFilter)) ||
+            (contains(libs[idCurrentLib].authors[book.idFirstAuthor].vIdTags, idTagFilter)));
 }
 
 void MainWindow::UpdateExportMenu()
@@ -2138,7 +2125,8 @@ void MainWindow::UpdateExportMenu()
     {
         ui->btnExport->setDefaultAction(menu->actions().constFirst());
     }
-    for(QAction *action: menu->actions())
+    const auto actions = menu->actions();
+    for(const QAction *action: actions)
     {
         connect(action, &QAction::triggered, this, &MainWindow::ExportAction);
     }
@@ -2212,8 +2200,8 @@ void MainWindow::onTreeView()
     ui->btnListView->setChecked(false);
     if(!bTreeView_){
         bTreeView_ = true;
-        QList<uint> listCheckedBooks = getCheckedBooks(true);
-        FillListBooks(listBooks_, listCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        std::vector<uint> vCheckedBooks = getCheckedBooks(true);
+        FillListBooks(vBooks_, vCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), true);
         aHeadersList_ = ui->Books->header()->saveState();
@@ -2228,8 +2216,8 @@ void MainWindow::onListView()
     ui->btnListView->setChecked(true);
     if(bTreeView_){
         bTreeView_ = false;
-        QList<uint> listCheckedBooks = getCheckedBooks(true);
-        FillListBooks(listBooks_, listCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        std::vector<uint> vCheckedBooks = getCheckedBooks(true);
+        FillListBooks(vBooks_, vCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), false);
         aHeadersTree_ = ui->Books->header()->saveState();

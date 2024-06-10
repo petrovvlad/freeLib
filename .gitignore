@@ -9,3 +9,4 @@ build-*
 .idea
 .vs
 cmake-build-*
+makeqm.sh

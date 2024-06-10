@@ -8,6 +8,8 @@
 #include <QMessageBox>
 #include <QTextStream>
 
+#include "utilites.h"
+
 ExportFrame::ExportFrame(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::ExportFrame)
@@ -44,6 +46,14 @@ ExportFrame::ExportFrame(QWidget *parent) :
     layout->setContentsMargins(0, 0, 0, 0);
     connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
     connect(ui->toolBox, &QToolBox::currentChanged, this, &ExportFrame::onTabWidgetCurrentChanged);
+
+    QRegularExpression rx(u"\\b[^@\\s]+@[^@\\s]+\\.[^@\\s]+\\b"_s, QRegularExpression::CaseInsensitiveOption);
+    validatorEMail.setRegularExpression(rx);
+
+    ui->from_email->setValidator(&validatorEMail);
+    ui->Email->setValidator(&validatorEMail);
+    connect(ui->from_email, &QLineEdit::textChanged, this, [this](){validateEmail(this->ui->from_email);});
+    connect(ui->Email, &QLineEdit::textChanged, this, [this](){validateEmail(this->ui->Email);});
 }
 
 ExportFrame::~ExportFrame()
@@ -131,16 +141,15 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
 
     while(ui->fontLayout->count() > 2)
         delete ui->fontLayout->itemAt(0)->widget();
-    int count = pExportOptions->vFontExportOptions.count();
-    for(int i=0; i<count; i++)
+    for(const auto &fontExportOptions :pExportOptions->vFontExportOptions)
     {
-        AddFont(pExportOptions->vFontExportOptions.at(i).bUse,
-                pExportOptions->vFontExportOptions.at(i).nTag,
-                pExportOptions->vFontExportOptions.at(i).sFont,
-                pExportOptions->vFontExportOptions.at(i).sFontB,
-                pExportOptions->vFontExportOptions.at(i).sFontI,
-                pExportOptions->vFontExportOptions.at(i).sFontBI,
-                pExportOptions->vFontExportOptions.at(i).nFontSize);
+        AddFont(fontExportOptions.bUse,
+                fontExportOptions.nTag,
+                fontExportOptions.sFont,
+                fontExportOptions.sFontB,
+                fontExportOptions.sFontI,
+                fontExportOptions.sFontBI,
+                fontExportOptions.nFontSize);
     }
 
     onOriginalFileNameClicked();
@@ -226,16 +235,14 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
         CurrentTool = sCurrentTool;
     while(ui->CurrentTools->count()>1)
         ui->CurrentTools->removeItem(1);
-    auto iTool = options.tools.constBegin();
     int index=0;
-    while(iTool != options.tools.constEnd()){
-        ui->CurrentTools->addItem(iTool.key());
-        if(iTool.key() == CurrentTool)
+    for(const auto &iTool :options.tools){
+        ui->CurrentTools->addItem(iTool.first);
+        if(iTool.first == CurrentTool)
         {
             ui->CurrentTools->setCurrentIndex(ui->CurrentTools->count()-1);
         }
         ++index;
-        ++iTool;
     }
 }
 
@@ -350,4 +357,14 @@ void ExportFrame::onBtnDefaultCSSclicked()
     QTextStream in(&file);
     ui->UserCSStext->setPlainText(in.readAll());
     file.close();
+}
+
+void ExportFrame::validateEmail(QLineEdit *leEmail)
+{
+    if(!leEmail->hasAcceptableInput())
+        leEmail->setStyleSheet(u"QLineEdit { color: red;}"_s);
+    else{
+        auto sColor = palette().color(QPalette::WindowText).name();
+        leEmail->setStyleSheet(u"QLineEdit { color: %1;}"_s.arg(sColor));
+    }
 }
