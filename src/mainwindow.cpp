@@ -1372,7 +1372,7 @@ void MainWindow::fillLanguages()
     }
     ui->language->model()->sort(0);
     ui->findLanguage->model()->sort(0);
-    settings->setValue(u"BookLanguage"_s, ui->language->currentText());
+    settings->setValue(u"BookLanguage"_s, sCurrentLanguage);
     ui->language->blockSignals(false);
     ui->findLanguage->blockSignals(false);
     QApplication::restoreOverrideCursor();
