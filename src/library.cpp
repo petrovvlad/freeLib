@@ -166,6 +166,7 @@ void loadLibrary(uint idLibrary)
     });
 
     lib.books.clear();
+    lib.vLaguages.clear();
     uint nBuff = 0;
     uint nTotalCount{0};
     while(!abFinished || nTotalCount != anTotalCount){
