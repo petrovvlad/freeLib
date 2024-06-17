@@ -35,7 +35,7 @@ private slots:
 private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
 
-    std::vector<uint> book_list(SLib& lib, uint idAuthor, uint idSeria, ushort idGenre,  const QString &sSearch, bool sequenceless);
+    std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, ushort idGenre,  const QString &sSearch, bool sequenceless);
     void stop_server();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
@@ -46,7 +46,7 @@ private:
     QDomElement docHeaderHTTP(const QString &sSesionQuery, const QString &sLibName, const QString &sLibUrl);
     QDomElement docHeaderOPDS(const QString &sTitle, const QString &sID, const QString &sLibUrl, const QString &sSesionQuery);
 
-    SLib& getLib(uint &idLib, const QString &sTypeServer = u"opds"_s, QString *pLibUrl = nullptr);
+    SLib* getLib(uint &idLib, const QString &sTypeServer = u"opds"_s, QString *pLibUrl = nullptr);
     QHttpServerResponse responseHTTP();
     QHttpServerResponse responseUnauthorized();
     QHttpServerResponse rootHTTP(uint idLib, const QHttpServerRequest &request);
