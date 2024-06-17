@@ -22,6 +22,7 @@ class opds_server : public QObject
 public:
     explicit opds_server(QObject *parent = nullptr);
     void server_run();
+    void setLanguageFilter(const QString &sLanguage);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
     void process(QString url, QTextStream& ts, const QString &session);
@@ -90,6 +91,7 @@ private:
     int OPDS_server_status;
     std::unordered_map<QString, QDateTime> sessions;
     ExportOptions *pExportOptions_;
+    QString sLanguageFilter_;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     QHttpServer httpServer_;
 #else

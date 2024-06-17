@@ -74,6 +74,7 @@ std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]
              "Options:\n"
              "-t,\t--tray\t\tMinimize to tray on start\n"
              "-s,\t--server\tStart server\n"
+                    "\t\t-lang [lang]\tLanguage filter\n"
              "-v,\t--version\tShow version and exit\n"
              "\t--verbose\tVerbose mode\n"
              "\t--lib-ls\tShow libraries\n"
@@ -100,6 +101,7 @@ int main(int argc, char *argv[])
     bVerbose = false;
     std::unique_ptr<QCoreApplication> a;
     QString cmdparam;
+    QString sLanguageFilter;
 
     for(int i=1; i<argc; i++){
 
@@ -115,6 +117,7 @@ int main(int argc, char *argv[])
 
         if (cmdparam == u"--server" || cmdparam == u"-s"){
             bServer = true;
+            sLanguageFilter = parseOption(argc-(i), &argv[i], "-lang");
         }else
 
         if (cmdparam == u"--tray" || cmdparam == u"-t"){
@@ -405,6 +408,8 @@ int main(int argc, char *argv[])
         loadGenres();
         loadLibrary(idCurrentLib);
         options.bOpdsEnable = true;
+        if(!sLanguageFilter.isEmpty())
+            pOpds->setLanguageFilter(sLanguageFilter);
         pOpds->server_run();
     }else{
         pMainWindow = new MainWindow;
