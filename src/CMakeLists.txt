@@ -50,9 +50,10 @@ set(PROJECT_SOURCES
         utilites.cpp        utilites.h
         passwordlineedit.cpp            passwordlineedit.h
         genresortfilterproxymodel.cpp   genresortfilterproxymodel.h
-        fb2mobi/hyphenations.cpp        fb2mobi/hyphenations.h
-        fb2mobi/fb2mobi.cpp             fb2mobi/fb2mobi.h
-        mobiEdit/mobiedit.cpp           mobiEdit/mobiedit.h
+        languagesortfilterproxymodel.cpp    languagesortfilterproxymodel.h
+        fb2mobi/hyphenations.cpp            fb2mobi/hyphenations.h
+        fb2mobi/fb2mobi.cpp                 fb2mobi/fb2mobi.h
+        mobiEdit/mobiedit.cpp               mobiEdit/mobiedit.h
         SmtpClient/src/emailaddress.cpp         SmtpClient/src/emailaddress.h
         SmtpClient/src/mimeattachment.cpp       SmtpClient/src/mimeattachment.h
         SmtpClient/src/mimecontentformatter.cpp SmtpClient/src/mimecontentformatter.h

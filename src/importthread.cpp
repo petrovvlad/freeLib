@@ -134,11 +134,20 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
 uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
              int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags)
 {
+    QString sRepairLanguge = language.toLower();
+    if(sRepairLanguge == u"io")
+        sRepairLanguge = u"eo"_s;
+    else if(sRepairLanguge == u"ua")
+        sRepairLanguge = u"uk"_s;
+    else if(sRepairLanguge == u"sh")
+        sRepairLanguge = u"sr"_s;
+
+
     queryInsertBook_.bindValue(QStringLiteral(":name"), name);
     queryInsertBook_.bindValue(QStringLiteral(":star"), star);
     queryInsertBook_.bindValue(QStringLiteral(":id_seria"), id_seria!=0 ?id_seria :QVariant());
     queryInsertBook_.bindValue(QStringLiteral(":num_in_seria"), num_in_seria);
-    queryInsertBook_.bindValue(QStringLiteral(":language"), language);
+    queryInsertBook_.bindValue(QStringLiteral(":language"), sRepairLanguge);
     queryInsertBook_.bindValue(QStringLiteral(":file"), file);
     queryInsertBook_.bindValue(QStringLiteral(":size"), size);
     queryInsertBook_.bindValue(QStringLiteral(":deleted"), deleted);

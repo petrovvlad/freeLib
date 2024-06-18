@@ -21,6 +21,7 @@
 #include "bookeditdlg.h"
 #include "treebookitem.h"
 #include "genresortfilterproxymodel.h"
+#include "languagesortfilterproxymodel.h"
 #include "library.h"
 #include "starsdelegate.h"
 #include "opds_server.h"
@@ -141,6 +142,18 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->s_genre->model()->setParent(MyProxySortModel);
     ui->s_genre->setModel(MyProxySortModel);
     MyProxySortModel->setDynamicSortFilter(false);
+
+    LanguageSortFilterProxyModel *langProxySortModel = new LanguageSortFilterProxyModel(ui->language);
+    langProxySortModel->setSourceModel(ui->language->model());
+    ui->language->model()->setParent(langProxySortModel);
+    ui->language->setModel(langProxySortModel);
+    langProxySortModel->setDynamicSortFilter(false);
+
+    langProxySortModel = new LanguageSortFilterProxyModel(ui->findLanguage);
+    langProxySortModel->setSourceModel(ui->findLanguage->model());
+    ui->findLanguage->model()->setParent(langProxySortModel);
+    ui->findLanguage->setModel(langProxySortModel);
+    langProxySortModel->setDynamicSortFilter(false);
 
     StarsDelegate* delegate = new StarsDelegate(this);
     ui->Books->setItemDelegateForColumn(5, delegate);
@@ -481,6 +494,7 @@ void MainWindow::ChangingLanguage()
 {
     ui->retranslateUi(this);
     FillListBooks();
+    fillLanguages();
 }
 
 void MainWindow::FillAlphabet(const QString &sAlphabetName)
@@ -1241,31 +1255,122 @@ void MainWindow::fillLanguages()
 {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     SLib &currentLib = libs[idCurrentLib];
+    static std::unordered_map<QString, QString> mLanguges = {{u"ab"_s, u"Аԥсшәа"_s},
+                                                             {u"am"_s, u"አማርኛ"_s},
+                                                             {u"ar"_s, u"العربية"_s},
+                                                             {u"az"_s, u"Azərbaycanca"_s},
+                                                             {u"ba"_s, u"Башҡортса"_s},
+                                                             {u"be"_s, u"Беларуская"_s},
+                                                             {u"bg"_s, u"Български"_s},
+                                                             {u"bn"_s, u"বাংলা"_s},
+                                                             {u"bo"_s, u"བོད་སྐད"_s},
+                                                             {u"br"_s, u"Brezhoneg"_s},
+                                                             {u"ca"_s, u"Catala"_s},
+                                                             {u"co"_s, u"Corsu"_s},
+                                                             {u"cs"_s, u"Čeština"_s},
+                                                             {u"cu"_s, u"Словѣньскъ"_s},
+                                                             {u"cv"_s, u"Чӑвашла"_s},
+                                                             {u"da"_s, u"Dansk"_s},
+                                                             {u"de"_s, u"Deutsch"_s},
+                                                             {u"el"_s, u"Ελληνικά"_s},
+                                                             {u"en"_s, u"English"_s},
+                                                             {u"eo"_s, u"Esperanto"_s},
+                                                             {u"es"_s, u"Español"_s},
+                                                             {u"et"_s, u"Eesti"_s},
+                                                             {u"fa"_s, u"فارسی"_s},
+                                                             {u"fi"_s, u"Suomi"_s},
+                                                             {u"fr"_s, u"Français"_s},
+                                                             {u"ga"_s, u"Gaeilge"_s},
+                                                             {u"gu"_s, u"ગુજરાતી"_s},
+                                                             {u"he"_s, u"עברית"_s},
+                                                             {u"hi"_s, u"हिन्दी"_s},
+                                                             {u"hr"_s, u"Hrvatski"_s},
+                                                             {u"hu"_s, u"Magyar"_s},
+                                                             {u"hy"_s, u"Հայերեն"_s},
+                                                             {u"ia"_s, u"Interlingua"_s},
+                                                             {u"ie"_s, u"Interlingue"_s},
+                                                             {u"id"_s, u"Bahasa Indonesia"_s},
+                                                             {u"is"_s, u"Íslenska"_s},
+                                                             {u"it"_s, u"Italiano"_s},
+                                                             {u"ja"_s, u"日本語"_s},
+                                                             {u"ka"_s, u"ქართული"_s},
+                                                             {u"kk"_s, u"Қазақша"_s},
+                                                             {u"kl"_s, u"Kalaallisut"_s},
+                                                             {u"km"_s, u"ភាសាខ្មែរ"_s},
+                                                             {u"kn"_s, u"ಕನ್ನಡ"_s},
+                                                             {u"ko"_s, u"한국어"_s},
+                                                             {u"ks"_s, u"کٲشُر"_s},
+                                                             {u"ku"_s, u"کوردی"_s},
+                                                             {u"ky"_s, u"Кыргызский"_s},
+                                                             {u"la"_s, u"Latina"_s},
+                                                             {u"lt"_s, u"Lietuvių"_s},
+                                                             {u"lv"_s, u"Latviešu"_s},
+                                                             {u"mk"_s, u"Македонски"_s},
+                                                             {u"ml"_s, u"മലയാളം"_s},
+                                                             {u"mn"_s, u"Монгол"_s},
+                                                             {u"mr"_s, u"मराठी"_s},
+                                                             {u"my"_s, u"ဗမာစာ"_s},
+                                                             {u"ne"_s, u"नेपाली"_s},
+                                                             {u"nl"_s, u"Nederlands"_s},
+                                                             {u"no"_s, u"Norsk bokmål"_s},
+                                                             {u"oc"_s, u"Occitan"_s},
+                                                             {u"os"_s, u"Ирон"_s},
+                                                             {u"pl"_s, u"Polski"_s},
+                                                             {u"ps"_s, u"پښتو"_s},
+                                                             {u"pt"_s, u"Português"_s},
+                                                             {u"ro"_s, u"Română"_s},
+                                                             {u"sa"_s, u"संस्कृत"_s},
+                                                             {u"sd"_s, u"सिन्धी"_s},
+                                                             {u"sk"_s, u"Slovenčina"_s},
+                                                             {u"sp"_s, u"Español"_s},
+                                                             {u"sq"_s, u"Gjuha shqipe"_s},
+                                                             {u"sr"_s, u"Српски"_s},
+                                                             {u"sv"_s, u"Svenska"_s},
+                                                             {u"ta"_s, u"தமிழ்"_s},
+                                                             {u"te"_s, u"తెలుగు"_s},
+                                                             {u"tg"_s, u"Тоҷикӣ"_s},
+                                                             {u"tr"_s, u"Türkçe"_s},
+                                                             {u"tt"_s, u"Татарча"_s},
+                                                             {u"ug"_s, u"ئۇيغۇرچە"_s},
+                                                             {u"ur"_s, u"اردو"_s},
+                                                             {u"uz"_s, u"Oʻzbekcha"_s},
+                                                             {u"vi"_s, u"Tiếng Việt"_s},
+                                                             {u"zh"_s, u"中文"_s},
+                                                             {u"ru"_s, u"Русский"_s},
+                                                             {u"uk"_s, u"Українська"_s},
+                                                             // {u"UN"_s, u"Undetermined"_s},
+                                                             {u"yi"_s, u"ייִדיש"_s}};
 
     ui->language->blockSignals(true);
     ui->findLanguage->blockSignals(true);
     ui->language->clear();
-    ui->language->addItem(QStringLiteral("*"), -1);
+    ui->language->addItem(tr("All"), -1);
     ui->language->setCurrentIndex(0);
     ui->findLanguage->clear();
-    ui->findLanguage->addItem(QStringLiteral("*"), -1);
+    ui->findLanguage->addItem(tr("All"), -1);
     ui->findLanguage->setCurrentIndex(0);
 
     auto settings = GetSettings();
-    QString sCurrentLanguage = settings->value(QStringLiteral("BookLanguage"), QStringLiteral("*")).toString();
+    QString sCurrentLanguage = settings->value(u"BookLanguage"_s, u"*"_s).toString();
     for(int iLang = 0; iLang<currentLib.vLaguages.size(); iLang++){
-        QString sLanguage = currentLib.vLaguages[iLang].toUpper();
-        if(!sLanguage.isEmpty()){
+        QString sAbbrLanguage = currentLib.vLaguages[iLang];
+        if(!sAbbrLanguage.isEmpty() && sAbbrLanguage != u"un"){
+            QString sLanguage;
+            if(mLanguges.contains(sAbbrLanguage))
+                sLanguage = mLanguges.at(sAbbrLanguage);
+            else
+                sLanguage = sAbbrLanguage;
             ui->language->addItem(sLanguage, iLang);
             ui->findLanguage->addItem(sLanguage, iLang);
-            if(sLanguage == sCurrentLanguage){
+            if(sAbbrLanguage == sCurrentLanguage){
                 ui->language->setCurrentIndex(ui->language->count()-1);
                 idCurrentLanguage_ = iLang;
             }
         }
     }
     ui->language->model()->sort(0);
-    settings->setValue(QStringLiteral("BookLanguage"), ui->language->currentText());
+    ui->findLanguage->model()->sort(0);
+    settings->setValue(u"BookLanguage"_s, sCurrentLanguage);
     ui->language->blockSignals(false);
     ui->findLanguage->blockSignals(false);
     QApplication::restoreOverrideCursor();
@@ -2158,9 +2263,15 @@ void MainWindow::ExportAction()
 
 void MainWindow::onLanguageFilterChanged(int index)
 {
-    QString sLanguage = ui->language->itemText(index);
+    SLib &currentLib = libs[idCurrentLib];
+    int iLang = ui->language->itemData(index).toInt();
+    QString sLanguage;
+    if(iLang == -1)
+        sLanguage = u"*"_s;
+    else
+        sLanguage = currentLib.vLaguages[iLang];
     auto settings = GetSettings();
-    settings->setValue(QStringLiteral("BookLanguage"), sLanguage);
+    settings->setValue(u"BookLanguage"_s, sLanguage);
     idCurrentLanguage_ = ui->language->itemData(index).toInt();
 
     FillSerials();
@@ -2426,4 +2537,6 @@ void MainWindow::changeEvent(QEvent *event)
         }
     }
 }
+
+
 

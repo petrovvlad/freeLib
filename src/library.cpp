@@ -41,6 +41,8 @@ void loadLibrary(uint idLibrary)
 
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.setForwardOnly(true);
+    if(!query.exec(u"SELECT id FROM lib WHERE id=%1;"_s.arg(idLibrary)) || !query.first())
+        return;
     SLib& lib = libs[idLibrary];
     auto future = QtConcurrent::run([idLibrary, &lib]()
     {
@@ -166,6 +168,7 @@ void loadLibrary(uint idLibrary)
     });
 
     lib.books.clear();
+    lib.vLaguages.clear();
     uint nBuff = 0;
     uint nTotalCount{0};
     while(!abFinished || nTotalCount != anTotalCount){
