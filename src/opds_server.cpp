@@ -324,8 +324,8 @@ QDomElement opds_server::doc_header(const QString &session, bool html, const QSt
                           "body {background-color: #ffffff;}\n"
                           "img.cover {height: %4em; float:left; margin-right: 0.5em;}\n"
                           ).arg(
-                              for_mobile ?QStringLiteral("3") :QStringLiteral("2"), for_mobile ?QStringLiteral("1.5") :QStringLiteral("1"),
-                              for_mobile ?QStringLiteral("2") :QStringLiteral("1.5"), for_mobile ?QStringLiteral("8") :QStringLiteral("6"));
+                              bMobile_ ?QStringLiteral("3") :QStringLiteral("2"), bMobile_ ?QStringLiteral("1.5") :QStringLiteral("1"),
+                              bMobile_ ?QStringLiteral("2") :QStringLiteral("1.5"), bMobile_ ?QStringLiteral("8") :QStringLiteral("6"));
         ;
         QDomElement style = AddTextNode(QStringLiteral("style"), css, head);
         style.setAttribute(QStringLiteral("type"),QStringLiteral("text/css"));
@@ -363,7 +363,7 @@ QDomElement opds_server::doc_header(const QString &session, bool html, const QSt
         QDomElement img = doc.createElement(QStringLiteral("img"));
         img.setAttribute(QStringLiteral("src"), QStringLiteral("/home.png"));
         img.setAttribute(QStringLiteral("border"), QStringLiteral("0"));
-        img.setAttribute(QStringLiteral("height"), QStringLiteral("%1px").arg(for_mobile ?QStringLiteral("48") :QStringLiteral("32")));
+        img.setAttribute(QStringLiteral("height"), QStringLiteral("%1px").arg(bMobile_ ?QStringLiteral("48") :QStringLiteral("32")));
         div.appendChild(img);
         div = AddTextNode(QStringLiteral("a"), QLatin1String(" ") + lib_name, body);
         div.setAttribute(QStringLiteral("class"), QStringLiteral("lib"));
@@ -750,32 +750,33 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
     html.appendChild(head);
     AddTextNode(u"TITLE"_s, sLibName, head);
 
-    QString css =   u"a.lib {font-size:%1em;font-weight: bold;}\n"
-                      "a.book {font-size:%1em;font-weight: bold;}\n"
-                      "div.author {font-size: %2em; background: #eeeeee; border-radius: 0.5em ;margin: 0.5em;padding: 0.1em;}\n"
-                      "div.caption {font-size: %1em;font-weight: bold;padding-bottom: 0.1em;color: #000000;text-decoration: underline;}\n"
-                      "div.book {font-size: %3em;font-weight: bold;padding-bottom: 0.1em;color: #000000;}\n"
-                      "input {font-size: %3em;font-weight: bold;padding-bottom: 0.1em;color: #000000;}\n"
-                      "a {font-size: %3em;font-weight: bold; color: black;text-decoration: none;}\n"
-                      //                "a {font-size: %3em;font-weight: #000000; color: black;text-decoration: none;}\n"
-                      "a.block {display: block;}\n"
-                      "a:active {color: #000000;text-decoration: underline;}\n"
-                      "a:link {color: #000000;text-decoration: none;}\n"
-                      "a:visited {color: #000000;text-decoration: none;}\n"
-                      "a:focus {color: #000000;text-decoration: underline;}\n"
-                      "a:hover {color: #000000;text-decoration: underline;}\n"
-                      //                "a.author {font-weight: #444444;}\n"
-                      "a.author {font-weight: bold;}\n"
-                      "a.author:active {color: #444444;}\n"
-                      "a.author:link {color: #444444;}\n"
-                      "a.author:visited {color: #444444;}\n"
-                      "a.author:focus {color: #444444;}\n"
-                      "a.author:hover {color: #444444;}\n"
-                      "body {background-color: #ffffff;}\n"
-                      "img.cover {height: %4em; float:left; margin-right: 0.5em;}\n"_s
-                      .arg(
-                          for_mobile ?u"3"_s :u"2"_s, for_mobile ?u"1.5"_s :u"1"_s,
-                          for_mobile ?u"2"_s :u"1.5"_s, for_mobile ?u"8"_s :u"6"_s);
+    QString css = u":root {  color-scheme: light dark;}"
+                   "@media (prefers-color-scheme: dark) {"
+                   " .color-invertible {filter: invert(100%);}"
+                   "}"
+                   "a.lib {font-size:%1em;font-weight: bold;}\n"
+                   "a.book {font-size:%1em;font-weight: bold;}\n"
+                   "div.author {font-size: %2em; background: light-dark(#eeeeee, #303030); border-radius: 0.5em ;margin: 0.5em;padding: 0.1em;}\n"
+                   "div.caption {font-size: %1em;font-weight: bold;padding-bottom: 0.1em; text-decoration: underline;}\n"
+                   "div.book {font-size: %3em;font-weight: bold;padding-bottom: 0.1em}\n"
+                   "input {font-size: %3em;font-weight: bold;padding-bottom: 0.1em;}\n"
+                   "a {font-size: %3em;font-weight: bold; text-decoration: none;}\n"
+                   "a.block {display: block;}\n"
+                   "a:active {color: light-dark(black, white);text-decoration: underline;}\n"
+                   "a:link {color: light-dark(black, white);text-decoration: none;}\n"
+                   "a:visited {color: light-dark(black, white);text-decoration: none;}\n"
+                   "a:focus {color: light-dark(black, white);text-decoration: underline;}\n"
+                   "a:hover {color: light-dark(black, white);text-decoration: underline;}\n"
+                   "a.author {font-weight: bold;}\n"
+                   "a.author:active {color: light-dark(#444444, #c0c0c0);}\n"
+                   "a.author:link {color: light-dark(#444444, #c0c0c0);}\n"
+                   "a.author:visited {color: light-dark(#444444, #c0c0c0);}\n"
+                   "a.author:focus {color: light-dark(#444444, #c0c0c0);}\n"
+                   "a.author:hover {color: light-dark(#444444, #c0c0c0);}\n"
+                   "img.cover {height: %4em; float:left; margin-right: 0.5em;}\n"
+                   "hr {color: light-dark(black, white); background-color: light-dark(black, white); height:3px;}\n"_s
+                      .arg(bMobile_ ?u"3"_s :u"2"_s, bMobile_ ?u"1.5"_s :u"1"_s,
+                           bMobile_ ?u"2"_s :u"1.5"_s, bMobile_ ?u"8"_s :u"6"_s);
     ;
     QDomElement style = AddTextNode(u"style"_s, css, head);
     style.setAttribute(u"type"_s, u"text/css"_s);
@@ -813,15 +814,14 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
     QDomElement img = doc.createElement(u"img"_s);
     img.setAttribute(u"src"_s, u"/home.png"_s);
     img.setAttribute(u"border"_s, u"0"_s);
-    img.setAttribute(u"height"_s, for_mobile ?u"48px"_s :u"32px"_s);
+    img.setAttribute(u"class"_s,u"color-invertible"_s);
+    img.setAttribute(u"height"_s, bMobile_ ?u"48px"_s :u"32px"_s);
     div.appendChild(img);
-    div = AddTextNode(u"a"_s, u" "_s + sLibName, body);
+    div = AddTextNode(u"a"_s, sLibName, body);
     div.setAttribute(u"class"_s, u"lib"_s);
     div.setAttribute(u"href"_s, (sLibUrl.isEmpty() ?u"/"_s :sLibUrl) + sSesionQuery);
 
     QDomElement hr = doc.createElement(u"HR"_s);
-    hr.setAttribute(u"size"_s, u"3"_s);
-    hr.setAttribute(u"color"_s, u"black"_s);
     body.appendChild(hr);
 
     return body;
@@ -952,7 +952,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
             if(bShowAuthor){
                 QDomElement el = AddTextNode(u"a"_s, lib.authors.at(book.idFirstAuthor).getName(), entry);
                 el.setAttribute(u"class"_s, u"book"_s);
-                el.setAttribute(u"href"_s, sLibUrl + u"/author/"_s + QString::number(book.idFirstAuthor) + sSession);
+                el.setAttribute(u"href"_s, sLibUrl + u"/author/"_s + QString::number(book.idFirstAuthor) + sSesionQuery);
             }
 
             QString sSerial = book.idSerial == 0 ?u""_s :lib.serials.at(book.idSerial).sName;
@@ -2240,6 +2240,7 @@ QHttpServerResponse opds_server::rootHTTP(uint idLib, const QHttpServerRequest &
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     QUrlQuery urlquery(url);
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
@@ -2260,8 +2261,6 @@ QHttpServerResponse opds_server::rootHTTP(uint idLib, const QHttpServerRequest &
     el.setAttribute(u"href"_s, sLibUrl + u"/genres"_s + sSesionQuery);
 
     QDomElement hr = doc.createElement(u"HR"_s);
-    hr.setAttribute(u"size"_s, u"3"_s);
-    hr.setAttribute(u"color"_s, u"black"_s);
     feed.appendChild(hr);
 
     QDomElement form = doc.createElement(u"FORM"_s);
@@ -2389,6 +2388,7 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     QUrlQuery urlquery(url);
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
@@ -2651,6 +2651,7 @@ QHttpServerResponse opds_server::authorHTTP(uint idLib, uint idAuthor, const QHt
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     QUrlQuery urlquery(url);
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
@@ -2746,6 +2747,7 @@ QHttpServerResponse opds_server::authorBooksHTTP(uint idLib, uint idAuthor, cons
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, 0, u""_s, false);
     return FillPageHTTP(vBooks, *pLib, tr("Books by ABC") + u" ("_s + pLib->authors.at(idAuthor).getName() + u")"_s, sLibUrl, url, false);
 }
@@ -2760,6 +2762,7 @@ QHttpServerResponse opds_server::authorBooksOPDS(uint idLib, uint idAuthor, cons
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, 0, u""_s, false);
     QString sPage = FillPageOPDS(vBooks, *pLib, tr("Books by ABC") + u" ("_s + pLib->authors.at(idAuthor).getName() + u")"_s, u"id:autorbooks:"_s + QString::number(idAuthor), sLibUrl, url);
 
@@ -2787,6 +2790,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     QUrlQuery urlquery(url);
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
@@ -2876,6 +2880,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
     if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->serials.contains(idSequence))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, idSequence, 0, u""_s);
     return FillPageHTTP(vBooks, *pLib, tr("Books of sequence") + u" ("_s + pLib->serials[idSequence].sName + u")"_s, sLibUrl, url, false);
 }
@@ -2907,6 +2912,7 @@ QHttpServerResponse opds_server::authorSequencelessHTTP(uint idLib, uint idAutho
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, 0, u""_s, true);
     return FillPageHTTP(vBooks, *pLib, tr("Books without sequence") % u" ("_s % pLib->authors[idAuthor].getName() % u")"_s, sLibUrl, url, false);
 }
@@ -2938,6 +2944,7 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     QUrlQuery urlquery(url);
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
@@ -3005,7 +3012,6 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
                         break;
                     }
                 }
-
             }
             else
             {
@@ -3127,7 +3133,6 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
                         break;
                     }
                 }
-
             }
             else
             {
@@ -3185,6 +3190,7 @@ QHttpServerResponse opds_server::sequenceBooksHTTP(uint idLib, uint idSequence, 
     if(pLib == nullptr || !pLib->serials.contains(idSequence))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     std::vector<uint> vBooks = book_list(*pLib, 0, idSequence, 0, u""_s);
     return FillPageHTTP(vBooks, *pLib, tr("Books of sequence") % u" ("_s % pLib->serials[idSequence].sName % u")"_s, sLibUrl, url, false);
 }
@@ -3225,6 +3231,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
     if(pLib == nullptr || (idParentGenre!=0 && !genres.contains(idParentGenre)))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     QUrlQuery urlquery(url);
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
@@ -3375,6 +3382,7 @@ QHttpServerResponse opds_server::searchHTTP(uint idLib, const QHttpServerRequest
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
+    checkMobile(request);
     QUrlQuery urlquery(url);
     QString sSearchString = urlquery.queryItemValue(u"search_string"_s);
 
@@ -3492,6 +3500,18 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     return result;
 }
 
+void opds_server::checkMobile(const QHttpServerRequest &request)
+{
+    bMobile_ = false;
+    auto headers = request.headers();
+    for(auto &header :headers){
+        if(header.first == "User-Agent"_ba){
+            if(header.second.toLower().contains("mobile"_ba))
+                bMobile_ = true;
+            break;
+        }
+    }
+}
 
 #endif
 
@@ -3546,7 +3566,7 @@ void opds_server::slotRead()
     QStringList TCPtokens;
     QStringList AUTHtokens;
     for_preview = false;
-    for_mobile = false;
+    bMobile_ = false;
     //bool PWDCHECK=false;
     while(clientSocket->bytesAvailable() > 0)
     {
@@ -3560,9 +3580,9 @@ void opds_server::slotRead()
         if(tokens[0] == QLatin1String("X-Purpose:"))
             for_preview=(tokens[1]==QLatin1String("preview"));
         if(tokens[0] == QLatin1String("User-Agent:"))
-            for_mobile = (tokens.contains(QStringLiteral("Mobile"), Qt::CaseInsensitive));
+            bMobile_ = (tokens.contains(QStringLiteral("Mobile"), Qt::CaseInsensitive));
 //        if(tokens[0] == "Cookie:")
-//            for_mobile=(tokens.contains("PWDCHECK=1",Qt::CaseInsensitive));
+//            bMobile_=(tokens.contains("PWDCHECK=1",Qt::CaseInsensitive));
 //        qDebug()<<tokens;
     }
     if (TCPtokens.count() > 0)

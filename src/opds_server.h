@@ -77,6 +77,7 @@ private:
 
     QByteArray cover(uint id, uint idBook);
     QHttpServerResponse convert(uint idLib, uint idBook, const QString &sFormat, bool opds);
+    void checkMobile(const QHttpServerRequest &request);
 #else
     QDomElement doc_header(const QString &session, bool html=false, const QString &lib_name = QString(), const QString &lib_url = QString());
     QString FillPage(std::vector<uint> listBooks, SLib& lib, const QString &sTitle, const QString &lib_url, const QString &current_url, QTextStream& ts, bool opds, uint nPage, const QString &session, bool bShowAuthor);
@@ -85,7 +86,7 @@ private:
 #endif
 
     bool for_preview;
-    bool for_mobile;
+    bool bMobile_;
     int port;
     QDomDocument doc;
     int OPDS_server_status;
