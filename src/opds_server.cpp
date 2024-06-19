@@ -230,7 +230,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                         vBooks.push_back(it->second);
             }
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return lib.books.at(lhs).sName < lib.books.at(rhs).sName; });
+        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return QString::localeAwareCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) < 0; });
     }
     if(idAuthor == 0 && idSeria != 0){
         for(const auto &iBook :lib.books){
@@ -253,7 +253,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                 }
             }
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return lib.books.at(lhs).sName < lib.books.at(rhs).sName; });
+        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return QString::localeAwareCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName) < 0; });
     }
     if(!sSearch.isEmpty()){
         for(const auto &iBook :lib.books){
@@ -275,9 +275,9 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
         }
         std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
             if(lib.books.at(lhs).idFirstAuthor != lib.books.at(rhs).idFirstAuthor)
-                return lib.authors.at(lib.books.at(lhs).idFirstAuthor).getName() < lib.authors.at(lib.books.at(rhs).idFirstAuthor).getName();
+                return QString::localeAwareCompare(lib.authors.at(lib.books.at(lhs).idFirstAuthor).getName(), lib.authors.at(lib.books.at(rhs).idFirstAuthor).getName()) < 0;
             else
-                return lib.books.at(lhs).sName < lib.books.at(rhs).sName;
+                return QString::localeAwareCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) < 0;
 
         });
 
@@ -3267,6 +3267,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
                 vIdGenres.push_back(iGenre.first);
         }
     }
+    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return genres.at(id1).sName < genres.at(id2).sName;});
     QDomElement feed;
     feed = docHeaderHTTP(sSesionQuery, pLib->name, sLibUrl);
 
@@ -3280,7 +3281,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
         div.setAttribute(u"class"_s, u"author"_s);
         QDomElement el = AddTextNode(u"A"_s, genres[idGenre].sName, div);
         el.setAttribute(u"class"_s, u"block"_s);
-        el.setAttribute(u"href"_s, sLibUrl + u"/genres/"_s + QString::number(idGenre) + sSesionQuery );
+        el.setAttribute(u"href"_s, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSesionQuery );
         if(idParentGenre != 0)
         {
             QDomElement el = AddTextNode(u"div"_s, QString::number(nCount) + u" "_s + tr("books"), div);
@@ -3338,6 +3339,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
         }
     }
 
+    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return genres.at(id1).sName < genres.at(id2).sName;});
     QString sCurrentDateTime = QDateTime::currentDateTimeUtc().toString(Qt::ISODate);
     QDomElement feed;
     feed = docHeaderOPDS(tr("Books by genre"), u"tag:root:genre"_s, sLibUrl, sSesionQuery);
