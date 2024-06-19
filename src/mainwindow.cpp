@@ -2023,9 +2023,8 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
     TreeBookItem* item_seria = nullptr;
     TreeBookItem* item_book;
     TreeBookItem* item_author;
-    std::unordered_map<uint, TreeBookItem*> authors;
-
-    std::unordered_map<uint, TreeBookItem*> mSerias;
+    std::unordered_map<uint, TreeBookItem*> mAuthorItems;
+    std::unordered_map<uint, TreeBookItem*> mSeriaItems;
 
     const bool wasBlocked = ui->Books->blockSignals(true);
     ui->Books->clear();
@@ -2046,7 +2045,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
 
             uint idSerial = book.idSerial;
             if(bTreeView_){
-                if(!authors.contains(idAuthor)){
+                if(!mAuthorItems.contains(idAuthor)){
                     item_author = new TreeBookItem(ui->Books, ITEM_TYPE_AUTHOR);
                     item_author->setText(0, sAuthor);
                     item_author->setExpanded(true);
@@ -2058,9 +2057,9 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                     if(options.bUseTag){
                         item_author->setIcon(0, getTagIcon(lib.authors[idAuthor].vIdTags));
                     }
-                    authors[idAuthor] = item_author;
+                    mAuthorItems[idAuthor] = item_author;
                 }else{
-                    item_author = authors[idAuthor];
+                    item_author = mAuthorItems[idAuthor];
                     auto checkedState = item_author->checkState(0);
                     if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
                         item_author->setCheckState(0, Qt::PartiallyChecked);
@@ -2068,9 +2067,9 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
 
                 if(idSerial > 0){
                     bool bFound = false;
-                    for(const auto &iSerial :mSerias){
+                    for(const auto &iSerial :mSeriaItems){
                         item_seria = iSerial.second;
-                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor){
+                        if(item_seria->parent()->data(0, Qt::UserRole) == idAuthor && item_seria->data(0, Qt::UserRole) == idSerial){
                             auto checkedState = item_seria->checkState(0);
                             if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
                                 item_seria->setCheckState(0, Qt::PartiallyChecked);
@@ -2079,7 +2078,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                         }
                     }
                     if(!bFound){
-                        item_seria = new TreeBookItem(authors[idAuthor], ITEM_TYPE_SERIA);
+                        item_seria = new TreeBookItem(mAuthorItems[idAuthor], ITEM_TYPE_SERIA);
                         item_seria->setText(0, lib.serials[idSerial].sName);
                         item_author->addChild(item_seria);
                         item_seria->setExpanded(true);
@@ -2090,7 +2089,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                         if(options.bUseTag)
                             item_seria->setIcon(0, getTagIcon(lib.serials[idSerial].vIdTags));
 
-                        mSerias.insert({idSerial, item_seria});
+                        mSeriaItems.insert({idSerial, item_seria});
                     }
                     item_book = new TreeBookItem(item_seria, ITEM_TYPE_BOOK);
                 }else
