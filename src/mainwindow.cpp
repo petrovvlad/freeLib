@@ -181,6 +181,11 @@ MainWindow::MainWindow(QWidget *parent) :
         nCurrentTab = TabAuthors;
     }
 
+    if(options.bOpdsEnable){
+        pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
+        pOpds_->server_run();
+    }
+
     UpdateTags();
     loadGenres();
     loadLibrary(idCurrentLib);
@@ -266,11 +271,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->TagFilter, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onTagFilterChanged);
     ui->Books->header()->setContextMenuPolicy(Qt::CustomContextMenu);
     connect(ui->Books->header(), &QWidget::customContextMenuRequested, this, &MainWindow::HeaderContextMenu);
-
-    if(options.bOpdsEnable){
-        pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
-        pOpds_->server_run();
-    }
     FillLibrariesMenu();
     UpdateExportMenu();
 
@@ -1368,6 +1368,8 @@ void MainWindow::fillLanguages()
             }
         }
     }
+    if(pOpds_)
+        pOpds_->setLanguageFilter(sCurrentLanguage);
     ui->language->model()->sort(0);
     ui->findLanguage->model()->sort(0);
     settings->setValue(u"BookLanguage"_s, sCurrentLanguage);
@@ -2277,6 +2279,8 @@ void MainWindow::onLanguageFilterChanged(int index)
     FillAuthors();
     FillGenres();
     FillListBooks();
+    if(pOpds_)
+        pOpds_->setLanguageFilter(sLanguage);
 }
 
 void MainWindow::onChangeAlpabet(const QString &sAlphabetName)
