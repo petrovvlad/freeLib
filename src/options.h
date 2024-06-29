@@ -117,6 +117,7 @@ struct Options
     QString sProxyHost;
     QString sProxyUser;
     QString sProxyPassword;
+    QString sBaseUrl;
 
     qint64 nCacheSize;
     int nHttpExport;

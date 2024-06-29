@@ -347,7 +347,10 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
             pSettings->remove(u"HTTP_password"_s);
         }
     }
-    nOpdsPort = pSettings->value(QStringLiteral("OPDS_port"), nDefaultOpdsPort).toInt();
+    sBaseUrl = pSettings->value(u"BaseUrl"_s).toString();
+    if(sBaseUrl.endsWith(u"/"))
+        sBaseUrl.chop(1);
+    nOpdsPort = pSettings->value(u"OPDS_port"_s, nDefaultOpdsPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
     nHttpExport = pSettings->value(QStringLiteral("httpExport"), 0).toInt();
     nProxyType = pSettings->value(QStringLiteral("proxy_type"), 0).toInt();
@@ -404,7 +407,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     }
     pSettings->endArray();
 
-    pSettings->setValue(QStringLiteral("localeUI"), options.sUiLanguageName);
+    pSettings->setValue(QStringLiteral("localeUI"), sUiLanguageName);
     pSettings->setValue(QStringLiteral("localeABC"), options.sAlphabetName);
     pSettings->setValue(QStringLiteral("database_path"), options.sDatabasePath);
     pSettings->setValue(QStringLiteral("ShowDeleted"), options.bShowDeleted);
@@ -419,9 +422,10 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(QStringLiteral("OPDS_enable"), options.bOpdsEnable);
     pSettings->setValue(QStringLiteral("httpExport"), options.nHttpExport);
     pSettings->setValue(QStringLiteral("HTTP_need_pasword"), options.bOpdsNeedPassword);
-    pSettings->setValue(QStringLiteral("HTTP_user"), options.sOpdsUser);
+    pSettings->setValue(u"HTTP_user"_s, options.sOpdsUser);
     pSettings->setValue(u"httpPassword"_s, QString(baOpdsPasswordSalt.toBase64()) + u":"_s + QString(baOpdsPasswordHash.toBase64()));
-    pSettings->setValue(QStringLiteral("srv_annotation"), options.bOpdsShowAnotation);
+    pSettings->setValue(u"BaseUrl"_s, sBaseUrl);
+    pSettings->setValue(u"srv_annotation"_s, options.bOpdsShowAnotation);
     pSettings->setValue(QStringLiteral("srv_covers"), options.bOpdsShowCover);
     pSettings->setValue(QStringLiteral("OPDS_port"), options.nOpdsPort);
     pSettings->setValue(QStringLiteral("books_per_page"), options.nOpdsBooksPerPage);

@@ -85,7 +85,6 @@ private:
     QString WriteSuccess(const QString &contentType = QStringLiteral("text/html;charset=utf-8"), bool isGZip=false);
 #endif
 
-    bool for_preview;
     bool bMobile_;
     int port;
     QDomDocument doc;
@@ -96,6 +95,7 @@ private:
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     QHttpServer httpServer_;
 #else
+    bool for_preview;
     QStringList sesions_auth;
     QMap<qintptr, QTcpSocket *> OPDS_clients;
     QMap<QString, QString> params;
