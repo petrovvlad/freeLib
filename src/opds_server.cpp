@@ -756,23 +756,18 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
                    "}"
                    "a.lib {font-size:%1em;font-weight: bold;}\n"
                    "a.book {font-size:%1em;font-weight: bold;}\n"
-                   "div.author {font-size: %2em; background: light-dark(#eeeeee, #303030); border-radius: 0.5em ;margin: 0.5em;padding: 0.1em;}\n"
+                   "div.item {font-size: %2em; background: light-dark(#eeeeee, #303030); border-radius: 0.5em ;margin: 0.5em;padding: 0.1em;}\n"
                    "div.caption {font-size: %1em;font-weight: bold;padding-bottom: 0.1em; text-decoration: underline;}\n"
                    "div.book {font-size: %3em;font-weight: bold;padding-bottom: 0.1em}\n"
                    "input {font-size: %3em;font-weight: bold;padding-bottom: 0.1em;}\n"
-                   "a {font-size: %3em;font-weight: bold; text-decoration: none;}\n"
+                   "a {font-size: %3em;font-weight: bold; text-decoration: none;color: light-dark(black, white);}\n"
                    "a.block {display: block;}\n"
-                   "a:active {color: light-dark(black, white);text-decoration: underline;}\n"
-                   "a:link {color: light-dark(black, white);text-decoration: none;}\n"
-                   "a:visited {color: light-dark(black, white);text-decoration: none;}\n"
-                   "a:focus {color: light-dark(black, white);text-decoration: underline;}\n"
-                   "a:hover {color: light-dark(black, white);text-decoration: underline;}\n"
-                   "a.author {font-weight: bold;}\n"
-                   "a.author:active {color: light-dark(#444444, #c0c0c0);}\n"
-                   "a.author:link {color: light-dark(#444444, #c0c0c0);}\n"
-                   "a.author:visited {color: light-dark(#444444, #c0c0c0);}\n"
-                   "a.author:focus {color: light-dark(#444444, #c0c0c0);}\n"
-                   "a.author:hover {color: light-dark(#444444, #c0c0c0);}\n"
+                   "a:active {text-decoration: underline;}\n"
+                   "a:link {text-decoration: none;}\n"
+                   "a:visited {text-decoration: none;}\n"
+                   "a:focus {text-decoration: underline;}\n"
+                   "a:hover {text-decoration: underline;}\n"
+                   "a.item {font-weight: bold; color: light-dark(#444444, #c0c0c0);}\n"
                    "img.cover {height: %4em; float:left; margin-right: 0.5em;}\n"
                    "hr {color: light-dark(black, white); background-color: light-dark(black, white); height:3px;}\n"_s
                       .arg(bMobile_ ?u"3"_s :u"2"_s, bMobile_ ?u"1.5"_s :u"1"_s,
@@ -781,14 +776,17 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
     QDomElement style = AddTextNode(u"style"_s, css, head);
     style.setAttribute(u"type"_s, u"text/css"_s);
     QDomElement meta = doc.createElement(u"META"_s);
-    meta.setAttribute(u"http-equiv"_s, u"Content-Type"_s);
-    meta.setAttribute(u"content"_s, u"text/html; charset=utf-8"_s);
+    meta.setAttribute(u"charset"_s, u"utf-8"_s);
     head.appendChild(meta);
+
+    if(!options.sBaseUrl.isEmpty()){
+        QDomElement baseUrl = doc.createElement(u"base"_s);
+        baseUrl.setAttribute(u"href"_s, options.sBaseUrl);
+        head.appendChild(baseUrl);
+    }
 
     QDomElement link;
     QString icon_file = u"/icon_256x256.png"_s;
-    if(for_preview)
-        icon_file = u"/splash_opera.png"_s;
 
     link = doc.createElement(u"LINK"_s);
     link.setAttribute(u"rel"_s, u"icon"_s);
@@ -931,7 +929,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
             SBook& book = lib.books.at(idBook);
             QString sIdBook = QString::number(idBook);
             QDomElement entry = doc.createElement(u"div"_s);
-            entry.setAttribute(u"class"_s, u"author"_s);
+            entry.setAttribute(u"class"_s, u"item"_s);
             feed.appendChild(entry);
 
             QDomElement table = doc.createElement(u"table"_s);
@@ -966,41 +964,41 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
             {
                 QDomElement el = AddTextNode(u"a"_s, u"fb2"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/fb2"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                el.setAttribute(u"class"_s, u"item"_s);
                 el = AddTextNode(u"a"_s, u"epub"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                el.setAttribute(u"class"_s, u"item"_s);
                 if(bKindleInstallsed){
                     el=AddTextNode(u"a"_s, u"mobi"_s, entry);
                     el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
-                    el.setAttribute(u"class"_s, u"author"_s);
+                    el.setAttribute(u"class"_s, u"item"_s);
                     el = AddTextNode(u"a"_s, u"azw3"_s, entry);
                     el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/azw3"_s + sSesionQuery);
-                    el.setAttribute(u"class"_s, u"author"_s);
+                    el.setAttribute(u"class"_s, u"item"_s);
                 }
             }
             else if(book.sFormat == u"epub"_s)
             {
                 QDomElement el = AddTextNode(u"a"_s, u"epub"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                el.setAttribute(u"class"_s, u"item"_s);
                 if(bKindleInstallsed){
                     el = AddTextNode(u"a"_s, u"mobi"_s, entry);
                     el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
-                    el.setAttribute(u"class"_s, u"author"_s);
+                    el.setAttribute(u"class"_s, u"item"_s);
                 }
             }
             else if(book.sFormat == u"mobi"_s)
             {
                 QDomElement el = AddTextNode(u"a"_s, u"mobi"_s, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/mobi"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                el.setAttribute(u"class"_s, u"item"_s);
             }
             else
             {
                 QDomElement el = AddTextNode(u"a"_s, book.sFormat, entry);
                 el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/download"_s + sSesionQuery);
-                el.setAttribute(u"class"_s, u"author"_s);
+                el.setAttribute(u"class"_s, u"item"_s);
             }
 
             if(options.bOpdsShowAnotation)
@@ -1033,7 +1031,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
         feed.appendChild(entry);
         QDomElement el = AddTextNode(u"a"_s, tr("Previous page"), entry);
         el.setAttribute(u"href"_s, urlPrevious.toString());
-        el.setAttribute(u"class"_s, u"author"_s);
+        el.setAttribute(u"class"_s, u"item"_s);
     }
     if(static_cast<uint>(vBooks.size()) > (nPage+1)*nMaxBooksPerPage){
         int i = 0;
@@ -1054,7 +1052,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
 
         QDomElement el = AddTextNode(u"a"_s, tr("Next page"), entry);
         el.setAttribute(u"href"_s, urlNext.toString());
-        el.setAttribute(u"class"_s, u"author"_s);
+        el.setAttribute(u"class"_s, u"item"_s);
 
     }
     QString str = u"<!DOCTYPE html>\n"_s;
@@ -2302,7 +2300,7 @@ QHttpServerResponse opds_server::rootOPDS(uint idLib, const QHttpServerRequest &
         return responseUnauthorized();
     QUrlQuery urlquery(url);
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2443,7 +2441,7 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
             QDomElement td = doc.createElement(u"td"_s);
             tag_tr.appendChild(td);
             QDomElement div = doc.createElement(u"div"_s);
-            div.setAttribute(u"class"_s, u"author"_s);
+            div.setAttribute(u"class"_s, u"item"_s);
             td.appendChild(div);
             QDomElement el = AddTextNode(u"a"_s, sIndex.first, div);
             el.setAttribute(u"class"_s, u"block"_s);
@@ -2506,7 +2504,7 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
             }
 
             QDomElement div = doc.createElement(u"DIV"_s);
-            div.setAttribute(u"class"_s, u"author"_s);
+            div.setAttribute(u"class"_s, u"item"_s);
             feed.appendChild(div);
             QDomElement el = AddTextNode(u"a"_s, pLib->authors.at(iIndex).getName(), div);
             el.setAttribute(u"class"_s, u"block"_s);
@@ -2524,7 +2522,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2660,7 +2658,7 @@ QHttpServerResponse opds_server::authorHTTP(uint idLib, uint idAuthor, const QHt
     QString sIdAuthor = QString::number(idAuthor);
     QDomElement feed = docHeaderHTTP(sSesionQuery, pLib->name, sLibUrl);
     QDomElement div_auth = doc.createElement(u"DIV"_s);;
-    div_auth.setAttribute(u"class"_s, u"author"_s);
+    div_auth.setAttribute(u"class"_s, u"item"_s);
     feed.appendChild(div_auth);
     QDomElement div_caption = AddTextNode(u"div"_s, tr("Books by") + u" "_s + sAuthor, div_auth);
     div_caption.setAttribute(u"class"_s, u"caption"_s);
@@ -2693,7 +2691,7 @@ QHttpServerResponse opds_server::authorOPDS(uint idLib, uint idAuthor, const QHt
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2758,7 +2756,7 @@ QHttpServerResponse opds_server::authorBooksOPDS(uint idLib, uint idAuthor, cons
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2813,7 +2811,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
     for(const auto &iSeria :mCountBooks)
     {
         QDomElement entry = doc.createElement(u"div"_s);
-        entry.setAttribute(u"class"_s, u"author"_s);
+        entry.setAttribute(u"class"_s, u"item"_s);
         feed.appendChild(entry);
         QDomElement el = AddTextNode(u"a"_s, pLib->serials.at(iSeria.first).sName, entry);
         el.setAttribute(u"class"_s, u"block"_s);
@@ -2829,7 +2827,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2891,7 +2889,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->serials.contains(idSequence))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2923,7 +2921,7 @@ QHttpServerResponse opds_server::authorSequencelessOPDS(uint idLib, uint idAutho
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2996,7 +2994,7 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
             tag_tr.appendChild(td);
 
             QDomElement div = doc.createElement(u"DIV"_s);
-            div.setAttribute(u"class"_s, u"author"_s);
+            div.setAttribute(u"class"_s, u"item"_s);
             td.appendChild(div);
             QDomElement el = AddTextNode(u"a"_s, iIndex.first, div);
             el.setAttribute(u"class"_s, u"block"_s);
@@ -3052,7 +3050,7 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
                         nBooksCount++;
             }
             QDomElement div = doc.createElement(u"DIV"_s);
-            div.setAttribute(u"class"_s, u"author"_s);
+            div.setAttribute(u"class"_s, u"item"_s);
             feed.appendChild(div);
             QDomElement el = AddTextNode(u"a"_s, pLib->serials.at(idSerial).sName, div);
             el.setAttribute(u"class"_s, u"block"_s);
@@ -3070,7 +3068,7 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3201,7 +3199,7 @@ QHttpServerResponse opds_server::sequenceBooksOPDS(uint idLib, uint idSequence, 
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->serials.contains(idSequence))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3278,7 +3276,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
             continue;
         QDomElement div = doc.createElement(u"DIV"_s);
         feed.appendChild(div);
-        div.setAttribute(u"class"_s, u"author"_s);
+        div.setAttribute(u"class"_s, u"item"_s);
         QDomElement el = AddTextNode(u"A"_s, genres[idGenre].sName, div);
         el.setAttribute(u"class"_s, u"block"_s);
         el.setAttribute(u"href"_s, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSesionQuery );
@@ -3297,7 +3295,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || (idParentGenre!=0 && !genres.contains(idParentGenre)))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3399,7 +3397,7 @@ QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest
         return responseUnauthorized();
     QUrlQuery urlquery(url);
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 

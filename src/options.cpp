@@ -347,7 +347,10 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
             pSettings->remove(u"HTTP_password"_s);
         }
     }
-    nOpdsPort = pSettings->value(QStringLiteral("OPDS_port"), nDefaultOpdsPort).toInt();
+    sBaseUrl = pSettings->value(u"BaseUrl"_s).toString();
+    if(sBaseUrl.endsWith(u"/"))
+        sBaseUrl.chop(1);
+    nOpdsPort = pSettings->value(u"OPDS_port"_s, nDefaultOpdsPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
     nHttpExport = pSettings->value(QStringLiteral("httpExport"), 0).toInt();
     nProxyType = pSettings->value(QStringLiteral("proxy_type"), 0).toInt();
@@ -397,43 +400,44 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
 void Options::Save(QSharedPointer<QSettings> pSettings)
 {
     int countExport = vExportOptions.size();
-    pSettings->beginWriteArray(QStringLiteral("export"));
+    pSettings->beginWriteArray(u"export"_s);
     for(int iExport=0; iExport<countExport; iExport++){
         pSettings->setArrayIndex(iExport);
         vExportOptions[iExport].Save(pSettings);
     }
     pSettings->endArray();
 
-    pSettings->setValue(QStringLiteral("localeUI"), options.sUiLanguageName);
-    pSettings->setValue(QStringLiteral("localeABC"), options.sAlphabetName);
-    pSettings->setValue(QStringLiteral("database_path"), options.sDatabasePath);
-    pSettings->setValue(QStringLiteral("ShowDeleted"), options.bShowDeleted);
-    pSettings->setValue(QStringLiteral("use_tag"), options.bUseTag);
-    pSettings->setValue(QStringLiteral("no_splash"), !options.bShowSplash);
-    pSettings->setValue(QStringLiteral("store_position"), options.bStorePosition);
-    pSettings->setValue(QStringLiteral("tray_icon"), options.nIconTray);
-    pSettings->setValue(QStringLiteral("tray_color"), options.nTrayColor);
-    pSettings->setValue(QStringLiteral("CloseExpDlg"),options.bCloseDlgAfterExport);
-    pSettings->setValue(QStringLiteral("uncheck_export"),options.bUncheckAfterExport);
-    pSettings->setValue(QStringLiteral("extended_symbols"), options.bExtendedSymbols);
-    pSettings->setValue(QStringLiteral("OPDS_enable"), options.bOpdsEnable);
-    pSettings->setValue(QStringLiteral("httpExport"), options.nHttpExport);
-    pSettings->setValue(QStringLiteral("HTTP_need_pasword"), options.bOpdsNeedPassword);
-    pSettings->setValue(QStringLiteral("HTTP_user"), options.sOpdsUser);
+    pSettings->setValue(u"localeUI"_s, sUiLanguageName);
+    pSettings->setValue(u"localeABC"_s, sAlphabetName);
+    pSettings->setValue(u"database_path"_s, sDatabasePath);
+    pSettings->setValue(u"ShowDeleted"_s, bShowDeleted);
+    pSettings->setValue(u"use_tag"_s, bUseTag);
+    pSettings->setValue(u"no_splash"_s, !bShowSplash);
+    pSettings->setValue(u"store_position"_s, bStorePosition);
+    pSettings->setValue(u"tray_icon"_s, nIconTray);
+    pSettings->setValue(u"tray_color"_s, nTrayColor);
+    pSettings->setValue(u"CloseExpDlg"_s,bCloseDlgAfterExport);
+    pSettings->setValue(u"uncheck_export"_s,bUncheckAfterExport);
+    pSettings->setValue(u"extended_symbols"_s, bExtendedSymbols);
+    pSettings->setValue(u"OPDS_enable"_s, bOpdsEnable);
+    pSettings->setValue(u"httpExport"_s, nHttpExport);
+    pSettings->setValue(u"HTTP_need_pasword"_s, bOpdsNeedPassword);
+    pSettings->setValue(u"HTTP_user"_s, sOpdsUser);
     pSettings->setValue(u"httpPassword"_s, QString(baOpdsPasswordSalt.toBase64()) + u":"_s + QString(baOpdsPasswordHash.toBase64()));
-    pSettings->setValue(QStringLiteral("srv_annotation"), options.bOpdsShowAnotation);
-    pSettings->setValue(QStringLiteral("srv_covers"), options.bOpdsShowCover);
-    pSettings->setValue(QStringLiteral("OPDS_port"), options.nOpdsPort);
-    pSettings->setValue(QStringLiteral("books_per_page"), options.nOpdsBooksPerPage);
-    pSettings->setValue(QStringLiteral("proxy_type"), options.nProxyType);
-    pSettings->setValue(QStringLiteral("proxy_port"), options.nProxyPort);
-    pSettings->setValue(QStringLiteral("proxy_user"), options.sProxyUser);
-    pSettings->setValue(QStringLiteral("proxy_host"), options.sProxyHost);
-    pSettings->setValue(QStringLiteral("proxy_password"), options.sProxyPassword);
+    pSettings->setValue(u"BaseUrl"_s, sBaseUrl);
+    pSettings->setValue(u"srv_annotation"_s, bOpdsShowAnotation);
+    pSettings->setValue(u"srv_covers"_s, bOpdsShowCover);
+    pSettings->setValue(u"OPDS_port"_s, nOpdsPort);
+    pSettings->setValue(u"books_per_page"_s, nOpdsBooksPerPage);
+    pSettings->setValue(u"proxy_type"_s, nProxyType);
+    pSettings->setValue(u"proxy_port"_s, nProxyPort);
+    pSettings->setValue(u"proxy_user"_s, sProxyUser);
+    pSettings->setValue(u"proxy_host"_s, sProxyHost);
+    pSettings->setValue(u"proxy_password"_s, sProxyPassword);
 
     pSettings->beginWriteArray(u"application"_s);
     int index = 0;
-    for(const auto &iApp :options.applications)
+    for(const auto &iApp :applications)
     {
         pSettings->setArrayIndex(index);
         pSettings->setValue(u"ext"_s, iApp.first);
@@ -444,7 +448,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
 
     pSettings->beginWriteArray(u"tools"_s);
     index = 0;
-    for(const auto &iTool :options.tools){
+    for(const auto &iTool :tools){
         pSettings->setArrayIndex(index);
         pSettings->setValue(u"name"_s, iTool.second.sPath);
         pSettings->setValue(u"args"_s, iTool.second.sArgs);
