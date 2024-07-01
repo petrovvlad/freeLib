@@ -162,6 +162,9 @@ opds_server::opds_server(QObject *parent) :
     httpServer_.route(u"/http_<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return searchHTTP(idLib, request); });
 
+    httpServer_.route(u"/http_<arg>/searchauthor"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+                      { return searchAuthorHTTP(idLib, request); });
+
     httpServer_.route(u"/opds_<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return searchOPDS(idLib, request); });
 
@@ -754,7 +757,9 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
                    "@media (prefers-color-scheme: dark) {"
                    " .color-invertible {filter: invert(100%);}"
                    "}"
-                   "a.lib {font-size:%1em;font-weight: bold;}\n"
+                   "a.lib {font-size:%1em;font-weight}"
+                   "a.lib:hover {text-decoration: none;}"
+                   "a.lib:focus {text-decoration: none;}\n"
                    "a.book {font-size:%1em;font-weight: bold;}\n"
                    "div.item {font-size: %2em; background: light-dark(#eeeeee, #303030); border-radius: 0.5em ;margin: 0.5em;padding: 0.1em;}\n"
                    "div.caption {font-size: %1em;font-weight: bold;padding-bottom: 0.1em; text-decoration: underline;}\n"
@@ -2260,35 +2265,7 @@ QHttpServerResponse opds_server::rootHTTP(uint idLib, const QHttpServerRequest &
 
     QDomElement hr = doc.createElement(u"HR"_s);
     feed.appendChild(hr);
-
-    QDomElement form = doc.createElement(u"FORM"_s);
-    form.setAttribute(u"method"_s, u"get"_s);
-    form.setAttribute(u"action"_s, sLibUrl + u"/search"_s);
-    feed.appendChild(form);
-
-    div = doc.createElement(u"DIV"_s);
-    //div.setAttribute("class","book");
-    form.appendChild(div);
-    el = AddTextNode(u"div"_s, tr("Finding books by name/author: "), div);
-    el.setAttribute(u"class"_s, u"book"_s);
-    div.appendChild(el);
-
-    el = doc.createElement(u"INPUT"_s);
-    el.setAttribute(u"type"_s, u"text"_s);
-    el.setAttribute(u"name"_s, u"search_string"_s);
-    //el.setAttribute("class","book");
-    div.appendChild(el);
-
-    el = doc.createElement(u"INPUT"_s);
-    el.setAttribute(u"type"_s, u"hidden"_s);
-    el.setAttribute(u"name"_s, u"session"_s);
-    //el.setAttribute(QStringLiteral("value"), session);
-    div.appendChild(el);
-
-    el = doc.createElement(u"INPUT"_s);
-    el.setAttribute(u"type"_s, u"submit"_s);
-    el.setAttribute(u"value"_s, tr("Find"));
-    div.appendChild(el);
+    attachSearchFormHTTP(feed, tr("Finding books by name/author: "), sLibUrl + u"/search"_s, u""_s, sSession);
 
     return responseHTTP();
 }
@@ -2376,6 +2353,42 @@ struct LocaleAwareQStringComparator {
     }
 };
 
+void opds_server::attachSearchFormHTTP(QDomElement &feed, const QString &sTitle, const QString &sAction, const QString &sSearch, const QString &sSession)
+{
+    QDomElement div = doc.createElement(u"div"_s);
+
+    QDomElement form = doc.createElement(u"form"_s);
+    form.setAttribute(u"method"_s, u"get"_s);
+    form.setAttribute(u"action"_s, sAction);
+    feed.appendChild(form);
+    form.appendChild(div);
+
+    QDomElement el;
+    el = AddTextNode(u"div"_s, sTitle, div);
+    el.setAttribute(u"class"_s, u"book"_s);
+    div.appendChild(el);
+
+    el = doc.createElement(u"input"_s);
+    el.setAttribute(u"type"_s, u"search"_s);
+    el.setAttribute(u"name"_s, u"search_string"_s);
+    if(!sSearch.isEmpty())
+        el.setAttribute(u"value"_s, sSearch);
+    div.appendChild(el);
+
+    if(!sSession.isEmpty()){
+        el = doc.createElement(u"input"_s);
+        el.setAttribute(u"type"_s, u"hidden"_s);
+        el.setAttribute(u"name"_s, u"session"_s);
+        el.setAttribute(u"value"_s, sSession);
+        div.appendChild(el);
+    }
+
+    el = doc.createElement(u"input"_s);
+    el.setAttribute(u"type"_s, u"submit"_s);
+    el.setAttribute(u"value"_s, tr("Find"));
+    div.appendChild(el);
+}
+
 QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request)
 {
     QUrl url;
@@ -2425,6 +2438,8 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
 
     if(count>30 && !bByBooks)
     {
+        attachSearchFormHTTP(feed, tr("Search authors: "), sLibUrl + u"/searchauthor"_s, sIndex, sSession);
+
         QDomElement tag_table;
         QDomElement tag_tr;
         int nCurrentColumn = 0;
@@ -3388,6 +3403,88 @@ QHttpServerResponse opds_server::searchHTTP(uint idLib, const QHttpServerRequest
 
     std::vector<uint> vBooks = book_list(*pLib, 0, 0, 0, sSearchString.replace(u'+', u' '));
     return FillPageHTTP(vBooks, *pLib, tr("Books search"), sLibUrl, url, true);
+}
+
+std::vector<uint> opds_server::searchAuthors(const SLib &lib, const QString sSearch)
+{
+    std::vector<uint> vResult;
+    auto sListSearch = sSearch.split(u"+"_s, Qt::SkipEmptyParts);
+    if(sListSearch.isEmpty())
+        return vResult;
+    for(const auto &iAuthor :lib.authors){
+        bool bMatch = true;
+        bool bMatchF = false;
+        bool bMatchM = false;
+        bool bMatchL = false;
+        for(const auto &sSubSearch :sListSearch){
+            bool bMatchAny = false;
+            if(!bMatchF && iAuthor.second.sFirstName.startsWith(sSubSearch, Qt::CaseInsensitive)){
+                bMatchF = true;
+                bMatchAny = true;
+            }
+            if(!bMatchAny && !bMatchM && iAuthor.second.sMiddleName.startsWith(sSubSearch, Qt::CaseInsensitive)){
+                bMatchM = true;
+                bMatchAny = true;
+            }
+            if(!bMatchAny && !bMatchL && iAuthor.second.sLastName.startsWith(sSubSearch, Qt::CaseInsensitive)){
+                bMatchL = true;
+                bMatchAny = true;
+            }
+            if(!bMatchAny){
+                bMatch = false;
+                break;
+            }
+        }
+        if(bMatch)
+            vResult.push_back(iAuthor.first);
+    }
+    std::sort(vResult.begin(), vResult.end(), [&lib](uint id1, uint id2)
+              { return QString::localeAwareCompare(lib.authors.at(id1).getName(), lib.authors.at(id2).getName()) < 0; });
+    return vResult;
+}
+
+QHttpServerResponse opds_server::searchAuthorHTTP(uint idLib, const QHttpServerRequest &request)
+{
+    QUrl url;
+    if(!checkAuth(request, url))
+        return responseUnauthorized();
+    QString sLibUrl;
+    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    if(pLib == nullptr)
+        return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+
+    checkMobile(request);
+    QUrlQuery urlquery(url);
+    QString sSearchString = urlquery.queryItemValue(u"search_string"_s);
+    QString sSession = urlquery.queryItemValue(u"session"_s);
+    QString sSesionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
+
+    auto vAuthors = searchAuthors(*pLib, sSearchString);
+    QDomElement feed;
+    feed = docHeaderHTTP(sSesionQuery, pLib->name, sLibUrl);
+
+    attachSearchFormHTTP(feed, tr("Search authors: "), sLibUrl + u"/searchauthor"_s, sSearchString, sSession);
+
+    for(auto idAuthor :vAuthors){
+        uint nBooksCount = 0;
+        auto range = pLib->authorBooksLink.equal_range(idAuthor);
+        for (auto it = range.first; it != range.second; ++it) {
+            auto &book = pLib->books.at(it->second);
+            if(!book.bDeleted)
+                if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
+                    nBooksCount++;
+        }
+
+        QDomElement div = doc.createElement(u"DIV"_s);
+        div.setAttribute(u"class"_s, u"item"_s);
+        feed.appendChild(div);
+        QDomElement el = AddTextNode(u"a"_s, pLib->authors.at(idAuthor).getName(), div);
+        el.setAttribute(u"class"_s, u"block"_s);
+        el.setAttribute(u"href"_s, sLibUrl + u"/author/"_s + QString::number(idAuthor) + sSesionQuery);
+        AddTextNode(u"div"_s, QString::number(nBooksCount) + u" "_s + tr("books"), div);
+    }
+
+    return responseHTTP();
 }
 
 QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest &request)

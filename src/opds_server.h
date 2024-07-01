@@ -71,8 +71,11 @@ private:
     QHttpServerResponse bookHTTP(uint idLib, uint idBook, const QString &sFormat);
     QHttpServerResponse bookOPDS(uint idLib, uint idBook, const QString &sFormat);
     QHttpServerResponse genresHTTP(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
+    void attachSearchFormHTTP(QDomElement &feed, const QString &sTitle, const QString &sAction, const QString &sSearch, const QString &sSession);
     QHttpServerResponse genresOPDS(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse searchHTTP(uint idLib, const QHttpServerRequest &request);
+    std::vector<uint> searchAuthors(const SLib &lib, const QString sSearch);
+    QHttpServerResponse searchAuthorHTTP(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
 
     QByteArray cover(uint id, uint idBook);
