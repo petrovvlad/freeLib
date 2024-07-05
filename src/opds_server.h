@@ -74,7 +74,7 @@ private:
     void attachSearchFormHTTP(QDomElement &feed, const QString &sTitle, const QString &sAction, const QString &sSearch, const QString &sSession);
     QHttpServerResponse genresOPDS(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse searchHTTP(uint idLib, const QHttpServerRequest &request);
-    std::vector<uint> searchAuthors(const SLib &lib, const QString sSearch);
+    std::vector<uint> searchAuthors(const SLib &lib, const QStringView sSearch);
     QHttpServerResponse searchAuthorHTTP(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
 
