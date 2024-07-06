@@ -797,12 +797,12 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
     link = doc.createElement(u"link"_s);
     link.setAttribute(u"rel"_s, u"shortcut icon"_s);
     link.setAttribute(u"type"_s, u"image/png"_s);
-    link.setAttribute(u"href"_s, sIconFile + sSesionQuery);
+    link.setAttribute(u"href"_s, sIconFile);
     head.appendChild(link);
     link = doc.createElement(u"link"_s);
     link.setAttribute(u"rel"_s, u"apple-touch-icon"_s);
     link.setAttribute(u"type"_s, u"image/png"_s);
-    link.setAttribute(u"href"_s, sIconFile + sSesionQuery);
+    link.setAttribute(u"href"_s, sIconFile);
     head.appendChild(link);
 
     QDomElement body = doc.createElement(u"body"_s);
@@ -888,7 +888,7 @@ QHttpServerResponse opds_server::responseHTTP()
 {
     QString str = u"<!DOCTYPE html>\n"_s;
     QTextStream ts(&str, QIODevice::WriteOnly);
-    doc.namedItem(u"HTML"_s).save(ts, 2);
+    doc.namedItem(u"html"_s).save(ts, 2);
     QHttpServerResponse result(str);
     result.addHeader("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
     result.addHeader("Connection"_ba, "keep-alive"_ba);
