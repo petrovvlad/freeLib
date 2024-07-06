@@ -797,12 +797,12 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
     link = doc.createElement(u"link"_s);
     link.setAttribute(u"rel"_s, u"shortcut icon"_s);
     link.setAttribute(u"type"_s, u"image/png"_s);
-    link.setAttribute(u"href"_s, sIconFile + sSesionQuery);
+    link.setAttribute(u"href"_s, sIconFile);
     head.appendChild(link);
     link = doc.createElement(u"link"_s);
     link.setAttribute(u"rel"_s, u"apple-touch-icon"_s);
     link.setAttribute(u"type"_s, u"image/png"_s);
-    link.setAttribute(u"href"_s, sIconFile + sSesionQuery);
+    link.setAttribute(u"href"_s, sIconFile);
     head.appendChild(link);
 
     QDomElement body = doc.createElement(u"body"_s);
@@ -888,7 +888,7 @@ QHttpServerResponse opds_server::responseHTTP()
 {
     QString str = u"<!DOCTYPE html>\n"_s;
     QTextStream ts(&str, QIODevice::WriteOnly);
-    doc.namedItem(u"HTML"_s).save(ts, 2);
+    doc.namedItem(u"html"_s).save(ts, 2);
     QHttpServerResponse result(str);
     result.addHeader("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
     result.addHeader("Connection"_ba, "keep-alive"_ba);
@@ -1054,7 +1054,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
     }
     QString str = u"<!DOCTYPE html>\n"_s;
     QTextStream ts(&str);
-    doc.namedItem(u"HTML"_s).save(ts, 2);
+    doc.namedItem(u"html"_s).save(ts, 2);
     QHttpServerResponse result(str);
     result.addHeader("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
     result.addHeader("Connection"_ba, "keep-alive"_ba);
@@ -1116,21 +1116,26 @@ QString opds_server::FillPageOPDS(const std::vector<uint> &vBooks, SLib &lib, co
             category.setAttribute(u"term"_s, genres[idGenre].sName);
             category.setAttribute(u"label"_s, genres[idGenre].sName);
         }
+        QDomElement el;
         if(book.sFormat == u"fb2"_s)
         {
-            QDomElement el = AddTextNode(u"link"_s, u""_s, entry);
+            el = AddTextNode(u"link"_s, u""_s, entry);
             el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/fb2"_s + sSesionQuery);
             el.setAttribute(u"rel"_s, u"http://opds-spec.org/acquisition/open-access"_s);
             el.setAttribute(u"type"_s, u"application/fb2"_s);
+
+            el = AddTextNode(u"link"_s, u""_s, entry);
+            el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
+            el.setAttribute(u"rel"_s, u"http://opds-spec.org/acquisition/open-access"_s);
+            el.setAttribute(u"type"_s, u"application/epub+zip"_s);
         }
         else if(book.sFormat == u"epub"_s || book.sFormat == u"mobi"_s){
-            QDomElement el = AddTextNode(u"link"_s, u""_s, entry);
+            el = AddTextNode(u"link"_s, u""_s, entry);
             el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/download"_s
                                            + sSesionQuery);
             el.setAttribute(u"rel"_s, u"http://opds-spec.org/acquisition/open-access"_s);
             el.setAttribute(u"type"_s, u"application/"_s + book.sFormat);
         }
-        QDomElement el;
 
         el = AddTextNode(u"link"_s, u""_s, entry);
         el.setAttribute(QStringLiteral("href"), sLibUrl + u"/book/"_s + sIdBook + u"/download"_s
