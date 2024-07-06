@@ -1054,7 +1054,7 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
     }
     QString str = u"<!DOCTYPE html>\n"_s;
     QTextStream ts(&str);
-    doc.namedItem(u"HTML"_s).save(ts, 2);
+    doc.namedItem(u"html"_s).save(ts, 2);
     QHttpServerResponse result(str);
     result.addHeader("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
     result.addHeader("Connection"_ba, "keep-alive"_ba);
