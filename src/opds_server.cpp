@@ -1116,21 +1116,26 @@ QString opds_server::FillPageOPDS(const std::vector<uint> &vBooks, SLib &lib, co
             category.setAttribute(u"term"_s, genres[idGenre].sName);
             category.setAttribute(u"label"_s, genres[idGenre].sName);
         }
+        QDomElement el;
         if(book.sFormat == u"fb2"_s)
         {
-            QDomElement el = AddTextNode(u"link"_s, u""_s, entry);
+            el = AddTextNode(u"link"_s, u""_s, entry);
             el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/fb2"_s + sSesionQuery);
             el.setAttribute(u"rel"_s, u"http://opds-spec.org/acquisition/open-access"_s);
             el.setAttribute(u"type"_s, u"application/fb2"_s);
+
+            el = AddTextNode(u"link"_s, u""_s, entry);
+            el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/epub"_s + sSesionQuery);
+            el.setAttribute(u"rel"_s, u"http://opds-spec.org/acquisition/open-access"_s);
+            el.setAttribute(u"type"_s, u"application/epub+zip"_s);
         }
         else if(book.sFormat == u"epub"_s || book.sFormat == u"mobi"_s){
-            QDomElement el = AddTextNode(u"link"_s, u""_s, entry);
+            el = AddTextNode(u"link"_s, u""_s, entry);
             el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/download"_s
                                            + sSesionQuery);
             el.setAttribute(u"rel"_s, u"http://opds-spec.org/acquisition/open-access"_s);
             el.setAttribute(u"type"_s, u"application/"_s + book.sFormat);
         }
-        QDomElement el;
 
         el = AddTextNode(u"link"_s, u""_s, entry);
         el.setAttribute(QStringLiteral("href"), sLibUrl + u"/book/"_s + sIdBook + u"/download"_s
