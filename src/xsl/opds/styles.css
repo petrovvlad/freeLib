@@ -1,0 +1,123 @@
+:root {  color-scheme: light dark;}
+@media (prefers-color-scheme: dark) {
+  img.home {
+    filter: invert(100%);
+  }
+}
+
+a {
+  font-size: 1.5em;
+  font-weight: bold;
+  text-decoration: none;
+  color: light-dark(black, white);
+}
+a.block {
+  display: block;
+}
+a:active {
+  text-decoration: underline;
+
+}
+a:link {
+  text-decoration: none;
+
+}
+a:visited {
+  text-decoration: none;
+
+}
+a:focus {
+  text-decoration: underline;
+
+}
+a:hover {
+  text-decoration: underline;
+
+}
+a.lib {
+  font-size:2em;
+  font-weight:bold;
+}
+a.lib:hover {
+  text-decoration: none;
+}
+a.lib:focus {
+  text-decoration: none;
+}
+a.book {
+  font-size:2em;
+  font-weight: bold;
+}
+
+a.item {
+  font-weight: bold; color: light-dark(#444444, #c0c0c0);
+}
+div.item {
+  font-size: 1em;
+  background: light-dark(#eeeeee, #303030);
+  border-radius: 0.5em;
+  margin: 0.5em;
+  padding: 0.1em;
+}
+div.caption {
+  font-size: 2em;
+  font-weight: bold;
+  padding-bottom: 0.1em;
+  text-decoration: underline;
+}
+div.book {
+  font-size: 1.5em;
+  font-weight: bold;
+  padding-bottom: 0.1em
+}
+input {
+  font-size: 1.5em;
+  font-weight: bold;
+  padding-bottom: 0.1em;
+}
+
+img.cover {
+  height: 6em;
+  float:left;
+  margin-right: 0.5em;
+}
+img.home {
+  height: 32px;
+}
+hr {
+  color: light-dark(black, white);
+  background-color: light-dark(black, white);
+  height:3px;
+
+}
+
+/*for mobile device*/
+@media screen and (max-width: 800px) {
+  a {
+    font-size: 2em;
+  }
+  a.lib {
+    font-size:3em;
+
+  }
+  div.item {
+    font-size: 1.5em;
+  }
+  div.caption {
+    font-size: 3em;
+  }
+  div.book {
+    font-size: 2em;
+  }
+  input {
+    font-size: 2em;
+  }
+  img.cover {
+    height: 8em;
+  }
+  img.home {
+    height: 48px;
+  }
+
+}
+
