@@ -51,7 +51,6 @@ private:
     QHttpServerResponse responseUnauthorized();
     QHttpServerResponse rootHTTP(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse rootOPDS(uint idLib, const QHttpServerRequest &request);
-    QByteArray image(const QString &sFile);
     QHttpServerResponse authorsIndexHTTP(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
     QHttpServerResponse authorsIndexOPDS(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
     QHttpServerResponse authorHTTP(uint idLib, uint idAuthor, const QHttpServerRequest &request);
@@ -71,13 +70,15 @@ private:
     QHttpServerResponse bookHTTP(uint idLib, uint idBook, const QString &sFormat);
     QHttpServerResponse bookOPDS(uint idLib, uint idBook, const QString &sFormat);
     QHttpServerResponse genresHTTP(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
+    void attachSearchFormHTTP(QDomElement &feed, const QString &sTitle, const QString &sAction, const QString &sSearch, const QString &sSession);
     QHttpServerResponse genresOPDS(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse searchHTTP(uint idLib, const QHttpServerRequest &request);
+    std::vector<uint> searchAuthors(const SLib &lib, const QStringView sSearch);
+    QHttpServerResponse searchAuthorHTTP(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
 
     QByteArray cover(uint id, uint idBook);
     QHttpServerResponse convert(uint idLib, uint idBook, const QString &sFormat, bool opds);
-    void checkMobile(const QHttpServerRequest &request);
 #else
     QDomElement doc_header(const QString &session, bool html=false, const QString &lib_name = QString(), const QString &lib_url = QString());
     QString FillPage(std::vector<uint> listBooks, SLib& lib, const QString &sTitle, const QString &lib_url, const QString &current_url, QTextStream& ts, bool opds, uint nPage, const QString &session, bool bShowAuthor);
@@ -85,7 +86,6 @@ private:
     QString WriteSuccess(const QString &contentType = QStringLiteral("text/html;charset=utf-8"), bool isGZip=false);
 #endif
 
-    bool bMobile_;
     int port;
     QDomDocument doc;
     int OPDS_server_status;
@@ -95,6 +95,7 @@ private:
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     QHttpServer httpServer_;
 #else
+    bool bMobile_;
     bool for_preview;
     QStringList sesions_auth;
     QMap<qintptr, QTcpSocket *> OPDS_clients;
