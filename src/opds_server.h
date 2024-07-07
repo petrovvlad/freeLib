@@ -34,6 +34,8 @@ private slots:
 
 private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
+    void addTextNode(const QString &sName, const QString &sText, const QString &sClass, QDomNode &node);
+    void addHRefNode(const QString &sText, const QString &sHRef, const QString &sClass, QDomNode &node);
 
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, ushort idGenre,  const QString &sSearch, bool sequenceless);
     void stop_server();
