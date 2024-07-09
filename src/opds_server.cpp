@@ -51,7 +51,9 @@ opds_server::opds_server(QObject *parent) :
         QByteArray ba = file.readAll();
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
-        return QHttpServerResponse(ba);
+        QHttpServerResponse response("image/png"_ba, ba);
+        response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+        return response;
     });
 
     httpServer_.route(u"/<arg>.css"_s, QHttpServerRequest::Method::Get, [](const QString &sUrl)
@@ -73,7 +75,9 @@ opds_server::opds_server(QObject *parent) :
         QByteArray ba = cover(idLib, idBook);
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
-        return QHttpServerResponse(ba);
+        QHttpServerResponse response("image/jpeg"_ba, ba);
+        response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+        return response;
     });
 
     httpServer_.route(u"/opds_<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
@@ -81,7 +85,7 @@ opds_server::opds_server(QObject *parent) :
         QByteArray ba = cover(idLib, idBook);
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
-        return QHttpServerResponse(ba);
+        return QHttpServerResponse("image/jpeg"_ba, ba);
     });
 
     httpServer_.route(u"/http_<arg>/authorsindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
@@ -783,9 +787,7 @@ bool opds_server::checkAuth(const QHttpServerRequest &request, QUrl &url)
 
 QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QString &sLibName, const QString &sLibUrl)
 {
-    doc.clear();
-    QDomProcessingInstruction xmlProcessingInstruction = doc.createProcessingInstruction(u"DOCTYPE"_s, u"HTML"_s);
-    doc.appendChild(xmlProcessingInstruction);
+    doc = QDomDocument(u"HTML"_s);
     QDomElement html = doc.createElement(u"html"_s);
     doc.appendChild(html);
     QDomElement head = doc.createElement(u"head"_s);
@@ -843,7 +845,6 @@ QDomElement opds_server::docHeaderHTTP(const QString &sSesionQuery, const QStrin
     body.appendChild(hr);
 
     return body;
-
 }
 
 QDomElement opds_server::docHeaderOPDS(const QString &sTitle, const QString &sID, const QString &sLibUrl, const QString &sSesionQuery)
@@ -906,10 +907,7 @@ SLib* opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLib
 
 QHttpServerResponse opds_server::responseHTTP()
 {
-    QString str = u"<!DOCTYPE html>\n"_s;
-    QTextStream ts(&str, QIODevice::WriteOnly);
-    doc.namedItem(u"html"_s).save(ts, 2);
-    QHttpServerResponse result(str);
+    QHttpServerResponse result("text/html"_ba, doc.toByteArray(2));
     result.addHeader("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
     result.addHeader("Connection"_ba, "keep-alive"_ba);
     result.addHeader("Pragma"_ba, "no-cache"_ba);
@@ -919,7 +917,7 @@ QHttpServerResponse opds_server::responseHTTP()
 
 QHttpServerResponse opds_server::responseUnauthorized()
 {
-    QHttpServerResponse result(u"HTTP/1.1 401 Authorization Required"_s, QHttpServerResponder::StatusCode::Unauthorized);
+    QHttpServerResponse result("text/html"_ba, "HTTP/1.1 401 Authorization Required"_ba, QHttpServerResponder::StatusCode::Unauthorized);
     result.addHeader("WWW-Authenticate"_ba, "Basic"_ba);
     result.addHeader("Content-Type"_ba, "text/html;charset=utf-8");
     result.addHeader("Connection"_ba, "close"_ba);
@@ -1060,18 +1058,9 @@ QHttpServerResponse opds_server::FillPageHTTP(const std::vector<uint> &vBooks, S
             addHRefNode(u">"_s, sHref + QString::number(nPage+1), u"page"_s, pageBar);
         }else
             addTextNode(u"span"_s, u">"_s, u"arrow"_s, pageBar);
-
     }
 
-    QString str = u"<!DOCTYPE html>\n"_s;
-    QTextStream ts(&str);
-    doc.namedItem(u"html"_s).save(ts, 2);
-    QHttpServerResponse result(str);
-    result.addHeader("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
-    result.addHeader("Connection"_ba, "keep-alive"_ba);
-    result.addHeader("Pragma"_ba, "no-cache"_ba);
-
-    return result;
+    return responseHTTP();
 }
 
 QString opds_server::FillPageOPDS(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle,const QString &sId, const QString &sLibUrl, const QUrl &url)
@@ -2328,7 +2317,7 @@ QHttpServerResponse opds_server::rootOPDS(uint idLib, const QHttpServerRequest &
     el.setAttribute(u"href"_s, sLibUrl + u"/genres"_s + sSesionQuery);
     el.setAttribute(u"type"_s, u"application/atom+xml;profile=opds-catalog"_s);
 
-    QHttpServerResponse result(doc.toString());
+    QHttpServerResponse result("text/html"_ba, doc.toByteArray());
     return result;
 }
 
