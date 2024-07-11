@@ -3528,18 +3528,20 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
             sBookFileName = book.sFile + u"."_s + sFormat;;
         if(sFormat == u"epub"_s || sFormat == u"mobi"_s || sFormat == u"azw3"_s)
         {
-            QFile file;
-            file.setFileName(QDir::tempPath() + u"/freeLib/book0."_s + book.sFormat);
-            file.open(QFile::WriteOnly);
-            file.write(baBook);
-            file.close();
-            QFileInfo fi(file);
+            if(book.sFormat != sFormat){
+                QFile file;
+                file.setFileName(QDir::tempPath() + u"/freeLib/book0."_s + book.sFormat);
+                file.open(QFile::WriteOnly);
+                file.write(baBook);
+                file.close();
+                QFileInfo fi(file);
 
-            fb2mobi conv(pExportOptions, idLib);
-            QString sOutFile = conv.convert(QStringList() << fi.absoluteFilePath(), idBook);
-            file.setFileName(sOutFile);
-            file.open(QFile::ReadOnly);
-            baBook = file.readAll();
+                fb2mobi conv(pExportOptions, idLib);
+                QString sOutFile = conv.convert(QStringList() << fi.absoluteFilePath(), idBook);
+                file.setFileName(sOutFile);
+                file.open(QFile::ReadOnly);
+                baBook = file.readAll();
+            }
             if(opds)
             {
                 if(sFormat == u"epub"_s)
