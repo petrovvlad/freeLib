@@ -1192,7 +1192,10 @@ QString opds_server::FillPageOPDS(const std::vector<uint> &vBooks, SLib &lib, co
             el.setAttribute(u"href"_s, sLibUrl + u"/book/"_s + sIdBook + u"/download"_s
                                            + sSesionQuery);
             el.setAttribute(u"rel"_s, u"http://opds-spec.org/acquisition/open-access"_s);
-            el.setAttribute(u"type"_s, u"application/"_s + book.sFormat);
+            if(book.sFormat == u"epub"_s)
+                el.setAttribute(u"type"_s, u"application/epub+zip"_s);
+            else
+                el.setAttribute(u"type"_s, u"application/x-mobipocket-ebook"_s);
         }
 
         el = AddTextNode(u"link"_s, u""_s, entry);
