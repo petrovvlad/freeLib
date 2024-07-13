@@ -11,12 +11,8 @@ a {
   text-decoration: none;
   color: light-dark(black, white);
 }
-a.block {
-  display: block;
-}
-a:active {
+/*a:active {
   text-decoration: underline;
-
 }
 a:link {
   text-decoration: none;
@@ -24,33 +20,55 @@ a:link {
 }
 a:visited {
   text-decoration: none;
-
 }
 a:focus {
   text-decoration: underline;
-
 }
 a:hover {
   text-decoration: underline;
-
+}*/
+a.block {
+  font-size: 1.5em;
+  display: block;
 }
+a.block:hover {
+  text-decoration: underline;
+}
+a.block:focus {
+  text-decoration: underline;
+}
+
 a.lib {
   font-size:2em;
   font-weight:bold;
 }
-a.lib:hover {
+/*a.lib:hover {
   text-decoration: none;
 }
 a.lib:focus {
-  text-decoration: none;
+  text-decoration: none;*/
 }
+
 a.book {
   font-size:2em;
   font-weight: bold;
 }
+div.book {
+  font-size: 1.5em;
+  font-weight: bold;
+  padding-bottom: 0.1em
+}
 
 a.item {
-  font-weight: bold; color: light-dark(#444444, #c0c0c0);
+  font-size: 1.5em;
+  font-weight: bold;
+  color: light-dark(#444444, #c0c0c0);
+}
+a.item:hover  {
+  text-decoration: underline;
+}
+a.item:focus {
+  text-decoration: underline;
 }
 div.item {
   font-size: 1em;
@@ -59,25 +77,59 @@ div.item {
   margin: 0.5em;
   padding: 0.1em;
 }
+
 div.caption {
   font-size: 2em;
   font-weight: bold;
   padding-bottom: 0.1em;
   text-decoration: underline;
 }
-div.book {
-  font-size: 1.5em;
-  font-weight: bold;
-  padding-bottom: 0.1em
+
+div.page-bar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-weight: 500;
+  font-family: Arial,sans-serif;
+  font-size: 1.2em;
 }
+span.page-current {
+  display: flex;
+  font-size: 1.2em;
+  box-shadow: inset 0 0 0 1px;
+  color: #548EAA;
+  padding: 0 0.2em;
+  height: 1.5em;
+  min-width: 1.1em;
+  align-items: center;
+  justify-content: center;
+  border-radius: 3px;
+}
+span.page {
+/*  font-size: 1.2em;*/
+
+/*  text-decoration: none;*/
+  padding: 0 0.2em;
+  align-items: center;
+}
+span.arrow {
+  color: light-dark(#C0C0C0, #4d4d4d);
+  padding: 0 0.2em;
+  align-items: center;
+}
+a.page {
+  padding: 0 0.2em;
+  font-size: 1.2em;
+  font-weight: 500;
+}
+
 input {
   font-size: 1.5em;
   font-weight: bold;
   padding-bottom: 0.1em;
 }
-
 img.cover {
-  height: 6em;
+  height: 7.5em;
   float:left;
   margin-right: 0.5em;
 }
@@ -88,17 +140,15 @@ hr {
   color: light-dark(black, white);
   background-color: light-dark(black, white);
   height:3px;
-
 }
 
 /*for mobile device*/
-@media screen and (max-width: 800px) {
+@media screen and (max-width: 990px) {
   a {
     font-size: 2em;
   }
   a.lib {
     font-size:3em;
-
   }
   div.item {
     font-size: 1.5em;
@@ -113,7 +163,7 @@ hr {
     font-size: 2em;
   }
   img.cover {
-    height: 8em;
+    height: 9.5em;
   }
   img.home {
     height: 48px;
