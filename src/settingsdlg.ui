@@ -487,7 +487,7 @@
              <string>Base Url:</string>
             </property>
             <property name="textFormat">
-             <enum>Qt::TextFormat::MarkdownText</enum>
+             <enum>Qt::TextFormat::PlainText</enum>
             </property>
            </widget>
           </item>
