@@ -87,7 +87,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->AddExp, &QAbstractButton::clicked, this, &SettingsDlg::AddExt);
     connect(ui->DelApp, &QAbstractButton::clicked, this, &SettingsDlg::DelApp);
     connect(ui->AddApp, &QAbstractButton::clicked, this, &SettingsDlg::AddApp);
-    connect(ui->OPDS_port, static_cast<void (QSpinBox::*)(int)>(&QSpinBox::valueChanged), this, &SettingsDlg::ChangePort);
     connect(ui->OPDS_enable, &QCheckBox::stateChanged, this, &SettingsDlg::onOpdsEnable);
     connect(ui->AddExport, &QToolButton::clicked, this, &SettingsDlg::onAddExportClicked);
     connect(ui->DelExport, &QPushButton::clicked, this, &SettingsDlg::onDelExportClicked);
@@ -120,7 +119,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
     onHTTPneedPaswordClicked();
 
-    ChangePort(ui->OPDS_port->value());
     onOpdsEnable(ui->OPDS_enable->checkState());
 }
 
@@ -172,6 +170,7 @@ void SettingsDlg::LoadSettings()
     ui->extended_symbols->setChecked(options_.bExtendedSymbols);
     ui->OPDS_enable->setChecked(options_.bOpdsEnable);
     ui->OPDS_port->setValue(options_.nOpdsPort);
+    ui->baseUrl->setText(options.sBaseUrl);
     ui->HTTP_need_pasword->setChecked(options_.bOpdsNeedPassword);
     ui->HTTP_user->setText(options_.sOpdsUser);
     if(options_.baOpdsPasswordSalt.isEmpty())
@@ -300,12 +299,6 @@ void SettingsDlg::btnDBPath()
     }
 }
 
-void SettingsDlg::ChangePort(int i)
-{
-    ui->OPDS->setText(QStringLiteral("<a href='http://localhost:%1/opds'>http://localhost:%1/opds</a>").arg(i));
-    ui->HTTP->setText(QStringLiteral("<a href='http://localhost:%1'>http://localhost:%1</a>").arg(i));
-}
-
 void SettingsDlg::ChangeLanguage()
 {
     options_.sUiLanguageName = ui->Language->currentData().toString();
@@ -366,6 +359,7 @@ void SettingsDlg::btnOK()
     options.baOpdsPasswordHash = ui->HTTP_password->getPasswordHash();
     options.baOpdsPasswordSalt = ui->HTTP_password->getPasswordSalt();
     options.nOpdsPort = ui->OPDS_port->value();
+    options.sBaseUrl = ui->baseUrl->text();
     options.nOpdsBooksPerPage = ui->books_per_page->value();
     options.nProxyType = ui->proxy_type->currentIndex();
     options.nProxyPort = ui->proxy_port->value();
@@ -720,10 +714,8 @@ void SettingsDlg::onOpdsEnable(int state)
 {
     bool bOpdsEnable = (state == Qt::Checked);
     ui->OPDS_port->setEnabled(bOpdsEnable);
+    ui->baseUrl->setEnabled(bOpdsEnable);
     ui->label_20->setEnabled(bOpdsEnable);
-    ui->OPDS->setEnabled(bOpdsEnable);
-    ui->label_21->setEnabled(bOpdsEnable);
-    ui->HTTP->setEnabled(bOpdsEnable);
     ui->label_23->setEnabled(bOpdsEnable);
     ui->httpExport->setEnabled(bOpdsEnable);
     ui->label_2->setEnabled(bOpdsEnable);

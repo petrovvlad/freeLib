@@ -53,8 +53,8 @@
        </property>
       </widget>
      </item>
-     <item row="3" column="1">
-      <widget class="QLabel" name="OPDS">
+     <item row="5" column="1">
+      <widget class="QLabel" name="HTTP">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -62,20 +62,31 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string notr="true">&lt;a href=\"localhost\"&gt;localhost&lt;/a&gt;</string>
+        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
        </property>
-       <property name="textInteractionFlags">
-        <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
+      </widget>
+     </item>
+     <item row="2" column="0">
+      <widget class="QLabel" name="label_2">
+       <property name="text">
+        <string>INPX file (optionally):</string>
        </property>
       </widget>
      </item>
-     <item row="3" column="0">
-      <widget class="QLabel" name="label_5">
+     <item row="5" column="0">
+      <widget class="QLabel" name="label_6">
        <property name="text">
-        <string>OPDS server</string>
+        <string>web server</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="0">
+      <widget class="QLabel" name="label">
+       <property name="text">
+        <string>OPDS 2.0 server</string>
        </property>
       </widget>
      </item>
@@ -95,28 +106,8 @@
      <item row="1" column="1">
       <widget class="QLineEdit" name="BookDir"/>
      </item>
-     <item row="4" column="1">
-      <widget class="QLabel" name="HTTP">
-       <property name="sizePolicy">
-        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
-         <horstretch>0</horstretch>
-         <verstretch>0</verstretch>
-        </sizepolicy>
-       </property>
-       <property name="text">
-        <string notr="true">&lt;a href=\"localhost\"&gt;localhost&lt;/a&gt;</string>
-       </property>
-       <property name="openExternalLinks">
-        <bool>true</bool>
-       </property>
-      </widget>
-     </item>
-     <item row="4" column="0">
-      <widget class="QLabel" name="label_6">
-       <property name="text">
-        <string>HTTP server</string>
-       </property>
-      </widget>
+     <item row="2" column="1">
+      <widget class="QLineEdit" name="inpx"/>
      </item>
      <item row="0" column="1">
       <layout class="QHBoxLayout" name="Name_layout">
@@ -161,15 +152,38 @@
        </item>
       </layout>
      </item>
-     <item row="2" column="0">
-      <widget class="QLabel" name="label_2">
+     <item row="3" column="1">
+      <widget class="QLabel" name="OPDS">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="text">
-        <string>INPX file (optionally):</string>
+        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+       </property>
+       <property name="openExternalLinks">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
        </property>
       </widget>
      </item>
-     <item row="2" column="1">
-      <widget class="QLineEdit" name="inpx"/>
+     <item row="3" column="0">
+      <widget class="QLabel" name="label_5">
+       <property name="text">
+        <string>OPDS server</string>
+       </property>
+      </widget>
+     </item>
+     <item row="4" column="1">
+      <widget class="QLabel" name="OPDS2">
+       <property name="text">
+        <string>&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+       </property>
+      </widget>
      </item>
     </layout>
    </item>
@@ -195,7 +209,7 @@
       <item>
        <widget class="QRadioButton" name="del_old">
         <property name="text">
-         <string>Delete old and add new</string>
+         <string>Dele&amp;te old and add new</string>
         </property>
        </widget>
       </item>

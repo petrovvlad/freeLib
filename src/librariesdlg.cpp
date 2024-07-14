@@ -228,8 +228,11 @@ void LibrariesDlg::SelectLibrary()
     ui->inpx->setDisabled(idCurrentLib_ == 0);
     ui->BookDir->setDisabled(idCurrentLib_ == 0);
     ui->btnUpdate->setDisabled(idCurrentLib_ == 0);
-    ui->OPDS->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
-    ui->HTTP->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+    QString sBaseUrl = options.sBaseUrl.isEmpty() ?u"http://localhost:%1"_s.arg(options.nOpdsPort) :options.sBaseUrl;
+    QString sIdLib = QString::number(idCurrentLib_);
+    ui->OPDS->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/opds/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/opds/"_s % sIdLib % u"</a>"_s);
+    ui->OPDS2->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/opds2/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/opds2/"_s % sIdLib % u"</a>"_s);
+    ui->HTTP->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/"_s % sIdLib % u"</a>"_s);
     ui->progressBar->hide();
     ui->labelStatus->hide();
 

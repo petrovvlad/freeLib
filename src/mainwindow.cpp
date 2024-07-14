@@ -705,7 +705,7 @@ void MainWindow::Settings()
             FillGenres();
             FillListBooks();
         }
-        if(options.bOpdsEnable != pDlg->options_.bOpdsEnable || options.nOpdsPort != pDlg->options_.nOpdsPort ||
+        if(options.bOpdsEnable != pDlg->options_.bOpdsEnable || options.nOpdsPort != pDlg->options_.nOpdsPort || options.sBaseUrl != pDlg->options_.sBaseUrl ||
            options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || options.sOpdsUser != pDlg->options_.sOpdsUser ||
            options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash)
         {

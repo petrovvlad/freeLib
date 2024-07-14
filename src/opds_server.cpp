@@ -35,15 +35,15 @@ opds_server::opds_server(QObject *parent) :
     httpServer_.route(u"/opds"_s, QHttpServerRequest::Method::Get, [this](const QHttpServerRequest &request)
     { return rootOPDS(0, request); });
 
-    httpServer_.route(u"/http_<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
     {
         return rootHTTP(idLib, request);
     });
 
-    httpServer_.route(u"/opds_<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
     { return rootOPDS(idLib, request); });
 
-    httpServer_.route(u"/opds2_<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
                       { return rootOPDS2(idLib, request); });
 
     httpServer_.route(u"/<arg>.png"_s, QHttpServerRequest::Method::Get, [](const QString &sUrl)
@@ -73,7 +73,7 @@ opds_server::opds_server(QObject *parent) :
     });
 
 
-    httpServer_.route(u"/http_<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
+    httpServer_.route(u"/<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
     {
         QByteArray ba = cover(idLib, idBook);
         if(ba.isEmpty())
@@ -83,7 +83,7 @@ opds_server::opds_server(QObject *parent) :
         return response;
     });
 
-    httpServer_.route(u"/opds_<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
+    httpServer_.route(u"/opds/<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
     {
         QByteArray ba = cover(idLib, idBook);
         if(ba.isEmpty())
@@ -91,7 +91,7 @@ opds_server::opds_server(QObject *parent) :
         return QHttpServerResponse("image/jpeg"_ba, ba);
     });
 
-    httpServer_.route(u"/opds2_<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
+    httpServer_.route(u"/opds2/<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
     {
         QByteArray ba = cover(idLib, idBook);
         if(ba.isEmpty())
@@ -99,156 +99,156 @@ opds_server::opds_server(QObject *parent) :
         return QHttpServerResponse("image/jpeg"_ba, ba);
     });
 
-    httpServer_.route(u"/http_<arg>/authorsindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/authorsindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     {
         return authorsIndexHTTP(idLib, u""_s, false, request);
     });
 
-    httpServer_.route(u"/opds_<arg>/authorsindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/authorsindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return authorsIndexOPDS(idLib, u""_s, false, request); });
 
-    httpServer_.route(u"/opds2_<arg>/authorsindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/authorsindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
                       { return authorsIndexOPDS2(idLib, u""_s, false, request); });
 
-    httpServer_.route(u"/http_<arg>/authorsindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/authorsindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return authorsIndexHTTP(idLib, sIndex, false, request); });
 
-    httpServer_.route(u"/opds_<arg>/authorsindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/authorsindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return authorsIndexOPDS(idLib, sIndex, false, request); });
 
-    httpServer_.route(u"/opds2_<arg>/authorsindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/authorsindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
                       { return authorsIndexOPDS2(idLib, sIndex, false, request); });
 
-    httpServer_.route(u"/http_<arg>/authorsindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/authorsindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return authorsIndexHTTP(idLib, sIndex, true, request); });
 
-    httpServer_.route(u"/opds_<arg>/authorsindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/authorsindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return authorsIndexOPDS(idLib, sIndex, true, request); });
 
-    httpServer_.route(u"/opds2_<arg>/authorsindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/authorsindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return authorsIndexOPDS2(idLib, sIndex, true, request); });
 
-    httpServer_.route(u"/http_<arg>/author/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/author/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorHTTP(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds_<arg>/author/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/author/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorOPDS(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds2_<arg>/author/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/author/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorOPDS2(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/http_<arg>/authorbooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/authorbooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorBooksHTTP(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds_<arg>/authorbooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/authorbooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorBooksOPDS(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds2_<arg>/authorbooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/authorbooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorBooksOPDS2(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/http_<arg>/authorsequences/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/authorsequences/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorSequencesHTTP(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds_<arg>/authorsequences/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/authorsequences/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorSequencesOPDS(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds2_<arg>/authorsequences/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/authorsequences/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorSequencesOPDS2(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/http_<arg>/authorsequence/<arg>/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/authorsequence/<arg>/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request)
     { return authorSequencesHTTP(idLib, idAuthor, idSequence, request); });
 
-    httpServer_.route(u"/opds_<arg>/authorsequence/<arg>/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/authorsequence/<arg>/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request)
     { return authorSequencesOPDS(idLib, idAuthor, idSequence, request); });
 
-    httpServer_.route(u"/opds2_<arg>/authorsequence/<arg>/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/authorsequence/<arg>/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request)
     { return authorSequencesOPDS2(idLib, idAuthor, idSequence, request); });
 
-    httpServer_.route(u"/http_<arg>/authorsequenceless/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/authorsequenceless/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorSequencelessHTTP(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds_<arg>/authorsequenceless/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/authorsequenceless/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorSequencelessOPDS(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/opds2_<arg>/authorsequenceless/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/authorsequenceless/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idAuthor, const QHttpServerRequest &request)
     { return authorSequencelessOPDS2(idLib, idAuthor, request); });
 
-    httpServer_.route(u"/http_<arg>/sequencesindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/sequencesindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return sequencesIndexHTTP(idLib, u""_s, false, request); });
 
-    httpServer_.route(u"/opds_<arg>/sequencesindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/sequencesindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return sequencesIndexOPDS(idLib, u""_s, false, request); });
 
-    httpServer_.route(u"/opds2_<arg>/sequencesindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/sequencesindex"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return sequencesIndexOPDS2(idLib, u""_s, false, request); });
 
-    httpServer_.route(u"/http_<arg>/sequencesindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/sequencesindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return sequencesIndexHTTP(idLib, sIndex, false, request); });
 
-    httpServer_.route(u"/opds_<arg>/sequencesindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/sequencesindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return sequencesIndexOPDS(idLib, sIndex, false, request); });
 
-    httpServer_.route(u"/opds2_<arg>/sequencesindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/sequencesindex/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return sequencesIndexOPDS2(idLib, sIndex, false, request); });
 
-    httpServer_.route(u"/http_<arg>/sequencesindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/sequencesindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return sequencesIndexHTTP(idLib, sIndex, true, request); });
 
-    httpServer_.route(u"/opds_<arg>/sequencesindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/sequencesindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return sequencesIndexOPDS(idLib, sIndex, true, request); });
 
-    httpServer_.route(u"/opds2_<arg>/sequencesindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/sequencesindex/<arg>/books"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QString &sIndex, const QHttpServerRequest &request)
     { return sequencesIndexOPDS2(idLib, sIndex, true, request); });
 
-    httpServer_.route(u"/http_<arg>/sequencebooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idSequence, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/sequencebooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idSequence, const QHttpServerRequest &request)
     { return sequenceBooksHTTP(idLib, idSequence, request); });
 
-    httpServer_.route(u"/opds_<arg>/sequencebooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idSequence, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/sequencebooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idSequence, const QHttpServerRequest &request)
     { return sequenceBooksOPDS(idLib, idSequence, request); });
 
-    httpServer_.route(u"/opds2_<arg>/sequencebooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idSequence, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/sequencebooks/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idSequence, const QHttpServerRequest &request)
     { return sequenceBooksOPDS2(idLib, idSequence, request); });
 
-    httpServer_.route(u"/http_<arg>/genres"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/genres"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return genresHTTP(idLib, 0, request); });
 
-    httpServer_.route(u"/opds_<arg>/genres"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/genres"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return genresOPDS(idLib, 0, request); });
 
-    httpServer_.route(u"/opds2_<arg>/genres"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/genres"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
                       { return genresOPDS2(idLib, 0, request); });
 
-    httpServer_.route(u"/http_<arg>/genres/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idGenre, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/genres/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idGenre, const QHttpServerRequest &request)
     {        return genresHTTP(idLib, idGenre, request);    });
 
-    httpServer_.route(u"/opds_<arg>/genres/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idGenre, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/genres/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idGenre, const QHttpServerRequest &request)
     { return genresOPDS(idLib, idGenre, request); });
 
-    httpServer_.route(u"/opds2_<arg>/genres/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idGenre, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/genres/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idGenre, const QHttpServerRequest &request)
                       { return genresOPDS2(idLib, idGenre, request); });
 
-    httpServer_.route(u"/http_<arg>/book/<arg>/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook, const QString &sFormat)
+    httpServer_.route(u"/<arg>/book/<arg>/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook, const QString &sFormat)
     { return bookHTTP(idLib, idBook, sFormat); });
 
-    httpServer_.route(u"/opds_<arg>/book/<arg>/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook, const QString &sFormat)
+    httpServer_.route(u"/opds/<arg>/book/<arg>/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook, const QString &sFormat)
     { return bookOPDS(idLib, idBook, sFormat); });
 
-    httpServer_.route(u"/opds2_<arg>/book/<arg>/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook, const QString &sFormat)
+    httpServer_.route(u"/opds2/<arg>/book/<arg>/<arg>"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook, const QString &sFormat)
     { return bookOPDS(idLib, idBook, sFormat); });
 
-    httpServer_.route(u"/http_<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return searchHTTP(idLib, request); });
 
-    httpServer_.route(u"/http_<arg>/searchauthor"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/<arg>/searchauthor"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
                       { return searchAuthorHTTP(idLib, request); });
 
-    httpServer_.route(u"/opds_<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds/<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return searchOPDS(idLib, request); });
 
-    httpServer_.route(u"/opds2_<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
+    httpServer_.route(u"/opds2/<arg>/search"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, const QHttpServerRequest &request)
     { return searchOPDS2(idLib, request); });
 
-    httpServer_.route(u"/opds_<arg>/opensearch.xml"_s, QHttpServerRequest::Method::Get,  [](uint /*idLib*/, const QHttpServerRequest &request){
+    httpServer_.route(u"/opds/<arg>/opensearch.xml"_s, QHttpServerRequest::Method::Get,  [](uint /*idLib*/, const QHttpServerRequest &request){
         QString sUrl = request.url().toString();
         sUrl.chop(u"opensearch.xml"_s.size());
         QString sTemplate = sUrl + u"search?q={searchTerms}&amp;author={atom:author}&amp;title={atom:title}"_s;
@@ -1001,7 +1001,7 @@ SLib* opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLib
     if(idLib == 0)
         idLib = idCurrentLib;
     if(pLibUrl != nullptr)
-        *pLibUrl = sTypeServer +u"_"_s + QString::number(idLib);
+        *pLibUrl = options.sBaseUrl % sTypeServer % u"/"_s % QString::number(idLib);
     if(!libs.contains(idLib) || !libs.at(idLib).bLoaded)
         loadLibrary(idLib);
     if(!libs.contains(idLib))
@@ -1044,7 +1044,13 @@ QString hrefOfPage(const QUrl &url, uint nPage)
     if(i >= listQueryItems.size())
         listQueryItems << QPair<QString, QString> (u"page"_s, QString::number(nPage));
     urlquery.setQueryItems(listQueryItems);
-    QUrl newUrl = url;
+    QUrl newUrl;
+    if(options.sBaseUrl.isEmpty())
+        newUrl = url;
+    else{
+        newUrl = options.sBaseUrl;
+        newUrl.setPath(url.path());
+    }
     newUrl.setQuery(urlquery);
     QString result = newUrl.toString();
     return result;
@@ -2542,7 +2548,7 @@ QHttpServerResponse opds_server::rootHTTP(uint idLib, const QHttpServerRequest &
         return responseUnauthorized();
 
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -2729,7 +2735,7 @@ QHttpServerResponse opds_server::authorsIndexHTTP(uint idLib, const QString &sIn
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3110,7 +3116,7 @@ QHttpServerResponse opds_server::authorHTTP(uint idLib, uint idAuthor, const QHt
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3241,7 +3247,7 @@ QHttpServerResponse opds_server::authorBooksHTTP(uint idLib, uint idAuthor, cons
     QUrl url;
     if(!checkAuth(request, url))
         return responseUnauthorized();
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3297,7 +3303,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3431,7 +3437,7 @@ QHttpServerResponse opds_server::authorSequencesHTTP(uint idLib, uint idAuthor, 
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->serials.contains(idSequence))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3477,7 +3483,7 @@ QHttpServerResponse opds_server::authorSequencelessHTTP(uint idLib, uint idAutho
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3523,7 +3529,7 @@ QHttpServerResponse opds_server::sequencesIndexHTTP(uint idLib, const QString &s
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    const SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3882,7 +3888,7 @@ QHttpServerResponse opds_server::sequenceBooksHTTP(uint idLib, uint idSequence, 
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr || !pLib->serials.contains(idSequence))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3937,7 +3943,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr || (idParentGenre!=0 && !genres.contains(idParentGenre)))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -3952,7 +3958,7 @@ QHttpServerResponse opds_server::genresHTTP(uint idLib, ushort idParentGenre, co
     {
         if(genres[idParentGenre].idParrentGenre > 0){
             std::vector<uint> vBooks = book_list(*pLib, 0, 0, idParentGenre, u""_s);
-            return FillPageHTTP(vBooks, *pLib, tr("Books by ABC"), sLibUrl, url, true);
+            return FillPageHTTP(vBooks, *pLib, tr("Books by genre") % u": " % genres[idParentGenre].sName, sLibUrl, url, true);
         }
         for(const auto &iGenre :genres){
             if(iGenre.second.idParrentGenre == idParentGenre)
@@ -4019,7 +4025,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
     {
         if(genres[idParentGenre].idParrentGenre > 0){
             std::vector<uint> vBooks = book_list(*pLib, 0, 0, idParentGenre, u""_s);
-            QString sPage =  fillPageOPDS(vBooks, *pLib, tr("Books by ABC"), u""_s, sLibUrl, url);
+            QString sPage =  fillPageOPDS(vBooks, *pLib, tr("Books by genre") % u": " % genres[idParentGenre].sName, u""_s, sLibUrl, url);
             QHttpServerResponse result(sPage);
             return result;
         }
@@ -4104,7 +4110,7 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
     {
         if(genres[idParentGenre].idParrentGenre > 0){
             std::vector<uint> vBooks = book_list(*pLib, 0, 0, idParentGenre, u""_s);
-            QHttpServerResponse result = fillPageOPDS2(vBooks, *pLib, tr("Books by ABC"), sLibUrl, url);
+            QHttpServerResponse result = fillPageOPDS2(vBooks, *pLib, tr("Books by genre") % u": " % genres[idParentGenre].sName, sLibUrl, url);
             return result;
         }
         for(const auto &iGenre :genres){
@@ -4166,7 +4172,7 @@ QHttpServerResponse opds_server::searchHTTP(uint idLib, const QHttpServerRequest
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -4221,7 +4227,7 @@ QHttpServerResponse opds_server::searchAuthorHTTP(uint idLib, const QHttpServerR
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    SLib *pLib = getLib(idLib, u"/http"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
@@ -4439,7 +4445,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
 {
     QByteArray baContentType;
     QString sContentDisposition;
-    SLib *pLib = getLib(idLib, u"/http"_s);
+    SLib *pLib = getLib(idLib, u""_s);
     if(pLib == nullptr || !pLib->books.contains(idBook))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
     QByteArray baBook;

@@ -111,7 +111,6 @@ private slots:
     void DelExt();
     void AddApp();
     void DelApp();
-    void ChangePort(int i);
     void ChangeLanguage();
     void ExportNameChanged();
     void onAddExportClicked();
