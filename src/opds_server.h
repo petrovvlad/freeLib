@@ -36,12 +36,17 @@ private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
     void addTextNode(const QString &sName, const QString &sText, const QString &sClass, QDomNode &node);
     void addHRefNode(const QString &sText, const QString &sHRef, const QString &sClass, QDomNode &node);
+    static void addNavigation(QJsonArray &navigation, const QString &sTitle, const QString &sHRef, uint nCount=0);
+    static void addLink(QJsonArray &links, const QString &sRel, const QString sType, const QString &sHRef);
 
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, ushort idGenre, const QString &sSearch, bool sequenceless);
-    std::vector<uint> searchBooksByTitle(const SLib& lib, const QString &sSearch);
+    std::vector<uint> searchBooks(const SLib& lib, QStringView sAuthor, QStringView sTitle);
+    auto searchSequence(const SLib& lib, QStringView sSequence);
+    static std::vector<uint> searchAuthors(const SLib &lib, const QStringView sAuthor);
     void stop_server();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+    static void loadAnnotations(const std::vector<uint> &vBooks, SLib &lib, uint begin, uint end);
     QHttpServerResponse FillPageHTTP(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor);
     QString fillPageOPDS(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sId, const QString &sLibUrl, const QUrl &url);
     QHttpServerResponse fillPageOPDS2(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url);
@@ -88,7 +93,6 @@ private:
     QHttpServerResponse genresOPDS(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse genresOPDS2(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse searchHTTP(uint idLib, const QHttpServerRequest &request);
-    std::vector<uint> searchAuthors(const SLib &lib, const QStringView sSearch);
     QHttpServerResponse searchAuthorHTTP(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS2(uint idLib, const QHttpServerRequest &request);
