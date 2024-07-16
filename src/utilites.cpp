@@ -376,7 +376,7 @@ bool setCurrentZipFileName(QuaZip *zip, const QString &name)
 bool kindlegenInstalled()
 {
     //Проверка наличия kindlegen в /usr/bin
-    QFileInfo fi("/usr/bin/kindlegen");
+    QFileInfo fi(u"/usr/bin/kindlegen"_s);
     if(fi.isExecutable())
         return true;
 
@@ -385,4 +385,22 @@ bool kindlegenInstalled()
     process.start("pkg-config", QStringList() << "--exists" << "kindlegen");
     process.waitForFinished();
     return process.exitCode() == 0;
+}
+
+bool localeStringCompare(const QString &str1, const QString &str2)
+{
+    auto minSize = std::min(str1.size(), str2.size());
+    for(uint i=0; i<minSize; ++i){
+        auto ch1 = str1.at(i);
+        auto ch2 = str2.at(i);
+        bool bLetter1 = ch1.isLetter();
+        bool bLetter2 = ch2.isLetter();
+        if(bLetter1 && bLetter2)
+            return QString::localeAwareCompare(str1, str2) < 0;
+        if(bLetter1 && !bLetter2)
+            return true;
+        if(!bLetter1 && bLetter2)
+            return false;
+    }
+    return QString::localeAwareCompare(str1, str2) < 0;
 }

@@ -60,6 +60,7 @@ QString RelativeToAbsolutePath(QString path);
 bool openDB(const QString &sName);
 void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only);
 QString Transliteration(QString str);
+bool localeStringCompare(const QString &str1, const QString &str2);
 void setProxy();
 QSharedPointer<QSettings> GetSettings(bool bReopen = false);
 void setLocale(const QString &sLocale);

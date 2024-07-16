@@ -25,7 +25,7 @@ struct SerialComparator {
     SerialComparator(const std::unordered_map<uint, SSerial>& a) : mSerial(a) {}
 
     bool operator()(uint id1, uint id2) const {
-        return QString::localeAwareCompare(mSerial.at(id1).sName, mSerial.at(id2).sName) < 0;
+        return localeStringCompare(mSerial.at(id1).sName, mSerial.at(id2).sName);
     }
 };
 
@@ -370,7 +370,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                         vBooks.push_back(it->second);
             }
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return QString::localeAwareCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) < 0; });
+        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) /*< 0*/; });
     }
     if(idAuthor == 0 && idSeria != 0){
         for(const auto &iBook :lib.books){
@@ -393,7 +393,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                 }
             }
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return QString::localeAwareCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName) < 0; });
+        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName) /*< 0*/; });
     }
     if(!sSearch.isEmpty()){
         for(const auto &iBook :lib.books){
@@ -415,9 +415,9 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
         }
         std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
             if(lib.books.at(lhs).idFirstAuthor != lib.books.at(rhs).idFirstAuthor)
-                return QString::localeAwareCompare(lib.authors.at(lib.books.at(lhs).idFirstAuthor).getName(), lib.authors.at(lib.books.at(rhs).idFirstAuthor).getName()) < 0;
+                return localeStringCompare(lib.authors.at(lib.books.at(lhs).idFirstAuthor).getName(), lib.authors.at(lib.books.at(rhs).idFirstAuthor).getName()) /*< 0*/;
             else
-                return QString::localeAwareCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) < 0;
+                return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) /*< 0*/;
         });
 
     }
@@ -440,7 +440,7 @@ std::vector<uint> opds_server::searchBooks(const SLib &lib, QStringView sAuthor,
         }
     }
     std::sort(vBooks.begin(), vBooks.end(), [&lib](uint id1, uint id2){
-        return QString::localeAwareCompare(lib.books.at(id1).sName, lib.books.at(id2).sName) < 0;
+        return localeStringCompare(lib.books.at(id1).sName, lib.books.at(id2).sName) /*< 0*/;
     });
 
     return vBooks;
@@ -451,7 +451,6 @@ auto opds_server::searchSequence(const SLib &lib, QStringView sSequence)
     std::unordered_set<uint> stSequece;
     SerialComparator comporator(lib.serials);
     std::map<uint, uint, SerialComparator> mSequence(comporator);
-    // for(const auto &iSecuence)
     for(const auto &iBook :lib.books){
         auto &book = iBook.second;
         if(book.idSerial != 0 && !book.bDeleted){
@@ -2706,7 +2705,7 @@ QByteArray opds_server::cover(uint idLib, uint idBook)
 
 struct LocaleAwareQStringComparator {
     bool operator()(const QString& str1, const QString& str2) const {
-        return str1.localeAwareCompare(str2) < 0;
+        return localeStringCompare(str1, str2);
     }
 };
 
@@ -4147,7 +4146,7 @@ QHttpServerResponse opds_server::searchAuthorHTTP(uint idLib, const QHttpServerR
 
     auto vAuthors = searchAuthors(*pLib, sSearchString);
     std::sort(vAuthors.begin(), vAuthors.end(), [pLib](uint id1, uint id2)
-              { return QString::localeAwareCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) < 0; });
+              { return localeStringCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) /*< 0*/; });
 
     QDomElement feed;
     feed = docHeaderHTTP(sSessionQuery, pLib->name, sLibUrl);
@@ -4244,7 +4243,7 @@ QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest
         sSearchAuthor.replace(u'+', u' ');
         auto vAuthors = searchAuthors(*pLib, sSearchAuthor);
         std::sort(vAuthors.begin(), vAuthors.end(), [pLib](uint id1, uint id2)
-                  { return QString::localeAwareCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) < 0; });
+                  { return localeStringCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) /*< 0*/; });
 
         QString sSession = urlquery.queryItemValue(u"session"_s);
         QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
@@ -4356,7 +4355,7 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
         sSearchAuthor.replace(u'+', u' ');
         auto vAuthors = searchAuthors(*pLib, sSearchAuthor);
         std::sort(vAuthors.begin(), vAuthors.end(), [pLib](uint id1, uint id2)
-                  { return QString::localeAwareCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) < 0; });
+                  { return localeStringCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) /*< 0*/; });
         QString sSession = urlquery.queryItemValue(u"session"_s);
         QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
         QJsonObject root = docHeaderOPDS2(tr("Finding authors"), sLibUrl, sSession);
