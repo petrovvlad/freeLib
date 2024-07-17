@@ -40,60 +40,61 @@ private:
     static void addLink(QJsonArray &links, const QString &sRel, const QString sType, const QString &sHRef);
 
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, ushort idGenre, const QString &sSearch, bool sequenceless);
-    std::vector<uint> searchBooks(const SLib& lib, QStringView sAuthor, QStringView sTitle);
-    auto searchSequence(const SLib& lib, QStringView sSequence);
-    static std::vector<uint> searchAuthors(const SLib &lib, const QStringView sAuthor);
     void stop_server();
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+    std::vector<uint> searchBooks(const SLib& lib, QStringView sAuthor, QStringView sTitle);
+    auto searchSequence(const SLib& lib, QStringView sSequence);
+    static std::vector<uint> searchAuthors(const SLib &lib, const QStringView sAuthor);
+
     static void loadAnnotations(const std::vector<uint> &vBooks, SLib &lib, uint begin, uint end);
-    QHttpServerResponse FillPageHTTP(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor);
+    QHttpServerResponse FillPageHTML(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor);
     QString fillPageOPDS(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sId, const QString &sLibUrl, const QUrl &url);
     QHttpServerResponse fillPageOPDS2(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url);
 
     bool checkAuth(const QHttpServerRequest &request, QUrl &url);
-    QDomElement docHeaderHTTP(const QString &sSesionQuery, const QString &sLibName, const QString &sLibUrl);
+    QDomElement docHeaderHTML(const QString &sSesionQuery, const QString &sLibName, const QString &sLibUrl);
     QDomElement docHeaderOPDS(const QString &sTitle, const QString &sID, const QString &sLibUrl, const QString &sSession);
     QJsonObject docHeaderOPDS2(const QString &sTitle, const QString &sLibUrl, const QString &sSession);
 
     SLib* getLib(uint &idLib, const QString &sTypeServer = u"opds"_s, QString *pLibUrl = nullptr);
-    QHttpServerResponse responseHTTP();
+    QHttpServerResponse responseHTML();
     QHttpServerResponse responseUnauthorized();
-    QHttpServerResponse rootHTTP(uint idLib, const QHttpServerRequest &request);
+    QHttpServerResponse rootHTML(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse rootOPDS(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse rootOPDS2(uint idLib, const QHttpServerRequest &request);
-    QHttpServerResponse authorsIndexHTTP(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
+    QHttpServerResponse authorsIndexHTML(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
     QHttpServerResponse authorsIndexOPDS(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
     QHttpServerResponse authorsIndexOPDS2(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
-    QHttpServerResponse authorHTTP(uint idLib, uint idAuthor, const QHttpServerRequest &request);
+    QHttpServerResponse authorHTML(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorOPDS2(uint idLib, uint idAuthor, const QHttpServerRequest &request);
-    QHttpServerResponse authorBooksHTTP(uint idLib, uint idAuthor, const QHttpServerRequest &request);
+    QHttpServerResponse authorBooksHTML(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorBooksOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorBooksOPDS2(uint idLib, uint idAuthor, const QHttpServerRequest &request);
-    QHttpServerResponse authorSequencesHTTP(uint idLib, uint idAuthor, const QHttpServerRequest &request);
+    QHttpServerResponse authorSequencesHTML(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorSequencesOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorSequencesOPDS2(uint idLib, uint idAuthor, const QHttpServerRequest &request);
-    QHttpServerResponse authorSequencesHTTP(uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request);
+    QHttpServerResponse authorSequencesHTML(uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request);
     QHttpServerResponse authorSequencesOPDS(uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request);
     QHttpServerResponse authorSequencesOPDS2(uint idLib, uint idAuthor, uint idSequence, const QHttpServerRequest &request);
-    QHttpServerResponse authorSequencelessHTTP(uint idLib, uint idAuthor, const QHttpServerRequest &request);
+    QHttpServerResponse authorSequencelessHTML(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorSequencelessOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorSequencelessOPDS2(uint idLib, uint idAuthor, const QHttpServerRequest &request);
-    QHttpServerResponse sequencesIndexHTTP(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
+    QHttpServerResponse sequencesIndexHTML(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
     QHttpServerResponse sequencesIndexOPDS(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
     QHttpServerResponse sequencesIndexOPDS2(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
-    QHttpServerResponse sequenceBooksHTTP(uint idLib, uint idSequence, const QHttpServerRequest &request);
+    QHttpServerResponse sequenceBooksHTML(uint idLib, uint idSequence, const QHttpServerRequest &request);
     QHttpServerResponse sequenceBooksOPDS(uint idLib, uint idSequence, const QHttpServerRequest &request);
     QHttpServerResponse sequenceBooksOPDS2(uint idLib, uint idSequence, const QHttpServerRequest &request);
-    QHttpServerResponse bookHTTP(uint idLib, uint idBook, const QString &sFormat);
+    QHttpServerResponse bookHTML(uint idLib, uint idBook, const QString &sFormat);
     QHttpServerResponse bookOPDS(uint idLib, uint idBook, const QString &sFormat);
-    QHttpServerResponse genresHTTP(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
-    void attachSearchFormHTTP(QDomElement &feed, const QString &sTitle, const QString &sAction, const QString &sSearch, const QString &sSession);
+    QHttpServerResponse genresHTML(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
+    void attachSearchFormHTML(QDomElement &feed, const QString &sTitle, const QString &sAction, const QString &sSearch, const QString &sSession);
     QHttpServerResponse genresOPDS(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse genresOPDS2(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
-    QHttpServerResponse searchHTTP(uint idLib, const QHttpServerRequest &request);
-    QHttpServerResponse searchAuthorHTTP(uint idLib, const QHttpServerRequest &request);
+    QHttpServerResponse searchHTML(uint idLib, const QHttpServerRequest &request);
+    QHttpServerResponse searchAuthorHTML(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS2(uint idLib, const QHttpServerRequest &request);
 
