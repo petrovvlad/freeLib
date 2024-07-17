@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>705</width>
-    <height>473</height>
+    <height>497</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -54,7 +54,7 @@
       </widget>
      </item>
      <item row="5" column="1">
-      <widget class="QLabel" name="HTTP">
+      <widget class="QLabel" name="linkHTML">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -62,7 +62,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string notr="true">&lt;a href=\"localhost\"&gt;localhost&lt;/a&gt;</string>
+        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
@@ -77,14 +77,14 @@
       </widget>
      </item>
      <item row="5" column="0">
-      <widget class="QLabel" name="label_6">
+      <widget class="QLabel" name="labelHTML">
        <property name="text">
         <string>web server</string>
        </property>
       </widget>
      </item>
      <item row="4" column="0">
-      <widget class="QLabel" name="label">
+      <widget class="QLabel" name="labelOPDS2">
        <property name="text">
         <string>OPDS 2.0 server</string>
        </property>
@@ -153,7 +153,7 @@
       </layout>
      </item>
      <item row="3" column="1">
-      <widget class="QLabel" name="OPDS">
+      <widget class="QLabel" name="linkOPDS">
        <property name="sizePolicy">
         <sizepolicy hsizetype="Preferred" vsizetype="Fixed">
          <horstretch>0</horstretch>
@@ -161,7 +161,7 @@
         </sizepolicy>
        </property>
        <property name="text">
-        <string notr="true">&lt;a href=\"localhost\"&gt;localhost&lt;/a&gt;</string>
+        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
@@ -172,16 +172,16 @@
       </widget>
      </item>
      <item row="3" column="0">
-      <widget class="QLabel" name="label_5">
+      <widget class="QLabel" name="labelOPDS">
        <property name="text">
         <string>OPDS server</string>
        </property>
       </widget>
      </item>
      <item row="4" column="1">
-      <widget class="QLabel" name="OPDS2">
+      <widget class="QLabel" name="linkOPDS2">
        <property name="text">
-        <string>&lt;a href=\"localhost\"&gt;localhost&lt;/a&gt;</string>
+        <string>&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
        </property>
       </widget>
      </item>
