@@ -22,9 +22,10 @@ class opds_server : public QObject
 public:
     explicit opds_server(QObject *parent = nullptr);
     void server_run();
-    void setLanguageFilter(const QString &sLanguage);
 
+    void setLanguageFilter(const QString &sLanguage);
 #if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
+
     void process(QString url, QTextStream& ts, const QString &session);
 
 private slots:
@@ -34,11 +35,13 @@ private slots:
 
 private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     void addTextNode(const QString &sName, const QString &sText, const QString &sClass, QDomNode &node);
     void addHRefNode(const QString &sText, const QString &sHRef, const QString &sClass, QDomNode &node);
     static void addNavigation(QJsonArray &navigation, const QString &sTitle, const QString &sHRef, uint nCount=0);
     static void addLink(QJsonArray &links, const QString &sRel, const QString sType, const QString &sHRef);
-
+#endif
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, ushort idGenre, const QString &sSearch, bool sequenceless);
     void stop_server();
 
@@ -107,10 +110,11 @@ private:
     QString WriteSuccess(const QString &contentType = QStringLiteral("text/html;charset=utf-8"), bool isGZip=false);
 #endif
 
-    int port;
-    QDomDocument doc;
-    int OPDS_server_status;
-    std::unordered_map<QString, QDateTime> sessions;
+    enum Status : int {stoped, run};
+    Status status_;
+    int nPort_;
+    QDomDocument doc_;
+    std::unordered_map<QString, QDateTime> sessions_;
     ExportOptions *pExportOptions_;
     QString sLanguageFilter_;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
