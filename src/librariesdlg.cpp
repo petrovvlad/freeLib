@@ -63,6 +63,14 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     ui->progressBar->hide();
     ui->labelStatus->hide();
     ui->btnBreak->hide();
+#if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
+    ui->labelOPDS->hide();
+    ui->linkOPDS->hide();
+    ui->labelOPDS2->hide();
+    ui->linkOPDS2->hide();
+    ui->labelHTML->hide();
+    ui->linkHTML->hide();
+#endif
 }
 
 LibrariesDlg::~LibrariesDlg()
@@ -228,8 +236,13 @@ void LibrariesDlg::SelectLibrary()
     ui->inpx->setDisabled(idCurrentLib_ == 0);
     ui->BookDir->setDisabled(idCurrentLib_ == 0);
     ui->btnUpdate->setDisabled(idCurrentLib_ == 0);
-    ui->OPDS->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/opds_%1\">http://localhost:%2/opds_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
-    ui->HTTP->setText(idCurrentLib_ == 0 ?QStringLiteral("") :QStringLiteral("<a href=\"http://localhost:%2/http_%1\">http://localhost:%2/http_%1</a>").arg(idCurrentLib_).arg(options.nOpdsPort));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+    QString sBaseUrl = options.sBaseUrl.isEmpty() ?u"http://localhost:%1"_s.arg(options.nOpdsPort) :options.sBaseUrl;
+    QString sIdLib = QString::number(idCurrentLib_);
+    ui->linkOPDS->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/opds/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/opds/"_s % sIdLib % u"</a>"_s);
+    ui->linkOPDS2->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/opds2/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/opds2/"_s % sIdLib % u"</a>"_s);
+    ui->linkHTML->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/"_s % sIdLib % u"</a>"_s);
+#endif
     ui->progressBar->hide();
     ui->labelStatus->hide();
 
