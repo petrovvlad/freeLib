@@ -37,10 +37,15 @@ private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
-    void addTextNode(const QString &sName, const QString &sText, const QString &sClass, QDomNode &node);
-    void addHRefNode(const QString &sText, const QString &sHRef, const QString &sClass, QDomNode &node);
+    void addTextNode(QDomNode &node, const QString &sName, const QString &sText, const QString &sClass);
+    void addHRefNode(QDomNode &node, const QString &sText, const QString &sHRef, const QString &sClass);
     static void addNavigation(QJsonArray &navigation, const QString &sTitle, const QString &sHRef, uint nCount=0);
-    static void addLink(QJsonArray &links, const QString &sRel, const QString sType, const QString &sHRef);
+    static void addLink(QJsonArray &links, const QString sType, const QString &sHRef, const QString &sRel);
+    void addLink(QDomNode &node, const QString sType, const QString &sHRef, const QString &sRel, const QString &sTitle);
+    void addLink(QDomNode &node, const QString sType, const QString &sHRef, const QString &sRel);
+    void addLink(QDomNode &node, const QString sType, const QString &sHRef);
+    void addEntry(QDomElement &feed, const QString &sId, const QString &sHRef, const QString &sTitle, const QString &sContent);
+
 #endif
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, ushort idGenre, const QString &sSearch, bool sequenceless);
     void stop_server();
@@ -98,6 +103,7 @@ private:
     QHttpServerResponse genresOPDS2(uint idLib, ushort idParentGenre, const QHttpServerRequest &request);
     QHttpServerResponse searchHTML(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchAuthorHTML(uint idLib, const QHttpServerRequest &request);
+    QHttpServerResponse searchSequenceHTML(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse searchOPDS2(uint idLib, const QHttpServerRequest &request);
 
