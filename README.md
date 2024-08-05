@@ -45,7 +45,7 @@ git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
 ```
 mkdir freeLib/build && cd freeLib/build && \
 cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build . -j2 && \
-sudo make install
+sudo cmake --install . --config Release
 ```
 
 ### Установка в Arch Linux
