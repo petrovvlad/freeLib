@@ -120,16 +120,18 @@ private slots:
     void onDefaultExportClicked();
     void onBtnDefaultSettingsClicked();
     void onTabWidgetCurrentChanged(int index);
-    void onProxyTypeCurrentIndexChanged(int index);
     void onTrayIconCurrentIndexChanged(int index);
     void onTrayColorCurrentIndexChanged(int index);
-    void onHTTPneedPaswordClicked();
     void onBtnSaveExportClicked();
     void onBtnOpenExportClicked();
     void onChangeAlphabetCombobox(int index);
-    void onOpdsEnable(int state);
     void btnDBPath();
+#ifdef USE_HTTSERVER
+    void onProxyTypeCurrentIndexChanged(int index);
+    void onHTTPneedPaswordClicked();
+    void onOpdsEnable(int state);
     void UpdateWebExportList();
+#endif
     virtual void reject();
 
 signals:

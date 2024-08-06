@@ -278,6 +278,7 @@ void Options::setDefault(){
     bCloseDlgAfterExport = true;
     bUncheckAfterExport = true;
     bExtendedSymbols = false;
+#ifdef USE_HTTSERVER
     bOpdsEnable = false;
     bOpdsShowCover = true;
     bOpdsShowAnotation = true;
@@ -293,6 +294,7 @@ void Options::setDefault(){
     sProxyHost = QStringLiteral("");
     sProxyUser = QStringLiteral("");
     sProxyPassword = QStringLiteral("");
+#endif
     setExportDefault();
 }
 
@@ -322,6 +324,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     bCloseDlgAfterExport = pSettings->value(QStringLiteral("CloseExpDlg"), true).toBool();
     bUncheckAfterExport = pSettings->value(QStringLiteral("uncheck_export"), true).toBool();
     bExtendedSymbols = pSettings->value(QStringLiteral("extended_symbols"), false).toBool();
+#ifdef USE_HTTSERVER
     bOpdsEnable = pSettings->value(QStringLiteral("OPDS_enable"), false).toBool();
     bOpdsShowCover = pSettings->value(QStringLiteral("srv_covers"), true).toBool();
     bOpdsShowAnotation = pSettings->value(QStringLiteral("srv_annotation"), true).toBool();
@@ -358,6 +361,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     sProxyHost = pSettings->value(QStringLiteral("proxy_host")).toString();
     sProxyUser = pSettings->value(QStringLiteral("proxy_password")).toString();
     sProxyPassword = pSettings->value(QStringLiteral("proxy_user")).toString();
+#endif
     nCacheSize = pSettings->value(u"CacheSize"_s, 10).toLongLong()*1024*1024;
 
     int count = pSettings->beginReadArray(QStringLiteral("application"));
@@ -419,6 +423,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"CloseExpDlg"_s,bCloseDlgAfterExport);
     pSettings->setValue(u"uncheck_export"_s,bUncheckAfterExport);
     pSettings->setValue(u"extended_symbols"_s, bExtendedSymbols);
+#ifdef USE_HTTSERVER
     pSettings->setValue(u"OPDS_enable"_s, bOpdsEnable);
     pSettings->setValue(u"httpExport"_s, nHttpExport);
     pSettings->setValue(u"HTTP_need_pasword"_s, bOpdsNeedPassword);
@@ -434,6 +439,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"proxy_user"_s, sProxyUser);
     pSettings->setValue(u"proxy_host"_s, sProxyHost);
     pSettings->setValue(u"proxy_password"_s, sProxyPassword);
+#endif
 
     pSettings->beginWriteArray(u"application"_s);
     int index = 0;

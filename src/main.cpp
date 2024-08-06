@@ -14,7 +14,9 @@
 #include "aboutdialog.h"
 #include "utilites.h"
 #include "config-freelib.h"
+#ifdef USE_HTTSERVER
 #include "opds_server.h"
+#endif
 #include "importthread.h"
 
 uint idCurrentLib;
@@ -73,8 +75,10 @@ void cmdhelp(){
 std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]\n"
              "Options:\n"
              "-t,\t--tray\t\tMinimize to tray on start\n"
+#ifdef USE_HTTSERVER
              "-s,\t--server\tStart server\n"
                     "\t\t-lang [lang]\tLanguage filter\n"
+#endif
              "-v,\t--version\tShow version and exit\n"
              "\t--verbose\tVerbose mode\n"
              "\t--lib-ls\tShow libraries\n"
@@ -96,12 +100,14 @@ std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]
 int main(int argc, char *argv[])
 {
     Q_INIT_RESOURCE(resource);
+#ifdef USE_HTTSERVER
     bool bServer = false;
+    QString sLanguageFilter;
+#endif
     bTray = false;
     bVerbose = false;
     std::unique_ptr<QCoreApplication> a;
     QString cmdparam;
-    QString sLanguageFilter;
 
     for(int i=1; i<argc; i++){
 
@@ -115,11 +121,12 @@ int main(int argc, char *argv[])
         if (cmdparam == u"--verbose")
             bVerbose = true;
 
+#ifdef USE_HTTSERVER
         if (cmdparam == u"--server" || cmdparam == u"-s"){
             bServer = true;
             sLanguageFilter = parseOption(argc-(i), &argv[i], "-lang");
         }else
-
+#endif
         if (cmdparam == u"--tray" || cmdparam == u"-t"){
             bTray = true;
         }else
@@ -185,11 +192,18 @@ int main(int argc, char *argv[])
                         << "Library:\t" << libs[nId].name.toStdString() << "\n"
                         << "Inpx file:\t" << libs[nId].sInpx.toStdString() << "\n"
                         << "Books dir:\t" << libs[nId].path.toStdString() << "\n"
-                        << "Version:\t" << libs[nId].sVersion.toStdString() << "\n"
-                        << QApplication::translate("LibrariesDlg", "OPDS server").toStdString()
-                        << ":\thttp://localhost:" << options.nOpdsPort << "/opds_" << nId << "\n"
-                        << QApplication::translate("LibrariesDlg", "HTTP server").toStdString()
-                        << ":\thttp://localhost:"  << options.nOpdsPort << "/http_" << nId << "\n";
+                        << "Version:\t" << libs[nId].sVersion.toStdString() << "\n";
+#ifdef USE_HTTSERVER
+                    std::string sBaseUrl = options.sBaseUrl.isEmpty() ?"http://localhost:" + std::to_string(options.nOpdsPort) :options.sBaseUrl.toStdString();
+                    std::string sIdLib = std::to_string(nId);
+                    std::cout
+                        << QApplication::translate("LibrariesDlg", "OPDS server").toStdString() << " "
+                        << "\t" << sBaseUrl <<"/opds/" << sIdLib << "\n"
+                        << QApplication::translate("LibrariesDlg", "OPDS2 server").toStdString()
+                        << "\t" << sBaseUrl <<"/opds2/" << sIdLib << "\n"
+                        << QApplication::translate("LibrariesDlg", "Web server").toStdString()
+                        << "\t\t" << sBaseUrl << "/" << sIdLib << "\n";
+#endif
                 }
                 else{
                     std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
@@ -346,10 +360,13 @@ int main(int argc, char *argv[])
         //QFont::insertSubstitution(".Lucida Grande UI", "Lucida Grande");
     }
 #endif
+#ifdef USE_HTTSERVER
     if(bServer){
         setenv("QT_QPA_PLATFORM", "offscreen", 1);
         a = std::unique_ptr<QCoreApplication>(new QGuiApplication(argc, argv));
-    }else{
+    }else
+#endif
+    {
         a = std::unique_ptr<QCoreApplication>(new QApplication(argc, argv));
         static_cast<QApplication*>(a.get())->setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
@@ -370,7 +387,13 @@ int main(int argc, char *argv[])
         options.setExportDefault();
 
     std::unique_ptr<QSplashScreen> splash;
-    if(!bServer && options.bShowSplash){
+    if(
+#ifdef USE_HTTSERVER
+        !bServer &&
+#endif
+        options.bShowSplash
+        )
+    {
         QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a.get())->devicePixelRatio()>=2? QStringLiteral("@2x") :QStringLiteral("")));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
@@ -397,11 +420,12 @@ int main(int argc, char *argv[])
         dirCovers.mkpath(sDirCovers);
 
     a->processEvents();
-    setProxy();
     UpdateLibs();
 
     MainWindow *pMainWindow = nullptr;
 
+#ifdef USE_HTTSERVER
+    setProxy();
     std::unique_ptr<opds_server> pOpds;
     if(bServer){
         pOpds = std::unique_ptr<opds_server>( new opds_server(a.get()) );
@@ -411,7 +435,9 @@ int main(int argc, char *argv[])
         if(!sLanguageFilter.isEmpty())
             pOpds->setLanguageFilter(sLanguageFilter);
         pOpds->server_run();
-    }else{
+    }else
+#endif
+    {
         pMainWindow = new MainWindow;
 #ifdef Q_OS_OSX
         //  w.setWindowFlags(w.windowFlags() & ~Qt::WindowFullscreenButtonHint);

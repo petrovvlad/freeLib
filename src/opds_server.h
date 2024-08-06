@@ -5,9 +5,7 @@
 #include <QTcpServer>
 #include <QDomDocument>
 #include <QDateTime>
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
 #include <QHttpServer>
-#endif
 
 #include "library.h"
 #include "options.h"
@@ -24,19 +22,10 @@ public:
     void server_run();
 
     void setLanguageFilter(const QString &sLanguage);
-#if QT_VERSION < QT_VERSION_CHECK(6, 4, 0)
-
-    void process(QString url, QTextStream& ts, const QString &session);
-
-private slots:
-    void new_connection();
-    void slotRead();
-#endif
 
 private:
     QDomElement AddTextNode(const QString &name, const QString &text, QDomNode &node);
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     void addTextNode(QDomNode &node, const QString &sName, const QString &sText, const QString &sClass);
     void addHRefNode(QDomNode &node, const QString &sText, const QString &sHRef, const QString &sClass);
     static void addNavigation(QJsonArray &navigation, const QString &sTitle, const QString &sHRef, uint nCount=0);
@@ -46,11 +35,9 @@ private:
     void addLink(QDomNode &node, const QString sType, const QString &sHRef);
     void addEntry(QDomElement &feed, const QString &sId, const QString &sHRef, const QString &sTitle, const QString &sContent);
 
-#endif
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, ushort idGenre, const QString &sSearch, bool sequenceless);
     void stop_server();
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     std::vector<uint> searchBooks(const SLib& lib, QStringView sAuthor, QStringView sTitle);
     auto searchSequence(const SLib& lib, QStringView sSequence);
     static std::vector<uint> searchAuthors(const SLib &lib, const QStringView sAuthor);
@@ -109,12 +96,6 @@ private:
 
     QByteArray cover(uint id, uint idBook);
     QHttpServerResponse convert(uint idLib, uint idBook, const QString &sFormat, bool opds);
-#else
-    QDomElement doc_header(const QString &session, bool html=false, const QString &lib_name = QString(), const QString &lib_url = QString());
-    QString FillPage(std::vector<uint> listBooks, SLib& lib, const QString &sTitle, const QString &lib_url, const QString &current_url, QTextStream& ts, bool opds, uint nPage, const QString &session, bool bShowAuthor);
-    void convert(uint idLib, uint idBook, const QString &format, const QString &file_name, bool opds, QTextStream &ts);
-    QString WriteSuccess(const QString &contentType = QStringLiteral("text/html;charset=utf-8"), bool isGZip=false);
-#endif
 
     enum Status : int {stoped, run};
     Status status_;
@@ -123,16 +104,7 @@ private:
     std::unordered_map<QString, QDateTime> sessions_;
     ExportOptions *pExportOptions_;
     QString sLanguageFilter_;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
     QHttpServer httpServer_;
-#else
-    bool bMobile_;
-    bool for_preview;
-    QStringList sesions_auth;
-    QMap<qintptr, QTcpSocket *> OPDS_clients;
-    QMap<QString, QString> params;
-    QTcpServer OPDS_server;
-#endif
 };
 
 #endif // OPDS_SERVER_H

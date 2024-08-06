@@ -87,17 +87,14 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->AddExp, &QAbstractButton::clicked, this, &SettingsDlg::AddExt);
     connect(ui->DelApp, &QAbstractButton::clicked, this, &SettingsDlg::DelApp);
     connect(ui->AddApp, &QAbstractButton::clicked, this, &SettingsDlg::AddApp);
-    connect(ui->OPDS_enable, &QCheckBox::stateChanged, this, &SettingsDlg::onOpdsEnable);
     connect(ui->AddExport, &QToolButton::clicked, this, &SettingsDlg::onAddExportClicked);
     connect(ui->DelExport, &QPushButton::clicked, this, &SettingsDlg::onDelExportClicked);
     connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
     connect(ui->DefaultExport, &QCheckBox::clicked, this, &SettingsDlg::onDefaultExportClicked);
     connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &SettingsDlg::onTabWidgetCurrentChanged);
-    connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
     connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
     connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
-    connect(ui->HTTP_need_pasword, &QCheckBox::clicked, this, &SettingsDlg::onHTTPneedPaswordClicked);
     connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
     connect(ui->btnOpenExport, &QToolButton::clicked, this, &SettingsDlg::onBtnOpenExportClicked);
     connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
@@ -114,12 +111,21 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout->setContentsMargins(0, 0, 0, 0);
     connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
 
-    LoadSettings();
+    LoadSettings();   
+
+#ifdef USE_HTTSERVER
+    connect(ui->OPDS_enable, &QCheckBox::stateChanged, this, &SettingsDlg::onOpdsEnable);
+    connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
+    connect(ui->HTTP_need_pasword, &QCheckBox::clicked, this, &SettingsDlg::onHTTPneedPaswordClicked);
+
     UpdateWebExportList();
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
     onHTTPneedPaswordClicked();
-
     onOpdsEnable(ui->OPDS_enable->checkState());
+#else
+    ui->tabWidget->setTabVisible(2, false);
+#endif
+
 }
 
 SettingsDlg::~SettingsDlg()
@@ -168,6 +174,7 @@ void SettingsDlg::LoadSettings()
 #endif
 
     ui->extended_symbols->setChecked(options_.bExtendedSymbols);
+#ifdef USE_HTTSERVER
     ui->OPDS_enable->setChecked(options_.bOpdsEnable);
     ui->OPDS_port->setValue(options_.nOpdsPort);
     ui->baseUrl->setText(options.sBaseUrl);
@@ -184,6 +191,7 @@ void SettingsDlg::LoadSettings()
     ui->proxy_host->setText(options_.sProxyHost);
     ui->proxy_password->setText(options_.sProxyPassword);
     ui->proxy_user->setText(options_.sProxyUser);
+#endif
 
     ui->ApplicationList->setRowCount(options_.applications.size());
     int index = 0;
@@ -239,6 +247,7 @@ void SettingsDlg::updateKindelegenWarring(int iExportOpton)
     }
 }
 
+#ifdef USE_HTTSERVER
 void SettingsDlg::UpdateWebExportList()
 {
     int index = 0;
@@ -257,6 +266,7 @@ void SettingsDlg::UpdateWebExportList()
             ui->httpExport->setCurrentIndex(i + 1);
     }
 }
+#endif
 
 void SettingsDlg::reject()
 {
@@ -350,6 +360,7 @@ void SettingsDlg::btnOK()
     options.bCloseDlgAfterExport = ui->CloseExpDlg->isChecked();
     options.bUncheckAfterExport = ui->uncheck_export->isChecked();
     options.bExtendedSymbols = ui->extended_symbols->isChecked();
+#ifdef USE_HTTSERVER
     options.bOpdsEnable = ui->OPDS_enable->isChecked();
     options.nHttpExport = ui->httpExport->currentIndex();
     options.bOpdsNeedPassword = ui->HTTP_need_pasword->isChecked();
@@ -366,6 +377,7 @@ void SettingsDlg::btnOK()
     options.sProxyHost = ui->proxy_host->text();
     options.sProxyUser = ui->proxy_user->text();
     options.sProxyPassword = ui->proxy_password->text();
+#endif
 
     options.applications.clear();
     for (int i = 0; i < ui->ApplicationList->rowCount(); ++i)
@@ -393,7 +405,9 @@ void SettingsDlg::btnOK()
     settings->setValue(QStringLiteral("SettingsWndExportList_headers/geometry"), ui->ExportList->horizontalHeader()->saveState());
     settings->setValue(QStringLiteral("SettingsWndApplicationList/geometry"), ui->ApplicationList->saveGeometry());
     settings->setValue(QStringLiteral("SettingsWndApplicationList_headers/geometry"), ui->ApplicationList->horizontalHeader()->saveState());
+#ifdef USE_HTTSERVER
     setProxy();
+#endif
 }
 
 void SettingsDlg::SaveTools()
@@ -454,13 +468,17 @@ void SettingsDlg::onAddExportClicked()
 
     connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
     connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+#ifdef USE_HTTSERVER
     UpdateWebExportList();
+#endif
 }
 
 void SettingsDlg::ExportNameChanged()
 {
     ui->ExportName->setItemText(ui->ExportName->currentIndex(), ui->ExportName->lineEdit()->text());
+#ifdef USE_HTTSERVER
     UpdateWebExportList();
+#endif
 }
 
 void SettingsDlg::onDelExportClicked()
@@ -476,7 +494,9 @@ void SettingsDlg::onDelExportClicked()
     ui->ExportName->removeItem(ui->ExportName->currentIndex());
     if(ui->ExportName->count() <= 1)
         ui->DelExport->setDisabled(true);
+#ifdef USE_HTTSERVER
     UpdateWebExportList();
+#endif
 }
 
 void SettingsDlg::onExportNameCurrentIndexChanged(int index)
@@ -509,7 +529,6 @@ void SettingsDlg::onBtnDefaultSettingsClicked()
     }
 }
 
-
 void SettingsDlg::onTabWidgetCurrentChanged(int /*index*/)
 {
     if(ui->tabWidget->currentWidget() == ui->tab_export)
@@ -519,6 +538,7 @@ void SettingsDlg::onTabWidgetCurrentChanged(int /*index*/)
     }
 }
 
+#ifdef USE_HTTSERVER
 void SettingsDlg::onProxyTypeCurrentIndexChanged(int index)
 {
     bool bEnable = index > 0;
@@ -531,6 +551,7 @@ void SettingsDlg::onProxyTypeCurrentIndexChanged(int index)
     ui->proxy_port->setEnabled(bEnable);
     ui->proxy_user->setEnabled(bEnable);
 }
+#endif
 
 void SettingsDlg::onTrayIconCurrentIndexChanged(int index)
 {
@@ -545,6 +566,7 @@ void SettingsDlg::onTrayColorCurrentIndexChanged(int index)
     emit ChangingTrayIcon(options_.nIconTray, options_.nTrayColor);
 }
 
+#ifdef USE_HTTSERVER
 void SettingsDlg::onHTTPneedPaswordClicked()
 {
     ui->p_password->setEnabled(ui->HTTP_need_pasword->isChecked());
@@ -552,6 +574,7 @@ void SettingsDlg::onHTTPneedPaswordClicked()
     ui->HTTP_password->setEnabled(ui->HTTP_need_pasword->isChecked());
     ui->HTTP_user->setEnabled(ui->HTTP_need_pasword->isChecked());
 }
+#endif
 
 void SettingsDlg::onBtnSaveExportClicked()
 {
@@ -710,6 +733,7 @@ void SettingsDlg::onChangeAlphabetCombobox(int /*index*/)
     emit ChangeAlphabet(options_.sAlphabetName);
 }
 
+#ifdef USE_HTTSERVER
 void SettingsDlg::onOpdsEnable(int state)
 {
     bool bOpdsEnable = (state == Qt::Checked);
@@ -729,3 +753,4 @@ void SettingsDlg::onOpdsEnable(int state)
     ui->books_per_page->setEnabled(bOpdsEnable);
     ui->label_5->setEnabled(bOpdsEnable);
 }
+#endif

@@ -7,14 +7,15 @@
 #include <QtWidgets/QTreeWidgetItem>
 #include <QBuffer>
 #include <QMenu>
-#include <QTcpServer>
 #include <QSystemTrayIcon>
 #include <QList>
 
 #include "helpdialog.h"
 #include "options.h"
 #include "coverlabel.h"
+#ifdef USE_HTTSERVER
 #include "opds_server.h"
+#endif
 #include "importthread.h"
 
 namespace Ui {
@@ -79,7 +80,9 @@ private:
     QByteArray aHeadersTree_;
     QByteArray aHeadersList_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
+#ifdef USE_HTTSERVER
     std::unique_ptr<opds_server> pOpds_;
+#endif
     ImportThread *pImportThread_;
     QThread *pThread_;
 
