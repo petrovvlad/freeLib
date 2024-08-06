@@ -123,7 +123,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     onHTTPneedPaswordClicked();
     onOpdsEnable(ui->OPDS_enable->checkState());
 #else
-    ui->tabWidget->setTabVisible(2, false);
+    ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->tab_network));
 #endif
 
 }
