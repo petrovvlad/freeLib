@@ -8,6 +8,7 @@
 
 #ifdef USE_DEJVULIBRE
 #include <libdjvu/ddjvuapi.h>
+#include <libdjvu/miniexp.h>
 #endif
 
 #include <QActionGroup>
@@ -36,6 +37,7 @@
 #include <QIODevice>
 #include <QItemDelegate>
 #include <QLabel>
+#include <QLibrary>
 #include <QLibraryInfo>
 #include <QLineEdit>
 #include <QList>
@@ -46,7 +48,6 @@
 #include <QMessageBox>
 #include <QMetaEnum>
 #include <QMultiMap>
-#include <QNetworkProxy>
 #include <QObject>
 #include <QPainter>
 #include <QProcess>
@@ -66,7 +67,6 @@
 #include <QStringList>
 #include <QStyledItemDelegate>
 #include <QSystemTrayIcon>
-#include <QTcpServer>
 #include <QTextBrowser>
 #include <QTextCodec>
 #include <QTextStream>
@@ -85,15 +85,20 @@
 #include <QtAlgorithms>
 #include <QtConcurrent>
 #include <algorithm>
+#include <chrono>
 #include <iostream>
 #include <typeinfo>
+#include <unistd.h>
+#include <unordered_set>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QByteArrayView>
 #endif
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+#ifdef USE_HTTSERVER
 #include <QHttpServer>
+#include <QNetworkProxy>
+#include <QTcpServer>
 #endif
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)

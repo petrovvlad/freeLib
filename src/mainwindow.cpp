@@ -24,7 +24,6 @@
 #include "languagesortfilterproxymodel.h"
 #include "library.h"
 #include "starsdelegate.h"
-#include "opds_server.h"
 #include "statisticsdialog.h"
 #include "utilites.h"
 #include "bookfile.h"
@@ -181,10 +180,12 @@ MainWindow::MainWindow(QWidget *parent) :
         nCurrentTab = TabAuthors;
     }
 
+#ifdef USE_HTTSERVER
     if(options.bOpdsEnable){
         pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
         pOpds_->server_run();
     }
+#endif
 
     UpdateTags();
     loadGenres();
@@ -705,6 +706,7 @@ void MainWindow::Settings()
             FillGenres();
             FillListBooks();
         }
+#ifdef USE_HTTSERVER
         if(options.bOpdsEnable != pDlg->options_.bOpdsEnable || options.nOpdsPort != pDlg->options_.nOpdsPort || options.sBaseUrl != pDlg->options_.sBaseUrl ||
            options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || options.sOpdsUser != pDlg->options_.sOpdsUser ||
            options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash)
@@ -713,6 +715,7 @@ void MainWindow::Settings()
                 pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
             pOpds_->server_run();
         }
+#endif
         UpdateExportMenu();
         resizeEvent(nullptr);
     }
@@ -1368,8 +1371,10 @@ void MainWindow::fillLanguages()
             }
         }
     }
+#ifdef USE_HTTSERVER
     if(pOpds_)
         pOpds_->setLanguageFilter(sCurrentLanguage);
+#endif
     ui->language->model()->sort(0);
     ui->findLanguage->model()->sort(0);
     settings->setValue(u"BookLanguage"_s, sCurrentLanguage);
@@ -2279,8 +2284,10 @@ void MainWindow::onLanguageFilterChanged(int index)
     FillAuthors();
     FillGenres();
     FillListBooks();
+#ifdef USE_HTTSERVER
     if(pOpds_)
         pOpds_->setLanguageFilter(sLanguage);
+#endif
 }
 
 void MainWindow::onChangeAlpabet(const QString &sAlphabetName)

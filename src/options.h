@@ -5,7 +5,6 @@
 #include <QString>
 #include <QStandardPaths>
 #include <QSettings>
-#include <QVector>
 
 #include "utilites.h"
 
@@ -105,26 +104,12 @@ struct Options
     void Load(QSharedPointer<QSettings> pSettings);
     void Save(QSharedPointer<QSettings> pSettings);
 
-    const static ushort nDefaultOpdsPort = 8080;
-    const static ushort  nDefaultProxyPort = 8080;
 
     QString sAlphabetName;
     QString sUiLanguageName;
     QString sDatabasePath;
-    QString sOpdsUser;
-    QByteArray baOpdsPasswordHash;
-    QByteArray baOpdsPasswordSalt;
-    QString sProxyHost;
-    QString sProxyUser;
-    QString sProxyPassword;
-    QString sBaseUrl;
 
     qint64 nCacheSize;
-    int nHttpExport;
-    quint16 nOpdsPort;
-    quint16 nOpdsBooksPerPage;
-    quint16 nProxyPort;
-    quint8 nProxyType;
 
     qint8 nIconTray;
     qint8 nTrayColor;
@@ -135,10 +120,28 @@ struct Options
     bool bCloseDlgAfterExport;
     bool bUncheckAfterExport;
     bool bExtendedSymbols;
+
+#ifdef USE_HTTSERVER
+    const static ushort nDefaultOpdsPort = 8080;
+    const static ushort  nDefaultProxyPort = 8080;
+
+    QString sOpdsUser;
+    QByteArray baOpdsPasswordHash;
+    QByteArray baOpdsPasswordSalt;
+    QString sProxyHost;
+    QString sProxyUser;
+    QString sProxyPassword;
+    QString sBaseUrl;
+    int nHttpExport;
+    quint16 nOpdsPort;
+    quint16 nOpdsBooksPerPage;
+    quint16 nProxyPort;
+    quint8 nProxyType;
     bool bOpdsEnable;
     bool bOpdsShowCover;
     bool bOpdsShowAnotation;
     bool bOpdsNeedPassword;
+#endif
 
     std::unordered_map<QString, QString> applications;
     std::unordered_map<QString, ToolsOptions> tools;

@@ -270,6 +270,7 @@ QString Transliteration(QString str)
     return fn;
 }
 
+#ifdef USE_HTTSERVER
 QNetworkProxy proxy;
 void setProxy()
 {
@@ -291,6 +292,7 @@ void setProxy()
     }
     QNetworkProxy::setApplicationProxy(proxy);
 }
+#endif
 
 QSharedPointer<QSettings> GetSettings(bool bReopen)
 {
@@ -382,7 +384,7 @@ bool kindlegenInstalled()
 
     //Проверка установленного kindlegen через pkg-config
     QProcess process;
-    process.start("pkg-config", QStringList() << "--exists" << "kindlegen");
+    process.start(u"pkg-config"_s, QStringList() << u"--exists"_s << u"kindlegen"_s);
     process.waitForFinished();
     return process.exitCode() == 0;
 }

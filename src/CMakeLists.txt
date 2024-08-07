@@ -12,9 +12,6 @@ message(STATUS "FREELIB_QT_MAJOR_VERSION: ${FREELIB_QT_MAJOR_VERSION}")
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
     find_package(QT NAMES Qt6 REQUIRED)
     find_package(Qt6 COMPONENTS ${QT_COMPONENTS} REQUIRED)
-    if(QT_VERSION_MINOR GREATER_EQUAL 4)
-        find_package(Qt6 COMPONENTS HttpServer REQUIRED)
-    endif()
 else()
     find_package(QT NAMES Qt5 REQUIRED)
     find_package(Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
@@ -42,7 +39,6 @@ set(PROJECT_SOURCES
         statisticsdialog.h  statisticsdialog.cpp statisticsdialog.ui
         importthread.cpp    importthread.h
         exportthread.cpp    exportthread.h
-        opds_server.cpp     opds_server.h
         options.cpp         options.h
         treebookitem.cpp    treebookitem.h
         coverlabel.cpp      coverlabel.h
@@ -72,6 +68,19 @@ set(PROJECT_SOURCES
 )
 
 add_subdirectory(Help)
+
+if((FREELIB_QT_MAJOR_VERSION EQUAL 6) AND (QT_VERSION_MINOR GREATER_EQUAL 4))
+  find_package(Qt6 COMPONENTS HttpServer QUIET)
+  if(Qt6HttpServer_FOUND)
+    message(STATUS "Found HttpServer")
+    set(PROJECT_SOURCES
+        ${PROJECT_SOURCES}
+        opds_server.cpp     opds_server.h
+    )
+    add_definitions(-DUSE_HTTSERVER=1)
+   endif()
+endif()
+
 
 find_package(QuaZip-Qt${QT_VERSION_MAJOR} QUIET)
 if(NOT QuaZip-Qt${QT_VERSION_MAJOR}_FOUND)
@@ -139,7 +148,7 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Concurrent
     QuaZip::QuaZip)
 
-if(QT_VERSION_MAJOR EQUAL 6 AND QT_VERSION_MINOR GREATER_EQUAL 4)
+if(Qt6HttpServer_FOUND)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
 endif()
 
