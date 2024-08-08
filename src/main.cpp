@@ -199,7 +199,7 @@ int main(int argc, char *argv[])
                     std::cout
                         << QApplication::translate("LibrariesDlg", "OPDS server").toStdString() << " "
                         << "\t" << sBaseUrl <<"/opds/" << sIdLib << "\n"
-                        << QApplication::translate("LibrariesDlg", "OPDS2 server").toStdString()
+                        << QApplication::translate("LibrariesDlg", "OPDS 2.0 server").toStdString()
                         << "\t" << sBaseUrl <<"/opds2/" << sIdLib << "\n"
                         << QApplication::translate("LibrariesDlg", "Web server").toStdString()
                         << "\t\t" << sBaseUrl << "/" << sIdLib << "\n";
