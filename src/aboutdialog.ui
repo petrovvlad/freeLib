@@ -3,7 +3,7 @@
  <class>AboutDialog</class>
  <widget class="QDialog" name="AboutDialog">
   <property name="windowModality">
-   <enum>Qt::WindowModal</enum>
+   <enum>Qt::WindowModality::WindowModal</enum>
   </property>
   <property name="geometry">
    <rect>
@@ -40,7 +40,7 @@
         <string/>
        </property>
        <property name="pixmap">
-        <pixmap resource="resource.qrc">:/icons/img/icons/freelib.svg</pixmap>
+        <pixmap resource="resource.qrc">:/icons/img/icons/freelib.png</pixmap>
        </property>
        <property name="scaledContents">
         <bool>true</bool>
@@ -102,7 +102,7 @@
           <string notr="true">Website: &lt;a href=&quot;https://github.com/petrovvlad/freeLib/&quot; style=&quot;text-decoration: underline&quot;&gt;https://github.com/petrovvlad/freeLib&lt;/a&gt;</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::RichText</enum>
+          <enum>Qt::TextFormat::RichText</enum>
          </property>
          <property name="openExternalLinks">
           <bool>true</bool>
@@ -121,13 +121,13 @@
           <string>Report bugs at: &lt;a href=&quot;https://github.com/petrovvlad/freeLib/issues&quot; style=&quot;text-decoration: underline;&quot;&gt;https://github.com&lt;/a&gt;</string>
          </property>
          <property name="textFormat">
-          <enum>Qt::AutoText</enum>
+          <enum>Qt::TextFormat::AutoText</enum>
          </property>
          <property name="openExternalLinks">
           <bool>true</bool>
          </property>
          <property name="textInteractionFlags">
-          <set>Qt::LinksAccessibleByMouse</set>
+          <set>Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
          </property>
         </widget>
        </item>
@@ -143,7 +143,7 @@
           <string>freeLib is distributed under the terms of the GNU General Public License (GPL) version 3.</string>
          </property>
          <property name="alignment">
-          <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+          <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
          </property>
          <property name="wordWrap">
           <bool>true</bool>
@@ -171,7 +171,7 @@
    <item>
     <widget class="QDialogButtonBox" name="buttonBox">
      <property name="standardButtons">
-      <set>QDialogButtonBox::Close</set>
+      <set>QDialogButtonBox::StandardButton::Close</set>
      </property>
     </widget>
    </item>

@@ -47,7 +47,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>0</number>
+      <number>2</number>
      </property>
      <widget class="QWidget" name="tab_common">
       <attribute name="title">
@@ -430,7 +430,7 @@
           </sizepolicy>
          </property>
          <property name="title">
-          <string>HTTP/OPDS server</string>
+          <string>OPDS/Web server</string>
          </property>
          <property name="alignment">
           <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>

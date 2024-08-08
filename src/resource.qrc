@@ -107,6 +107,6 @@
         <file>img/icons/stars/3star.svg</file>
         <file>img/icons/stars/4star.svg</file>
         <file>img/icons/stars/5star.svg</file>
-        <file>img/icons/freelib.svg</file>
+        <file>img/icons/freelib.png</file>
     </qresource>
 </RCC>

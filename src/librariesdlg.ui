@@ -67,6 +67,9 @@
        <property name="openExternalLinks">
         <bool>true</bool>
        </property>
+       <property name="textInteractionFlags">
+        <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
+       </property>
       </widget>
      </item>
      <item row="2" column="0">
@@ -79,7 +82,7 @@
      <item row="5" column="0">
       <widget class="QLabel" name="labelHTML">
        <property name="text">
-        <string>web server</string>
+        <string>Web server</string>
        </property>
       </widget>
      </item>
@@ -182,6 +185,12 @@
       <widget class="QLabel" name="linkOPDS2">
        <property name="text">
         <string>&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+       </property>
+       <property name="openExternalLinks">
+        <bool>true</bool>
+       </property>
+       <property name="textInteractionFlags">
+        <set>Qt::TextInteractionFlag::LinksAccessibleByKeyboard|Qt::TextInteractionFlag::LinksAccessibleByMouse</set>
        </property>
       </widget>
      </item>
