@@ -80,7 +80,7 @@ private:
     void parse_body(const QDomNode &elem);
     void parse_description(const QDomNode &child);
     void parse_binary(const QDomNode &elem);
-    void parse_format(const QDomNode &elem, QString tag=QLatin1String("") , QString css=QLatin1String(""), QString href=QLatin1String(""));
+    void parse_format(const QDomNode &elem, QString tag=u""_s , QString css=u""_s, QString href=u""_s);
     void parse_span(const QString &span, const QDomNode &elem);
 
     void generate_toc();
@@ -112,7 +112,7 @@ private:
     SBook *pBook;
     uint idBook_;
     uint idLib_;
-    QString book_cover;
+    QString sFileCover_;
     QString bookseriestitle;
     QString authorstring;
     QString isbn;
@@ -150,7 +150,7 @@ private:
 
     bool join_seria;
     int current_book;
-    QString outputFormat;
+    QString sOutputFormat_;
 
     void InsertSeriaNumberToCover(const QString &number, CreateCover create_cover);
     bool need_end_chapter_vignette;

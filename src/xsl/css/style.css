@@ -356,3 +356,15 @@ p.dropcaps
     margin-top: 0em;
     margin-bottom: 0em;
 }
+
+/*Обложка*/
+body.cover {
+        margin: 0px;
+        oeb-column-number: 1;
+        padding: 0px;
+}
+
+svg.cover-svg {
+        height: 100%;
+        width: 100%;
+}
