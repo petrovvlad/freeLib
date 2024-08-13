@@ -79,7 +79,7 @@ QString test_language(QString language)
 QString HTMLHEAD = QStringLiteral("<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
             "<head>"
                 "<title>freeLib</title>"
-                "<link rel=\"stylesheet\" type=\"text/css\" href=\"css/main.css\"/>"
+                "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/>"
                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>"
             "</head>"
             "<body>");
@@ -1180,7 +1180,7 @@ void fb2mobi::generate_opf_epub()
     if(pExportOptions_->nContentPlacement != 0)
     {
         buf += u"<item id=\"toc\" media-type=\"application/xhtml+xml\" href=\"toc.html\"/>\n"
-                "<item id=\"css\" href=\"css/main.css\" media-type=\"text/css\"/>\n"_s;
+               "<item id=\"css\" href=\"style.css\" media-type=\"text/css\"/>\n"_s;
     }
 
     QFileInfoList fonts = QDir(sTmpDir_ + u"/OEBPS/fonts"_s).entryInfoList(QDir::NoDotAndDotDot | QDir::Files);
@@ -1666,7 +1666,6 @@ struct FontFamily
 QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
 {
     pBook_ = &libs[idLib_].books[idBook];
-    // book_ = libs[idLib_].books[idBook];
     idBook_ = idBook;
     sOutputFormat_ = pExportOptions_->sOutputFormat;
     if(files.size() == 1)
@@ -1694,7 +1693,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     dir.removeRecursively();
     dir.mkpath(sTmpDir_ + u"/OEBPS/css"_s);
 
-    QString sFileCss = sTmpDir_ + u"/OEBPS/css/main.css"_s;
+    QString sFileCss = sTmpDir_ + u"/OEBPS/style.css"_s;
     if(pExportOptions_->bUserCSS && !pExportOptions_->sUserCSS.isEmpty())
     {
         QFile file(sFileCss);
@@ -1737,35 +1736,35 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         const FontExportOptions &fontExportOptions = pExportOptions_->vFontExportOptions.at(i);
         if(fontExportOptions.bUse)
         {
+            dir.setPath(sTmpDir_ + u"/OEBPS"_s);
             dir.mkpath(sTmpDir_ + u"/OEBPS/fonts"_s);
             FontFamily set;
             for(int j=0; j<4; j++)
             {
-                QString font_file = j==0 ?fontExportOptions.sFont :j==1 ?fontExportOptions.sFontB :j==2 ?fontExportOptions.sFontI :j==3 ?fontExportOptions.sFontBI :u""_s;
-                int index = fonts.indexOf(font_file);
-                if(index<0 && !font_file.isEmpty())
+                QString sFileFont = j==0 ?fontExportOptions.sFont :j==1 ?fontExportOptions.sFontB :j==2 ?fontExportOptions.sFontI :j==3 ?fontExportOptions.sFontBI :u""_s;
+                int index = fonts.indexOf(sFileFont);
+                if(index<0 && !sFileFont.isEmpty())
                 {
-                    fonts.append(font_file);
+                    fonts.append(sFileFont);
                     index = fonts.count()-1;
-                    if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file))
+                    if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % sFileFont))
 
                     {
-                        QFile::copy(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
+                        QFile::copy(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % sFileFont, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
                     }
                     else
                     {
-                        if(QFile::exists(sFontsPath % u"/"_s % font_file))
+                        if(QFile::exists(sFontsPath % u"/"_s % sFileFont))
                         {
-                            QFile::copy(sFontsPath % u"/"_s % font_file, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
+                            QFile::copy(sFontsPath % u"/"_s % sFileFont, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
                         }
-                        else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % font_file))
+                        else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % sFileFont))
                         {
-                            QFile::copy(FREELIB_DATA_DIR % u"/fonts"_s % font_file, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
+                            QFile::copy(FREELIB_DATA_DIR % u"/fonts"_s % sFileFont, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
                         }
                         else
                         {
-                            QFileInfo fi(font_file);
-                            font_file = fi.fileName();
+                            QFileInfo fi(sFileFont);
                             QFile::copy(fi.absoluteFilePath(), sTmpDir_  + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
                         }
                     }
@@ -1805,11 +1804,11 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
                     if(j==3 && set.font_bi==-1)
                         continue;
                     css.write(u"\n@font-face {\n"
-                                             "    font-family: \"font%4\";\n"
-                                             "    src: url(\"../fonts/font%1.ttf\");\n"
-                                             "%2"
-                                             "%3"
-                                             "}\n"_s.arg(
+                               "    font-family: \"font%4\";\n"
+                               "    src: url(\"fonts/font%1.ttf\");\n"
+                               "%2"
+                               "%3"
+                               "}\n"_s.arg(
                                (QString::number(j==0?set.font:j==1?set.font_b:j==2?set.font_i:j==3?set.font_bi:0)),
                               (j==1||j==3)?u"    font-weight: bold;\n"_s :u""_s,
                               (j==2||j==3)?u"    font-style: italic;\n"_s :u""_s,
@@ -1943,7 +1942,6 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
             "<html xmlns=\"http://www.w3.org/1999/xhtml\">\n"
             "<head>\n"
             "<title/>\n"
-            "<link rel=\"stylesheet\" href=\"css/main.css\" type=\"text/css\"/>\n"
             "</head>\n"
             "<body style=\"margin: 0px; padding: 0px; oeb-column-number: 1;\">\n"
             "<svg xmlns=\"http://www.w3.org/2000/svg\" xmlns:xlink=\"http://www.w3.org/1999/xlink\" style=\"height: 100%; width: 100%;\" viewBox=\"0 0 "_s % sWidth % u" "_s % sHeight % u"\">\n"
