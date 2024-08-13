@@ -95,7 +95,7 @@ void BookFile::open()
                 {
                     MyDBG << "Error open file: " << sZipChain[i];
                 }
-                vData.push_back(zipFile.readAll());
+                vData.emplace_back(zipFile.readAll());
                 zipFile.close();
                 uz.close();
             }

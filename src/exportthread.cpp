@@ -111,24 +111,24 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
     QString tmp_dir;
     if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
         tmp_dir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0);
-    book_dir.mkpath(tmp_dir + QStringLiteral("/freeLib"));
+    book_dir.mkpath(tmp_dir + u"/freeLib"_s);
 
-    QStringList out_file;
+    std::vector<QString> out_file;
     int i = 0;
     QFile file;
     for(const QBuffer* buf: vOutBuff)
     {
-        out_file << tmp_dir + QStringLiteral("/freeLib/book%1.").arg(QString::number(i)) + fi.suffix();
+        out_file.emplace_back(tmp_dir % u"/freeLib/book%1."_s.arg(QString::number(i)) % fi.suffix());
         i++;
-        QFile::remove(out_file.last());
-        file.setFileName(out_file.last());
+        QFile::remove(out_file.back());
+        file.setFileName(out_file.back());
         file.open(QFile::WriteOnly);
         file.write(buf->data());
         file.close();
     }
-    if(out_file.count() == 0)
+    if(out_file.size() == 0)
         return false;
-    QString current_out_file = out_file.first();
+    QString current_out_file = out_file.front();
     if(
             (pExportOptions_->sOutputFormat == u"MOBI" ||
              pExportOptions_->sOutputFormat == u"EPUB" ||
@@ -356,7 +356,7 @@ void ExportThread::export_books()
                 sFileName = pExportOptions_->sExportFileName;
                 if(sFileName.isEmpty())
                     sFileName = ExportOptions::sDefaultEexpFileName;
-                QStringList listPartName = libs[idCurrentLib].fillParams(sFileName, idBook).split(QStringLiteral("/"));
+                QStringList listPartName = libs[idCurrentLib].fillParams(sFileName, idBook).split(u"/"_s);
                 //Проверка и уменьшение длины имени файла до nMaxFileName байт
                 for(int i = 0; i<listPartName.size(); i++){
                     auto &sPartName = listPartName[i];
@@ -367,15 +367,15 @@ void ExportThread::export_books()
                     if(i == 0)
                         sFileName = sPartName.trimmed();
                     else
-                        sFileName += QStringLiteral("/") + sPartName.trimmed();
+                        sFileName += u"/"_s + sPartName.trimmed();
                 }
 
-                sFileName += QStringLiteral(".") + book.sFormat;
+                sFileName += u"."_s + book.sFormat;
                 if(pExportOptions_->bTransliteration)
                     sFileName = Transliteration(sFileName);
             }
 
-            sFileName = dir.path() % QStringLiteral("/") % sFileName;
+            sFileName = dir.path() % u"/"_s % sFileName;
         }
 
         if(convert(vBuffers, idCurrentLib, sFileName, count, vBooks[0]))
