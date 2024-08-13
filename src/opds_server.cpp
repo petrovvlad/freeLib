@@ -325,7 +325,7 @@ void opds_server::addNavigation(QJsonArray &navigation, const QString &sTitle, c
         properties[u"numberOfItems"] = static_cast<int>(nCount);
         entry[u"properties"] = properties;
     }
-    navigation.push_back(entry);
+    navigation.push_back(std::move(entry));
 }
 
 void opds_server::addLink(QJsonArray &links, const QString sType, const QString &sHRef, const QString &sRel)
@@ -334,7 +334,7 @@ void opds_server::addLink(QJsonArray &links, const QString sType, const QString 
     link[u"rel"] = sRel;
     link[u"type"] = sType;
     link[u"href"] = sHRef;
-    links.push_back(link);
+    links.push_back(std::move(link));
 }
 
 void opds_server::addLink(QDomNode &node, const QString sType, const QString &sHRef,const QString &sRel , const QString &sTitle)
@@ -688,7 +688,7 @@ QJsonObject opds_server::docHeaderOPDS2(const QString &sTitle, const QString &sL
     linkSearch[u"href"] = QString(sLibUrl % u"/search{?query,title,author}"_s % (sSession.isEmpty() ?u""_s :u"&session="_s % sSession));
     linkSearch[u"type"] = u"application/opds+json"_s;
     linkSearch[u"templated"] = true;
-    links.push_back(linkSearch);
+    links.push_back(std::move(linkSearch));
 
     root[u"links"] = links;
     return root;
@@ -1062,10 +1062,10 @@ QHttpServerResponse opds_server::fillPageOPDS2(const std::vector<uint> &vBooks, 
                 QJsonObject link;
                 link[u"type"] = u"application/opds+json"_s;
                 link[u"href"] = QString(sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery);
-                links.push_back(link);
+                links.push_back(std::move(link));
                 joAuthor[u"links"] = links;
             }
-            authors.push_back(joAuthor);
+            authors.push_back(std::move(joAuthor));
         }
         metadata[u"author"] = authors;
         metadata[u"language"] = lib.vLaguages[book.idLanguage];
@@ -1078,9 +1078,9 @@ QHttpServerResponse opds_server::fillPageOPDS2(const std::vector<uint> &vBooks, 
             QJsonObject link;
             link[u"type"] = u"application/opds+json"_s;
             link[u"href"] = QString(sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery);
-            links.push_back(link);
+            links.push_back(std::move(link));
             genre[u"links"] = links;
-            subject.push_back(genre);
+            subject.push_back(std::move(genre));
         }
         metadata[u"subject"] = subject;
         entry[u"metadata"] = metadata;
@@ -1112,10 +1112,10 @@ QHttpServerResponse opds_server::fillPageOPDS2(const std::vector<uint> &vBooks, 
             QJsonObject image;
             image[u"type"] = u"image/jpeg"_s;
             image[u"href"] = QString(sLibUrl % u"/covers/"_s % sIdBook % u"/cover.jpg"_s);
-            images.push_back(image);
+            images.push_back(std::move(image));
             entry[u"images"] = images;
         }
-        publications.push_back(entry);
+        publications.push_back(std::move(entry));
     }
     root[u"publications"] = publications;
 
@@ -2445,7 +2445,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
 
 
     std::vector<ushort> vIdGenres;
-    QMap<ushort, uint> mCounts;
+    std::unordered_map<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
         if(genres[idParentGenre].idParrentGenre > 0){
@@ -2520,7 +2520,7 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
 
 
     std::vector<ushort> vIdGenres;
-    QMap<ushort, uint> mCounts;
+    std::unordered_map<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
         if(genres[idParentGenre].idParrentGenre > 0){
@@ -2906,7 +2906,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
                 QFileInfo fi(file);
 
                 fb2mobi conv(pExportOptions, idLib);
-                QString sOutFile = conv.convert(QStringList() << fi.absoluteFilePath(), idBook);
+                QString sOutFile = conv.convert({fi.absoluteFilePath()}, idBook);
                 file.setFileName(sOutFile);
                 file.open(QFile::ReadOnly);
                 baBook = file.readAll();
