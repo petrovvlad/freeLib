@@ -2207,9 +2207,7 @@ void MainWindow::UpdateExportMenu()
     {
         const ExportOptions &exportOptions = options.vExportOptions.at(i);
         if(bKindlegenInstalled ||
-            (exportOptions.sOutputFormat != u"MOBI") &&
-            (exportOptions.sOutputFormat != u"AZW3") &&
-            (exportOptions.sOutputFormat != u"MOBI7"))
+            (exportOptions.format != mobi && exportOptions.format != azw3 && exportOptions.format != mobi7))
         {
             QAction *action = new QAction(exportOptions.sName, menu/*this*/);
             action->setData(i);

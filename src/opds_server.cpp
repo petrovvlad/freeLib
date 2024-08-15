@@ -2867,9 +2867,21 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
 
     ExportOptions *pExportOptions = nullptr;
     int count = options.vExportOptions.size();
+    ExportFormat format;
+    if(sFormat == u"EPUB")
+        format = epub;
+    else if(sFormat == u"AZW3")
+        format = azw3;
+    else if(sFormat == u"MOBI")
+        format = mobi;
+    else if(sFormat == u"MOBI7")
+        format = mobi7;
+    else
+        format = asis;
+
     for(int i=0; i<count; i++)
     {
-        if((options.vExportOptions[i].sOutputFormat.toLower() == sFormat) || (sFormat == u"fb2"_s && options.vExportOptions[i].sOutputFormat == u"-"_s && pLib->books[idBook].sFormat == u"fb2"_s))
+        if((options.vExportOptions[i].format == format) || (sFormat == u"fb2"_s && options.vExportOptions[i].format == asis && pLib->books[idBook].sFormat == u"fb2"_s))
         {
             pExportOptions = &options.vExportOptions[i];
             break;
@@ -2895,7 +2907,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
         sBookFileName = book_file.fileName();
         if(pExportOptions != nullptr && pExportOptions->bOriginalFileName)
             sBookFileName = book.sFile % u"."_s % sFormat;;
-        if(sFormat == u"epub"_s || sFormat == u"mobi"_s || sFormat == u"azw3"_s)
+        if(format == epub || format == mobi || format == azw3)
         {
             if(book.sFormat != sFormat){
                 QFile file;
@@ -2911,7 +2923,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
                 file.open(QFile::ReadOnly);
                 baBook = file.readAll();
             }
-            if(sFormat == u"epub"_s){
+            if(format == epub){
                 baContentType = "application/epub+zip"_ba;
             }
             else{

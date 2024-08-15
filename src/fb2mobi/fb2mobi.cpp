@@ -672,7 +672,7 @@ void fb2mobi::parse_format(const QDomNode &elem, QString tag , QString css, QStr
         str = u"<"_s + tag;
         if(!css.isEmpty())
             str += u" class=\"%1\""_s.arg(css);
-        if(pExportOptions_->nFootNotes==3 && tag.toLower() == u"a" && sOutputFormat_ == u"EPUB")
+        if(pExportOptions_->nFootNotes==3 && tag.toLower() == u"a" && outputFormat_ == epub)
         {
             str += u" epub:type=\"noteref\""_s;
         }
@@ -1335,14 +1335,14 @@ void fb2mobi::generate_html(QFile *file)
             QString title = notes[0].isEmpty() ?u"^"_s :notes[0];
             if(pExportOptions_->nFootNotes == 3)
             {
-                if(sOutputFormat_ == u"EPUB")
+                if(outputFormat_ == epub)
                     *str += u"<div epub:type=\"footnote\" id=\"%1\">"_s.arg(id);
                 else
                     *str += u"<div id=\"%1\"><div class=\"titlenotes\"><a href=\"%2\">[%3] </a></div>"_s.arg(id,href,title);
             }
             else
             {
-                if(sOutputFormat_ == u"EPUB")
+                if(outputFormat_ == epub)
                     *str += u"<div class=\"titlenotes\" id=\"%1\"><a href=\"%2\">[%3] </a></div>"_s.arg(id, href, title);
                 else
                     *str += u"<div class=\"titlenotes\" id=\"%1\">%2</div>"_s.arg(id, title);
@@ -1543,7 +1543,7 @@ QString fb2mobi::convert(uint idBook)
     dir.mkpath(sTmpDir_ + u"/OEBPS"_s);
 
     QBuffer outbuff;
-    sOutputFormat_ = u"EPUB"_s;
+    outputFormat_ = epub;
     if(libs[idLib_].books[idBook].sFormat != u"fb2")
         return u""_s;
     pBook_ = &libs[idLib_].books[idBook];
@@ -1667,21 +1667,22 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
 {
     pBook_ = &libs[idLib_].books[idBook];
     idBook_ = idBook;
-    sOutputFormat_ = pExportOptions_->sOutputFormat;
+    outputFormat_ = pExportOptions_->format;
     if(files.size() == 1)
     {
         fb2file.setFile(files.at(0));
         QString out_file;
         if(fb2file.suffix().toLower() == u"epub" &&
-                (pExportOptions_->sOutputFormat == u"MOBI" ||
-                 pExportOptions_->sOutputFormat == u"AZW3"))
+            pExportOptions_->format == mobi ||
+            pExportOptions_->format == azw3
+                )
         {
             QString sKindlegen = QApplication::applicationDirPath() + QStringLiteral("/kindlegen");
             if(!QFile::exists(sKindlegen))
                 sKindlegen = u"kindlegen"_s;
             QProcess::execute(sKindlegen, {sTmpDir_ % u"/"_s % fb2file.fileName()});
             out_file = sTmpDir_ % u"/"_s % fb2file.completeBaseName() % u".mobi"_s;
-            if(pExportOptions_->sOutputFormat == u"AZW3")
+            if(pExportOptions_->format == azw3)
             {
                 out_file = GenerateAZW3(out_file);
             }
@@ -1933,7 +1934,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         }
     }
 
-    if(!sFileCover_.isEmpty() && pExportOptions_->sOutputFormat == u"EPUB"){
+    if(!sFileCover_.isEmpty() && pExportOptions_->format == epub){
         QString sWidth = QString::number(width);
         QString sHeight = QString::number(height);
 
@@ -1975,9 +1976,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         f.close();
     }
 
-    if(pExportOptions_->sOutputFormat == u"MOBI" ||
-            pExportOptions_->sOutputFormat == u"AZW3" ||
-            pExportOptions_->sOutputFormat == u"MOBI7")
+    if(pExportOptions_->format == mobi || pExportOptions_->format == azw3 || pExportOptions_->format == mobi7)
         generate_ncx();
     else
         generate_ncx_epub();
@@ -1987,9 +1986,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     ts << buf;
     f.close();
 
-    if(pExportOptions_->sOutputFormat == u"MOBI" ||
-            pExportOptions_->sOutputFormat == u"AZW3" ||
-            pExportOptions_->sOutputFormat == u"MOBI7")
+    if(pExportOptions_->format == mobi || pExportOptions_->format == azw3 || pExportOptions_->format == mobi7)
         generate_opf();
     else
         generate_opf_epub();
@@ -1999,9 +1996,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     ts << buf;
     f.close();
 
-    if(pExportOptions_->sOutputFormat == u"MOBI" ||
-            pExportOptions_->sOutputFormat == u"AZW3" ||
-            pExportOptions_->sOutputFormat == u"MOBI7")
+    if(pExportOptions_->format == mobi || pExportOptions_->format == azw3 || pExportOptions_->format == mobi7)
     {
         QString sKindlegen = QApplication::applicationDirPath() + u"/kindlegen"_s;
         if(!QFile::exists(sKindlegen))
@@ -2009,15 +2004,14 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         QProcess::execute(sKindlegen, {opf_file});
         out_file = sTmpDir_ + u"/OEBPS/book.mobi"_s;
     }
-    if(pExportOptions_->sOutputFormat == QStringLiteral("AZW3"))
-    {
+    switch(pExportOptions_->format){
+    case azw3:
         out_file = GenerateAZW3(out_file);
-    }
-    if(pExportOptions_->sOutputFormat == u"MOBI7")
-    {
+        break;
+    case mobi7:
         out_file = GenerateMOBI7(out_file);
-    }
-    else if(pExportOptions_->sOutputFormat == u"EPUB")
+        break;
+    case epub:
     {
         if(QDir(sTmpDir_ + u"/OEBPS/pic"_s).entryList(QStringList(), QDir::Files).count() == 0)
         {
@@ -2050,8 +2044,10 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         zip.close();
 
         out_file = sTmpDir_ + u"/book.epub"_s;
+
     }
-    else if(pExportOptions_->sOutputFormat == u"PDF")
+        break;
+    case pdf:
     {
 
 //        QWebEnginePage* pdf = new QWebEnginePage();
@@ -2071,6 +2067,9 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
 //        pdf->printToPdf(out_file);
 //        qDebug()<<out_file<<html_files[0].file_name;
 //        delete pdf;
+    }
+    default:
+        break;
     }
     return out_file;
 }

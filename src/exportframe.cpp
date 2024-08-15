@@ -19,6 +19,12 @@ ExportFrame::ExportFrame(QWidget *parent) :
     ui->stackedWidget->setCurrentIndex(0);
     ui->tabWidget->setCurrentIndex(0);
     ui->toolBox->setCurrentIndex(0);
+    ui->OutputFormat->addItem(u"-"_s, ExportFormat::asis);
+    ui->OutputFormat->addItem(u"EPUB"_s, ExportFormat::epub);
+    ui->OutputFormat->addItem(u"AZW3"_s, ExportFormat::azw3);
+    ui->OutputFormat->addItem(u"MOBI"_s, ExportFormat::mobi);
+    ui->OutputFormat->addItem(u"MOBI7"_s, ExportFormat::mobi7);
+
     onOutputFormatChanged(0);
     onConnectionTypeChanged(0);
     connect(ui->AddFont, &QPushButton::clicked, this, [this](){this->AddFont();});
@@ -81,10 +87,10 @@ void ExportFrame::onOutputFormatChanged(int /*index*/)
 
 void ExportFrame::onConnectionTypeChanged(int /*index*/)
 {
-    if(ui->ConnectionType->currentText().toLower() == QStringLiteral("tcp"))
-        ui->Port->setText(QStringLiteral("25"));
+    if(ui->ConnectionType->currentText().toLower() == u"tcp"_s)
+        ui->Port->setText(u"25"_s);
     else
-        ui->Port->setText(QStringLiteral("465"));
+        ui->Port->setText(u"465"_s);
 }
 
 void ExportFrame::Load(const ExportOptions *pExportOptions)
@@ -110,7 +116,13 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
     ui->userCSS->setChecked(pExportOptions->bUserCSS);
     ui->UserCSStext->setPlainText(pExportOptions->sUserCSS);
     ui->split_file->setChecked(pExportOptions->bSplitFile);
-    ui->OutputFormat->setCurrentText(pExportOptions->sOutputFormat);
+    auto count = ui->OutputFormat->count();
+    for(int i=0; i<count; ++i){
+        if(ui->OutputFormat->itemData(i) == pExportOptions->format){
+            ui->OutputFormat->setCurrentIndex(i);
+            break;
+        }
+    }
     ui->break_after_cupture->setChecked(pExportOptions->bBreakAfterCupture);
     ui->annotation->setChecked(pExportOptions->bAnnotation);
     ui->footnotes->setCurrentIndex(pExportOptions->nFootNotes);
@@ -172,12 +184,13 @@ QStringList ExportFrame::Save(ExportOptions *pExportOptions)
     pExportOptions->sDevicePath = ui->Path->text().trimmed();
     pExportOptions->nEmailPause = ui->PauseMail->value();
     pExportOptions->nEmailConnectionType = ui->ConnectionType->currentIndex();
-    pExportOptions->sSendTo = ui->radioDevice->isChecked() ?QStringLiteral("device") :QStringLiteral("e-mail");
+    pExportOptions->sSendTo = ui->radioDevice->isChecked() ?u"device"_s :u"e-mail"_s;
     pExportOptions->sCurrentTool = ui->CurrentTools->currentText();
     pExportOptions->bAskPath = ui->askPath->isChecked();
     pExportOptions->bOriginalFileName = ui->originalFileName->isChecked();
     pExportOptions->sExportFileName = ui->ExportFileName->text().trimmed();
-    pExportOptions->sOutputFormat = ui->OutputFormat->currentText();
+    pExportOptions->format = ui->OutputFormat->currentData().value<ExportFormat>();
+
     pExportOptions->bDropCaps = ui->dropcaps->isChecked();
     pExportOptions->bJoinSeries = ui->join_series->isChecked();
     pExportOptions->nHyphenate = ui->hyphenate->currentIndex();
@@ -352,7 +365,7 @@ void ExportFrame::onBtnDefaultCSSclicked()
         if(QMessageBox::question(this, tr("Load CSS"), tr("Are you sure you want to load default CSS?"), QMessageBox::Yes|QMessageBox::No, QMessageBox::NoButton) != QMessageBox::Yes)
             return;
     }
-    QFile file(QStringLiteral(":/xsl/css/style.css"));
+    QFile file(u":/xsl/css/style.css"_s);
     file.open(QFile::ReadOnly);
     QTextStream in(&file);
     ui->UserCSStext->setPlainText(in.readAll());

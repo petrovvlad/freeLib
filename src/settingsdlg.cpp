@@ -240,9 +240,9 @@ void SettingsDlg::updateKindelegenWarring(int iExportOpton)
     {
         const ExportOptions *pExportOptions = &options_.vExportOptions.at(iExportOpton);
         bool bKindlgenLableVisible = !kindlegenInstalled() &&
-                                     (pExportOptions->sOutputFormat == u"MOBI" ||
-                                      pExportOptions->sOutputFormat == u"AZW3" ||
-                                      pExportOptions->sOutputFormat == u"MOBI7");
+                                     (pExportOptions->format == mobi ||
+                                      pExportOptions->format == azw3 ||
+                                      pExportOptions->format == mobi7);
         ui->label_kindlegen->setVisible(bKindlgenLableVisible);
     }
 }
@@ -458,7 +458,7 @@ void SettingsDlg::DelApp()
 void SettingsDlg::onAddExportClicked()
 {
     ExportOptions exportOptions;
-    exportOptions.setDefault(tr("Send to ..."), QStringLiteral("-"), false);
+    exportOptions.setDefault(tr("Send to ..."), asis, false);
     ExportFrame* frame=new ExportFrame(this);
     ui->stackedWidget->addWidget(frame);
     ui->ExportName->addItem(exportOptions.sName, false);

@@ -100,10 +100,10 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
         pSettings->setValue(QStringLiteral("sendTo"), sSendTo);
         pSettings->setValue(QStringLiteral("current_tool"), sCurrentTool);
     }
-    pSettings->setValue(QStringLiteral("askPath"), bAskPath);
-    pSettings->setValue(QStringLiteral("originalFileName"), bOriginalFileName);
-    pSettings->setValue(QStringLiteral("ExportFileName"), sExportFileName);
-    pSettings->setValue(QStringLiteral("OutputFormat"), sOutputFormat);
+    pSettings->setValue(u"askPath"_s, bAskPath);
+    pSettings->setValue(u"originalFileName"_s, bOriginalFileName);
+    pSettings->setValue(u"ExportFileName"_s, sExportFileName);
+    pSettings->setValue(u"OutputFormat"_s, format);
     pSettings->setValue(QStringLiteral("dropcaps"), bDropCaps);
     pSettings->setValue(QStringLiteral("join_series"), bJoinSeries);
     pSettings->setValue(QStringLiteral("hyphenate"), nHyphenate);
@@ -184,8 +184,21 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     nVignette = pSettings->value(QStringLiteral("Vignette"), 0).toUInt();
     bUserCSS = pSettings->value(QStringLiteral("userCSS"), false).toBool();
     sUserCSS = pSettings->value(QStringLiteral("UserCSStext"), "").toString();
-    bSplitFile = pSettings->value(QStringLiteral("split_file"), true).toBool();
-    sOutputFormat = pSettings->value(QStringLiteral("OutputFormat")).toString();
+    bSplitFile = pSettings->value(u"split_file"_s, true).toBool();
+    QVariant varOutputFormat = pSettings->value(u"OutputFormat"_s);
+    QString sFormat = varOutputFormat.toString();
+    if(sFormat == u"EPUB")
+        format = epub;
+    else if(sFormat == u"AZW3")
+        format = azw3;
+    else if(sFormat == u"MOBI")
+        format = mobi;
+    else if(sFormat == u"MOBI7")
+        format = mobi7;
+    else if(sFormat == u"-")
+        format = asis;
+    else
+        format = varOutputFormat.value<ExportFormat>();
     bBreakAfterCupture = pSettings->value(QStringLiteral("break_after_cupture"), true).toBool();
     bAnnotation = pSettings->value(QStringLiteral("annotation"), false).toBool();
     nFootNotes = pSettings->value(QStringLiteral("footnotes"), 0).toUInt();
@@ -223,10 +236,10 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     pSettings->endArray();
 }
 
-void ExportOptions::setDefault(const QString &_sName, const QString &_sOtputFormat, bool _bDefault)
+void ExportOptions::setDefault(const QString &_sName, ExportFormat _OtputFormat, bool _bDefault)
 {
     sName = _sName;
-    sOutputFormat = _sOtputFormat;
+    format = _OtputFormat;
     bDefault = _bDefault;
     sSendTo = QStringLiteral("device");
     nEmailServerPort = 25;
@@ -303,10 +316,10 @@ void Options::setExportDefault()
     vExportOptions.clear();
     vExportOptions.resize(4);
 
-    vExportOptions[0].setDefault(QApplication::tr("Save as") + QStringLiteral(" ..."), QStringLiteral("-"), true);
-    vExportOptions[1].setDefault(QApplication::tr("Save as") + QStringLiteral(" MOBI"), QStringLiteral("MOBI"), false);
-    vExportOptions[2].setDefault(QApplication::tr("Save as") + QStringLiteral(" EPUB"), QStringLiteral("EPUB"), false);
-    vExportOptions[3].setDefault(QApplication::tr("Save as") + QStringLiteral(" AZW3"), QStringLiteral("AZW3"), false);
+    vExportOptions[0].setDefault(QApplication::tr("Save as") + u" ..."_s, asis, true);
+    vExportOptions[1].setDefault(QApplication::tr("Save as") + u" MOBI"_s, mobi, false);
+    vExportOptions[2].setDefault(QApplication::tr("Save as") + u" EPUB"_s, epub, false);
+    vExportOptions[3].setDefault(QApplication::tr("Save as") + u" AZW3"_s, azw3, false);
 }
 
 void Options::Load(QSharedPointer<QSettings> pSettings)

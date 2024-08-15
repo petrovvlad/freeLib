@@ -130,11 +130,11 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
         return false;
     QString current_out_file = out_file.front();
     if(
-            (pExportOptions_->sOutputFormat == u"MOBI" ||
-             pExportOptions_->sOutputFormat == u"EPUB" ||
-             pExportOptions_->sOutputFormat == u"AZW3" ||
-             pExportOptions_->sOutputFormat == u"MOBI7" ||
-             pExportOptions_->sOutputFormat == u"PDF") &&
+        (pExportOptions_->format == mobi ||
+         pExportOptions_->format == epub ||
+         pExportOptions_->format == azw3 ||
+         pExportOptions_->format == mobi7 ||
+         pExportOptions_->format == pdf ) &&
             (fi.suffix().toLower() == u"fb2" || fi.suffix().toLower() == u"epub"))
     {
         fb2mobi conv(pExportOptions_, idLib);
@@ -240,7 +240,7 @@ void ExportThread::export_books()
 {
     QDir dir = sExportDir_;
 
-    if(pExportOptions_->bOriginalFileName && send_type != ST_Mail && pExportOptions_->sOutputFormat == u"-")
+    if(pExportOptions_->bOriginalFileName && send_type != ST_Mail && pExportOptions_->format == asis)
     {
         QString LibPath = libs[idCurrentLib].path;
         for(auto idBook: vBbooks_)
@@ -293,8 +293,8 @@ void ExportThread::export_books()
 
     std::vector<std::vector<uint> > vBbooksGroup;
     bool bNeedGroupSeries =
-            (pExportOptions_->sOutputFormat == u"EPUB" || pExportOptions_->sOutputFormat == u"MOBI" ||
-             pExportOptions_->sOutputFormat == u"AZW3" || pExportOptions_->sOutputFormat == u"MOBI7") &&
+        (pExportOptions_->format == epub || pExportOptions_->format == mobi ||
+         pExportOptions_->format == azw3 || pExportOptions_->format == mobi7) &&
             pExportOptions_->bJoinSeries;
 
     for(auto idBook: vBbooks_)

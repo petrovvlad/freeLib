@@ -148,7 +148,7 @@ private:
 
     bool join_seria;
     int current_book;
-    QString sOutputFormat_;
+    ExportFormat outputFormat_;
 
     void InsertSeriaNumberToCover(const QString &number, CreateCover create_cover);
     bool need_end_chapter_vignette;
