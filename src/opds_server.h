@@ -29,6 +29,7 @@ private:
 
     void addTextNode(QDomNode &node, const QString &sName, const QString &sText, const QString &sClass);
     void addHRefNode(QDomNode &node, const QString &sText, const QString &sHRef, const QString &sClass);
+    void addDownloadItem(QDomNode &node, const QString &sText, const QString &sHRef);
     static void addNavigation(QJsonArray &navigation, const QString &sTitle, const QString &sHRef, uint nCount=0);
     static void addLink(QJsonArray &links, const QString sType, const QString &sHRef, const QString &sRel);
     void addLink(QDomNode &node, const QString sType, const QString &sHRef, const QString &sRel, const QString &sTitle);

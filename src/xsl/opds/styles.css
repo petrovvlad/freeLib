@@ -3,6 +3,9 @@
   img.home {
     filter: invert(100%);
   }
+  img.download {
+    filter: invert(100%);
+  }
 }
 
 a {
@@ -56,9 +59,17 @@ a.book {
 div.book {
   font-size: 1.5em;
   font-weight: bold;
+  font-family: sans-serif;
   padding-bottom: 0.1em
 }
-
+a.author {
+  font-size: 1.4em;
+  font-weight: normal;
+  font-style: oblique;
+  font-family: sans-serif;
+  display: block;
+  color: light-dark(#444444, #c0c0c0);
+}
 a.item {
   font-size: 1.5em;
   font-weight: bold;
@@ -83,6 +94,11 @@ div.caption {
   font-weight: bold;
   padding-bottom: 0.1em;
   text-decoration: underline;
+}
+
+div.search {
+  font-size:1.5em;
+  font-weight: bold;
 }
 
 div.page-bar {
@@ -136,6 +152,17 @@ img.cover {
 img.home {
   height: 32px;
 }
+a.download {
+  font-family: Arial,sans-serif;
+  font-size: 1em;
+  padding: 0.1em;
+  border: 1px;
+  border-radius: 3px;
+  border-style: solid;
+}
+img.download {
+  height: 1em;
+}
 hr {
   color: light-dark(black, white);
   background-color: light-dark(black, white);
@@ -167,6 +194,9 @@ hr {
   }
   img.home {
     height: 48px;
+  }
+  td {
+    margin: 0.1em
   }
 
 }

@@ -55,6 +55,19 @@ opds_server::opds_server(QObject *parent) :
         return response;
     });
 
+    httpServer_.route(u"/<arg>.svg"_s, QHttpServerRequest::Method::Get, [](const QString &sUrl)
+                      {
+                          QString sFile = u":/xsl/opds/"_s % sUrl % u".svg"_s;
+                          QFile file(sFile);
+                          file.open(QFile::ReadOnly);
+                          QByteArray ba = file.readAll();
+                          if(ba.isEmpty())
+                              return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+                          QHttpServerResponse response("image/svg+xml"_ba, ba);
+                          response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+                          return response;
+                      });
+
     httpServer_.route(u"/<arg>.css"_s, QHttpServerRequest::Method::Get, [](const QString &sUrl)
     {
         QString sCSS = u":/xsl/opds/"_s % sUrl % u".css"_s;
@@ -301,6 +314,21 @@ void opds_server::addHRefNode(QDomNode &node, const QString &sText, const QStrin
     el.appendChild(txt);
 }
 
+void opds_server::addDownloadItem(QDomNode &node, const QString &sText, const QString &sHRef)
+{
+    QDomElement el = doc_.createElement(u"a"_s);
+    el.setAttribute(u"href"_s, sHRef);
+    el.setAttribute(u"class"_s, u"download"_s);
+    QDomElement img = doc_.createElement(u"img"_s);
+    img.setAttribute(u"class"_s, u"download"_s);
+    img.setAttribute(u"src"_s, u"/download.svg"_s);
+    el.appendChild(img);
+    node.appendChild(el);
+    QDomText txt = doc_.createTextNode(sText);
+    el.appendChild(txt);
+}
+
+
 void opds_server::addNavigation(QJsonArray &navigation, const QString &sTitle, const QString &sHRef, uint nCount)
 {
     QJsonObject entry;
@@ -371,7 +399,7 @@ void opds_server::addEntry(QDomElement &feed, const QString &sId, const QString 
 QString siplifySearchString(const QString &str)
 {
     QString sSimplified = str;
-    const static QRegularExpression simpl(u"[.,«»?!-]"_s);
+    const static QRegularExpression simpl(u"[.,«»?!-\"'()]"_s);
     sSimplified = sSimplified.replace(simpl, u" "_s).simplified().toCaseFolded();
 
     return sSimplified;
@@ -831,34 +859,36 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
             el.setAttribute(u"src"_s, sLibUrl % u"/covers/"_s % sIdBook % u"/cover.jpg"_s);
             el.setAttribute(u"class"_s, u"cover"_s);
         }
-        if(bShowAuthor)
-            addHRefNode(entry, lib.authors.at(book.idFirstAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(book.idFirstAuthor) % sSessionQuery, u"book"_s);
 
         QString sSerial = book.idSerial == 0 ?u""_s :lib.serials.at(book.idSerial).sName;
         QString sText = book.sName % (sSerial.isEmpty() || book.numInSerial==0  ?u""_s :(u" ("_s % sSerial % u"["_s % QString::number(book.numInSerial) % u"])"_s));
         addTextNode(entry, u"div"_s, sText, u"book"_s);
+        if(bShowAuthor)
+            addHRefNode(entry, lib.authors.at(book.idFirstAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(book.idFirstAuthor) % sSessionQuery, u"author"_s);
         QDomElement br = doc_.createElement(u"br"_s);
         entry.appendChild(br);
 
         if(book.sFormat == u"fb2"_s)
         {
-            addHRefNode(entry, u"fb2"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery, u"item"_s);
-            addHRefNode(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"item"_s);
+            addDownloadItem(entry, u"fb2"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery);
+
+
+            addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery);
             if(bKindleInstallsed){
-                addHRefNode(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"item"_s);
-                addHRefNode(entry, u"azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"item"_s);
+                addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
+                addDownloadItem(entry, u"azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery);
             }
         }
         else if(book.sFormat == u"epub"_s)
         {
-            addHRefNode(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s, u"item"_s);
+            addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s);
             if(bKindleInstallsed)
-                addHRefNode(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"item"_s);
+                addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
         }
         else if(book.sFormat == u"mobi"_s)
-            addHRefNode(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"item"_s);
+            addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
         else
-            addHRefNode(entry, book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"item"_s);
+            addDownloadItem(entry, book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery);
 
         if(options.bOpdsShowAnotation)
             addTextNode(entry, u"div"_s, book.sAnnotation, u"annotation"_s);
@@ -1263,7 +1293,7 @@ void opds_server::attachSearchFormHTML(QDomElement &feed, const QString &sTitle,
     form.appendChild(div);
 
     QDomElement el;
-    addTextNode(div, u"div"_s, sTitle, u"book"_s);
+    addTextNode(div, u"div"_s, sTitle, u"search"_s);
 
     el = doc_.createElement(u"input"_s);
     el.setAttribute(u"type"_s, u"search"_s);
@@ -2870,13 +2900,13 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     ExportOptions *pExportOptions = nullptr;
     int count = options.vExportOptions.size();
     ExportFormat format;
-    if(sFormat == u"EPUB")
+    if(sFormat == u"epub")
         format = epub;
-    else if(sFormat == u"AZW3")
+    else if(sFormat == u"azw3")
         format = azw3;
-    else if(sFormat == u"MOBI")
+    else if(sFormat == u"mobi")
         format = mobi;
-    else if(sFormat == u"MOBI7")
+    else if(sFormat == u"mobi7")
         format = mobi7;
     else
         format = asis;
