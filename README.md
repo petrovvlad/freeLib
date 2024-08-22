@@ -22,8 +22,20 @@ freeLib - каталогизатор для библиотек LibRusEc и Flibu
 * Настройка форматирования книг (шрифты, буквица, заголовки, переносы, сноски)
 * Чтение книг с помощью внешних приложений. Можно назначить отдельную программу для каждого формата.
 
-#### Сборка и установка из исходников в Ubuntu
-
+### Установка
+#### Ubuntu
+```
+sudo add-apt-repository ppa:alex-p/freelib \
+sudo apt update \
+sudo apt install freelib
+```
+#### Debian
+[Инструкция](https://notesalexp.org/freelib/)
+#### Arch Linux
+```
+yay -S freelib
+```
+### Сборка и установка из исходников в Ubuntu
 Установить необходимые компоненты: 
 в Ubuntu ≥ 23.04
 ```
@@ -48,12 +60,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build
 sudo cmake --install . --config Release
 ```
 
-### Установка в Arch Linux
-```
-yay -S freelib
-```
-
 Для конвертации книг в AZW3, MOBI необходимо установить **kindlegen**.
 
-#### Обсуждение
+### Обсуждение
 канал Matrix:  [#freeLib:matrix.p-vlad.ru](https://matrix.to/#/#freeLib:matrix.p-vlad.ru)
