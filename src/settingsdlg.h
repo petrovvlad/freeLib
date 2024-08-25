@@ -104,6 +104,8 @@ private:
 
     void LoadSettings();
     void updateKindelegenWarring(int iExportOpton);
+
+public slots:
 private slots:
     void btnOK();
     void SaveTools();
@@ -127,10 +129,11 @@ private slots:
     void onChangeAlphabetCombobox(int index);
     void btnDBPath();
 #ifdef USE_HTTSERVER
+    void onExportFormatChanged();
+    void onUseForHttpChanged();
     void onProxyTypeCurrentIndexChanged(int index);
     void onHTTPneedPaswordClicked();
     void onOpdsEnable(int state);
-    void UpdateWebExportList();
 #endif
     virtual void reject();
 

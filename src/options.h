@@ -97,6 +97,7 @@ struct ExportOptions
     bool bCreateCover;
     bool bCreateCoverAlways;
     bool bAddCoverLabel;
+    bool bUseForHttp;
     std::vector<FontExportOptions> vFontExportOptions;
 };
 
@@ -135,7 +136,6 @@ struct Options
     QString sProxyUser;
     QString sProxyPassword;
     QString sBaseUrl;
-    int nHttpExport;
     quint16 nOpdsPort;
     quint16 nOpdsBooksPerPage;
     quint16 nProxyPort;

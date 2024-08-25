@@ -41,6 +41,9 @@ ExportFrame::ExportFrame(QWidget *parent) :
     connect(ui->PostprocessingCopy, &QCheckBox::clicked, this, &ExportFrame::onPostprocessingCopyClicked);
     connect(ui->userCSS, &QCheckBox::clicked, this, &ExportFrame::onUserCSSclicked);
     connect(ui->btnDefaultCSS, &QToolButton::clicked, this, &ExportFrame::onBtnDefaultCSSclicked);
+#ifdef USE_HTTSERVER
+    connect(ui->checkBoxUseForHttp, &QCheckBox::clicked, this, &ExportFrame::onUseForHttpChanged);
+#endif
 
     QToolButton* btnPath = new QToolButton(this);
     btnPath->setFocusPolicy(Qt::NoFocus);
@@ -82,7 +85,9 @@ void ExportFrame::onRadioEmailToggled(bool checked)
 
 void ExportFrame::onOutputFormatChanged(int /*index*/)
 {
-    ui->tabFormat->setDisabled(ui->OutputFormat->currentText() == QStringLiteral("-"));
+    ExportFormat format = ui->OutputFormat->currentData().value<ExportFormat>();
+    ui->tabFormat->setDisabled(format == asis);
+    emit OutputFormatChanged();
 }
 
 void ExportFrame::onConnectionTypeChanged(int /*index*/)
@@ -123,6 +128,9 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
             break;
         }
     }
+#ifdef USE_HTTSERVER
+    ui->checkBoxUseForHttp->setChecked(pExportOptions->bUseForHttp);
+#endif
     ui->break_after_cupture->setChecked(pExportOptions->bBreakAfterCupture);
     ui->annotation->setChecked(pExportOptions->bAnnotation);
     ui->footnotes->setCurrentIndex(pExportOptions->nFootNotes);
@@ -171,6 +179,21 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
     connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
 }
 
+ExportFormat ExportFrame::outputFormat()
+{
+    return ui->OutputFormat->currentData().value<ExportFormat>();
+}
+
+bool ExportFrame::getUseForHttp()
+{
+    return ui->checkBoxUseForHttp->isChecked();
+}
+
+void ExportFrame::setUseForHttp(bool bUse)
+{
+    ui->checkBoxUseForHttp->setChecked(bUse);
+}
+
 QStringList ExportFrame::Save(ExportOptions *pExportOptions)
 {
     pExportOptions->sEmailFrom = ui->from_email->text().trimmed();
@@ -190,6 +213,9 @@ QStringList ExportFrame::Save(ExportOptions *pExportOptions)
     pExportOptions->bOriginalFileName = ui->originalFileName->isChecked();
     pExportOptions->sExportFileName = ui->ExportFileName->text().trimmed();
     pExportOptions->format = ui->OutputFormat->currentData().value<ExportFormat>();
+#ifdef USE_HTTSERVER
+    pExportOptions->bUseForHttp = ui->checkBoxUseForHttp->isChecked();
+#endif
 
     pExportOptions->bDropCaps = ui->dropcaps->isChecked();
     pExportOptions->bJoinSeries = ui->join_series->isChecked();
@@ -257,6 +283,11 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
         }
         ++index;
     }
+}
+
+void ExportFrame::onUseForHttpChanged()
+{
+    emit UseForHttpChanged();
 }
 
 FontFrame* ExportFrame::AddFont(bool use, int tag, const QString &font, const QString &font_b, const QString &font_i, const QString &font_bi, int fontSize)

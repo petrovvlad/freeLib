@@ -56,17 +56,17 @@ opds_server::opds_server(QObject *parent) :
     });
 
     httpServer_.route(u"/<arg>.svg"_s, QHttpServerRequest::Method::Get, [](const QString &sUrl)
-                      {
-                          QString sFile = u":/xsl/opds/"_s % sUrl % u".svg"_s;
-                          QFile file(sFile);
-                          file.open(QFile::ReadOnly);
-                          QByteArray ba = file.readAll();
-                          if(ba.isEmpty())
-                              return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
-                          QHttpServerResponse response("image/svg+xml"_ba, ba);
-                          response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
-                          return response;
-                      });
+    {
+        QString sFile = u":/xsl/opds/"_s % sUrl % u".svg"_s;
+        QFile file(sFile);
+        file.open(QFile::ReadOnly);
+        QByteArray ba = file.readAll();
+        if(ba.isEmpty())
+            return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+        QHttpServerResponse response("image/svg+xml"_ba, ba);
+        response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+        return response;
+    });
 
     httpServer_.route(u"/<arg>.css"_s, QHttpServerRequest::Method::Get, [](const QString &sUrl)
     {
@@ -661,14 +661,20 @@ QDomElement opds_server::docHeaderHTML(const QString &sSessionQuery, const QStri
 
     QDomElement body = doc_.createElement(u"body"_s);
     html.appendChild(body);
-    QDomElement div = AddTextNode(u"a"_s, u""_s, body);
-    div.setAttribute(u"class"_s, u"lib"_s);
-    div.setAttribute(u"href"_s, (sLibUrl.isEmpty() ?u"/"_s :sLibUrl) + sSessionQuery);
-    QDomElement img = doc_.createElement(u"img"_s);
-    img.setAttribute(u"src"_s, u"/home.png"_s);
-    img.setAttribute(u"class"_s, u"home"_s);
-    div.appendChild(img);
-    addHRefNode(body, sLibName, (sLibUrl.isEmpty() ?u"/"_s :sLibUrl) + sSessionQuery, u"lib"_s);
+    QDomElement a = AddTextNode(u"a"_s, u""_s, body);
+    QString sHref = (sLibUrl.isEmpty() ?u"/"_s :sLibUrl) + sSessionQuery;
+    a.setAttribute(u"class"_s, u"lib"_s);
+    a.setAttribute(u"href"_s, sHref);
+    QDomElement svg = doc_.createElement(u"svg"_s);
+    svg.setAttribute(u"xmlns"_s, u"http://www.w3.org/2000/svg"_s);
+    svg.setAttribute(u"class"_s, u"home"_s);
+    svg.setAttribute(u"viewBox"_s, u"0 0 32 32"_s);
+    a.appendChild(svg);
+    QDomElement path = doc_.createElement(u"path"_s);
+    path.setAttribute(u"d"_s, u"M 1,17 16,1 31,17 h -4 v 14 h -8 v -9 h -6 v 9 h -8 V 17 Z"_s);
+    svg.appendChild(path);
+
+    addHRefNode(body, sLibName, sHref, u"lib"_s);
 
     QDomElement hr = doc_.createElement(u"hr"_s);
     body.appendChild(hr);
@@ -872,18 +878,36 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
         {
             addDownloadItem(entry, u"fb2"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery);
 
-
-            addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery);
-            if(bKindleInstallsed){
-                addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
-                addDownloadItem(entry, u"azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery);
+            int count = options.vExportOptions.size();
+            for(int i=0; i<count; i++)
+            {
+                auto &exportOptions = options.vExportOptions[i];
+                if(exportOptions.bUseForHttp){
+                    if(exportOptions.format == epub)
+                        addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery);
+                    if(bKindleInstallsed){
+                        if(exportOptions.format == mobi)
+                            addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
+                        if(exportOptions.format == azw3)
+                            addDownloadItem(entry, u"azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery);
+                    }
+                }
             }
         }
         else if(book.sFormat == u"epub"_s)
         {
             addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s);
-            if(bKindleInstallsed)
-                addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
+            if(bKindleInstallsed){
+                int count = options.vExportOptions.size();
+                for(int i=0; i<count; i++)
+                {
+                    auto &exportOptions = options.vExportOptions[i];
+                    if(exportOptions.bUseForHttp && exportOptions.format == mobi){
+                        addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
+                        break;
+                    }
+                }
+            }
         }
         else if(book.sFormat == u"mobi"_s)
             addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
@@ -998,14 +1022,14 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
             addLink(entry, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(bKindleInstallsed){
                 addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-                addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+                addLink(entry, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             }
         }
         else if(book.sFormat == u"epub"_s){
             addLink(entry, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(bKindleInstallsed){
                 addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-                addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+                addLink(entry, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             }
         }else if(book.sFormat == u"mobi"_s)
             addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
@@ -1131,14 +1155,14 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
             addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(bKindleInstallsed){
                 addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-                addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+                addLink(links, u"application/azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             }
         }
         else if(book.sFormat == u"epub"){
             addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(bKindleInstallsed){
                 addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-                addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+                addLink(links, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             }
         }else if(book.sFormat == u"mobi")
             addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
@@ -1190,19 +1214,19 @@ QHttpServerResponse opds_server::rootHTML(uint idLib, const QHttpServerRequest &
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
     QDomElement feed = docHeaderHTML(sSessionQuery, pLib->name, sLibUrl);
-    QDomElement div = doc_.createElement(u"DIV"_s);
+    QDomElement div = doc_.createElement(u"div"_s);
     feed.appendChild(div);
     QDomElement el;
 
-    el = AddTextNode(u"A"_s, tr("Finding books by authors"), div);
+    el = AddTextNode(u"a"_s, tr("Finding books by authors"), div);
     el.setAttribute(u"href"_s, sLibUrl % u"/authorsindex"_s % sSessionQuery );
-    div = doc_.createElement(u"DIV"_s);
+    div = doc_.createElement(u"div"_s);
     feed.appendChild(div);
-    el = AddTextNode(u"A"_s, tr("Finding books by sequences"), div);
+    el = AddTextNode(u"a"_s, tr("Finding books by sequences"), div);
     el.setAttribute(u"href"_s, sLibUrl % u"/sequencesindex"_s % sSessionQuery);
-    div = doc_.createElement(u"DIV"_s);
+    div = doc_.createElement(u"div"_s);
     feed.appendChild(div);
-    el = AddTextNode(u"A"_s, tr("Finding books by genre"), div);
+    el = AddTextNode(u"a"_s, tr("Finding books by genre"), div);
     el.setAttribute(u"href"_s, sLibUrl % u"/genres"_s % sSessionQuery);
 
     QDomElement hr = doc_.createElement(u"HR"_s);
@@ -2913,7 +2937,8 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
 
     for(int i=0; i<count; i++)
     {
-        if((options.vExportOptions[i].format == format) || (sFormat == u"fb2"_s && options.vExportOptions[i].format == asis && pLib->books[idBook].sFormat == u"fb2"_s))
+        if((options.vExportOptions[i].format == format && options.vExportOptions[i].bUseForHttp) ||
+            (sFormat == u"fb2"_s && options.vExportOptions[i].format == asis && pLib->books[idBook].sFormat == u"fb2"_s))
         {
             pExportOptions = &options.vExportOptions[i];
             break;
