@@ -1673,9 +1673,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         fb2file.setFile(files.at(0));
         QString out_file;
         if(fb2file.suffix().toLower() == u"epub" &&
-            pExportOptions_->format == mobi ||
-            pExportOptions_->format == azw3
-                )
+            (outputFormat_ == mobi || outputFormat_ == azw3))
         {
             QString sKindlegen = QApplication::applicationDirPath() + QStringLiteral("/kindlegen");
             if(!QFile::exists(sKindlegen))
