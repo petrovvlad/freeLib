@@ -239,6 +239,8 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
 void ExportThread::export_books()
 {
     QDir dir = sExportDir_;
+    if(!dir.exists())
+        dir.mkdir(sExportDir_);
 
     if(pExportOptions_->bOriginalFileName && send_type != ST_Mail && pExportOptions_->format == asis)
     {
