@@ -53,6 +53,22 @@ sudo cmake --install . --config Release
 yay -S freelib
 ```
 
+### Сборка и установка из исходников в FreeBSD 14.0-RELEASE
+
+```
+pkg install qt5-qmake qt5-buildtools djvulibre
+```
+Скачать исходники программы:
+```
+git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
+```
+Собрать и установить:
+```
+mkdir freeLib/build && cd freeLib/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && cmake --build . -j2 && \
+sudo cmake --install . --config Release
+```
+
 Для конвертации книг в AZW3, MOBI необходимо установить **kindlegen**.
 
 #### Обсуждение
