@@ -14,7 +14,7 @@ freeLib - каталогизатор для библиотек LibRusEc и Flibu
 * Работа с несколькими библиотеками.
 * Импорт библиотек из inpx-файлов.
 * Поиск и фильтрация книг.
-* Серверы OPDS и HTTP (требуется QHttpServer).
+* Серверы OPDS и Web (требуется QHttpServer).
 * Сохранение книг в выбранную папку.
 * Различные настройки экспорта для нескольких устройств.
 * Отправка выбранных файлов книг на email.
@@ -35,7 +35,9 @@ sudo apt install freelib
 ```
 yay -S freelib
 ```
-### Сборка и установка из исходников в Ubuntu
+### Сборка и установка из исходников
+Для конвертации книг в AZW3, MOBI необходимо установить **kindlegen**.
+#### Ubuntu
 Установить необходимые компоненты: 
 в Ubuntu ≥ 23.04
 ```
@@ -60,7 +62,24 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build
 sudo cmake --install . --config Release
 ```
 
-Для конвертации книг в AZW3, MOBI необходимо установить **kindlegen**.
+#### FreeBSD 14.0-RELEASE
+```
+pkg install qt5-qmake qt5-buildtools djvulibre
+```
+
+Скачать исходники программы:
+
+```
+git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
+```
+
+Собрать и установить:
+
+```
+mkdir freeLib/build && cd freeLib/build && \
+cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr/local .. && cmake --build . -j2 && \
+sudo cmake --install . --config Release
+```
 
 ### Обсуждение
 канал Matrix:  [#freeLib:matrix.p-vlad.ru](https://matrix.to/#/#freeLib:matrix.p-vlad.ru)
