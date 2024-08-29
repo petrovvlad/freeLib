@@ -331,8 +331,8 @@ p.dropcaps
     text-indent: 0;
     text-align: center;
     page-break-after: avoid;
-    margin-bottom: 0em;
-    margin-top: 0em;
+    margin-bottom: 0;
+    margin-top: 0;
 }
 
 /*Виньетка после заголовка*/
@@ -341,7 +341,7 @@ p.dropcaps
     text-indent: 0;
     text-align: center;
     page-break-before: avoid;
-    margin-top: 0em;
+    margin-top: 0;
     margin-bottom: 0;
 }
 

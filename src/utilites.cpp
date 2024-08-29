@@ -43,10 +43,10 @@ void creatDB(const QString &sFileDB)
 bool openDB(const QString &sName)
 {
     if(!QSqlDatabase::contains(sName))
-        QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), sName);
+        QSqlDatabase::addDatabase(u"QSQLITE"_s, sName);
 
     QString sAppDir,sFileDB;
-    QSettings settings;
+    auto settings = GetSettings();
 
     QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
     if(fi.exists() && fi.isFile())
@@ -56,9 +56,9 @@ bool openDB(const QString &sName)
     else
     {
         sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-        sFileDB = sAppDir + QStringLiteral("/freeLib.sqlite");
+        sFileDB = sAppDir + u"/freeLib.sqlite"_s;
         options.sDatabasePath = sFileDB;
-        settings.setValue(QStringLiteral("database_path"), sFileDB);
+        settings->setValue(u"database_path"_s, sFileDB);
     }
     QFile file(sFileDB);
     if(!file.exists())
@@ -71,7 +71,7 @@ bool openDB(const QString &sName)
         return false;
     }
     QSqlQuery query(dbase);
-    query.exec(QStringLiteral("SELECT value FROM params WHERE name='version'"));
+    query.exec(u"SELECT value FROM params WHERE name='version'"_s);
     int version = 0;
     if(query.next())
     {
@@ -86,7 +86,7 @@ bool openDB(const QString &sName)
             return false;
         }
     }
-    query.exec(QStringLiteral("SELECT value FROM params WHERE name='version_minor'"));
+    query.exec(u"SELECT value FROM params WHERE name='version_minor'"_s);
     int nMinorVersion = 0;
     if(query.next())
     {

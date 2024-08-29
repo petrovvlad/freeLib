@@ -131,7 +131,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
     return idAuthor;
 }
 
-uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
+uint ImportThread::AddBook(qlonglong star, QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
              int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags)
 {
     QString sRepairLanguge = language.toLower();
@@ -140,8 +140,8 @@ uint ImportThread::AddBook(qlonglong star, const QString &name, qlonglong id_ser
     else if(sRepairLanguge == u"ua")
         sRepairLanguge = u"uk"_s;
     else if(sRepairLanguge == u"sh")
-        sRepairLanguge = u"sr"_s;
-
+        sRepairLanguge = u"sr"_s;    
+    name.replace(u"..."_s, u"…"_s);
 
     queryInsertBook_.bindValue(QStringLiteral(":name"), name);
     queryInsertBook_.bindValue(QStringLiteral(":star"), star);

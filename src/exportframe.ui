@@ -38,7 +38,7 @@
    <item>
     <widget class="QTabWidget" name="tabWidget">
      <property name="currentIndex">
-      <number>1</number>
+      <number>0</number>
      </property>
      <widget class="QWidget" name="tab">
       <attribute name="title">
@@ -62,47 +62,22 @@
          <property name="title">
           <string>Export parameters</string>
          </property>
-         <layout class="QFormLayout" name="formLayout_2">
-          <property name="fieldGrowthPolicy">
-           <enum>QFormLayout::FieldGrowthPolicy::FieldsStayAtSizeHint</enum>
-          </property>
-          <property name="formAlignment">
-           <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
-          </property>
+         <layout class="QGridLayout" name="gridLayout_2">
+          <item row="0" column="1">
+           <widget class="QComboBox" name="OutputFormat">
+            <property name="sizePolicy">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+              <horstretch>0</horstretch>
+              <verstretch>0</verstretch>
+             </sizepolicy>
+            </property>
+           </widget>
+          </item>
           <item row="0" column="0">
            <widget class="QLabel" name="label_12">
             <property name="text">
              <string>Convert to:</string>
             </property>
-           </widget>
-          </item>
-          <item row="0" column="1">
-           <widget class="QComboBox" name="OutputFormat">
-            <item>
-             <property name="text">
-              <string notr="true">-</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true">MOBI</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true">EPUB</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true">AZW3</string>
-             </property>
-            </item>
-            <item>
-             <property name="text">
-              <string notr="true">MOBI7</string>
-             </property>
-            </item>
            </widget>
           </item>
           <item row="1" column="0">
@@ -112,10 +87,17 @@
             </property>
            </widget>
           </item>
+          <item row="0" column="2">
+           <widget class="QCheckBox" name="checkBoxUseForHttp">
+            <property name="text">
+             <string>Use profile for OPDS/Web server</string>
+            </property>
+           </widget>
+          </item>
           <item row="1" column="1">
            <widget class="QComboBox" name="CurrentTools">
             <property name="sizePolicy">
-             <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
+             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
               <horstretch>0</horstretch>
               <verstretch>0</verstretch>
              </sizepolicy>
@@ -126,6 +108,19 @@
              </property>
             </item>
            </widget>
+          </item>
+          <item row="0" column="3">
+           <spacer name="horizontalSpacer_9">
+            <property name="orientation">
+             <enum>Qt::Orientation::Horizontal</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>40</width>
+              <height>20</height>
+             </size>
+            </property>
+           </spacer>
           </item>
          </layout>
         </widget>

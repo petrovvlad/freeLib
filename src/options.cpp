@@ -100,10 +100,11 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
         pSettings->setValue(QStringLiteral("sendTo"), sSendTo);
         pSettings->setValue(QStringLiteral("current_tool"), sCurrentTool);
     }
-    pSettings->setValue(QStringLiteral("askPath"), bAskPath);
-    pSettings->setValue(QStringLiteral("originalFileName"), bOriginalFileName);
-    pSettings->setValue(QStringLiteral("ExportFileName"), sExportFileName);
-    pSettings->setValue(QStringLiteral("OutputFormat"), sOutputFormat);
+    pSettings->setValue(u"askPath"_s, bAskPath);
+    pSettings->setValue(u"originalFileName"_s, bOriginalFileName);
+    pSettings->setValue(u"ExportFileName"_s, sExportFileName);
+    pSettings->setValue(u"OutputFormat"_s, format);
+    pSettings->setValue(u"UseForHttpServer"_s, bUseForHttp);
     pSettings->setValue(QStringLiteral("dropcaps"), bDropCaps);
     pSettings->setValue(QStringLiteral("join_series"), bJoinSeries);
     pSettings->setValue(QStringLiteral("hyphenate"), nHyphenate);
@@ -184,8 +185,22 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     nVignette = pSettings->value(QStringLiteral("Vignette"), 0).toUInt();
     bUserCSS = pSettings->value(QStringLiteral("userCSS"), false).toBool();
     sUserCSS = pSettings->value(QStringLiteral("UserCSStext"), "").toString();
-    bSplitFile = pSettings->value(QStringLiteral("split_file"), true).toBool();
-    sOutputFormat = pSettings->value(QStringLiteral("OutputFormat")).toString();
+    bSplitFile = pSettings->value(u"split_file"_s, true).toBool();
+    QVariant varOutputFormat = pSettings->value(u"OutputFormat"_s);
+    QString sFormat = varOutputFormat.toString();
+    if(sFormat == u"EPUB")
+        format = epub;
+    else if(sFormat == u"AZW3")
+        format = azw3;
+    else if(sFormat == u"MOBI")
+        format = mobi;
+    else if(sFormat == u"MOBI7")
+        format = mobi7;
+    else if(sFormat == u"-")
+        format = asis;
+    else
+        format = varOutputFormat.value<ExportFormat>();
+    bUseForHttp = pSettings->value(u"UseForHttpServer"_s, true).toBool();
     bBreakAfterCupture = pSettings->value(QStringLiteral("break_after_cupture"), true).toBool();
     bAnnotation = pSettings->value(QStringLiteral("annotation"), false).toBool();
     nFootNotes = pSettings->value(QStringLiteral("footnotes"), 0).toUInt();
@@ -223,10 +238,10 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     pSettings->endArray();
 }
 
-void ExportOptions::setDefault(const QString &_sName, const QString &_sOtputFormat, bool _bDefault)
+void ExportOptions::setDefault(const QString &_sName, ExportFormat _OtputFormat, bool _bDefault)
 {
     sName = _sName;
-    sOutputFormat = _sOtputFormat;
+    format = _OtputFormat;
     bDefault = _bDefault;
     sSendTo = QStringLiteral("device");
     nEmailServerPort = 25;
@@ -255,6 +270,7 @@ void ExportOptions::setDefault(const QString &_sName, const QString &_sOtputForm
     bCreateCover = false;
     bCreateCoverAlways = false;
     bAddCoverLabel = false;
+    bUseForHttp = true;
     nContentPlacement = 0;
     vFontExportOptions.resize(1);
     FontExportOptions *pFontExportOptions = &vFontExportOptions[0];
@@ -283,17 +299,16 @@ void Options::setDefault(){
     bOpdsShowCover = true;
     bOpdsShowAnotation = true;
     bOpdsNeedPassword = false;
-    sOpdsUser = QStringLiteral("");
+    sOpdsUser = u""_s;
     baOpdsPasswordSalt.clear();
     baOpdsPasswordHash.clear();
     nOpdsPort = nDefaultOpdsPort;
     nOpdsBooksPerPage = 15;
-    nHttpExport = 0;
     nProxyType = 0;
     nProxyPort = nDefaultProxyPort;
-    sProxyHost = QStringLiteral("");
-    sProxyUser = QStringLiteral("");
-    sProxyPassword = QStringLiteral("");
+    sProxyHost = u""_s;
+    sProxyUser = u""_s;
+    sProxyPassword = u""_s;
 #endif
     setExportDefault();
 }
@@ -303,10 +318,10 @@ void Options::setExportDefault()
     vExportOptions.clear();
     vExportOptions.resize(4);
 
-    vExportOptions[0].setDefault(QApplication::tr("Save as") + QStringLiteral(" ..."), QStringLiteral("-"), true);
-    vExportOptions[1].setDefault(QApplication::tr("Save as") + QStringLiteral(" MOBI"), QStringLiteral("MOBI"), false);
-    vExportOptions[2].setDefault(QApplication::tr("Save as") + QStringLiteral(" EPUB"), QStringLiteral("EPUB"), false);
-    vExportOptions[3].setDefault(QApplication::tr("Save as") + QStringLiteral(" AZW3"), QStringLiteral("AZW3"), false);
+    vExportOptions[0].setDefault(QApplication::tr("Save as") + u" ..."_s, asis, true);
+    vExportOptions[1].setDefault(QApplication::tr("Save as") + u" MOBI"_s, mobi, false);
+    vExportOptions[2].setDefault(QApplication::tr("Save as") + u" EPUB"_s, epub, false);
+    vExportOptions[3].setDefault(QApplication::tr("Save as") + u" AZW3"_s, azw3, false);
 }
 
 void Options::Load(QSharedPointer<QSettings> pSettings)
@@ -355,7 +370,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
         sBaseUrl.chop(1);
     nOpdsPort = pSettings->value(u"OPDS_port"_s, nDefaultOpdsPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
-    nHttpExport = pSettings->value(QStringLiteral("httpExport"), 0).toInt();
+    // nHttpExport = pSettings->value(QStringLiteral("httpExport"), 0).toInt();
     nProxyType = pSettings->value(QStringLiteral("proxy_type"), 0).toInt();
     nProxyPort = pSettings->value(QStringLiteral("proxy_port"), nDefaultProxyPort).toInt();
     sProxyHost = pSettings->value(QStringLiteral("proxy_host")).toString();
@@ -388,15 +403,20 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     }
     pSettings->endArray();
 
-    QString HomeDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
-        HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    count = pSettings->beginReadArray(QStringLiteral("export"));
+    count = pSettings->beginReadArray(u"export"_s);
     vExportOptions.resize(count);
+    std::unordered_set<ExportFormat> httpFormats;
     for(int i=0; i<count; i++)
     {
         pSettings->setArrayIndex(i);
-        vExportOptions[i].Load(pSettings);
+        auto &exportOptions = vExportOptions[i];
+        exportOptions.Load(pSettings);
+#ifdef USE_HTTSERVER
+        if(httpFormats.contains(exportOptions.format) && exportOptions.bUseForHttp)
+            exportOptions.bUseForHttp = false;
+        else
+            httpFormats.insert(exportOptions.format);
+#endif
     }
     pSettings->endArray();
 }
@@ -425,7 +445,6 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"extended_symbols"_s, bExtendedSymbols);
 #ifdef USE_HTTSERVER
     pSettings->setValue(u"OPDS_enable"_s, bOpdsEnable);
-    pSettings->setValue(u"httpExport"_s, nHttpExport);
     pSettings->setValue(u"HTTP_need_pasword"_s, bOpdsNeedPassword);
     pSettings->setValue(u"HTTP_user"_s, sOpdsUser);
     pSettings->setValue(u"httpPassword"_s, QString(baOpdsPasswordSalt.toBase64()) + u":"_s + QString(baOpdsPasswordHash.toBase64()));

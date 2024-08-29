@@ -66,6 +66,7 @@
         <file>img/icons/dark/send.svg</file>
         <file>img/icons/light/send.svg</file>
         <file>xsl/opds/styles.css</file>
+        <file>xsl/opds/download.svg</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/settings.png</file>

@@ -118,7 +118,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
     connect(ui->HTTP_need_pasword, &QCheckBox::clicked, this, &SettingsDlg::onHTTPneedPaswordClicked);
 
-    UpdateWebExportList();
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
     onHTTPneedPaswordClicked();
     onOpdsEnable(ui->OPDS_enable->checkState());
@@ -228,10 +227,19 @@ void SettingsDlg::LoadSettings()
         connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
         connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
         connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
+#ifdef USE_HTTSERVER
+        connect(frame, &ExportFrame::OutputFormatChanged, this, &SettingsDlg::onExportFormatChanged);
+        connect(frame, &ExportFrame::UseForHttpChanged, this, &SettingsDlg::onUseForHttpChanged);
+#else
+#endif
     }
     ui->DelExport->setEnabled(count > 1);
     ui->ExportName->setCurrentIndex(iDefault);
     updateKindelegenWarring(iDefault);
+#ifdef USE_HTTSERVER
+    onExportFormatChanged();
+#endif
+
 }
 
 void SettingsDlg::updateKindelegenWarring(int iExportOpton)
@@ -240,30 +248,26 @@ void SettingsDlg::updateKindelegenWarring(int iExportOpton)
     {
         const ExportOptions *pExportOptions = &options_.vExportOptions.at(iExportOpton);
         bool bKindlgenLableVisible = !kindlegenInstalled() &&
-                                     (pExportOptions->sOutputFormat == u"MOBI" ||
-                                      pExportOptions->sOutputFormat == u"AZW3" ||
-                                      pExportOptions->sOutputFormat == u"MOBI7");
+                                     (pExportOptions->format == mobi ||
+                                      pExportOptions->format == azw3 ||
+                                      pExportOptions->format == mobi7);
         ui->label_kindlegen->setVisible(bKindlgenLableVisible);
     }
 }
 
 #ifdef USE_HTTSERVER
-void SettingsDlg::UpdateWebExportList()
+void SettingsDlg::onUseForHttpChanged()
 {
-    int index = 0;
-    if(ui->httpExport->count() > 1)
-        index = ui->httpExport->currentIndex();
-    while(ui->httpExport->count() > 1)
-        ui->httpExport->removeItem(1);
-    ui->httpExport->setCurrentIndex(0);
-
-    if(index == 0)
-        index = options_.nHttpExport;
-    for(int i=0; i<ui->stackedWidget->count(); i++)
-    {
-        ui->httpExport->addItem(ui->ExportName->itemText(i));
-        if((i+1) == index)
-            ui->httpExport->setCurrentIndex(i + 1);
+    auto currentFrame = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget());
+    bool bCurrentUseHttp = currentFrame->getUseForHttp();
+    if(bCurrentUseHttp){
+        auto currentFormat = currentFrame->outputFormat();
+        for(int i=0; i<ui->stackedWidget->count(); i++){
+            auto frame = qobject_cast<ExportFrame*>(ui->stackedWidget->widget(i));
+            auto format = frame->outputFormat();
+            if(currentFormat == format && currentFrame != frame && frame->getUseForHttp())
+                frame->setUseForHttp(false);
+        }
     }
 }
 #endif
@@ -362,7 +366,6 @@ void SettingsDlg::btnOK()
     options.bExtendedSymbols = ui->extended_symbols->isChecked();
 #ifdef USE_HTTSERVER
     options.bOpdsEnable = ui->OPDS_enable->isChecked();
-    options.nHttpExport = ui->httpExport->currentIndex();
     options.bOpdsNeedPassword = ui->HTTP_need_pasword->isChecked();
     options.bOpdsShowAnotation = ui->srv_annotation->isChecked();
     options.bOpdsShowCover = ui->srv_covers->isChecked();
@@ -396,7 +399,6 @@ void SettingsDlg::btnOK()
         qobject_cast<ExportFrame*>(ui->stackedWidget->widget(i))->Save(pExportOptions);
         pExportOptions->sName = ui->ExportName->itemText(i);
         pExportOptions->bDefault = ui->ExportName->itemData(i).toBool();
-
     }
     options.Save(settings);
 
@@ -458,8 +460,19 @@ void SettingsDlg::DelApp()
 void SettingsDlg::onAddExportClicked()
 {
     ExportOptions exportOptions;
-    exportOptions.setDefault(tr("Send to ..."), QStringLiteral("-"), false);
-    ExportFrame* frame=new ExportFrame(this);
+    exportOptions.setDefault(tr("Send to ..."), asis, false);
+#ifdef USE_HTTSERVER
+    bool bUseForHttp = true;
+    for(int i=0; i<ui->stackedWidget->count(); i++){
+        auto frame = qobject_cast<ExportFrame*>(ui->stackedWidget->widget(i));
+        if(frame->outputFormat() == asis && frame->getUseForHttp()){
+            bUseForHttp = false;
+            break;
+        }
+    }
+    exportOptions.bUseForHttp = bUseForHttp;
+#endif
+    ExportFrame* frame = new ExportFrame(this);
     ui->stackedWidget->addWidget(frame);
     ui->ExportName->addItem(exportOptions.sName, false);
     ui->ExportName->setCurrentIndex(ui->ExportName->count() - 1);
@@ -468,17 +481,11 @@ void SettingsDlg::onAddExportClicked()
 
     connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
     connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
-#ifdef USE_HTTSERVER
-    UpdateWebExportList();
-#endif
 }
 
 void SettingsDlg::ExportNameChanged()
 {
     ui->ExportName->setItemText(ui->ExportName->currentIndex(), ui->ExportName->lineEdit()->text());
-#ifdef USE_HTTSERVER
-    UpdateWebExportList();
-#endif
 }
 
 void SettingsDlg::onDelExportClicked()
@@ -494,9 +501,6 @@ void SettingsDlg::onDelExportClicked()
     ui->ExportName->removeItem(ui->ExportName->currentIndex());
     if(ui->ExportName->count() <= 1)
         ui->DelExport->setDisabled(true);
-#ifdef USE_HTTSERVER
-    UpdateWebExportList();
-#endif
 }
 
 void SettingsDlg::onExportNameCurrentIndexChanged(int index)
@@ -505,6 +509,27 @@ void SettingsDlg::onExportNameCurrentIndexChanged(int index)
     ui->stackedWidget->setCurrentIndex(index);
     ui->DefaultExport->setChecked(ui->ExportName->currentData().toBool());
 }
+
+#ifdef USE_HTTSERVER
+void SettingsDlg::onExportFormatChanged()
+{
+    auto currentFrame = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget());
+    auto currentFormat = currentFrame->outputFormat();
+    bool bCurrentUseHttp = currentFrame->getUseForHttp();
+    std::unordered_map<ExportFormat, uint> formatCount;
+    for(int i=0; i<ui->stackedWidget->count(); i++){
+        auto frame = qobject_cast<ExportFrame*>(ui->stackedWidget->widget(i));
+        auto format = frame->outputFormat();
+        formatCount[format]++;
+        if(bCurrentUseHttp && frame != currentFrame && currentFormat == format && frame->getUseForHttp()){
+            currentFrame->setUseForHttp(false);
+            bCurrentUseHttp = false;
+        }
+    }
+    if(formatCount[currentFormat] == 1)
+        currentFrame->setUseForHttp(true);
+}
+#endif
 
 void SettingsDlg::onChangeExportFrameTab(int tab_id, int page_id)
 {
@@ -603,9 +628,6 @@ void SettingsDlg::onBtnSaveExportClicked()
     file.close();
     zip_file.close();
 
-    QString HomeDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
-        HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
     for(const QString &font: fonts_list)
     {
@@ -741,8 +763,6 @@ void SettingsDlg::onOpdsEnable(int state)
     ui->baseUrl->setEnabled(bOpdsEnable);
     ui->label_20->setEnabled(bOpdsEnable);
     ui->label_23->setEnabled(bOpdsEnable);
-    ui->httpExport->setEnabled(bOpdsEnable);
-    ui->label_2->setEnabled(bOpdsEnable);
     ui->HTTP_need_pasword->setEnabled(bOpdsEnable);
     ui->HTTP_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
     ui->p_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());

@@ -38,11 +38,14 @@ struct FontExportOptions
     quint8 nTag;
 };
 
+enum ExportFormat {asis=1, epub, azw3, mobi, mobi7, pdf};
+Q_DECLARE_METATYPE(ExportFormat)
+
 struct ExportOptions
 {
     void Save(QSharedPointer<QSettings> pSettings, bool bSavePasswords = true);
     void Load(QSharedPointer<QSettings> pSettings);
-    void setDefault(const QString &_sName, const QString &_sOtputFormat, bool _bDefault);
+    void setDefault(const QString &_sName, ExportFormat _OtputFormat, bool _bDefault);
 
     constexpr const static char* sDefaultEexpFileName = "%a/%s/%n2 %b";
     constexpr const static char* sDefaultDropcapsFont = "sangha.ttf";
@@ -61,12 +64,12 @@ struct ExportOptions
     QString sDevicePath;
     QString sExportFileName;
     QString sUserCSS;
-    QString sOutputFormat;
     QString sBookSeriesTitle;
     QString sAuthorSring;
     QString sCoverLabel;
     QString sSendTo;
 
+    ExportFormat format;
     quint16 nEmailServerPort;
     quint8 nEmailPause;
     quint8 nMaxCaptionLevel;
@@ -94,6 +97,7 @@ struct ExportOptions
     bool bCreateCover;
     bool bCreateCoverAlways;
     bool bAddCoverLabel;
+    bool bUseForHttp;
     std::vector<FontExportOptions> vFontExportOptions;
 };
 
@@ -132,7 +136,6 @@ struct Options
     QString sProxyUser;
     QString sProxyPassword;
     QString sBaseUrl;
-    int nHttpExport;
     quint16 nOpdsPort;
     quint16 nOpdsBooksPerPage;
     quint16 nProxyPort;
