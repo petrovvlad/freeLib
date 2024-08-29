@@ -67,6 +67,7 @@ sudo cmake --install . --config Release
 pkg install qt5-qmake qt5-buildtools djvulibre
 ```
 
+
 Скачать исходники программы:
 
 ```
@@ -74,6 +75,7 @@ git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
 ```
 
 Собрать и установить:
+
 
 ```
 mkdir freeLib/build && cd freeLib/build && \
