@@ -17,6 +17,18 @@
 #define SAVE_INDEX  4
 #define MAX_COLUMN_COUNT    3
 
+QString mime(QStringView sFormat)
+{
+    if(sFormat == u"djv" || sFormat == u"djvu")
+        return u"image/vnd-djvu"_s;
+    if(sFormat == u"doc")
+        return u"application/msword"_s;
+    if(sFormat == u"rar")
+        return u"application/vnd.rar"_s;
+    if(sFormat == u"txt")
+        return u"text/plain"_s;
+    return u"application/"_s.append(sFormat);
+}
 
 struct SerialComparator {
     const std::unordered_map<uint, SSerial>& mSerial;
@@ -1033,7 +1045,7 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
             }
         }else if(book.sFormat == u"mobi"_s)
             addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        addLink(entry, u"application/"_s + book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"alternate"_s, tr("Download"));
+        addLink(entry, mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"alternate"_s, tr("Download"));
 
         if(options.bOpdsShowCover)
         {
@@ -1155,7 +1167,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
             addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(bKindleInstallsed){
                 addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-                addLink(links, u"application/azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+                addLink(links, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             }
         }
         else if(book.sFormat == u"epub"){
@@ -1166,7 +1178,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
             }
         }else if(book.sFormat == u"mobi")
             addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        addLink(links,  u"application/"_s + book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+        addLink(links,  mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         entry[u"links"] = links;
 
         if(options.bOpdsShowCover)
@@ -2987,9 +2999,19 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
                 baContentType = "application/x-mobipocket-ebook"_ba;
             }
         }
-        else
-        {
-            baContentType = "application/"_ba + sFormat.toUtf8();
+        switch (format) {
+        case epub:
+            baContentType = "application/epub+zip"_ba;
+            break;
+        case azw3:
+            baContentType = "application/x-mobi8-ebook"_ba;
+            break;
+        case mobi:
+            baContentType = "application/x-mobipocket-ebook"_ba;
+            break;
+        default:
+            baContentType = mime(sFormat).toUtf8();
+            break;
         }
         sContentDisposition = u"attachment; filename=\""_s % sBookFileName % u"\""_s;
     }
