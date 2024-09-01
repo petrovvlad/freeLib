@@ -391,6 +391,7 @@ bool kindlegenInstalled()
 
 bool localeStringCompare(const QString &str1, const QString &str2)
 {
+    static QCollator collator;
     auto minSize = std::min(str1.size(), str2.size());
     for(uint i=0; i<minSize; ++i){
         auto ch1 = str1.at(i);
@@ -398,11 +399,12 @@ bool localeStringCompare(const QString &str1, const QString &str2)
         bool bLetter1 = ch1.isLetter();
         bool bLetter2 = ch2.isLetter();
         if(bLetter1 && bLetter2)
-            return QString::localeAwareCompare(str1, str2) < 0;
+            return collator.compare(str1, str2) < 0;
         if(bLetter1 && !bLetter2)
             return true;
         if(!bLetter1 && bLetter2)
             return false;
     }
-    return QString::localeAwareCompare(str1, str2) < 0;
+    return collator.compare(str1, str2) < 0;
 }
+
