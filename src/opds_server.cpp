@@ -429,6 +429,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                     vBooks.push_back(it->second);
         }
         std::sort(vBooks.begin(), vBooks.end(),[&lib](uint lhs, uint rhs){ return lib.books.at(lhs).numInSerial < lib.books.at(rhs).numInSerial; });
+
     }
     if(idAuthor != 0 && idSeria == 0){
         auto range = lib.authorBooksLink.equal_range(idAuthor);
@@ -447,7 +448,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                         vBooks.push_back(it->second);
             }
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) /*< 0*/; });
+        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName); });
     }
     if(idAuthor == 0 && idSeria != 0){
         for(const auto &iBook :lib.books){
@@ -475,7 +476,8 @@ std::vector<uint> opds_server::listGenreBooks(const SLib &lib, ushort idGenre)
             }
         }
     }
-    std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName); });
+    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName); });
+
     return vBooks;
 }
 
@@ -484,25 +486,22 @@ std::vector<uint> opds_server::searchTitle(const SLib &lib, const QString &sTitl
     QString sSearch = siplifySearchString(sTitle);
     std::vector<uint> vBooks;
     if(!sSearch.isEmpty()){
-        for(const auto &iBook :lib.books){
-            if(!iBook.second.bDeleted){
-                QString sName = siplifySearchString(iBook.second.sName);
+        vBooks = blockingFiltered(lib.books, [&](const auto &book){
+            if(!book.bDeleted){
+                QString sName = siplifySearchString(book.sName);
                 if(sName.contains(sSearch)){
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage])
-                        vBooks.push_back(iBook.first);
+                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
+                        return true;
                 }
             }
-        }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
-            // if(lib.books.at(lhs).idFirstAuthor != lib.books.at(rhs).idFirstAuthor)
-            //     return localeStringCompare(lib.authors.at(lib.books.at(lhs).idFirstAuthor).getName(), lib.authors.at(lib.books.at(rhs).idFirstAuthor).getName());
-            // else
-                return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName);
+            return false;
         });
 
+        std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
+                return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName);
+        });
     }
     return vBooks;
-
 }
 
 std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuthor, const QString &sTitle)
@@ -511,18 +510,20 @@ std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuth
     QString sSimplifiedTitle = siplifySearchString(sTitle);
     std::unordered_set<uint>stIdAuthors(vAuthors.begin(), vAuthors.end());
     std::vector<uint> vBooks;
-    for(const auto &iBook :lib.books){
-        const auto &book = iBook.second;
+
+    vBooks = blockingFiltered(lib.books, [&](const auto &book){
         if(!book.bDeleted){
             QString sName = siplifySearchString(book.sName);
             if(sName.contains(sSimplifiedTitle)){
                 if(sAuthor.isEmpty() || std::any_of(book.vIdAuthors.begin(), book.vIdAuthors.end(), [&stIdAuthors](auto idAuthor){return stIdAuthors.contains(idAuthor);}))
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage])
-                        vBooks.push_back(iBook.first);
+                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
+                        return true;
             }
         }
-    }
-    std::sort(vBooks.begin(), vBooks.end(), [&lib](uint id1, uint id2){
+        return false;
+    });
+
+    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint id1, uint id2){
         return localeStringCompare(lib.books.at(id1).sName, lib.books.at(id2).sName);
     });
 
@@ -534,21 +535,27 @@ auto opds_server::searchSequence(const SLib &lib, const QString &sSequence)
     QString sSearchSimplefied = siplifySearchString(sSequence);
     SerialComparator comporator(lib.serials);
     std::map<uint, uint, SerialComparator> mSequence(comporator);
-    for(const auto &iBook :lib.books){
-        auto &book = iBook.second;
+
+    std::vector<uint> v;
+    v.reserve(lib.books.size());
+    for(const auto &it :lib.books)
+        v.push_back(it.first);
+    std::mutex m;
+    QtConcurrent::blockingMap(v, [&](auto id){
+        auto &book = lib.books.at(id);
         if(book.idSerial != 0 && !book.bDeleted){
-            if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage]){
-                if(mSequence.contains(book.idSerial))
+            if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage]){
+                const auto &secuence = lib.serials.at(book.idSerial);
+                QString sName  = siplifySearchString(secuence.sName);
+                if(sName.contains(sSearchSimplefied)){
+                    std::lock_guard<std::mutex> guard(m);
                     mSequence[book.idSerial]++;
-                else{
-                    const auto &secuence = lib.serials.at(book.idSerial);
-                    QString sName  = siplifySearchString(secuence.sName);
-                    if(sName.contains(sSearchSimplefied))
-                        mSequence[book.idSerial] = 1;
                 }
             }
         }
-    }
+
+    });
+
     return mSequence;
 }
 
@@ -558,6 +565,7 @@ std::vector<uint> opds_server::searchAuthors(const SLib &lib, const QString &sAu
     auto sListSearch = siplifySearchString(sAuthor).split(u" "_s, Qt::SkipEmptyParts);
     if(sListSearch.isEmpty())
         return vResult;
+
     for(const auto &iAuthor :lib.authors){
         bool bMatch = true;
         bool bMatchF = false;
@@ -585,6 +593,7 @@ std::vector<uint> opds_server::searchAuthors(const SLib &lib, const QString &sAu
         if(bMatch)
             vResult.push_back(iAuthor.first);
     }
+
     return vResult;
 }
 
@@ -1464,7 +1473,7 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
                 vAuthorId.push_back(idAuthor);
             }
         }
-        std::sort(vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2)
+        std::sort(g::executionpolicy, vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2)
         {
             return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();
         });
@@ -1731,7 +1740,6 @@ QHttpServerResponse opds_server::authorHTML(uint idLib, uint idAuthor, const QHt
     div = doc_.createElement(u"div"_s);
     divAuth.appendChild(div);
     addHRefNode(div, tr("Books without sequence"), sLibUrl % u"/authorsequenceless/"_s % sIdAuthor % sSessionQuery, u"block"_s);
-
 
     div = doc_.createElement(u"div"_s);
     divAuth.appendChild(div);

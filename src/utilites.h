@@ -69,5 +69,19 @@ void setLocale(const QString &sLocale);
 bool setCurrentZipFileName(QuaZip *zip, const QString &name);
 bool kindlegenInstalled();
 
+template <typename T, typename SequenceType, typename KeepFunctor>
+std::vector<T> blockingFiltered(const std::unordered_map<T, SequenceType> &sequence, KeepFunctor &&keep)
+{
+    std::vector<T> v;
+    v.reserve(sequence.size());
+    for(const auto &it :sequence)
+        v.push_back(it.first);
+
+    return QtConcurrent::blockingFiltered(v, [&](T id) {
+        const auto &a = sequence.at(id);
+        return keep(a);
+    });
+}
+
 
 #endif // UTILITES_H

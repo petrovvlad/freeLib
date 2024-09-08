@@ -8,6 +8,24 @@
 
 #include "utilites.h"
 
+#ifdef emit
+#undef emit
+#define NOQTEMIT
+#endif
+#include <execution>
+#ifdef NOQTEMIT
+#define emit
+#endif
+
+namespace g {
+#ifdef USE_TBB
+inline constexpr auto executionpolicy = std::execution::par;
+#else
+inline constexpr auto executionpolicy = std::execution::seq;
+#endif
+
+}
+
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
 constexpr qsizetype nPasswordSaltSize = 24;
 constexpr quint64 nPasswordHashSize = 48;

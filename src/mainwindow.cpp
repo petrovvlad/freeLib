@@ -1,12 +1,3 @@
-#ifdef emit
-#undef emit
-#define NOQTEMIT
-#endif
-#include <execution>
-#ifdef NOQTEMIT
-#define emit
-#endif
-
 #define QT_USE_QSTRINGBUILDER
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
@@ -1151,6 +1142,7 @@ void MainWindow::SelectSeria()
     uint idSerial = cur_item->data(Qt::UserRole).toUInt();
     vBooks_.clear();
     SLib& lib = libs[idCurrentLib];
+
     for(const auto &book :lib.books){
         if(book.second.idSerial == idSerial && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.second.idLanguage)){
             vBooks_.push_back(book.first);
@@ -1859,52 +1851,53 @@ void MainWindow::FillAuthors()
     QString sSearch = ui->searchAuthor->text();
     static const QRegularExpression re(QStringLiteral("[A-Za-zа-яА-ЯЁё]"));
     std::vector<uint> vIdAuthors;
-    std::unordered_map<uint, QString> mNameAuthors;
 
-    for(const auto &iAuthor :authors){
-        if(sSearch == u"*" || (sSearch == u"#" &&
-          !iAuthor.second.getName().left(1).contains(re)) || iAuthor.second.getName().startsWith(sSearch, Qt::CaseInsensitive))
-        {
-            vIdAuthors.push_back(iAuthor.first);
-            mNameAuthors[iAuthor.first] = iAuthor.second.getName();
-        }
-    }
-
-#ifdef USE_TBB
-    auto policy = std::execution::par;
-#else
-    auto policy = std::execution::seq;
-#endif
-    std::sort(policy, vIdAuthors.begin(), vIdAuthors.end(), [&mNameAuthors](uint id1, uint id2){
-        return localeStringCompare(mNameAuthors.at(id1), mNameAuthors.at(id2));
+    vIdAuthors = blockingFiltered(authors, [&](auto &author){
+        QString sName  = author.getName();
+        return (sSearch == u"*" || (sSearch == u"#" && !sName.left(1).contains(re)) || sName.startsWith(sSearch, Qt::CaseInsensitive));
     });
 
-    for(uint idAuthor :vIdAuthors){
+    std::vector<QListWidgetItem*> vItems;
+    std::mutex m;
+    QtConcurrent::blockingMap(vIdAuthors, [&](uint idAuthor){
         auto &author = authors.at(idAuthor);
-        int count =0;
+        int count = 0;
         for (auto it = currentLib.authorBooksLink.equal_range(idAuthor); it.first != it.second; ++it.first) {
             SBook &book = currentLib.books[it.first->second];
             if(IsBookInList(book))
                 count++;
         }
         if(count>0){
-            QListWidgetItem *item = new QListWidgetItem(mNameAuthors.at(idAuthor) % u" ("_s % QString::number(count) % u")"_s);
+            QListWidgetItem *item = new QListWidgetItem(author.getName() % u" ("_s % QString::number(count) % u")"_s);
             if(options.bUseTag)
                 item->setIcon(getTagIcon(authors.at(idAuthor).vIdTags));
 
             item->setData(Qt::UserRole, idAuthor);
             if(options.bUseTag)
                 item->setIcon(getTagIcon(author.vIdTags));
-            ui->AuthorList->addItem(item);
-            if(idCurrentAuthor_ == idAuthor){
-                item->setSelected(true);
+            if(idCurrentAuthor_ == idAuthor)
                 selectedItem = item;
+
+            {
+                std::lock_guard<std::mutex> guard(m);
+                vItems.push_back(item);
             }
         }
+    });
+
+    std::sort(g::executionpolicy, vItems.begin(), vItems.end(), [](auto item1, auto item2){
+        return localeStringCompare(item1->text(), item2->text());
+    });
+
+    for(auto item :vItems){
+        ui->AuthorList->addItem(item);
+        if(item == selectedItem)
+             item->setSelected(true);
     }
 
-    if(selectedItem != nullptr)
-        ui->AuthorList->scrollToItem(selectedItem);
+    if(selectedItem != nullptr){
+        ui->AuthorList->setCurrentItem(selectedItem);
+    }
 
     ui->AuthorList->blockSignals(wasBlocked);
     if(bVerbose){
@@ -1932,31 +1925,27 @@ void MainWindow::FillSerials()
 
     for(const auto &book :lib.books){
         if(book.second.idSerial != 0 &&
-           IsBookInList(book.second) && (sSearch == u"*" || (sSearch == u"#" &&                                                                                                                  !lib.serials.at(book.second.idSerial).sName.left(1).contains(re)) ||
-           lib.serials.at(book.second.idSerial).sName.startsWith(sSearch, Qt::CaseInsensitive)))
+           IsBookInList(book.second) && (sSearch == u"*" || (sSearch == u"#" && !squences.at(book.second.idSerial).sName.left(1).contains(re)) ||
+           squences.at(book.second.idSerial).sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
 
                 mCounts[book.second.idSerial]++;
         }
     }
+
     std::vector<uint> vIdSequence;
     for(auto iSequnce :mCounts)
         vIdSequence.push_back(iSequnce.first);
-#ifdef USE_TBB
-    auto policy = std::execution::par;
-#else
-    auto policy = std::execution::seq;
-#endif
-    std::sort(policy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
+    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
         return localeStringCompare(squences.at(id1).sName, squences.at(id2).sName);
     });
 
     for(auto idSequnce :vIdSequence)
     {
-        QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(lib.serials.at(idSequnce).sName).arg(mCounts.at(idSequnce)));
+        QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(squences.at(idSequnce).sName).arg(mCounts.at(idSequnce)));
         item->setData(Qt::UserRole, idSequnce);
         if(options.bUseTag)
-            item->setIcon(getTagIcon(lib.serials.at(idSequnce).vIdTags));
+            item->setIcon(getTagIcon(squences.at(idSequnce).vIdTags));
         ui->SeriaList->addItem(item);
         if(idSequnce == idCurrentSerial_)
         {
