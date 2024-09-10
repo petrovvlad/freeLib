@@ -1,3 +1,4 @@
+
 #define QT_USE_QSTRINGBUILDER
 #include "options.h"
 
@@ -43,10 +44,10 @@ QString decodeStr(const QString &str)
     return QString::fromUtf8(arr);
 }
 
-QByteArray generateSalt()
+QByteArray Options::generateSalt()
 {
     QByteArray salt;
-    salt.resize(nPasswordSaltSize);  // Размер соли
+    salt.resize(nPasswordSaltSize_);  // Размер соли
 
     // Заполняем соль случайными данными
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
@@ -59,11 +60,11 @@ QByteArray generateSalt()
     return salt;
 }
 
-QByteArray passwordToHash(const QString& password, const QByteArray &salt)
+QByteArray Options::passwordToHash(const QString& password, const QByteArray &salt)
 {
     const int iterations = 4046;
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
-    QByteArray derivedKey = QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha512, password.toUtf8(), salt, iterations, nPasswordHashSize);
+    QByteArray derivedKey = QPasswordDigestor::deriveKeyPbkdf2(QCryptographicHash::Sha512, password.toUtf8(), salt, iterations, nPasswordHashSize_);
 #else
     QCryptographicHash hash(QCryptographicHash::Sha256);
     hash.addData(password.toUtf8());
@@ -75,7 +76,7 @@ QByteArray passwordToHash(const QString& password, const QByteArray &salt)
             key);
         key = hash.result();
     }
-    QByteArray derivedKey = key.left(nPasswordHashSize);
+    QByteArray derivedKey = key.left(nPasswordHashSize_);
 #endif
     return derivedKey;
 }
@@ -351,7 +352,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
         if(vPassword.size() == 2){
             baOpdsPasswordSalt = QByteArray::fromBase64(vPassword[0].toLatin1());
             baOpdsPasswordHash = QByteArray::fromBase64(vPassword[1].toLatin1());
-            if(baOpdsPasswordSalt.size() != nPasswordSaltSize || baOpdsPasswordHash.size() != nPasswordHashSize){
+            if(baOpdsPasswordSalt.size() != nPasswordSaltSize_ || baOpdsPasswordHash.size() != nPasswordHashSize_){
                 baOpdsPasswordSalt.clear();
                 baOpdsPasswordHash.clear();
             }
