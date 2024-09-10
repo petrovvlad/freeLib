@@ -86,7 +86,7 @@ void TagDialog::btnOk()
 {
     QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
     for(auto id :vIdDeleted_){
-        for(auto &iLib :libs){
+        for(auto &iLib :g::libs){
             iLib.second.deleteTag(id);
         }
     }

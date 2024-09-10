@@ -38,7 +38,7 @@ void ExportDlg::exec(const std::vector<uint> &vBooks, SendType send, qlonglong i
 {
     pExportOptions_ = &exportOptions;
     ui->Exporting->setText(QStringLiteral("0"));
-    ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);
+    ui->CloseAfter->setChecked(g::options.bCloseDlgAfterExport);
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0, 100);
     QString dir;
@@ -69,7 +69,7 @@ void ExportDlg::exec(uint idLib, const QString &path)
 {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
     ui->Exporting->setText(QStringLiteral("0"));
-    ui->CloseAfter->setChecked(options.bCloseDlgAfterExport);
+    ui->CloseAfter->setChecked(g::options.bCloseDlgAfterExport);
     ui->progressBar->setValue(0);
     ui->progressBar->setRange(0, 100);
 

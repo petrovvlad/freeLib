@@ -18,15 +18,7 @@
 #endif
 
 #include "utilites.h"
-#if QT_VERSION < QT_VERSION_CHECK(5, 13, 0)
 #include "options.h"
-#endif
-
-
-std::unordered_map<uint, SLib> libs;
-std::unordered_map<ushort, SGenre> genres;
-QString RelativeToAbsolutePath(QString path);
-extern bool bVerbose;
 
 void loadLibrary(uint idLibrary)
 {
@@ -36,14 +28,14 @@ void loadLibrary(uint idLibrary)
         return;
 
     qint64 timeStart, timeEnd;
-    if(bVerbose)
+    if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
 
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.setForwardOnly(true);
     if(!query.exec(u"SELECT id FROM lib WHERE id=%1;"_s.arg(idLibrary)) || !query.first())
         return;
-    SLib& lib = libs[idLibrary];
+    SLib& lib = g::libs[idLibrary];
     auto future = QtConcurrent::run([idLibrary, &lib]()
     {
         {
@@ -190,7 +182,7 @@ void loadLibrary(uint idLibrary)
             auto iLang = std::find(lib.vLaguages.cbegin(), lib.vLaguages.cend(), sLaguage);
             int idLanguage = iLang - lib.vLaguages.cbegin();
             if(idLanguage == lib.vLaguages.size())
-                lib.vLaguages.push_back(sLaguage);
+                lib.vLaguages.push_back(std::move(sLaguage));
             book.idLanguage = static_cast<uchar>(idLanguage);
             book.sFile = buff[k + 6].toString();
             book.nSize = buff[k + 7].toUInt();
@@ -315,7 +307,7 @@ void loadLibrary(uint idLibrary)
     future.waitForFinished();
     lib.bLoaded = true;
 
-    if(bVerbose){
+    if(g::bVerbose){
         timeEnd = QDateTime::currentMSecsSinceEpoch();
         qDebug()<< "loadLibrary " << timeEnd - timeStart << "msec";
     }
@@ -326,18 +318,18 @@ void loadGenres()
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
         return;
     qint64 timeStart;
-    if(bVerbose)
+    if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
-    genres.clear();
+    g::genres.clear();
     query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index, keys FROM genre;"));
     //                                   0   1     2          3           4
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
         ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
-        SGenre &genre = genres[idGenre];
+        SGenre &genre = g::genres[idGenre];
         genre.sName = query.value(1).toString();
         genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
         QString sKeys = query.value(4).toString();
@@ -348,7 +340,7 @@ void loadGenres()
 #endif
         genre.nSort = static_cast<ushort>(query.value(3).toUInt());
     }
-    if(bVerbose){
+    if(g::bVerbose){
         qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
         qDebug()<< "loadGenre " << timeEnd - timeStart << "msec";
     }

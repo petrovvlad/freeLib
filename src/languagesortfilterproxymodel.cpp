@@ -14,7 +14,7 @@ bool LanguageSortFilterProxyModel::lessThan(const QModelIndex &left, const QMode
         return true;
     if(idRight == -1)
         return false;
-    const auto &vLaguages = libs[idCurrentLib].vLaguages;
+    const auto &vLaguages = g::libs[g::idCurrentLib].vLaguages;
     QLocale locale;
     auto sCurrentLanguage = locale.name().left(2);
     if(vLaguages[idLeft] == sCurrentLanguage)

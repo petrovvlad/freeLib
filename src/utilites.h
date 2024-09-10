@@ -54,7 +54,9 @@ struct tag
     {
     }
 };
-extern std::vector<tag> vTags;
+namespace g {
+inline std::vector<tag> vTags;
+}
 
 QString RelativeToAbsolutePath(QString path);
 bool openDB(const QString &sName);

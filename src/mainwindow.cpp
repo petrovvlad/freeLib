@@ -54,9 +54,6 @@ QString sizeToString(uint size)
 }
 #endif
 
-extern bool bTray;
-extern bool bVerbose;
-
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -162,7 +159,7 @@ MainWindow::MainWindow(QWidget *parent) :
     int nCurrentTab;
 
     QString sFilter;
-    if(options.bStorePosition)
+    if(g::options.bStorePosition)
     {
         idCurrentAuthor_= settings->value(QStringLiteral("current_author_id"), 0).toUInt();
         idCurrentSerial_ = settings->value(QStringLiteral("current_serial_id"), 0).toUInt();
@@ -181,7 +178,7 @@ MainWindow::MainWindow(QWidget *parent) :
     }
 
 #ifdef USE_HTTSERVER
-    if(options.bOpdsEnable){
+    if(g::options.bOpdsEnable){
         pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
         pOpds_->server_run();
     }
@@ -189,7 +186,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
     UpdateTags();
     loadGenres();
-    loadLibrary(idCurrentLib);
+    loadLibrary(g::idCurrentLib);
     fillLanguages();
 
 //    FillAuthors();
@@ -239,10 +236,9 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageFilterChanged);
     connect(ui->Review, &QTextBrowser::anchorClicked, this, &MainWindow::ReviewLink );
 
-    FillAlphabet(options.sAlphabetName);
+    FillAlphabet(g::options.sAlphabetName);
     ExportBookListBtn(false);
-
-    setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0 || libs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + libs[idCurrentLib].name));
+    updateTitle();
 
     ui->tabWidget->setCurrentIndex(nCurrentTab);
     switch (nCurrentTab) {
@@ -275,7 +271,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FillLibrariesMenu();
     UpdateExportMenu();
 
-    ChangingTrayIcon(options.nIconTray, options.nTrayColor);
+    ChangingTrayIcon(g::options.nIconTray, g::options.nTrayColor);
 
 #ifdef Q_OS_OSX
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
@@ -329,8 +325,8 @@ void MainWindow::UpdateTags()
     int con = 1;
     ui->TagFilter->addItem(QStringLiteral("*"), 0);
     TagMenu.clear();
-    ui->TagFilter->setVisible(options.bUseTag);
-    ui->tag_label->setVisible(options.bUseTag);
+    ui->TagFilter->setVisible(g::options.bUseTag);
+    ui->tag_label->setVisible(g::options.bUseTag);
 
     while(query.next())
     {
@@ -346,7 +342,7 @@ void MainWindow::UpdateTags()
         if(bLatin1)
             sTagName = TagDialog::tr(sTagName.toLatin1().data());
         ui->TagFilter->addItem(sTagName, idTag);
-        if(settings->value(QStringLiteral("current_tag")).toInt() == ui->TagFilter->count()-1 && options.bUseTag)
+        if(settings->value(QStringLiteral("current_tag")).toInt() == ui->TagFilter->count()-1 && g::options.bUseTag)
             ui->TagFilter->setCurrentIndex(ui->TagFilter->count()-1);
         QAction *ac;
         uint idIcon = query.value(2).toUInt();
@@ -373,10 +369,11 @@ void MainWindow::updateIcons()
 {
     bool wasBlocked = ui->SeriaList->blockSignals(true);
     int nCount = ui->SeriaList->count();
+    const auto &lib = g::libs[g::idCurrentLib];
     for(int i=0; i<nCount; i++){
         auto item = ui->SeriaList->item(i);
         uint idSerial = item->data(Qt::UserRole).toUInt();
-        item->setIcon(getTagIcon(libs[idCurrentLib].serials[idSerial].vIdTags));
+        item->setIcon(getTagIcon(lib.serials.at(idSerial).vIdTags));
     }
     ui->SeriaList->blockSignals(wasBlocked);
 
@@ -385,7 +382,7 @@ void MainWindow::updateIcons()
     for(int i=0; i<nCount; i++){
         auto item = ui->AuthorList->item(i);
         uint idAuthor = item->data(Qt::UserRole).toUInt();
-        item->setIcon(getTagIcon(libs[idCurrentLib].authors[idAuthor].vIdTags));
+        item->setIcon(getTagIcon(lib.authors.at(idAuthor).vIdTags));
     }
     ui->AuthorList->blockSignals(wasBlocked);
 
@@ -411,13 +408,13 @@ void MainWindow::updateItemIcon(QTreeWidgetItem *item)
     uint id = item->data(0, Qt::UserRole).toUInt();
     switch(item->type()){
     case ITEM_TYPE_BOOK:
-        item->setIcon(0, getTagIcon(libs[idCurrentLib].books[id].vIdTags));
+        item->setIcon(0, getTagIcon(g::libs[g::idCurrentLib].books[id].vIdTags));
         break;
     case ITEM_TYPE_SERIA:
-        item->setIcon(0, getTagIcon(libs[idCurrentLib].serials[id].vIdTags));
+        item->setIcon(0, getTagIcon(g::libs[g::idCurrentLib].serials[id].vIdTags));
         break;
     case ITEM_TYPE_AUTHOR:
-        item->setIcon(0, getTagIcon(libs[idCurrentLib].authors[id].vIdTags));
+        item->setIcon(0, getTagIcon(g::libs[g::idCurrentLib].authors[id].vIdTags));
         break;
     }
 }
@@ -432,6 +429,11 @@ QIcon MainWindow::getTagIcon(const std::vector<uint> &vIdTags)
     return iconsTags_[0];
 }
 
+void MainWindow::updateTitle()
+{
+    setWindowTitle(u"freeLib"_s + ((g::idCurrentLib==0 || g::libs[g::idCurrentLib].name.isEmpty() ?u""_s :u" — "_s) + g::libs[g::idCurrentLib].name));
+}
+
 MainWindow::~MainWindow()
 {
     if(pTrayIcon_)
@@ -441,7 +443,7 @@ MainWindow::~MainWindow()
     if(pHelpDlg != nullptr)
         delete pHelpDlg;
 
-    if(options.bStorePosition)
+    if(g::options.bStorePosition)
         SaveLibPosition();
     auto settings = GetSettings();
     settings->beginGroup(QStringLiteral("Columns"));
@@ -589,16 +591,16 @@ void MainWindow::onSetTag()
             id = item->data(0, Qt::UserRole).toUInt();
             switch (item->type()) {
             case ITEM_TYPE_BOOK:
-                setTag(idTag, id, libs[idCurrentLib].books[id].vIdTags, u"book"_s, bSet);
+                setTag(idTag, id, g::libs[g::idCurrentLib].books[id].vIdTags, u"book"_s, bSet);
                 break;
 
             case ITEM_TYPE_SERIA:
-                setTag(idTag, id, libs[idCurrentLib].serials[id].vIdTags, u"seria"_s, bSet);
+                setTag(idTag, id, g::libs[g::idCurrentLib].serials[id].vIdTags, u"seria"_s, bSet);
 
                 break;
 
             case ITEM_TYPE_AUTHOR:
-                setTag(idTag, id, libs[idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
+                setTag(idTag, id, g::libs[g::idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
 
                 break;
 
@@ -610,12 +612,12 @@ void MainWindow::onSetTag()
     else if(currentListForTag_ == ui->AuthorList)
     {
         id = ui->AuthorList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, libs[idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
+        setTag(idTag, id, g::libs[g::idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
     }
     else if(currentListForTag_ == ui->SeriaList)
     {
         id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, libs[idCurrentLib].serials[id].vIdTags, QStringLiteral("seria"), bSet);
+        setTag(idTag, id, g::libs[g::idCurrentLib].serials[id].vIdTags, QStringLiteral("seria"), bSet);
     }
 
     //TODO оптимизировать обновление иконок при большом количестве отображаемых авторов/книг
@@ -698,7 +700,7 @@ void MainWindow::Settings()
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
     if(pDlg->exec() == QDialog::Accepted){
-        if(options.bShowDeleted != pDlg->options_.bShowDeleted || options.bUseTag != pDlg->options_.bUseTag)
+        if(g::options.bShowDeleted != pDlg->options_.bShowDeleted || g::options.bUseTag != pDlg->options_.bUseTag)
         {
             UpdateTags();
             SaveLibPosition();
@@ -707,11 +709,11 @@ void MainWindow::Settings()
             FillListBooks();
         }
 #ifdef USE_HTTSERVER
-        if(options.bOpdsEnable != pDlg->options_.bOpdsEnable || options.nOpdsPort != pDlg->options_.nOpdsPort || options.sBaseUrl != pDlg->options_.sBaseUrl ||
-           options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || options.sOpdsUser != pDlg->options_.sOpdsUser ||
-           options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash)
+        if(g::options.bOpdsEnable != pDlg->options_.bOpdsEnable || g::options.nOpdsPort != pDlg->options_.nOpdsPort || g::options.sBaseUrl != pDlg->options_.sBaseUrl ||
+           g::options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || g::options.sOpdsUser != pDlg->options_.sOpdsUser ||
+           g::options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash)
         {
-            if(pOpds_ == nullptr && options.bOpdsEnable)
+            if(pOpds_ == nullptr && g::options.bOpdsEnable)
                 pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
             pOpds_->server_run();
         }
@@ -793,7 +795,7 @@ QList<QTreeWidgetItem *> MainWindow::checkedItemsBookList(const QTreeWidgetItem 
 
 void MainWindow::uncheckBooks(const std::vector<uint> &vBooks)
 {
-    if(!options.bUncheckAfterExport)
+    if(!g::options.bUncheckAfterExport)
         return;
     QList<QTreeWidgetItem*> items;
     if(ui->Books->topLevelItemCount() == 0)
@@ -849,13 +851,13 @@ void MainWindow::BookDblClick()
     if(item->type() != ITEM_TYPE_BOOK)
         return;
     uint idBook = item->data(0, Qt::UserRole).toUInt();
-    SLib& lib = libs[idCurrentLib];
+    SLib& lib = g::libs[g::idCurrentLib];
     SBook &book = lib.books[idBook];
     QString sFileName;
     if(book.sArchive.isEmpty()){
         sFileName = lib.path % u"/"_s % book.sFile % u"."_s % book.sFormat;
     }else{
-        BookFile fileBook(idCurrentLib, idBook);
+        BookFile fileBook(g::idCurrentLib, idBook);
         QByteArray baBook = fileBook.data();
         if(baBook.size() == 0)
             return;
@@ -865,13 +867,13 @@ void MainWindow::BookDblClick()
         file.write(baBook);
         file.close();
     }
-    if(options.applications.contains(book.sFormat)){
+    if(g::options.applications.contains(book.sFormat)){
         if(
 #ifdef Q_OS_MACX
         QProcess::startDetached("open",QStringList()<<options.applications.value(fi.suffix().toLower())<<"--args"<<file.fileName())&&
-                QFileInfo(options.applications.value(sExt)).exists()
+                QFileInfo(g::options.applications.value(sExt)).exists()
 #else
-        QProcess::startDetached(options.applications.at(book.sFormat), QStringList() << sFileName)
+        QProcess::startDetached(g::options.applications.at(book.sFormat), QStringList() << sFileName)
 #endif
         )
             return;
@@ -974,7 +976,7 @@ void MainWindow::StartSearch()
     ushort idGenre = ui->s_genre->currentData().toUInt();
     int idLanguage = ui->findLanguage->currentData().toInt();
 
-    SLib& lib = libs[idCurrentLib];
+    SLib& lib = g::libs[g::idCurrentLib];
     vBooks_.clear();
     int nCount = 0;
     std::vector<uint> vPosFound;
@@ -1014,7 +1016,7 @@ void MainWindow::StartSearch()
         }else
             bMatchAuthor = true;
 
-        if((options.bShowDeleted || !book.second.bDeleted)&&
+        if((g::options.bShowDeleted || !book.second.bDeleted)&&
                 book.second.date>= dateFrom && book.second.date <= dateTo &&
                 bMatchAuthor &&
                 (sName.isEmpty() || book.second.sName.contains(sName, Qt::CaseInsensitive)) &&
@@ -1053,10 +1055,10 @@ void MainWindow::SelectLibrary()
 
     QAction* action = qobject_cast<QAction*>(sender());
     SaveLibPosition();
-    uint idOldLib = idCurrentLib;
-    idCurrentLib = action->data().toUInt();
-    if(idCurrentLib != idOldLib){
-        auto &oldLib = libs[idOldLib];
+    uint idOldLib = g::idCurrentLib;
+    g::idCurrentLib = action->data().toUInt();
+    if(g::idCurrentLib != idOldLib){
+        auto &oldLib = g::libs[idOldLib];
         QFuture<void> future;
         if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
             future = QtConcurrent::run([&oldLib]()
@@ -1071,9 +1073,9 @@ void MainWindow::SelectLibrary()
         }
 
         auto settings = GetSettings();
-        settings->setValue(QStringLiteral("LibID"), idCurrentLib);
+        settings->setValue(QStringLiteral("LibID"), g::idCurrentLib);
 
-        loadLibrary(idCurrentLib);
+        loadLibrary(g::idCurrentLib);
         fillLanguages();
         FillAuthors();
         FillSerials();
@@ -1090,8 +1092,7 @@ void MainWindow::SelectLibrary()
             break;
         }
 
-        setWindowTitle(u"freeLib"_s + ((idCurrentLib == 0||libs[idCurrentLib].name.isEmpty() ?u""_s :u" — "_s) + libs[idCurrentLib].name));
-
+        updateTitle();
         future.waitForFinished();
     }
 
@@ -1110,7 +1111,7 @@ void MainWindow::SelectGenre()
     QTreeWidgetItem* cur_item = ui->GenreList->selectedItems()[0];
     ushort idGenre = cur_item->data(0, Qt::UserRole).toUInt();
     vBooks_.clear();
-    SLib& lib = libs[idCurrentLib];
+    SLib& lib = g::libs[g::idCurrentLib];
     for(const auto &book :lib.books){
         if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.second.idLanguage)){
             for(auto iGenre: book.second.vIdGenres) {
@@ -1124,7 +1125,7 @@ void MainWindow::SelectGenre()
     idCurrentGenre_ = idGenre;
     FillListBooks(vBooks_, std::vector<uint>(), 0);
     auto settings = GetSettings();
-    if(options.bStorePosition){
+    if(g::options.bStorePosition){
         settings->setValue(QStringLiteral("current_genre_id"), idCurrentGenre_);
     }
 }
@@ -1141,7 +1142,7 @@ void MainWindow::SelectSeria()
     QListWidgetItem* cur_item = ui->SeriaList->selectedItems().at(0);
     uint idSerial = cur_item->data(Qt::UserRole).toUInt();
     vBooks_.clear();
-    SLib& lib = libs[idCurrentLib];
+    SLib& lib = g::libs[g::idCurrentLib];
 
     for(const auto &book :lib.books){
         if(book.second.idSerial == idSerial && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.second.idLanguage)){
@@ -1151,7 +1152,7 @@ void MainWindow::SelectSeria()
     FillListBooks(vBooks_, std::vector<uint>(), 0);
 
     idCurrentSerial_= idSerial;
-    if(options.bStorePosition){
+    if(g::options.bStorePosition){
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("current_serial_id"), idSerial);
     }
@@ -1168,12 +1169,12 @@ void MainWindow::SelectAuthor()
     QListWidgetItem* cur_item =ui->AuthorList->selectedItems().at(0);
     idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
     vBooks_.clear();
-    for (auto it = libs[idCurrentLib].authorBooksLink.equal_range(idCurrentAuthor_); it.first != it.second; ++it.first) {
+    for (auto it = g::libs[g::idCurrentLib].authorBooksLink.equal_range(idCurrentAuthor_); it.first != it.second; ++it.first) {
         vBooks_.push_back(it.first->second);
     }
     FillListBooks(vBooks_, std::vector<uint>(), idCurrentAuthor_);
 
-    if(options.bStorePosition){
+    if(g::options.bStorePosition){
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("current_author_id"), idCurrentAuthor_);
     }
@@ -1199,9 +1200,9 @@ void MainWindow::SelectBook()
     }
     uint idBook = item->data(0, Qt::UserRole).toUInt();
     idCurrentBook_ = idBook;
-    SLib& lib = libs[idCurrentLib];
+    SLib& lib = g::libs[g::idCurrentLib];
     SBook &book = lib.books[idBook];
-    BookFile file(idCurrentLib, idBook);
+    BookFile file(g::idCurrentLib, idBook);
     file.open();
     ui->btnOpenBook->setEnabled(true);
     if(book.sAnnotation.isEmpty())
@@ -1223,7 +1224,7 @@ void MainWindow::SelectBook()
     QString sGenres;
     for(auto idGenre: book.vIdGenres)
     {
-        QString sGenre = genres[idGenre].sName;
+        QString sGenre = g::genres[idGenre].sName;
         sGenres += (sGenres.isEmpty() ?u""_s :u"; "_s) + u"<a href='genre_%3%1'>%2</a>"_s
                 .arg(QString::number(idGenre), sGenre, sGenre.at(0));
     }
@@ -1258,7 +1259,7 @@ void MainWindow::SelectBook()
 void MainWindow::fillLanguages()
 {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    SLib &currentLib = libs[idCurrentLib];
+    SLib &currentLib = g::libs[g::idCurrentLib];
     static std::unordered_map<QString, QString> mLanguges = {{u"ab"_s, u"Аԥсшәа"_s},
                                                              {u"am"_s, u"አማርኛ"_s},
                                                              {u"ar"_s, u"العربية"_s},
@@ -1393,7 +1394,7 @@ void MainWindow::ManageLibrary()
     if(al.bLibChanged){
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        loadLibrary(idCurrentLib);
+        loadLibrary(g::idCurrentLib);
 
         UpdateTags();
         fillLanguages();
@@ -1405,7 +1406,7 @@ void MainWindow::ManageLibrary()
             onSerachSeriesChanded(ui->searchSeries->text());
             break;
         }
-        setWindowTitle(QStringLiteral("freeLib") + ((idCurrentLib==0||libs[idCurrentLib].name.isEmpty() ?QStringLiteral("") :QStringLiteral(" — ")) + libs[idCurrentLib].name));
+        updateTitle();
         FillLibrariesMenu();
         FillGenres();
         QGuiApplication::restoreOverrideCursor();
@@ -1423,7 +1424,7 @@ void MainWindow::onStatistics()
 
 void MainWindow::onAddBooks()
 {
-    SLib &lib = libs[idCurrentLib];
+    SLib &lib = g::libs[g::idCurrentLib];
 
     QStringList listFiles = QFileDialog::getOpenFileNames(this, tr("Select books to add"), lib.path,
                                                           tr("Books") + u" (*.fb2 *.epub *.zip)"_s, nullptr, QFileDialog::ReadOnly);
@@ -1449,7 +1450,7 @@ void MainWindow::onAddBooks()
         }
         pThread_ = new QThread;
         pImportThread_ = new ImportThread();
-        pImportThread_->init(idCurrentLib, lib, listFiles);
+        pImportThread_->init(g::idCurrentLib, lib, listFiles);
         pImportThread_->moveToThread(pThread_);
         connect(pThread_, &QThread::started, pImportThread_, &ImportThread::process);
         connect(pImportThread_, &ImportThread::End, pThread_, &QThread::quit);
@@ -1462,7 +1463,7 @@ void MainWindow::addBooksFinished()
 {
     pImportThread_->deleteLater();
     pThread_->deleteLater();
-    loadLibrary(idCurrentLib);
+    loadLibrary(g::idCurrentLib);
     fillLanguages();
     FillAuthors();
     FillSerials();
@@ -1627,7 +1628,7 @@ void MainWindow::ContextMenu(QPoint point)
     }
     if(menu.actions().count() > 0)
         menu.addSeparator();
-    if(options.bUseTag){
+    if(g::options.bUseTag){
         if(QObject::sender() == ui->Books){
             std::unordered_map<uint, uint> countTags;
             std::vector<uint> vIdTags;
@@ -1635,13 +1636,13 @@ void MainWindow::ContextMenu(QPoint point)
                 uint id = item->data(0, Qt::UserRole).toUInt();
                 switch(item->type()){
                 case ITEM_TYPE_BOOK:
-                    vIdTags = libs[idCurrentLib].books[id].vIdTags;
+                    vIdTags = g::libs[g::idCurrentLib].books[id].vIdTags;
                     break;
                 case ITEM_TYPE_SERIA:
-                    vIdTags = libs[idCurrentLib].serials[id].vIdTags;
+                    vIdTags = g::libs[g::idCurrentLib].serials[id].vIdTags;
                     break;
                 case ITEM_TYPE_AUTHOR:
-                    vIdTags = libs[idCurrentLib].authors[id].vIdTags;
+                    vIdTags = g::libs[g::idCurrentLib].authors[id].vIdTags;
                 }
                 for(auto idTag : vIdTags){
                     countTags[idTag]++;
@@ -1663,7 +1664,7 @@ void MainWindow::ContextMenu(QPoint point)
             for(const auto action :actions){
                 uint idTag = action->data().toUInt();
                 uint idAuthor = ui->AuthorList->itemAt(point)->data(Qt::UserRole).toUInt();
-                action->setChecked(contains(libs[idCurrentLib].authors[idAuthor].vIdTags, idTag) );
+                action->setChecked(contains(g::libs[g::idCurrentLib].authors[idAuthor].vIdTags, idTag) );
             }
 
         }
@@ -1673,7 +1674,7 @@ void MainWindow::ContextMenu(QPoint point)
             for(const auto action :actions){
                 uint idTag = action->data().toUInt();
                 uint idSerial = ui->SeriaList->itemAt(point)->data(Qt::UserRole).toUInt();
-                action->setChecked(contains(libs[idCurrentLib].serials[idSerial].vIdTags, idTag));
+                action->setChecked(contains(g::libs[g::idCurrentLib].serials[idSerial].vIdTags, idTag));
             }
 
         }
@@ -1818,7 +1819,7 @@ void MainWindow::FillLibrariesMenu()
         ui->btnLibrary->setMenu(menu);
     }
 
-    for(const auto &iLib :libs){
+    for(const auto &iLib :g::libs){
         uint idLib = iLib.first;
         if(idLib>0){
             QAction *action = new QAction(iLib.second.name, menu);
@@ -1827,7 +1828,7 @@ void MainWindow::FillLibrariesMenu()
             menu->insertAction(nullptr, action);
             pLibGroup_->addAction(action);
             connect(action, &QAction::triggered, this, &MainWindow::SelectLibrary);
-            if(idLib == idCurrentLib)
+            if(idLib == g::idCurrentLib)
                 action->setChecked(true);
         }
     }
@@ -1837,15 +1838,15 @@ void MainWindow::FillLibrariesMenu()
 
 void MainWindow::FillAuthors()
 {
-    if(idCurrentLib == 0)
+    if(g::idCurrentLib == 0)
         return;
     qint64 timeStart;
-    if(bVerbose)
+    if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     const bool wasBlocked = ui->AuthorList->blockSignals(true);
     ui->AuthorList->clear();
-    SLib &currentLib = libs[idCurrentLib];
+    SLib &currentLib = g::libs[g::idCurrentLib];
     auto &authors = currentLib.authors;
     QListWidgetItem *selectedItem = nullptr;
     QString sSearch = ui->searchAuthor->text();
@@ -1869,11 +1870,11 @@ void MainWindow::FillAuthors()
         }
         if(count>0){
             QListWidgetItem *item = new QListWidgetItem(author.getName() % u" ("_s % QString::number(count) % u")"_s);
-            if(options.bUseTag)
+            if(g::options.bUseTag)
                 item->setIcon(getTagIcon(authors.at(idAuthor).vIdTags));
 
             item->setData(Qt::UserRole, idAuthor);
-            if(options.bUseTag)
+            if(g::options.bUseTag)
                 item->setIcon(getTagIcon(author.vIdTags));
             if(idCurrentAuthor_ == idAuthor)
                 selectedItem = item;
@@ -1900,7 +1901,7 @@ void MainWindow::FillAuthors()
     }
 
     ui->AuthorList->blockSignals(wasBlocked);
-    if(bVerbose){
+    if(g::bVerbose){
         qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
         qDebug()<< "FillAuthors " << timeEnd - timeStart << "msec";
     }
@@ -1909,10 +1910,10 @@ void MainWindow::FillAuthors()
 
 void MainWindow::FillSerials()
 {
-    if(idCurrentLib == 0)
+    if(g::idCurrentLib == 0)
         return;
     qint64 timeStart;
-    if(bVerbose)
+    if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
     const bool wasBlocked = ui->SeriaList->blockSignals(true);
     ui->SeriaList->clear();
@@ -1920,7 +1921,7 @@ void MainWindow::FillSerials()
     static const QRegularExpression re(u"[A-Za-zа-яА-ЯЁё]"_s);
 
     std::unordered_map<uint, uint> mCounts;
-    const SLib& lib = libs[idCurrentLib];
+    const SLib& lib = g::libs[g::idCurrentLib];
     auto &squences = lib.serials;
 
     for(const auto &book :lib.books){
@@ -1944,7 +1945,7 @@ void MainWindow::FillSerials()
     {
         QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(squences.at(idSequnce).sName).arg(mCounts.at(idSequnce)));
         item->setData(Qt::UserRole, idSequnce);
-        if(options.bUseTag)
+        if(g::options.bUseTag)
             item->setIcon(getTagIcon(squences.at(idSequnce).vIdTags));
         ui->SeriaList->addItem(item);
         if(idSequnce == idCurrentSerial_)
@@ -1955,7 +1956,7 @@ void MainWindow::FillSerials()
     }
 
     ui->SeriaList->blockSignals(wasBlocked);
-    if(bVerbose){
+    if(g::bVerbose){
         qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
         qDebug()<< "FillSerials " << timeEnd - timeStart << "msec";
     }
@@ -1963,10 +1964,10 @@ void MainWindow::FillSerials()
 
 void MainWindow::FillGenres()
 {
-    if(idCurrentLib == 0)
+    if(g::idCurrentLib == 0)
         return;
     qint64 timeStart;
-    if(bVerbose)
+    if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
     const bool wasBlocked = ui->GenreList->blockSignals(true);
     ui->GenreList->clear();
@@ -1976,7 +1977,7 @@ void MainWindow::FillGenres()
     fontBold.setBold(true);
 
     std::unordered_map<ushort, uint> mCounts;
-    SLib& lib = libs[idCurrentLib];
+    SLib& lib = g::libs[g::idCurrentLib];
 
     for(const auto &book :lib.books){
         if(IsBookInList(book.second))
@@ -1989,11 +1990,11 @@ void MainWindow::FillGenres()
     std::unordered_map<ushort, QTreeWidgetItem*> mTopGenresItem;
     for(const auto &iGenre :mCounts){
         auto idGenre = iGenre.first;
-        auto idParrentGenre = genres[idGenre].idParrentGenre;
+        auto idParrentGenre = g::genres[idGenre].idParrentGenre;
         QTreeWidgetItem *pTopItem;
 
         if(!mTopGenresItem.contains(idParrentGenre)){
-            const QString &sTopName = genres[idParrentGenre].sName;
+            const QString &sTopName = g::genres[idParrentGenre].sName;
             pTopItem = new QTreeWidgetItem(ui->GenreList);
             pTopItem->setFont(0, fontBold);
             pTopItem->setText(0, sTopName);
@@ -2005,7 +2006,7 @@ void MainWindow::FillGenres()
             pTopItem = mTopGenresItem[idParrentGenre];
 
         QTreeWidgetItem *item = new QTreeWidgetItem(pTopItem);
-        const QString &sName = genres[idGenre].sName;
+        const QString &sName = g::genres[idGenre].sName;
         item->setText(0, u"%1 (%2)"_s.arg(sName).arg(mCounts[idGenre]));
         item->setData(0, Qt::UserRole, idGenre);
         ui->s_genre->addItem(QStringLiteral("   ") + sName, idGenre);
@@ -2020,7 +2021,7 @@ void MainWindow::FillGenres()
     ui->GenreList->model()->sort(0);
 
     ui->GenreList->blockSignals(wasBlocked);
-    if(bVerbose){
+    if(g::bVerbose){
         qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
         qDebug()<< "FillGenres " << timeEnd - timeStart << "msec";
     }
@@ -2046,10 +2047,10 @@ void MainWindow::FillListBooks()
 
 void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vector<uint> &vCheckedBooks, uint idCurrentAuthor)
 {
-    if(idCurrentLib == 0)
+    if(g::idCurrentLib == 0)
         return;
     qint64 timeStart;
-    if(bVerbose)
+    if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
     QFont bold_font(ui->Books->font());
     bold_font.setBold(true);
@@ -2064,7 +2065,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
 
     const bool wasBlocked = ui->Books->blockSignals(true);
     ui->Books->clear();
-    SLib &lib = libs[idCurrentLib];
+    SLib &lib = g::libs[g::idCurrentLib];
 
     for( uint idBook: vBooks) {
         SBook &book = lib.books[idBook];
@@ -2090,7 +2091,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                     item_author->setData(0, Qt::UserRole, idAuthor);
                     item_author->setData(3, Qt::UserRole, -1);
 
-                    if(options.bUseTag){
+                    if(g::options.bUseTag){
                         item_author->setIcon(0, getTagIcon(lib.authors[idAuthor].vIdTags));
                     }
                     mAuthorItems[idAuthor] = item_author;
@@ -2122,7 +2123,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                         item_seria->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
                         item_seria->setData(0, Qt::UserRole, idSerial);
                         item_seria->setData(3, Qt::UserRole, -1);
-                        if(options.bUseTag)
+                        if(g::options.bUseTag)
                             item_seria->setIcon(0, getTagIcon(lib.serials[idSerial].vIdTags));
 
                         mSeriaItems.insert({idSerial, item_seria});
@@ -2135,7 +2136,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
 
             item_book->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
             item_book->setData(0, Qt::UserRole, idBook);
-            if(options.bUseTag){
+            if(g::options.bUseTag){
                 item_book->setIcon(0, getTagIcon(book.vIdTags));
             }
 
@@ -2167,7 +2168,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
             item_book->setTextAlignment(6, Qt::AlignCenter);
 
             if(!book.vIdGenres.empty()){
-                item_book->setText(7, genres[book.vIdGenres.at(0)].sName);
+                item_book->setText(7, g::genres[book.vIdGenres.at(0)].sName);
                 item_book->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
             }
 
@@ -2196,7 +2197,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
     SelectBook();
 
     ui->Books->blockSignals(wasBlocked);
-    if(bVerbose){
+    if(g::bVerbose){
         qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
         qDebug()<< "FillListBooks " << timeEnd - timeStart << "msec";
     }
@@ -2211,10 +2212,10 @@ bool MainWindow::IsBookInList(const SBook &book)
 
 
     return (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.idLanguage) &&
-            (options.bShowDeleted || !book.bDeleted) &&
-           (!options.bUseTag || idTagFilter == 0 || contains(book.vIdTags, idTagFilter)||
-            (idSerial>0 && contains(libs[idCurrentLib].serials[idSerial].vIdTags, idTagFilter)) ||
-            (contains(libs[idCurrentLib].authors[book.idFirstAuthor].vIdTags, idTagFilter)));
+            (g::options.bShowDeleted || !book.bDeleted) &&
+           (!g::options.bUseTag || idTagFilter == 0 || contains(book.vIdTags, idTagFilter)||
+            (idSerial>0 && contains(g::libs[g::idCurrentLib].serials[idSerial].vIdTags, idTagFilter)) ||
+            (contains(g::libs[g::idCurrentLib].authors[book.idFirstAuthor].vIdTags, idTagFilter)));
 }
 
 void MainWindow::UpdateExportMenu()
@@ -2231,10 +2232,10 @@ void MainWindow::UpdateExportMenu()
         ui->btnExport->setMenu(menu);
     }
     //ui->btnExport->setDefaultAction(nullptr);
-    int count = options.vExportOptions.size();
+    int count = g::options.vExportOptions.size();
     for(int i = 0; i<count; i++)
     {
-        const ExportOptions &exportOptions = options.vExportOptions.at(i);
+        const ExportOptions &exportOptions = g::options.vExportOptions.at(i);
         if(bKindlegenInstalled ||
             (exportOptions.format != mobi && exportOptions.format != azw3 && exportOptions.format != mobi7))
         {
@@ -2288,15 +2289,15 @@ void MainWindow::UpdateExportMenu()
 void MainWindow::ExportAction()
 {
     int id = qobject_cast<QAction*>(sender())->data().toInt();
-    if(options.vExportOptions.at(id).sSendTo == QStringLiteral("device"))
-       SendToDevice(options.vExportOptions.at(id));
+    if(g::options.vExportOptions.at(id).sSendTo == QStringLiteral("device"))
+       SendToDevice(g::options.vExportOptions.at(id));
    else
-       SendMail(options.vExportOptions.at(id));
+       SendMail(g::options.vExportOptions.at(id));
 }
 
 void MainWindow::onLanguageFilterChanged(int index)
 {
-    SLib &currentLib = libs[idCurrentLib];
+    SLib &currentLib = g::libs[g::idCurrentLib];
     int iLang = ui->language->itemData(index).toInt();
     QString sLanguage;
     if(iLang == -1)
@@ -2388,7 +2389,7 @@ void MainWindow::onSetRating(QTreeWidgetItem *item, uchar nRating)
         MyDBG << query.lastError().text();
     else{
         item->setData(5, Qt::UserRole, nRating);
-        libs[idCurrentLib].books[idBook].nStars = nRating;
+        g::libs[g::idCurrentLib].books[idBook].nStars = nRating;
     }
 }
 
@@ -2438,7 +2439,7 @@ void MainWindow::onTabWidgetChanged(int index)
 
 void MainWindow::ChangingTrayIcon(int index, int color)
 {
-    if(bTray)
+    if(g::bTray)
         index = 2;
     if(index == 0)
     {
@@ -2524,7 +2525,7 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
         if(this->isActiveWindow() && this->isVisible())
         {
             this->setWindowState(this->windowState()|Qt::WindowMinimized);
-            if(options.nIconTray != 0)
+            if(g::options.nIconTray != 0)
                 this->hide();
         }
         else
@@ -2568,7 +2569,7 @@ void MainWindow::changeEvent(QEvent *event)
     {
         if(isMinimized())
         {
-            ChangingTrayIcon(options.nIconTray, options.nTrayColor);
+            ChangingTrayIcon(g::options.nIconTray, g::options.nTrayColor);
             TrayMenuAction(QSystemTrayIcon::Unknown);
             event->ignore();
         }

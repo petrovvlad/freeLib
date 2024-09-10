@@ -16,19 +16,21 @@ bool GenreSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIn
     if(idLeft == 0)
         return true;
 
-    if(genres[idLeft].idParrentGenre == 0 && genres[idRight].idParrentGenre == 0)
+    const auto& genreLeft = g::genres[idLeft];
+    const auto& genreRight = g::genres[idRight];
+    if(g::genres[idLeft].idParrentGenre == 0 && g::genres[idRight].idParrentGenre == 0)
         return idLeft < idRight;
 
-    if(genres[idLeft].idParrentGenre == 0 && genres[idRight].idParrentGenre > 0)
-        return idLeft <= genres[idRight].idParrentGenre;
+    if(genreLeft.idParrentGenre == 0 && genreRight.idParrentGenre > 0)
+        return idLeft <= genreRight.idParrentGenre;
 
-    if(genres[idLeft].idParrentGenre > 0 && genres[idRight].idParrentGenre == 0)
-        return idRight>genres[idLeft].idParrentGenre;
+    if(genreLeft.idParrentGenre > 0 && genreRight.idParrentGenre == 0)
+        return idRight>genreLeft.idParrentGenre;
 
-    if(genres[idLeft].idParrentGenre > 0 && genres[idRight].idParrentGenre > 0){
-        if(genres[idLeft].idParrentGenre == genres[idRight].idParrentGenre)
-            return genres[idLeft].nSort < genres[idRight].nSort;
-        return genres[idLeft].idParrentGenre < genres[idRight].idParrentGenre;
+    if(genreLeft.idParrentGenre > 0 && genreRight.idParrentGenre > 0){
+        if(genreLeft.idParrentGenre == genreRight.idParrentGenre)
+            return genreLeft.nSort < genreRight.nSort;
+        return genreLeft.idParrentGenre < genreRight.idParrentGenre;
     }
 
     return idLeft < idRight;

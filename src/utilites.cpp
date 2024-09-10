@@ -14,8 +14,6 @@
 #include "options.h"
 #include "config-freelib.h"
 
-std::vector<tag> vTags;
-
 QString RelativeToAbsolutePath(QString path)
 {
     if(QDir(path).isRelative() && path.indexOf(QLatin1String("%"))<0 && !path.startsWith(QLatin1String("mtp:/")))
@@ -48,7 +46,7 @@ bool openDB(const QString &sName)
     QString sAppDir,sFileDB;
     auto settings = GetSettings();
 
-    QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
+    QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
     if(fi.exists() && fi.isFile())
     {
         sFileDB = fi.canonicalFilePath();
@@ -57,7 +55,7 @@ bool openDB(const QString &sName)
     {
         sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
         sFileDB = sAppDir + u"/freeLib.sqlite"_s;
-        options.sDatabasePath = sFileDB;
+        g::options.sDatabasePath = sFileDB;
         settings->setValue(u"database_path"_s, sFileDB);
     }
     QFile file(sFileDB);
@@ -274,11 +272,11 @@ QString Transliteration(QString str)
 QNetworkProxy proxy;
 void setProxy()
 {
-    proxy.setPort(options.nProxyPort);
-    proxy.setHostName(options.sProxyHost);
-    proxy.setPassword(options.sProxyPassword);
-    proxy.setUser(options.sProxyUser);
-    switch(options.nProxyType)
+    proxy.setPort(g::options.nProxyPort);
+    proxy.setHostName(g::options.sProxyHost);
+    proxy.setPassword(g::options.sProxyPassword);
+    proxy.setUser(g::options.sProxyUser);
+    switch(g::options.nProxyType)
     {
     case 0:
         proxy.setType(QNetworkProxy::NoProxy);
@@ -353,15 +351,15 @@ void setLocale(const QString &sLocale)
         translator_qt.reset();
     }
 
-    vTags.clear();
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Top level captions"), u".h0"_s, u"top_caption_font"_s, 140));
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Captions"), u".h1,.h2,.h3,.h4,.h5,.h6"_s, u"caption_font"_s, 120));
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Dropcaps"), u"span.dropcaps"_s, u"dropcaps_font"_s, 300));
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Footnotes"), u".inlinenote,.blocknote"_s, u"footnotes_font"_s, 80));
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Annotation"), u".annotation"_s, QStringLiteral("annotation_font"), 100));
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Poems"), u".poem"_s, u"poem_font"_s, 100));
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Epigraph"), u".epigraph"_s, u"epigraph_font"_s, 100));
-    vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Book"), u"body"_s, u"body_font"_s, 100));
+    g::vTags.clear();
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Top level captions"), u".h0"_s, u"top_caption_font"_s, 140));
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Captions"), u".h1,.h2,.h3,.h4,.h5,.h6"_s, u"caption_font"_s, 120));
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Dropcaps"), u"span.dropcaps"_s, u"dropcaps_font"_s, 300));
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Footnotes"), u".inlinenote,.blocknote"_s, u"footnotes_font"_s, 80));
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Annotation"), u".annotation"_s, QStringLiteral("annotation_font"), 100));
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Poems"), u".poem"_s, u"poem_font"_s, 100));
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Epigraph"), u".epigraph"_s, u"epigraph_font"_s, 100));
+    g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Book"), u"body"_s, u"body_font"_s, 100));
 }
 
 bool setCurrentZipFileName(QuaZip *zip, const QString &name)
