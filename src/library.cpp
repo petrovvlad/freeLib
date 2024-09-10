@@ -42,7 +42,7 @@ void loadLibrary(uint idLibrary)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
             QSqlDatabase dbReadAuthors = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("readauthors"));
 #else
-            QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
+            QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
             QString sDbFile = fi.canonicalFilePath();
             QSqlDatabase dbReadAuthors = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("readauthors"));
             dbReadAuthors.setDatabaseName(sDbFile);
@@ -118,7 +118,7 @@ void loadLibrary(uint idLibrary)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
             QSqlDatabase dbReadBooks = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("readdb"));
 #else
-            QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
+            QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
             QString sDbFile = fi.canonicalFilePath();
             QSqlDatabase dbReadBooks = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));
             dbReadBooks.setDatabaseName(sDbFile);
@@ -241,7 +241,7 @@ void loadLibrary(uint idLibrary)
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
             QSqlDatabase dbReadDB = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("readdb"));
 #else
-            QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
+            QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
             QString sDbFile = fi.canonicalFilePath();
             QSqlDatabase dbReadDB = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));
             dbReadDB.setDatabaseName(sDbFile);
