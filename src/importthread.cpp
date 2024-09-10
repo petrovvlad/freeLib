@@ -624,7 +624,7 @@ void ImportThread::process()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
     QSqlDatabase dbase = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("importdb"));
 #else
-    QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
+    QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
     QString sDbFile = fi.canonicalFilePath();
     QSqlDatabase dbase = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));
     dbase.setDatabaseName(sDbFile);
