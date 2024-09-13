@@ -104,8 +104,9 @@ public:
 void loadLibrary(uint idLibrary);
 void loadGenres();
 
-extern uint idCurrentLib;
-extern std::unordered_map<uint, SLib> libs;
-extern std::unordered_map<ushort, SGenre> genres;
-
+namespace g {
+inline std::unordered_map<uint, SLib> libs;
+inline std::unordered_map<ushort, SGenre> genres;
+inline uint idCurrentLib;
+}
 #endif // LIBRARY_H

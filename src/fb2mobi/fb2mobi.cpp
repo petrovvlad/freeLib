@@ -76,26 +76,24 @@ QString test_language(QString language)
     return u"en"_s;
 }
 
-QString HTMLHEAD = QStringLiteral("<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
+const QString fb2mobi::sHtmlHead_ = u"<html xmlns=\"http://www.w3.org/1999/xhtml\" xmlns:epub=\"http://www.idpf.org/2007/ops\">"
             "<head>"
                 "<title>freeLib</title>"
                 "<link rel=\"stylesheet\" type=\"text/css\" href=\"style.css\"/>"
                 "<meta http-equiv=\"Content-Type\" content=\"text/html; charset=utf-8\"/>"
             "</head>"
-            "<body>");
+            "<body>"_s;
 
-
-QString HTMLFOOT = QStringLiteral("</body>"
-              "</html>");
+const QString fb2mobi::sHtmlFoot_ = u"</body></html>"_s;
 
 void fb2mobi::parse_description(const QDomNode &elem)
 {
     if(join_seria)
-        sBookName_ = pBook_->idSerial==0 ?u""_s :libs[idLib_].serials[pBook_->idSerial].sName;
+        sBookName_ = pBook_->idSerial==0 ?u""_s :g::libs[idLib_].serials[pBook_->idSerial].sName;
     else
         sBookName_ = pBook_->sName;
     book_author = authorstring;
-    book_author = libs[idLib_].fillParams(book_author, idBook_);
+    book_author = g::libs[idLib_].fillParams(book_author, idBook_);
     if(pExportOptions_->bAuthorTranslit)
         book_author = Transliteration(book_author);
     isbn = pBook_->sIsbn;
@@ -111,13 +109,13 @@ void fb2mobi::parse_description(const QDomNode &elem)
                  //    if(!hide_annotation)
                      {
                          pBufCurrent_ = &sBufAnnotation_;
-                         *pBufCurrent_ = HTMLHEAD;
+                         *pBufCurrent_ = sHtmlHead_;
                          *pBufCurrent_ += u"<div class=\"annotation\"><div class=\"h1\">%1</div>"_s.arg(sAnnotationTitle_);
                          bAannotation_ = true;
                          parse_format(ti.childNodes().at(t), u"div"_s);
                          bAannotation_ = false;
                          *pBufCurrent_ += u"</div>"_s;
-                         *pBufCurrent_ += HTMLFOOT;
+                         *pBufCurrent_ += sHtmlFoot_;
                          pBufCurrent_ = &vHtmlFiles_.back().sContent;
                      }
 
@@ -155,7 +153,7 @@ void fb2mobi::parse_description(const QDomNode &elem)
              }
          }
     }
-    hyphenator.init(test_language(libs[idLib_].vLaguages[pBook_->idLanguage]));
+    hyphenator.init(test_language(g::libs[idLib_].vLaguages[pBook_->idLanguage]));
 }
 
 void fb2mobi::parse_binary(const QDomNode &elem)
@@ -232,9 +230,9 @@ void fb2mobi::parse_section(const QDomNode &elem)
         if(pExportOptions_->bSplitFile )
         {
 
-            vHtmlFiles_.back().sContent += HTMLFOOT;
+            vHtmlFiles_.back().sContent += sHtmlFoot_;
             vHtmlFiles_.emplace_back(u"section%1.html"_s.arg(vHtmlFiles_.size()));
-            vHtmlFiles_.back().sContent = HTMLHEAD;
+            vHtmlFiles_.back().sContent = sHtmlHead_;
             if(!bAannotation_)
                 pBufCurrent_ = &vHtmlFiles_.back().sContent;
         }
@@ -863,7 +861,7 @@ void fb2mobi::parse_format(const QDomNode &elem, QString tag , QString css, QStr
 
 void fb2mobi::generate_toc()
 {
-    buf = HTMLHEAD %
+    buf = sHtmlHead_ %
           u"<div class=\"toc\">"_s %
           u"<div class=\"h1\" id=\"toc\">%1</div>"_s.arg(toctitle);
     if(!sBufAnnotation_.isEmpty() && !pExportOptions_->bAnnotation)
@@ -899,7 +897,7 @@ void fb2mobi::generate_toc()
 
     buf += u"</div>"
             "<div class=\"indent0\"><a href=\"%1\">%2</a></div>"_s.arg(u"annotation.html"_s, sNotesTitle_);
-    buf += HTMLFOOT;
+    buf += sHtmlFoot_;
 }
 
 
@@ -1140,17 +1138,17 @@ void fb2mobi::generate_opf_epub()
     {
 
         QString title = bookseriestitle;
-        title = libs[idLib_].fillParams(title, idBook_);
+        title = g::libs[idLib_].fillParams(title, idBook_);
         if(pExportOptions_->bSeriaTranslit)
             title=Transliteration(title);
         buf += u"<dc:title>%1</dc:title>\n"_s.arg(title);
      }
-    buf += u"<dc:language>%1</dc:language>\n"_s.arg(test_language(libs[idLib_].vLaguages[pBook_->idLanguage]));
+    buf += u"<dc:language>%1</dc:language>\n"_s.arg(test_language(g::libs[idLib_].vLaguages[pBook_->idLanguage]));
     buf += u"<dc:identifier id=\"bookid\">%1</dc:identifier>\n"_s.arg(isbn.isEmpty() ?QUuid::createUuid().toString() :isbn);
     buf += u"<dc:creator opf:role=\"aut\">%1</dc:creator>\n"_s.arg(book_author);
 
     if(!pBook_->vIdGenres.empty())
-        buf += u"<dc:subject>%1</dc:subject>\n"_s.arg(genres[pBook_->vIdGenres.at(0)].sName);
+        buf += u"<dc:subject>%1</dc:subject>\n"_s.arg(g::genres[pBook_->vIdGenres.at(0)].sName);
     if(!sBookAnntotation_.isEmpty()){
         static const QRegularExpression re(QStringLiteral("<[^>]*>"));
         buf += u"<dc:description>%1</dc:description>\n"_s.arg(sBookAnntotation_.replace(re, u""_s).trimmed());
@@ -1216,7 +1214,7 @@ void fb2mobi::generate_opf_epub()
 void fb2mobi::generate_opf()
 {
     Q_CHECK_PTR(pExportOptions_);
-    SLib& lib = libs[idLib_];
+    SLib& lib = g::libs[idLib_];
     buf = u"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"_s;
     buf += u"<package><metadata><dc-metadata xmlns:dc=\"http://\">"_s;
     if(pBook_->idSerial == 0)
@@ -1230,7 +1228,7 @@ void fb2mobi::generate_opf()
 
         buf += u"<dc:Title>%1</dc:Title>"_s.arg(title);
      }
-    buf += u"<dc:Language>%1</dc:Language>"_s.arg(test_language(libs[idLib_].vLaguages[pBook_->idLanguage]));
+    buf += u"<dc:Language>%1</dc:Language>"_s.arg(test_language(lib.vLaguages[pBook_->idLanguage]));
     buf += u"<dc:Creator>%1</dc:Creator>"_s.arg(book_author);
     buf += u"<dc:identifier id=\"BookId\" opf:scheme=\"ISBN\">%1</dc:identifier>"_s.arg(isbn.isEmpty() ?QUuid::createUuid().toString() :isbn);
     buf += u"<dc:Publisher /><dc:date /><x-metadata>"_s;
@@ -1272,7 +1270,7 @@ void fb2mobi::generate_html(QFile *file)
     vHtmlFiles_.emplace_back(QFileInfo(file->fileName()).completeBaseName() + u".html"_s);
     pBufCurrent_ = &vHtmlFiles_.back().sContent;
 
-    *pBufCurrent_ = HTMLHEAD;
+    *pBufCurrent_ = sHtmlHead_;
     doc.setContent(file);
     QDomNode root = doc.documentElement();
     href_pref = u"href"_s;
@@ -1290,8 +1288,8 @@ void fb2mobi::generate_html(QFile *file)
         else if(root.childNodes().at(i).toElement().tagName() == u"binary")
             parse_binary(root.childNodes().at(i));
     }
-    *pBufCurrent_ += HTMLFOOT;
-    std::erase_if(vHtmlFiles_, [](auto &html){return html.sContent == (HTMLHEAD + HTMLFOOT);});
+    *pBufCurrent_ += sHtmlFoot_;
+    std::erase_if(vHtmlFiles_, [](auto &html){return html.sContent == (sHtmlHead_ + sHtmlFoot_);});
 
     if((pExportOptions_->nFootNotes == 0 || pExportOptions_->nFootNotes == 3) && vNotesDict.size() > 0)
     {
@@ -1315,7 +1313,7 @@ void fb2mobi::generate_html(QFile *file)
         STOC c_toc = {u"%1#%2"_s.arg(vHtmlFiles_.back().sFileName, u"fn%1"_s.arg(toc_index)), tr("Footnotes"), 1, body_name, ""};
         toc.push_back(std::move(c_toc));
         QString* str = &vHtmlFiles_.back().sContent;
-        *str += HTMLHEAD;
+        *str += sHtmlHead_;
         *str += u"<a name='fn%1'></a>"_s.arg(QString::number(toc_index));
         toc_index++;
         for(int i=0; i<vNotesDict.size(); i++)
@@ -1353,15 +1351,15 @@ void fb2mobi::generate_html(QFile *file)
             *str += u"<div style=\"page-break-before:always;\"></div>"_s;
             if(str->length() > 10000)
             {
-                *str += HTMLFOOT;
+                *str += sHtmlFoot_;
                 //i++;
                 vHtmlFiles_.emplace_back(tmp.arg(QString::number(i+1)));
                 str = &vHtmlFiles_.back().sContent;
-                *str += HTMLHEAD;
+                *str += sHtmlHead_;
             }
         }
 
-        *str += HTMLFOOT;
+        *str += sHtmlFoot_;
     }
 
     for(const auto &ref :refFiles_){
@@ -1454,7 +1452,7 @@ void fb2mobi::InsertSeriaNumberToCover(const QString &number, CreateCover create
 
         font.setPixelSize(img.height() / 15);
         painter->setFont(font);
-        PaintText(painter, QRect(delta, delta, r_width, r_heigthTopBottom-delta2), Qt::AlignHCenter|Qt::AlignTop|Qt::TextWordWrap, libs[idLib_].authors[pBook_->idFirstAuthor].getName());
+        PaintText(painter, QRect(delta, delta, r_width, r_heigthTopBottom-delta2), Qt::AlignHCenter|Qt::AlignTop|Qt::TextWordWrap, g::libs[idLib_].authors[pBook_->idFirstAuthor].getName());
 
         font.setPixelSize(img.height() / 12);
         font.setBold(true);
@@ -1465,7 +1463,7 @@ void fb2mobi::InsertSeriaNumberToCover(const QString &number, CreateCover create
         font.setPixelSize(img.height() / 17);
         painter->setFont(font);
         PaintText(painter,QRect(delta, delta+r_heigth-r_heigthTopBottom+delta2, r_width, r_heigthTopBottom-delta2), Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
-                  (pBook_->idSerial ==0 ?u""_s :libs[idLib_].serials[pBook_->idSerial].sName) +
+                  (pBook_->idSerial ==0 ?u""_s :g::libs[idLib_].serials[pBook_->idSerial].sName) +
                   (pBook_->numInSerial>0 ?u"\n"_s + QString::number(pBook_->numInSerial) :u""_s));
     }
     img.save(sTmpDir_ % u"/OEBPS/"_s % sFileCover_);
@@ -1544,9 +1542,10 @@ QString fb2mobi::convert(uint idBook)
 
     QBuffer outbuff;
     outputFormat_ = epub;
-    if(libs[idLib_].books[idBook].sFormat != u"fb2")
+    auto &book = g::libs[idLib_].books[idBook];
+    if(book.sFormat != u"fb2")
         return u""_s;
-    pBook_ = &libs[idLib_].books[idBook];
+    pBook_ = &book;
 
     QFile file;
     QString out_file = sTmpDir_ + u"/book.fb2"_s;
@@ -1665,7 +1664,7 @@ struct FontFamily
 
 QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
 {
-    pBook_ = &libs[idLib_].books[idBook];
+    pBook_ = &g::libs[idLib_].books[idBook];
     idBook_ = idBook;
     outputFormat_ = pExportOptions_->format;
     if(files.size() == 1)
@@ -1721,7 +1720,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString sFontsPath = QFileInfo(options.sDatabasePath).absolutePath() + u"/fonts"_s;
+    QString sFontsPath = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
 
     QFile css(sFileCss);
     if(!css.open(QFile::Append)){
@@ -1779,14 +1778,14 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
             }
             quint8 tag_id = fontExportOptions.nTag;
             QString sFontSize = QString::number(fontExportOptions.nFontSize);
-            set.tags[vTags[tag_id].css] = sFontSize;
+            set.tags[g::vTags[tag_id].css] = sFontSize;
             bool find = false;
             for (int j=0; j<fonts_set.size(); j++)
             {
                 if(fonts_set[j] == set)
                 {
                     find = true;
-                    fonts_set[j].tags[vTags[tag_id].css] = sFontSize;
+                    fonts_set[j].tags[g::vTags[tag_id].css] = sFontSize;
                     break;
                 }
             }
@@ -1921,7 +1920,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         QString title = pExportOptions_->sCoverLabel;
         if(title.isEmpty())
             title = ExportOptions::sDefaultCoverLabel;
-        title = libs[idLib_].fillParams(title, idBook_);
+        title = g::libs[idLib_].fillParams(title, idBook_);
         if(pBook_->numInSerial == 0 || !pExportOptions_->bAddCoverLabel)
             title = u""_s;
         InsertSeriaNumberToCover(title, (pExportOptions_->bCreateCoverAlways ?cc_always :(pExportOptions_->bCreateCover ?cc_if_not_exists :cc_no)));

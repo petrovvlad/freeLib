@@ -18,6 +18,9 @@
 #endif
 #include "importthread.h"
 
+namespace g {
+inline bool bTray;
+}
 namespace Ui {
 class MainWindow;
 }
@@ -62,6 +65,7 @@ private:
     void updateIcons();
     void updateItemIcon(QTreeWidgetItem *item);
     QIcon getTagIcon(const std::vector<uint> &vIdTags);
+    void updateTitle();
 
 
     QSystemTrayIcon *pTrayIcon_;

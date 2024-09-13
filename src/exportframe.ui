@@ -140,7 +140,7 @@
          <item>
           <widget class="QRadioButton" name="radioEmail">
            <property name="text">
-            <string>Send to e-mail</string>
+            <string>Se&amp;nd to e-mail</string>
            </property>
           </widget>
          </item>
@@ -298,6 +298,9 @@
                 </item>
                 <item row="0" column="1">
                  <widget class="QLineEdit" name="from_email">
+                  <property name="inputMask">
+                   <string notr="true"/>
+                  </property>
                   <property name="placeholderText">
                    <string>e-mail</string>
                   </property>
@@ -312,6 +315,9 @@
                 </item>
                 <item row="1" column="1">
                  <widget class="QLineEdit" name="Email">
+                  <property name="inputMask">
+                   <string notr="true"/>
+                  </property>
                   <property name="placeholderText">
                    <string>e-mail</string>
                   </property>
@@ -326,6 +332,9 @@
                 </item>
                 <item row="2" column="1">
                  <widget class="QLineEdit" name="mail_subject">
+                  <property name="inputMask">
+                   <string notr="true"/>
+                  </property>
                   <property name="text">
                    <string/>
                   </property>
@@ -345,6 +354,9 @@
                  <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,3">
                   <item>
                    <widget class="QLineEdit" name="Server">
+                    <property name="inputMask">
+                     <string notr="true"/>
+                    </property>
                     <property name="placeholderText">
                      <string>server address</string>
                     </property>
@@ -391,7 +403,7 @@
                     <item>
                      <widget class="QLineEdit" name="Port">
                       <property name="inputMask">
-                       <string>00000</string>
+                       <string notr="true">00000</string>
                       </property>
                       <property name="placeholderText">
                        <string>port</string>
@@ -413,6 +425,9 @@
                  <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,3">
                   <item>
                    <widget class="QLineEdit" name="User">
+                    <property name="inputMask">
+                     <string notr="true"/>
+                    </property>
                     <property name="placeholderText">
                      <string>user name</string>
                     </property>
@@ -432,6 +447,9 @@
                     </item>
                     <item>
                      <widget class="QLineEdit" name="Password">
+                      <property name="inputMask">
+                       <string notr="true"/>
+                      </property>
                       <property name="echoMode">
                        <enum>QLineEdit::EchoMode::Password</enum>
                       </property>
@@ -501,14 +519,14 @@
        <item>
         <widget class="QToolBox" name="toolBox">
          <property name="currentIndex">
-          <number>3</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="page_2">
           <property name="geometry">
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>261</width>
+            <width>667</width>
             <height>332</height>
            </rect>
           </property>
@@ -560,6 +578,9 @@
                <layout class="QHBoxLayout" name="horizontalLayout_10">
                 <item>
                  <widget class="QLineEdit" name="authorstring">
+                  <property name="inputMask">
+                   <string notr="true"/>
+                  </property>
                   <property name="placeholderText">
                    <string notr="true">%nf %nm %nl</string>
                   </property>
@@ -585,6 +606,9 @@
                <layout class="QHBoxLayout" name="horizontalLayout_11">
                 <item>
                  <widget class="QLineEdit" name="seriastring">
+                  <property name="inputMask">
+                   <string notr="true"/>
+                  </property>
                   <property name="placeholderText">
                    <string notr="true">(%abbrs %n2) %b</string>
                   </property>
@@ -643,6 +667,9 @@
               </item>
               <item>
                <widget class="QLineEdit" name="coverLabel">
+                <property name="inputMask">
+                 <string notr="true"/>
+                </property>
                 <property name="placeholderText">
                  <string notr="true">%abbrs - %n2</string>
                 </property>
@@ -671,7 +698,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>347</width>
+            <width>667</width>
             <height>304</height>
            </rect>
           </property>
@@ -993,8 +1020,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>98</width>
-            <height>40</height>
+            <width>681</width>
+            <height>257</height>
            </rect>
           </property>
           <attribute name="label">

@@ -8,15 +8,14 @@
 
 #include "utilites.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
-constexpr qsizetype nPasswordSaltSize = 24;
-constexpr quint64 nPasswordHashSize = 48;
-#else
-constexpr int nPasswordSaltSize = 8;
-constexpr quint64 nPasswordHashSize = 20;
+#ifdef emit
+#undef emit
+#define NOQTEMIT
 #endif
-QByteArray generateSalt();
-QByteArray passwordToHash(const QString& password,const  QByteArray& salt);
+#include <execution>
+#ifdef NOQTEMIT
+#define emit
+#endif
 
 enum SendType{ST_Device, ST_Mail};
 
@@ -108,6 +107,8 @@ struct Options
     void Load(QSharedPointer<QSettings> pSettings);
     void Save(QSharedPointer<QSettings> pSettings);
 
+    static QByteArray passwordToHash(const QString& password, const QByteArray &salt);
+    static QByteArray generateSalt();
 
     QString sAlphabetName;
     QString sUiLanguageName;
@@ -149,9 +150,28 @@ struct Options
     std::unordered_map<QString, QString> applications;
     std::unordered_map<QString, ToolsOptions> tools;
     std::vector<ExportOptions> vExportOptions;
+
+private:
+#if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)
+    static constexpr qsizetype nPasswordSaltSize_ = 24;
+    static constexpr quint64 nPasswordHashSize_ = 48;
+#else
+    static constexpr int nPasswordSaltSize_ = 8;
+    static constexpr quint64 nPasswordHashSize_ = 20;
+#endif
+
 };
 
+namespace g {
+inline Options options;
+inline bool bVerbose;
+#ifdef USE_TBB
+inline constexpr auto executionpolicy = std::execution::par;
+#else
+inline constexpr auto executionpolicy = std::execution::seq;
+#endif
+}
 
-extern Options options;
+
 
 #endif // OPTIONS_H

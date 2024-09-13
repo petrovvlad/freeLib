@@ -140,7 +140,11 @@ uint ImportThread::AddBook(qlonglong star, QString &name, qlonglong id_seria, in
     else if(sRepairLanguge == u"ua")
         sRepairLanguge = u"uk"_s;
     else if(sRepairLanguge == u"sh")
-        sRepairLanguge = u"sr"_s;    
+        sRepairLanguge = u"sr"_s;
+    else if(sRepairLanguge == u"in")
+        sRepairLanguge = u"id"_s;
+    else if(sRepairLanguge == u"кг")
+        sRepairLanguge = u"ru"_s;
     name.replace(u"..."_s, u"…"_s);
 
     queryInsertBook_.bindValue(QStringLiteral(":name"), name);
@@ -620,7 +624,7 @@ void ImportThread::process()
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
     QSqlDatabase dbase = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("importdb"));
 #else
-    QFileInfo fi(RelativeToAbsolutePath(options.sDatabasePath));
+    QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
     QString sDbFile = fi.canonicalFilePath();
     QSqlDatabase dbase = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));
     dbase.setDatabaseName(sDbFile);

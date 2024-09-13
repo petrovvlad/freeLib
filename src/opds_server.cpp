@@ -17,6 +17,18 @@
 #define SAVE_INDEX  4
 #define MAX_COLUMN_COUNT    3
 
+QString mime(QStringView sFormat)
+{
+    if(sFormat == u"djv" || sFormat == u"djvu")
+        return u"image/vnd-djvu"_s;
+    if(sFormat == u"doc")
+        return u"application/msword"_s;
+    if(sFormat == u"rar")
+        return u"application/vnd.rar"_s;
+    if(sFormat == u"txt")
+        return u"text/plain"_s;
+    return u"application/"_s.append(sFormat);
+}
 
 struct SerialComparator {
     const std::unordered_map<uint, SSerial>& mSerial;
@@ -417,6 +429,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                     vBooks.push_back(it->second);
         }
         std::sort(vBooks.begin(), vBooks.end(),[&lib](uint lhs, uint rhs){ return lib.books.at(lhs).numInSerial < lib.books.at(rhs).numInSerial; });
+
     }
     if(idAuthor != 0 && idSeria == 0){
         auto range = lib.authorBooksLink.equal_range(idAuthor);
@@ -435,7 +448,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
                         vBooks.push_back(it->second);
             }
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName) /*< 0*/; });
+        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName); });
     }
     if(idAuthor == 0 && idSeria != 0){
         for(const auto &iBook :lib.books){
@@ -463,7 +476,8 @@ std::vector<uint> opds_server::listGenreBooks(const SLib &lib, ushort idGenre)
             }
         }
     }
-    std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName); });
+    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName); });
+
     return vBooks;
 }
 
@@ -472,25 +486,22 @@ std::vector<uint> opds_server::searchTitle(const SLib &lib, const QString &sTitl
     QString sSearch = siplifySearchString(sTitle);
     std::vector<uint> vBooks;
     if(!sSearch.isEmpty()){
-        for(const auto &iBook :lib.books){
-            if(!iBook.second.bDeleted){
-                QString sName = siplifySearchString(iBook.second.sName);
+        vBooks = blockingFiltered(lib.books, [&](const auto &book){
+            if(!book.bDeleted){
+                QString sName = siplifySearchString(book.sName);
                 if(sName.contains(sSearch)){
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage])
-                        vBooks.push_back(iBook.first);
+                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
+                        return true;
                 }
             }
-        }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
-            // if(lib.books.at(lhs).idFirstAuthor != lib.books.at(rhs).idFirstAuthor)
-            //     return localeStringCompare(lib.authors.at(lib.books.at(lhs).idFirstAuthor).getName(), lib.authors.at(lib.books.at(rhs).idFirstAuthor).getName());
-            // else
-                return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName);
+            return false;
         });
 
+        std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
+                return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName);
+        });
     }
     return vBooks;
-
 }
 
 std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuthor, const QString &sTitle)
@@ -499,18 +510,20 @@ std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuth
     QString sSimplifiedTitle = siplifySearchString(sTitle);
     std::unordered_set<uint>stIdAuthors(vAuthors.begin(), vAuthors.end());
     std::vector<uint> vBooks;
-    for(const auto &iBook :lib.books){
-        const auto &book = iBook.second;
+
+    vBooks = blockingFiltered(lib.books, [&](const auto &book){
         if(!book.bDeleted){
             QString sName = siplifySearchString(book.sName);
             if(sName.contains(sSimplifiedTitle)){
                 if(sAuthor.isEmpty() || std::any_of(book.vIdAuthors.begin(), book.vIdAuthors.end(), [&stIdAuthors](auto idAuthor){return stIdAuthors.contains(idAuthor);}))
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage])
-                        vBooks.push_back(iBook.first);
+                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
+                        return true;
             }
         }
-    }
-    std::sort(vBooks.begin(), vBooks.end(), [&lib](uint id1, uint id2){
+        return false;
+    });
+
+    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint id1, uint id2){
         return localeStringCompare(lib.books.at(id1).sName, lib.books.at(id2).sName);
     });
 
@@ -522,21 +535,27 @@ auto opds_server::searchSequence(const SLib &lib, const QString &sSequence)
     QString sSearchSimplefied = siplifySearchString(sSequence);
     SerialComparator comporator(lib.serials);
     std::map<uint, uint, SerialComparator> mSequence(comporator);
-    for(const auto &iBook :lib.books){
-        auto &book = iBook.second;
+
+    std::vector<uint> v;
+    v.reserve(lib.books.size());
+    for(const auto &it :lib.books)
+        v.push_back(it.first);
+    std::mutex m;
+    QtConcurrent::blockingMap(v, [&](auto id){
+        auto &book = lib.books.at(id);
         if(book.idSerial != 0 && !book.bDeleted){
-            if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage]){
-                if(mSequence.contains(book.idSerial))
+            if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage]){
+                const auto &secuence = lib.serials.at(book.idSerial);
+                QString sName  = siplifySearchString(secuence.sName);
+                if(sName.contains(sSearchSimplefied)){
+                    std::lock_guard<std::mutex> guard(m);
                     mSequence[book.idSerial]++;
-                else{
-                    const auto &secuence = lib.serials.at(book.idSerial);
-                    QString sName  = siplifySearchString(secuence.sName);
-                    if(sName.contains(sSearchSimplefied))
-                        mSequence[book.idSerial] = 1;
                 }
             }
         }
-    }
+
+    });
+
     return mSequence;
 }
 
@@ -546,6 +565,7 @@ std::vector<uint> opds_server::searchAuthors(const SLib &lib, const QString &sAu
     auto sListSearch = siplifySearchString(sAuthor).split(u" "_s, Qt::SkipEmptyParts);
     if(sListSearch.isEmpty())
         return vResult;
+
     for(const auto &iAuthor :lib.authors){
         bool bMatch = true;
         bool bMatchF = false;
@@ -573,6 +593,7 @@ std::vector<uint> opds_server::searchAuthors(const SLib &lib, const QString &sAu
         if(bMatch)
             vResult.push_back(iAuthor.first);
     }
+
     return vResult;
 }
 
@@ -583,7 +604,7 @@ bool opds_server::checkAuth(const QHttpServerRequest &request, QUrl &url)
 
     bool bResult = false;
     url = request.url();
-    if(options.bOpdsNeedPassword){
+    if(g::options.bOpdsNeedPassword){
         QUrlQuery urlquery(url);
         QString sSession = urlquery.queryItemValue(u"session"_s);
         if(!sSession.isEmpty() && sessions_.contains(sSession)){
@@ -600,10 +621,10 @@ bool opds_server::checkAuth(const QHttpServerRequest &request, QUrl &url)
                     QByteArrayView view = userPass;
                     QString sUser = QString::fromUtf8(view.first(colon));
                     QString password = QString::fromUtf8(view.sliced(colon + 1));
-                    if(!options.baOpdsPasswordSalt.isEmpty() && !options.baOpdsPasswordHash.isEmpty()){
-                        auto hashPassword = passwordToHash(password, options.baOpdsPasswordSalt);
+                    if(!g::options.baOpdsPasswordSalt.isEmpty() && !g::options.baOpdsPasswordHash.isEmpty()){
+                        auto hashPassword = Options::passwordToHash(password, g::options.baOpdsPasswordSalt);
 
-                        if (sUser == options.sOpdsUser && hashPassword == options.baOpdsPasswordHash){
+                        if (sUser == g::options.sOpdsUser && hashPassword == g::options.baOpdsPasswordHash){
                             bResult = true;
                             static QString chars = u"0123456789ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz"_s;
                             const int sessionNumberLen = 16;
@@ -647,9 +668,9 @@ QDomElement opds_server::docHeaderHTML(const QString &sSessionQuery, const QStri
     meta.setAttribute(u"charset"_s, u"utf-8"_s);
     head.appendChild(meta);
 
-    if(!options.sBaseUrl.isEmpty()){
+    if(!g::options.sBaseUrl.isEmpty()){
         QDomElement baseUrl = doc_.createElement(u"base"_s);
-        baseUrl.setAttribute(u"href"_s, options.sBaseUrl);
+        baseUrl.setAttribute(u"href"_s, g::options.sBaseUrl);
         head.appendChild(baseUrl);
     }
 
@@ -735,14 +756,14 @@ QJsonObject opds_server::docHeaderOPDS2(const QString &sTitle, const QString &sL
 SLib* opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLibUrl)
 {
     if(idLib == 0)
-        idLib = idCurrentLib;
+        idLib = g::idCurrentLib;
     if(pLibUrl != nullptr)
-        *pLibUrl = options.sBaseUrl % sTypeServer % u"/"_s % QString::number(idLib);
-    if(!libs.contains(idLib) || !libs.at(idLib).bLoaded)
+        *pLibUrl = g::options.sBaseUrl % sTypeServer % u"/"_s % QString::number(idLib);
+    if(!g::libs.contains(idLib) || !g::libs.at(idLib).bLoaded)
         loadLibrary(idLib);
-    if(!libs.contains(idLib))
+    if(!g::libs.contains(idLib))
         return nullptr;
-    SLib &lib = libs[idLib];
+    SLib &lib = g::libs[idLib];
     lib.timeHttp = std::chrono::system_clock::now();
     return &lib;
 }
@@ -781,10 +802,10 @@ QString hrefOfPage(const QUrl &url, uint nPage)
         listQueryItems << QPair<QString, QString> (u"page"_s, QString::number(nPage));
     urlquery.setQueryItems(listQueryItems);
     QUrl newUrl;
-    if(options.sBaseUrl.isEmpty())
+    if(g::options.sBaseUrl.isEmpty())
         newUrl = url;
     else{
-        newUrl = options.sBaseUrl;
+        newUrl = g::options.sBaseUrl;
         newUrl.setPath(url.path());
     }
     newUrl.setQuery(urlquery);
@@ -794,7 +815,7 @@ QString hrefOfPage(const QUrl &url, uint nPage)
 
 void opds_server::loadAnnotations(const std::vector<uint> &vBooks, SLib &lib, uint begin, uint end)
 {
-    if(options.bOpdsShowAnotation)
+    if(g::options.bOpdsShowAnotation)
     {
         std::vector<uint> vBooksNeedAnnotations;
         for(uint iBook = begin; iBook < end; ++iBook){
@@ -829,7 +850,7 @@ QHttpServerResponse opds_server::generatePageHTML(const std::vector<uint> &vBook
 void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomElement &feed, const QString &sLibUrl, const QString &sSessionQuery, const QUrl &url, bool bShowAuthor)
 {
     bool bKindleInstallsed = kindlegenInstalled();
-    auto nMaxBooksPerPage = options.nOpdsBooksPerPage;
+    auto nMaxBooksPerPage = g::options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
 
@@ -858,7 +879,7 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
         entry = doc_.createElement(u"td"_s);
         tr.appendChild(entry);
 
-        if(options.bOpdsShowCover)
+        if(g::options.bOpdsShowCover)
         {
             QDomElement el = doc_.createElement(u"img"_s);
             entry.appendChild(el);
@@ -878,10 +899,10 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
         {
             addDownloadItem(entry, u"fb2"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery);
 
-            int count = options.vExportOptions.size();
+            int count = g::options.vExportOptions.size();
             for(int i=0; i<count; i++)
             {
-                auto &exportOptions = options.vExportOptions[i];
+                auto &exportOptions = g::options.vExportOptions[i];
                 if(exportOptions.bUseForHttp){
                     if(exportOptions.format == epub)
                         addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery);
@@ -898,10 +919,10 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
         {
             addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s);
             if(bKindleInstallsed){
-                int count = options.vExportOptions.size();
+                int count = g::options.vExportOptions.size();
                 for(int i=0; i<count; i++)
                 {
-                    auto &exportOptions = options.vExportOptions[i];
+                    auto &exportOptions = g::options.vExportOptions[i];
                     if(exportOptions.bUseForHttp && exportOptions.format == mobi){
                         addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
                         break;
@@ -914,7 +935,7 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
         else
             addDownloadItem(entry, book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery);
 
-        if(options.bOpdsShowAnotation)
+        if(g::options.bOpdsShowAnotation)
             addTextNode(entry, u"div"_s, book.sAnnotation, u"annotation"_s);
     }
 
@@ -959,7 +980,7 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
 QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle,const QString &sId, const QString &sLibUrl, const QUrl &url)
 {
     bool bKindleInstallsed = kindlegenInstalled();
-    auto nMaxBooksPerPage = options.nOpdsBooksPerPage;
+    auto nMaxBooksPerPage = g::options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
 
@@ -1012,8 +1033,8 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
         for(auto idGenre: book.vIdGenres){
             QDomElement category = doc_.createElement(u"category"_s);
             entry.appendChild(category);
-            category.setAttribute(u"term"_s, genres[idGenre].sName);
-            category.setAttribute(u"label"_s, genres[idGenre].sName);
+            category.setAttribute(u"term"_s, g::genres[idGenre].sName);
+            category.setAttribute(u"label"_s, g::genres[idGenre].sName);
         }
         QDomElement el;
         if(book.sFormat == u"fb2"_s)
@@ -1033,9 +1054,9 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
             }
         }else if(book.sFormat == u"mobi"_s)
             addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        addLink(entry, u"application/"_s + book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"alternate"_s, tr("Download"));
+        addLink(entry, mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"alternate"_s, tr("Download"));
 
-        if(options.bOpdsShowCover)
+        if(g::options.bOpdsShowCover)
         {
             addLink(entry, u"image/jpeg"_s, sLibUrl % u"/covers/"_s % sIdBook % u"/cover.jpg"_s, u"http://opds-spec.org/image"_s);
             addLink(entry, u"image/jpeg"_s, sLibUrl % u"/covers/"_s % sIdBook % u"/cover.jpg"_s, u"x-stanza-cover-image"_s);
@@ -1045,7 +1066,7 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
         AddTextNode(u"dc:language"_s, lib.vLaguages[book.idLanguage], entry);
         AddTextNode(u"dc:format"_s, book.sFormat, entry);
 
-        if(options.bOpdsShowAnotation)
+        if(g::options.bOpdsShowAnotation)
         {
             if(book.sAnnotation.isEmpty()){
                 BookFile file(&lib, idBook);
@@ -1062,7 +1083,7 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
 QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url)
 {
     bool bKindleInstallsed = kindlegenInstalled();
-    auto nMaxBooksPerPage = options.nOpdsBooksPerPage;
+    auto nMaxBooksPerPage = g::options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
 
@@ -1107,7 +1128,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
         QString sSerial = book.idSerial == 0 ?u""_s :lib.serials[book.idSerial].sName;
         metadata[u"@type"] = u"http://schema.org/Book"_s;
         metadata[u"title"] = QString(book.sName % (sSerial.isEmpty() ?u""_s :u" ("_s % sSerial % u")"_s));
-        if(options.bOpdsShowAnotation)
+        if(g::options.bOpdsShowAnotation)
         {
             if(book.sAnnotation.isEmpty()){
                 BookFile file(&lib, idBook);
@@ -1136,7 +1157,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
         QJsonArray subject;
         for(auto idGenre: book.vIdGenres){
             QJsonObject genre;
-            genre[u"name"] = genres[idGenre].sName;
+            genre[u"name"] = g::genres[idGenre].sName;
             QJsonArray links;
             QJsonObject link;
             link[u"type"] = u"application/opds+json"_s;
@@ -1155,7 +1176,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
             addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(bKindleInstallsed){
                 addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-                addLink(links, u"application/azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+                addLink(links, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             }
         }
         else if(book.sFormat == u"epub"){
@@ -1166,10 +1187,10 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
             }
         }else if(book.sFormat == u"mobi")
             addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        addLink(links,  u"application/"_s + book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+        addLink(links,  mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         entry[u"links"] = links;
 
-        if(options.bOpdsShowCover)
+        if(g::options.bOpdsShowCover)
         {
             QJsonArray images;
             QJsonObject image;
@@ -1290,7 +1311,7 @@ QHttpServerResponse opds_server::rootOPDS2(uint idLib, const QHttpServerRequest 
 QByteArray opds_server::cover(uint idLib, uint idBook)
 {
     QByteArray baResult;
-    if(libs.contains(idLib) && libs.at(idLib).books.contains(idBook)){
+    if(g::libs.contains(idLib) && g::libs.at(idLib).books.contains(idBook)){
         BookFile file(idLib, idBook);
         QImage img = file.cover();
         QBuffer buffer(&baResult);
@@ -1452,7 +1473,7 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
                 vAuthorId.push_back(idAuthor);
             }
         }
-        std::sort(vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2)
+        std::sort(g::executionpolicy, vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2)
         {
             return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();
         });
@@ -1719,7 +1740,6 @@ QHttpServerResponse opds_server::authorHTML(uint idLib, uint idAuthor, const QHt
     div = doc_.createElement(u"div"_s);
     divAuth.appendChild(div);
     addHRefNode(div, tr("Books without sequence"), sLibUrl % u"/authorsequenceless/"_s % sIdAuthor % sSessionQuery, u"block"_s);
-
 
     div = doc_.createElement(u"div"_s);
     divAuth.appendChild(div);
@@ -2432,7 +2452,7 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr || (idParentGenre!=0 && !genres.contains(idParentGenre)))
+    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre)))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2444,18 +2464,18 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
     std::unordered_map<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
-        if(genres[idParentGenre].idParrentGenre > 0){
+        if(g::genres[idParentGenre].idParrentGenre > 0){
             std::vector<uint> vBooks = listGenreBooks(*pLib, idParentGenre);
-            return generatePageHTML(vBooks, *pLib, tr("Books by genre") % u": " % genres[idParentGenre].sName, sLibUrl, url, true);
+            return generatePageHTML(vBooks, *pLib, tr("Books by genre") % u": " % g::genres[idParentGenre].sName, sLibUrl, url, true);
         }
-        for(const auto &iGenre :genres){
+        for(const auto &iGenre :g::genres){
             if(iGenre.second.idParrentGenre == idParentGenre)
                 vIdGenres.push_back(iGenre.first);
         }
         for(const auto &iBook :pLib->books){
             if(!iBook.second.bDeleted){
                 for(auto iGenre: iBook.second.vIdGenres){
-                    if(genres[iGenre].idParrentGenre == idParentGenre){
+                    if(g::genres[iGenre].idParrentGenre == idParentGenre){
                         if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
                             ++mCounts[iGenre];
                     }
@@ -2465,12 +2485,12 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
     }
     else
     {
-        for(const auto &iGenre :genres){
+        for(const auto &iGenre :g::genres){
             if(iGenre.second.idParrentGenre == 0)
                 vIdGenres.push_back(iGenre.first);
         }
     }
-    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return genres.at(id1).sName < genres.at(id2).sName;});
+    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QDomElement feed;
     feed = docHeaderHTML(sSessionQuery, pLib->name, sLibUrl);
 
@@ -2482,7 +2502,7 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
         QDomElement div = doc_.createElement(u"DIV"_s);
         feed.appendChild(div);
         div.setAttribute(u"class"_s, u"item"_s);
-        addHRefNode(div, genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery, u"block"_s);
+        addHRefNode(div, g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery, u"block"_s);
         if(idParentGenre != 0)
         {
             QDomElement el = AddTextNode(u"div"_s, QString::number(nCount) + u" "_s + tr("books"), div);
@@ -2499,7 +2519,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr || (idParentGenre!=0 && !genres.contains(idParentGenre)))
+    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre)))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2511,20 +2531,20 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
     std::unordered_map<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
-        if(genres[idParentGenre].idParrentGenre > 0){
+        if(g::genres[idParentGenre].idParrentGenre > 0){
             std::vector<uint> vBooks = listGenreBooks(*pLib, idParentGenre);
-            QString sPage =  generatePageOPDS(vBooks, *pLib, tr("Books by genre") % u": " % genres[idParentGenre].sName, u""_s, sLibUrl, url);
+            QString sPage =  generatePageOPDS(vBooks, *pLib, tr("Books by genre") % u": " % g::genres[idParentGenre].sName, u""_s, sLibUrl, url);
             QHttpServerResponse result(sPage);
             return result;
         }
-        for(const auto &iGenre :genres){
+        for(const auto &iGenre :g::genres){
             if(iGenre.second.idParrentGenre == idParentGenre)
                 vIdGenres.push_back(iGenre.first);
         }
         for(const auto &iBook :pLib->books){
             if(!iBook.second.bDeleted){
                 for(auto iGenre: iBook.second.vIdGenres){
-                    if(genres[iGenre].idParrentGenre == idParentGenre){
+                    if(g::genres[iGenre].idParrentGenre == idParentGenre){
                         if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
                             ++mCounts[iGenre];
                     }
@@ -2534,13 +2554,13 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
     }
     else
     {
-        for(const auto &iGenre :genres){
+        for(const auto &iGenre :g::genres){
             if(iGenre.second.idParrentGenre == 0)
                 vIdGenres.push_back(iGenre.first);
         }
     }
 
-    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return genres.at(id1).sName < genres.at(id2).sName;});
+    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QDomElement feed;
     feed = docHeaderOPDS(tr("Books by genre"), u"tag:root:genre"_s, sLibUrl, sSession);
 
@@ -2556,10 +2576,10 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
         }
         else
         {
-            sContent =  tr("Books of genre") % u" "_s % genres[idGenre].sName;
+            sContent =  tr("Books of genre") % u" "_s % g::genres[idGenre].sName;
         }
-        addEntry(feed, u"tag:root:genre:"_s + genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery,
-                 genres[idGenre].sName, sContent);
+        addEntry(feed, u"tag:root:genre:"_s + g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery,
+                 g::genres[idGenre].sName, sContent);
 
     }
 
@@ -2574,7 +2594,7 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || (idParentGenre!=0 && !genres.contains(idParentGenre)))
+    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre)))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2585,21 +2605,21 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
     std::unordered_map<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
-        if(genres[idParentGenre].idParrentGenre > 0){
+        if(g::genres[idParentGenre].idParrentGenre > 0){
             std::vector<uint> vBooks = listGenreBooks(*pLib, idParentGenre);
-            QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books by genre") % u": " % genres[idParentGenre].sName, sLibUrl, url);
+            QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books by genre") % u": " % g::genres[idParentGenre].sName, sLibUrl, url);
             return result;
         }
-        for(const auto &iGenre :genres){
+        for(const auto &iGenre :g::genres){
             if(iGenre.second.idParrentGenre == idParentGenre)
                 vIdGenres.push_back(iGenre.first);
         }
         for(const auto &iBook :pLib->books){
             if(!iBook.second.bDeleted){
-                for(auto iGenre: iBook.second.vIdGenres){
-                    if(genres[iGenre].idParrentGenre == idParentGenre){
+                for(auto idGenre: iBook.second.vIdGenres){
+                    if(g::genres[idGenre].idParrentGenre == idParentGenre){
                         if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
-                            ++mCounts[iGenre];
+                            ++mCounts[idGenre];
                     }
                 }
             }
@@ -2607,13 +2627,13 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
     }
     else
     {
-        for(const auto &iGenre :genres){
+        for(const auto &iGenre :g::genres){
             if(iGenre.second.idParrentGenre == 0)
                 vIdGenres.push_back(iGenre.first);
         }
     }
 
-    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return genres.at(id1).sName < genres.at(id2).sName;});
+    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QJsonObject root = docHeaderOPDS2(tr("Books by genre"), sLibUrl, sSession);
 
     QJsonArray navigation;
@@ -2622,7 +2642,7 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
         uint nCount = idParentGenre != 0 ?mCounts[idGenre] :0;
         if(nCount == 0 && idParentGenre != 0)
             continue;
-        addNavigation(navigation, genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery, nCount);
+        addNavigation(navigation, g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery, nCount);
     }
     root[u"navigation"] = navigation;
 
@@ -2922,7 +2942,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     baBook = bookFile.data();
 
     ExportOptions *pExportOptions = nullptr;
-    int count = options.vExportOptions.size();
+    int count = g::options.vExportOptions.size();
     ExportFormat format;
     if(sFormat == u"epub")
         format = epub;
@@ -2937,10 +2957,10 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
 
     for(int i=0; i<count; i++)
     {
-        if((options.vExportOptions[i].format == format && options.vExportOptions[i].bUseForHttp) ||
-            (sFormat == u"fb2"_s && options.vExportOptions[i].format == asis && pLib->books[idBook].sFormat == u"fb2"_s))
+        if((g::options.vExportOptions[i].format == format && g::options.vExportOptions[i].bUseForHttp) ||
+            (sFormat == u"fb2"_s && g::options.vExportOptions[i].format == asis && pLib->books[idBook].sFormat == u"fb2"_s))
         {
-            pExportOptions = &options.vExportOptions[i];
+            pExportOptions = &g::options.vExportOptions[i];
             break;
         }
     }
@@ -2987,9 +3007,19 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
                 baContentType = "application/x-mobipocket-ebook"_ba;
             }
         }
-        else
-        {
-            baContentType = "application/"_ba + sFormat.toUtf8();
+        switch (format) {
+        case epub:
+            baContentType = "application/epub+zip"_ba;
+            break;
+        case azw3:
+            baContentType = "application/x-mobi8-ebook"_ba;
+            break;
+        case mobi:
+            baContentType = "application/x-mobipocket-ebook"_ba;
+            break;
+        default:
+            baContentType = mime(sFormat).toUtf8();
+            break;
         }
         sContentDisposition = u"attachment; filename=\""_s % sBookFileName % u"\""_s;
     }
@@ -3002,12 +3032,12 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
 
 void opds_server::server_run()
 {
-    if(options.nOpdsPort != nPort_ && status_ == Status::run)
+    if(g::options.nOpdsPort != nPort_ && status_ == Status::run)
     {
         stop_server();
     }
-    nPort_ = options.nOpdsPort;
-    if(options.bOpdsEnable)
+    nPort_ = g::options.nOpdsPort;
+    if(g::options.bOpdsEnable)
     {
         if(status_ == Status::stoped)
         {

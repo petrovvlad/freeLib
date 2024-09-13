@@ -275,7 +275,7 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
     while(ui->CurrentTools->count()>1)
         ui->CurrentTools->removeItem(1);
     int index=0;
-    for(const auto &iTool :options.tools){
+    for(const auto &iTool :g::options.tools){
         ui->CurrentTools->addItem(iTool.first);
         if(iTool.first == CurrentTool)
         {

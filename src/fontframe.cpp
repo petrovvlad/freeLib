@@ -157,7 +157,7 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
 {
     ui->setupUi(this);
 
-    for(const auto &iTag :vTags)
+    for(const auto &iTag :g::vTags)
     {
         ui->tag->addItem(iTag.name);
     }
@@ -209,7 +209,7 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
-    dir.setPath(QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts"));
+    dir.setPath(QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s);
     listFiles = dir.entryList(QStringList() << u"*.ttf"_s, QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name);
     for(const QString &str: std::as_const(listFiles))
     {
@@ -375,5 +375,5 @@ int FontFrame::fontSize()
 
 void FontFrame::onTagCurrentIndexChanged(int index)
 {
-    ui->fontSize->setValue(vTags[index].font_size);
+    ui->fontSize->setValue(g::vTags[index].font_size);
 }

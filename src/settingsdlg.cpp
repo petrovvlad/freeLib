@@ -20,7 +20,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui(new Ui::SettingsDlg)
 {
     ui->setupUi(this);
-    options_ = options;
+    options_ = g::options;
 
     auto settings = GetSettings();
     if(settings->contains(QStringLiteral("SettingsWnd/geometry")))
@@ -166,8 +166,8 @@ void SettingsDlg::LoadSettings()
 #else
     ui->settings_to_file->setChecked(QFileInfo::exists(QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg")));
 #endif
-    ui->CloseExpDlg->setChecked(options.bCloseDlgAfterExport);
-    ui->uncheck_export->setChecked(options.bUncheckAfterExport);
+    ui->CloseExpDlg->setChecked(options_.bCloseDlgAfterExport);
+    ui->uncheck_export->setChecked(options_.bUncheckAfterExport);
 #ifdef Q_OS_WINDOWS
     ui->extended_symbols->hide();
 #endif
@@ -176,11 +176,11 @@ void SettingsDlg::LoadSettings()
 #ifdef USE_HTTSERVER
     ui->OPDS_enable->setChecked(options_.bOpdsEnable);
     ui->OPDS_port->setValue(options_.nOpdsPort);
-    ui->baseUrl->setText(options.sBaseUrl);
+    ui->baseUrl->setText(options_.sBaseUrl);
     ui->HTTP_need_pasword->setChecked(options_.bOpdsNeedPassword);
     ui->HTTP_user->setText(options_.sOpdsUser);
     if(options_.baOpdsPasswordSalt.isEmpty())
-        options_.baOpdsPasswordSalt = generateSalt();
+        options_.baOpdsPasswordSalt = Options::generateSalt();
     ui->HTTP_password->setPassword(options_.baOpdsPasswordSalt, options_.baOpdsPasswordHash);
     ui->srv_annotation->setChecked(options_.bOpdsShowAnotation);
     ui->srv_covers->setChecked(options_.bOpdsShowCover);
@@ -275,17 +275,17 @@ void SettingsDlg::onUseForHttpChanged()
 void SettingsDlg::reject()
 {
     // Возврат к исхдному языку интерфеса.
-    if(options_.sUiLanguageName != options.sUiLanguageName){
-        ::setLocale(options.sUiLanguageName);
+    if(options_.sUiLanguageName != g::options.sUiLanguageName){
+        ::setLocale(g::options.sUiLanguageName);
         emit ChangingLanguage();
     }
     // Возврат к исхдному алфавиту.
-    if(options_.sAlphabetName != options.sAlphabetName){
-        emit ChangeAlphabet(options.sAlphabetName);
+    if(options_.sAlphabetName != g::options.sAlphabetName){
+        emit ChangeAlphabet(g::options.sAlphabetName);
     }
 
-    if(options_.nIconTray != options.nIconTray || options_.nTrayColor != options.nTrayColor){
-        emit ChangingTrayIcon(options.nIconTray, options.nTrayColor);
+    if(options_.nIconTray != g::options.nIconTray || options_.nTrayColor != g::options.nTrayColor){
+        emit ChangingTrayIcon(g::options.nIconTray, g::options.nTrayColor);
     }
     QDialog::reject();
 }
@@ -296,7 +296,7 @@ void SettingsDlg::btnDBPath()
     QString dir=QFileDialog::getExistingDirectory(this, tr("Select database directory"));
     if(!dir.isEmpty() && dir != ui->database_path->text())
     {
-        options.sDatabasePath = ui->database_path->text().trimmed();
+        g::options.sDatabasePath = ui->database_path->text().trimmed();
         QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("libdb"), false);
         if (dbase.isOpen())
             dbase.close();
@@ -352,55 +352,55 @@ void SettingsDlg::btnOK()
     }
     auto settings = GetSettings(true);
 
-    options.sUiLanguageName = options_.sUiLanguageName;
-    options.sAlphabetName = options_.sAlphabetName;
-    options.sDatabasePath = ui->database_path->text().trimmed();
-    options.bShowDeleted = ui->ShowDeleted->isChecked();
-    options.bUseTag = ui->use_tag->isChecked();
-    options.bShowSplash = !ui->splash->isChecked();
-    options.bStorePosition = ui->store_pos->isChecked();
-    options.nIconTray = ui->trayIcon->currentIndex();
-    options.nTrayColor = ui->tray_color->currentIndex();
-    options.bCloseDlgAfterExport = ui->CloseExpDlg->isChecked();
-    options.bUncheckAfterExport = ui->uncheck_export->isChecked();
-    options.bExtendedSymbols = ui->extended_symbols->isChecked();
+    g::options.sUiLanguageName = options_.sUiLanguageName;
+    g::options.sAlphabetName = options_.sAlphabetName;
+    g::options.sDatabasePath = ui->database_path->text().trimmed();
+    g::options.bShowDeleted = ui->ShowDeleted->isChecked();
+    g::options.bUseTag = ui->use_tag->isChecked();
+    g::options.bShowSplash = !ui->splash->isChecked();
+    g::options.bStorePosition = ui->store_pos->isChecked();
+    g::options.nIconTray = ui->trayIcon->currentIndex();
+    g::options.nTrayColor = ui->tray_color->currentIndex();
+    g::options.bCloseDlgAfterExport = ui->CloseExpDlg->isChecked();
+    g::options.bUncheckAfterExport = ui->uncheck_export->isChecked();
+    g::options.bExtendedSymbols = ui->extended_symbols->isChecked();
 #ifdef USE_HTTSERVER
-    options.bOpdsEnable = ui->OPDS_enable->isChecked();
-    options.bOpdsNeedPassword = ui->HTTP_need_pasword->isChecked();
-    options.bOpdsShowAnotation = ui->srv_annotation->isChecked();
-    options.bOpdsShowCover = ui->srv_covers->isChecked();
-    options.sOpdsUser = ui->HTTP_user->text();
-    options.baOpdsPasswordHash = ui->HTTP_password->getPasswordHash();
-    options.baOpdsPasswordSalt = ui->HTTP_password->getPasswordSalt();
-    options.nOpdsPort = ui->OPDS_port->value();
-    options.sBaseUrl = ui->baseUrl->text();
-    options.nOpdsBooksPerPage = ui->books_per_page->value();
-    options.nProxyType = ui->proxy_type->currentIndex();
-    options.nProxyPort = ui->proxy_port->value();
-    options.sProxyHost = ui->proxy_host->text();
-    options.sProxyUser = ui->proxy_user->text();
-    options.sProxyPassword = ui->proxy_password->text();
+    g::options.bOpdsEnable = ui->OPDS_enable->isChecked();
+    g::options.bOpdsNeedPassword = ui->HTTP_need_pasword->isChecked();
+    g::options.bOpdsShowAnotation = ui->srv_annotation->isChecked();
+    g::options.bOpdsShowCover = ui->srv_covers->isChecked();
+    g::options.sOpdsUser = ui->HTTP_user->text();
+    g::options.baOpdsPasswordHash = ui->HTTP_password->getPasswordHash();
+    g::options.baOpdsPasswordSalt = ui->HTTP_password->getPasswordSalt();
+    g::options.nOpdsPort = ui->OPDS_port->value();
+    g::options.sBaseUrl = ui->baseUrl->text();
+    g::options.nOpdsBooksPerPage = ui->books_per_page->value();
+    g::options.nProxyType = ui->proxy_type->currentIndex();
+    g::options.nProxyPort = ui->proxy_port->value();
+    g::options.sProxyHost = ui->proxy_host->text();
+    g::options.sProxyUser = ui->proxy_user->text();
+    g::options.sProxyPassword = ui->proxy_password->text();
 #endif
 
-    options.applications.clear();
+    g::options.applications.clear();
     for (int i = 0; i < ui->ApplicationList->rowCount(); ++i)
     {
         QString sExt = ui->ApplicationList->item(i, 0)->text();
         QString sApp  = ui->ApplicationList->item(i, 1)->text();
-        options.applications[sExt] = sApp;
+        g::options.applications[sExt] = sApp;
     }
     SaveTools();
 
-    options.vExportOptions.clear();
-    options.vExportOptions.resize(ui->stackedWidget->count());
+    g::options.vExportOptions.clear();
+    g::options.vExportOptions.resize(ui->stackedWidget->count());
     for(int i=0; i<ui->stackedWidget->count(); i++)
     {
-        ExportOptions* pExportOptions = &options.vExportOptions[i];
+        ExportOptions* pExportOptions = &g::options.vExportOptions[i];
         qobject_cast<ExportFrame*>(ui->stackedWidget->widget(i))->Save(pExportOptions);
         pExportOptions->sName = ui->ExportName->itemText(i);
         pExportOptions->bDefault = ui->ExportName->itemData(i).toBool();
     }
-    options.Save(settings);
+    g::options.Save(settings);
 
     settings->setValue(QStringLiteral("SettingsWnd/geometry"), saveGeometry());
     settings->setValue(QStringLiteral("SettingsWndExportList/geometry"), ui->ExportList->saveGeometry());
@@ -414,15 +414,15 @@ void SettingsDlg::btnOK()
 
 void SettingsDlg::SaveTools()
 {
-    options.tools.clear();
+    g::options.tools.clear();
     for(int i = 0; i < ui->ExportList->rowCount(); ++i){
         QString sName = ui->ExportList->item(i, 0)->text();
         QString sPath = ui->ExportList->item(i, 1)->text();
         QString sArgs = ui->ExportList->item(i, 2)->text();
         QString sExt = ui->ExportList->item(i, 3)->text();
-        options.tools[sName].sPath = sPath;
-        options.tools[sName].sArgs = sArgs;
-        options.tools[sName].sExt = sExt;
+        g::options.tools[sName].sPath = sPath;
+        g::options.tools[sName].sArgs = sArgs;
+        g::options.tools[sName].sExt = sExt;
     }
 }
 
@@ -628,7 +628,7 @@ void SettingsDlg::onBtnSaveExportClicked()
     file.close();
     zip_file.close();
 
-    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
+    QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
     for(const QString &font: fonts_list)
     {
         QString font_file = font;
@@ -681,7 +681,7 @@ void SettingsDlg::onBtnOpenExportClicked()
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString db_path = QFileInfo(options.sDatabasePath).absolutePath() + QStringLiteral("/fonts");
+    QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
     QDir().mkpath(db_path);
     const QStringList files = zip.getFileNameList();
 

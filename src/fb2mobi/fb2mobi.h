@@ -119,6 +119,9 @@ private:
     QString sNotesTitle_; //Dictionary of note body titles
     QString sBookName_;
     QString sBookAnntotation_;
+    static const QString sHtmlHead_;
+    static const QString sHtmlFoot_;
+
 
     bool need_page_break;
     bool bAannotation_;

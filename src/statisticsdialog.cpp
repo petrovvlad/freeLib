@@ -12,7 +12,7 @@ StatisticsDialog::StatisticsDialog(QWidget *parent) :
     ui->setupUi(this);
 
     QLocale locale;
-    SLib& lib = libs[idCurrentLib];
+    SLib& lib = g::libs[g::idCurrentLib];
     QString sText;
     sText = u"<table>"_s
             u"<tr><td width=\"50%\">"_s % tr("Library name") % u"</td><td>"_s % lib.name % u"</td></tr>"_s

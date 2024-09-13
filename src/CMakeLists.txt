@@ -18,6 +18,7 @@ else()
 endif()
 
 find_package(ZLIB REQUIRED)
+find_package(TBB QUIET)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(DjVuLibre QUIET)
@@ -98,6 +99,12 @@ if(DJVULIBRE_FOUND)
     add_definitions(-DUSE_DEJVULIBRE=1)
 endif()
 
+find_package(TBB QUIET)
+if(TBB_FOUND)
+    message(STATUS "Found TBB")
+    add_definitions(-DUSE_TBB=1)
+endif()
+
 #configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
 #file(COPY ${TS_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/translate)
 
@@ -145,11 +152,15 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Network
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Xml
-    Qt${QT_VERSION_MAJOR}::Concurrent
+    Qt${QT_VERSION_MAJOR}::Concurrent    
     QuaZip::QuaZip)
 
 if(Qt6HttpServer_FOUND)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
+endif()
+
+if(TBB_FOUND)
+    target_link_libraries(freelib PRIVATE TBB::tbb)
 endif()
 
 target_precompile_headers(freelib

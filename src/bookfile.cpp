@@ -9,7 +9,7 @@
 BookFile::BookFile(uint idLib, uint idBook)
     :bOpen_(false)
 {
-    pLib_ = &libs[idLib];
+    pLib_ = &g::libs[idLib];
     idBook_ = idBook;
 }
 
@@ -498,7 +498,7 @@ void BookFile::cleanCoversCache()
     for(uint i = 0; i<nCount; i++){
         const auto &fi = fiList[i];
         qint64 nNewSizeDir = nSizeDir + fi.size();
-        if(nNewSizeDir > options.nCacheSize && i>0)
+        if(nNewSizeDir > g::options.nCacheSize && i>0)
             QFile::remove(fi.absoluteFilePath());
         else
             nSizeDir = nNewSizeDir;

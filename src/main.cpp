@@ -19,39 +19,34 @@
 #endif
 #include "importthread.h"
 
-uint idCurrentLib;
-bool bTray;
-bool bVerbose;
-Options options;
-
 void UpdateLibs()
 {
     if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
-        idCurrentLib = 0;
+        g::idCurrentLib = 0;
     else{
         auto settings = GetSettings();
-        idCurrentLib = settings->value(QStringLiteral("LibID"), 0).toInt();
+        g::idCurrentLib = settings->value(QStringLiteral("LibID"), 0).toInt();
         QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
         query.exec(QStringLiteral("SELECT id,name,path,inpx,version,firstauthor,woDeleted FROM lib ORDER BY name"));
         //                                0  1    2    3    4       5           6
-        libs.clear();
+        g::libs.clear();
         while(query.next())
         {
             int idLib = query.value(0).toUInt();
-            libs[idLib].name = query.value(1).toString().trimmed();
-            libs[idLib].path = query.value(2).toString().trimmed();
-            libs[idLib].sInpx = query.value(3).toString().trimmed();
-            libs[idLib].sVersion = query.value(4).toString().trimmed();
-            libs[idLib].bFirstAuthor = query.value(5).toBool();
-            libs[idLib].bWoDeleted = query.value(6).toBool();
+            g::libs[idLib].name = query.value(1).toString().trimmed();
+            g::libs[idLib].path = query.value(2).toString().trimmed();
+            g::libs[idLib].sInpx = query.value(3).toString().trimmed();
+            g::libs[idLib].sVersion = query.value(4).toString().trimmed();
+            g::libs[idLib].bFirstAuthor = query.value(5).toBool();
+            g::libs[idLib].bWoDeleted = query.value(6).toBool();
         }
-        if(libs.empty())
-            idCurrentLib = 0;
+        if(g::libs.empty())
+            g::idCurrentLib = 0;
         else{
-            if(idCurrentLib == 0)
-                idCurrentLib = libs.cbegin()->first;
-            if(!libs.contains(idCurrentLib))
-                idCurrentLib = 0;
+            if(g::idCurrentLib == 0)
+                g::idCurrentLib = g::libs.cbegin()->first;
+            if(!g::libs.contains(g::idCurrentLib))
+                g::idCurrentLib = 0;
         }
     }
 }
@@ -104,8 +99,8 @@ int main(int argc, char *argv[])
     bool bServer = false;
     QString sLanguageFilter;
 #endif
-    bTray = false;
-    bVerbose = false;
+    g::bTray = false;
+    g::bVerbose = false;
     std::unique_ptr<QCoreApplication> a;
     QString cmdparam;
 
@@ -119,7 +114,7 @@ int main(int argc, char *argv[])
         }
 
         if (cmdparam == u"--verbose")
-            bVerbose = true;
+            g::bVerbose = true;
 
 #ifdef USE_HTTSERVER
         if (cmdparam == u"--server" || cmdparam == u"-s"){
@@ -128,7 +123,7 @@ int main(int argc, char *argv[])
         }else
 #endif
         if (cmdparam == u"--tray" || cmdparam == u"-t"){
-            bTray = true;
+            g::bTray = true;
         }else
 
         if (cmdparam == u"--version" || cmdparam == u"-v"){
@@ -143,14 +138,14 @@ int main(int argc, char *argv[])
             a->setApplicationName(QStringLiteral("freeLib"));
 
             auto settings = GetSettings();
-            options.Load(settings);
+            g::options.Load(settings);
 
 
             openDB(QStringLiteral("libdb"));
             UpdateLibs();
 
 
-            setLocale(options.sUiLanguageName);
+            setLocale(g::options.sUiLanguageName);
 
             uint nId = 0;
 
@@ -158,7 +153,7 @@ int main(int argc, char *argv[])
             if(cmdparam == u"--lib-ls"){
                 std::cout << "id\tlibrary\n"
                              "----------------------------------------------------------\n";
-                for(const auto &iLib :libs){
+                for(const auto &iLib :g::libs){
                     std::cout << iLib.first << "\t" << iLib.second.name.toStdString() << "\n";
                 }
             }
@@ -170,9 +165,9 @@ int main(int argc, char *argv[])
                 if(!sDbpath.isEmpty()){
 
                     if (QFile::exists(sDbpath)) {
-                        options.sDatabasePath = sDbpath;
-                        settings->setValue(QStringLiteral("database_path"), options.sDatabasePath);
-                        std::cout <<  options.sDatabasePath.toStdString() + " - Ok! \n";
+                        g::options.sDatabasePath = sDbpath;
+                        settings->setValue(QStringLiteral("database_path"), g::options.sDatabasePath);
+                        std::cout <<  g::options.sDatabasePath.toStdString() + " - Ok! \n";
                     }
                     else{
                         std::cout << "The path " + sDbpath.toStdString() + " does not exist! \n";
@@ -186,15 +181,15 @@ int main(int argc, char *argv[])
             // Get library information
             if(cmdparam == u"--lib-in"){
                 nId = (parseOption(argc-(i), &argv[i], "--lib-in")).toUInt();
-                if(libs.contains(nId)){
+                if(g::libs.contains(nId)){
 
                     std::cout
-                        << "Library:\t" << libs[nId].name.toStdString() << "\n"
-                        << "Inpx file:\t" << libs[nId].sInpx.toStdString() << "\n"
-                        << "Books dir:\t" << libs[nId].path.toStdString() << "\n"
-                        << "Version:\t" << libs[nId].sVersion.toStdString() << "\n";
+                        << "Library:\t" << g::libs[nId].name.toStdString() << "\n"
+                        << "Inpx file:\t" << g::libs[nId].sInpx.toStdString() << "\n"
+                        << "Books dir:\t" << g::libs[nId].path.toStdString() << "\n"
+                        << "Version:\t" << g::libs[nId].sVersion.toStdString() << "\n";
 #ifdef USE_HTTSERVER
-                    std::string sBaseUrl = options.sBaseUrl.isEmpty() ?"http://localhost:" + std::to_string(options.nOpdsPort) :options.sBaseUrl.toStdString();
+                    std::string sBaseUrl = g::options.sBaseUrl.isEmpty() ?"http://localhost:" + std::to_string(g::options.nOpdsPort) :g::options.sBaseUrl.toStdString();
                     std::string sIdLib = std::to_string(nId);
                     std::cout
                         << QApplication::translate("LibrariesDlg", "OPDS server").toStdString() << " "
@@ -216,7 +211,7 @@ int main(int argc, char *argv[])
                 QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
                 QString sId = parseOption(argc-(i), &argv[i], "-id");
                 nId = sId.toUInt();
-                if(libs.contains(nId)){
+                if(g::libs.contains(nId)){
 
                     QString inpxPath = parseOption(argc-(i), &argv[i], "-inpx");
                     inpxPath = QFileInfo{inpxPath}.absoluteFilePath();
@@ -302,10 +297,10 @@ int main(int argc, char *argv[])
             if(cmdparam == u"--lib-dl"){
 
                 nId = (parseOption(argc-(i), &argv[i], "--lib-dl")).toUInt();
-                if(libs.contains(nId)){
+                if(g::libs.contains(nId)){
                     char ans;
                     std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
-                              << "\"" << libs[nId].name.toStdString() << "\"? (y/N)";
+                              << "\"" << g::libs[nId].name.toStdString() << "\"? (y/N)";
                     std::cin.get(ans);
                     if(ans == 'y'){
                         QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
@@ -323,10 +318,10 @@ int main(int argc, char *argv[])
             if(cmdparam == u"--lib-up"){
                 nId = (parseOption(argc-(i), &argv[i], "--lib-up")).toUInt();
 
-                if(libs.contains(nId)){
+                if(g::libs.contains(nId)){
                     auto thread = new QThread;
                     auto imp_tr = new ImportThread();
-                    const SLib &lib = libs[nId];
+                    const SLib &lib = g::libs[nId];
 
                     imp_tr->init(nId, lib, UT_NEW);
                     imp_tr->moveToThread(thread);
@@ -381,17 +376,17 @@ int main(int argc, char *argv[])
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
     auto  settings = GetSettings();
-    options.Load(settings);
-    setLocale(options.sUiLanguageName);
-    if(options.vExportOptions.empty())
-        options.setExportDefault();
+    g::options.Load(settings);
+    setLocale(g::options.sUiLanguageName);
+    if(g::options.vExportOptions.empty())
+        g::options.setExportDefault();
 
     std::unique_ptr<QSplashScreen> splash;
     if(
 #ifdef USE_HTTSERVER
         !bServer &&
 #endif
-        options.bShowSplash
+        g::options.bShowSplash
         )
     {
         QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a.get())->devicePixelRatio()>=2? QStringLiteral("@2x") :QStringLiteral("")));
@@ -430,8 +425,8 @@ int main(int argc, char *argv[])
     if(bServer){
         pOpds = std::unique_ptr<opds_server>( new opds_server(a.get()) );
         loadGenres();
-        loadLibrary(idCurrentLib);
-        options.bOpdsEnable = true;
+        loadLibrary(g::idCurrentLib);
+        g::options.bOpdsEnable = true;
         if(!sLanguageFilter.isEmpty())
             pOpds->setLanguageFilter(sLanguageFilter);
         pOpds->server_run();
@@ -445,14 +440,14 @@ int main(int argc, char *argv[])
 
         if(!pMainWindow->error_quit)
         {
-            if(!bTray && options.nIconTray != 2)
+            if(!g::bTray && g::options.nIconTray != 2)
                 pMainWindow->show();
         }
         else{
             delete pMainWindow;
             return 1;
         }
-        if(options.bShowSplash)
+        if(g::options.bShowSplash)
             splash->finish(pMainWindow);
     }
 

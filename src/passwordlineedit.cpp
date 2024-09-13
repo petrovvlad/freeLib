@@ -13,7 +13,7 @@ void PasswordLineEdit::setPassword(const QByteArray &baSalt, const QByteArray &b
 {
     baSalt_ = baSalt;
     baHash_ = baHash;
-    if(!baHash.isEmpty() && baHash != passwordToHash(QStringLiteral(""), baSalt))
+    if(!baHash.isEmpty() && baHash != Options::passwordToHash(QStringLiteral(""), baSalt))
     {
         setText(u" ********** "_s);
     }
@@ -22,11 +22,11 @@ void PasswordLineEdit::setPassword(const QByteArray &baSalt, const QByteArray &b
 QByteArray PasswordLineEdit::getPasswordHash()
 {
     if(!sText_.isEmpty() && sText_ != u" ********** "_s){
-        QByteArray newHash = passwordToHash(sText_, baSalt_);
+        QByteArray newHash = Options::passwordToHash(sText_, baSalt_);
         if(baHash_ != newHash) // Генерируем новую соль если пароль изменился
         {
-            baSalt_ = generateSalt();
-            baHash_ =  passwordToHash(sText_, baSalt_);
+            baSalt_ = Options::generateSalt();
+            baHash_ =  Options::passwordToHash(sText_, baSalt_);
         }
     }
     return baHash_;
