@@ -401,6 +401,7 @@ void SettingsDlg::btnOK()
         pExportOptions->bDefault = ui->ExportName->itemData(i).toBool();
     }
     g::options.Save(settings);
+    g::options.savePasswords();
 
     settings->setValue(QStringLiteral("SettingsWnd/geometry"), saveGeometry());
     settings->setValue(QStringLiteral("SettingsWndExportList/geometry"), ui->ExportList->saveGeometry());

@@ -377,6 +377,7 @@ int main(int argc, char *argv[])
 
     auto  settings = GetSettings();
     g::options.Load(settings);
+    g::options.readPasswords();
     setLocale(g::options.sUiLanguageName);
     if(g::options.vExportOptions.empty())
         g::options.setExportDefault();

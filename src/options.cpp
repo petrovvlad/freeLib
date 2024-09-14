@@ -12,6 +12,14 @@
 #include <QRandomGenerator>
 #endif
 
+#ifdef USE_QTKEYCHAIN
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+#include <qt6keychain/keychain.h>
+#else
+#include <qt5keychain/keychain.h>
+#endif
+#endif //USE_QTKEYCHAIN
+
 static const quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
 QString encodeStr(const QString& str)
 {
@@ -93,7 +101,6 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
         pSettings->setValue(QStringLiteral("EmailServer"), sEmailServer);
         pSettings->setValue(QStringLiteral("EmailPort"), nEmailServerPort);
         pSettings->setValue(QStringLiteral("EmailUser"), sEmailUser);
-        pSettings->setValue(QStringLiteral("EmailPassword"), encodeStr(sEmailPassword));
         pSettings->setValue(QStringLiteral("PostprocessingCopy"), bPostprocessingCopy);
         pSettings->setValue(QStringLiteral("DevicePath"), sDevicePath);
         pSettings->setValue(QStringLiteral("PauseMail"), nEmailPause);
@@ -173,7 +180,7 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     sEmailServer = pSettings->value(QStringLiteral("EmailServer")).toString();
     nEmailServerPort = pSettings->value(QStringLiteral("EmailPort"), 25).toUInt();
     sEmailUser = pSettings->value(QStringLiteral("EmailUser")).toString();
-    sEmailPassword =  decodeStr(pSettings->value(QStringLiteral("EmailPassword")).toString());
+    sEmailPassword =  decodeStr(pSettings->value(QStringLiteral("EmailPassword")).toString()); //TO DO: удалить позже
     bPostprocessingCopy = pSettings->value(QStringLiteral("PostprocessingCopy"), false).toBool();
     sDevicePath = pSettings->value(QStringLiteral("DevicePath"),HomeDir).toString();
     bOriginalFileName = pSettings->value(QStringLiteral("originalFileName"), false).toBool();
@@ -371,11 +378,10 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
         sBaseUrl.chop(1);
     nOpdsPort = pSettings->value(u"OPDS_port"_s, nDefaultOpdsPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
-    // nHttpExport = pSettings->value(QStringLiteral("httpExport"), 0).toInt();
     nProxyType = pSettings->value(QStringLiteral("proxy_type"), 0).toInt();
     nProxyPort = pSettings->value(QStringLiteral("proxy_port"), nDefaultProxyPort).toInt();
     sProxyHost = pSettings->value(QStringLiteral("proxy_host")).toString();
-    sProxyUser = pSettings->value(QStringLiteral("proxy_password")).toString();
+    sProxyUser = pSettings->value(QStringLiteral("proxy_password")).toString(); //TO DO: удалить позже
     sProxyPassword = pSettings->value(QStringLiteral("proxy_user")).toString();
 #endif
     nCacheSize = pSettings->value(u"CacheSize"_s, 10).toLongLong()*1024*1024;
@@ -458,7 +464,6 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"proxy_port"_s, nProxyPort);
     pSettings->setValue(u"proxy_user"_s, sProxyUser);
     pSettings->setValue(u"proxy_host"_s, sProxyHost);
-    pSettings->setValue(u"proxy_password"_s, sProxyPassword);
 #endif
 
     pSettings->beginWriteArray(u"application"_s);
@@ -482,6 +487,90 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
         ++index;
     }
     pSettings->endArray();
+}
+
+void Options::readPasswords()
+{
+#ifdef USE_QTKEYCHAIN
+    QKeychain::ReadPasswordJob job(u"freelib"_s);
+    job.setAutoDelete(false);
+    QEventLoop loop;
+    job.connect( &job, SIGNAL(finished(QKeychain::Job*)), &loop, SLOT(quit()) );
+#ifdef USE_HTTSERVER
+    job.setKey(u"proxy"_s);
+    job.start();
+    loop.exec();
+    if (job.error())
+        qDebug() << "Error read password " <<  job.errorString();
+    else
+        sProxyPassword = job.textData();
+#endif //USE_HTTSERVER
+    int countExport = vExportOptions.size();
+    for(int iExport=0; iExport<countExport; iExport++){
+        if(vExportOptions[iExport].sSendTo == u"e-mail"){
+            job.setKey(u"smtp_"_s + QString::number(iExport+1));
+            job.start();
+            loop.exec();
+            if (!job.error())
+                vExportOptions[iExport].sEmailPassword = job.textData();
+        }
+    }
+#else
+    auto settings = GetSettings();
+#ifdef USE_HTTSERVER
+    settings->setValue(u"proxy_password"_s, sProxyPassword);
+#endif //USE_HTTSERVER
+    settings->beginReadArray(u"export"_s);
+    int countExport = vExportOptions.size();
+    for(int iExport=0; iExport<countExport; iExport++){
+        if(vExportOptions[iExport].sSendTo == u"e-mail"){
+            settings->setArrayIndex(iExport);
+            vExportOptions[iExport].sEmailPassword =  decodeStr(settings->value(QStringLiteral("EmailPassword")).toString());
+        }
+    }
+    settings->endArray();
+#endif //USE_QTKEYCHAIN
+}
+
+void Options::savePasswords()
+{
+#ifdef USE_QTKEYCHAIN
+    QKeychain::WritePasswordJob job( u"freelib"_s );
+    job.setAutoDelete(false);
+    QEventLoop loop;
+    job.connect( &job, SIGNAL(finished(QKeychain::Job*)), &loop, SLOT(quit()) );
+#ifdef USE_HTTSERVER
+    job.setKey(u"proxy"_s);
+    job.setTextData( sProxyPassword );
+    job.start();
+    loop.exec();
+    if (job.error())
+        qDebug() << "Error save password " <<  job.errorString();
+#endif //USE_HTTSERVER
+    int countExport = vExportOptions.size();
+    for(int iExport=0; iExport<countExport; iExport++){
+        if(vExportOptions[iExport].sSendTo == u"e-mail"){
+            job.setKey(u"smtp_"_s + QString::number(iExport+1));
+            job.setTextData(vExportOptions[iExport].sEmailPassword);
+            job.start();
+            loop.exec();
+        }
+    }
+#else
+    auto settings = GetSettings();
+#ifdef USE_HTTSERVER
+    sProxyPassword = settings->value(u"proxy_user"_s).toString();
+#endif //USE_HTTSERVER
+    settings->beginWriteArray(u"export"_s);
+    int countExport = vExportOptions.size();
+    for(int iExport=0; iExport<countExport; iExport++){
+        if(vExportOptions[iExport].sSendTo == u"e-mail"){
+            settings->setArrayIndex(iExport);
+            settings->setValue(u"EmailPassword"_s, encodeStr(vExportOptions[iExport].sEmailPassword));
+        }
+    }
+    settings->endArray();
+#endif //USE_QTKEYCHAIN
 }
 
 
