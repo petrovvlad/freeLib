@@ -45,7 +45,7 @@ sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt
 ```
 в Ubuntu < 23.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev libtbb-dev qtkeychain-qt5-dev
+sudo apt update && sudo apt install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev libtbb-dev
 ```
 Для отображения обложек djvu файлов установить библиотеку [DjVuLibre](https://djvu.sourceforge.net/)
 ```
