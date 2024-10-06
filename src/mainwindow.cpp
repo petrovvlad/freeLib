@@ -2090,6 +2090,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                     item_author->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
                     item_author->setData(0, Qt::UserRole, idAuthor);
                     item_author->setData(3, Qt::UserRole, -1);
+                    item_author->setData(5, Qt::UserRole, -1);
 
                     if(g::options.bUseTag){
                         item_author->setIcon(0, getTagIcon(lib.authors[idAuthor].vIdTags));
@@ -2123,6 +2124,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                         item_seria->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
                         item_seria->setData(0, Qt::UserRole, idSerial);
                         item_seria->setData(3, Qt::UserRole, -1);
+                        item_seria->setData(5, Qt::UserRole, -1);
                         if(g::options.bUseTag)
                             item_seria->setIcon(0, getTagIcon(lib.serials[idSerial].vIdTags));
 

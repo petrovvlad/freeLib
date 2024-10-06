@@ -1,4 +1,7 @@
-﻿configure_file(config-freelib.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-freelib.h)
+﻿set(CMAKE_CXX_STANDARD 20)
+set(CMAKE_CXX_STANDARD_REQUIRED ON)
+
+configure_file(config-freelib.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-freelib.h)
 configure_file(git-info.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/git-info.h)
 set(QT_COMPONENTS Core Network Widgets Gui Sql Xml Concurrent)
 
@@ -82,6 +85,11 @@ if((FREELIB_QT_MAJOR_VERSION EQUAL 6) AND (QT_VERSION_MINOR GREATER_EQUAL 4))
    endif()
 endif()
 
+find_package(Qt${QT_VERSION_MAJOR}Keychain QUIET)
+if(Qt${QT_VERSION_MAJOR}Keychain_FOUND)
+    message(STATUS "Found QtKeychain")
+    add_definitions(-DUSE_QTKEYCHAIN=1)
+endif()
 
 find_package(QuaZip-Qt${QT_VERSION_MAJOR} QUIET)
 if(NOT QuaZip-Qt${QT_VERSION_MAJOR}_FOUND)
@@ -159,6 +167,10 @@ if(Qt6HttpServer_FOUND)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
 endif()
 
+if(Qt${QT_VERSION_MAJOR}Keychain_FOUND)
+    target_link_libraries(freelib PRIVATE qt${QT_VERSION_MAJOR}keychain)
+endif()
+
 if(TBB_FOUND)
     target_link_libraries(freelib PRIVATE TBB::tbb)
 endif()
@@ -173,14 +185,6 @@ set_target_properties(freelib PROPERTIES
     MACOSX_BUNDLE_BUNDLE_VERSION ${PROJECT_VERSION}
     MACOSX_BUNDLE_SHORT_VERSION_STRING ${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}
 )
-
-if("cxx_std_20" IN_LIST CMAKE_CXX_COMPILE_FEATURES)
-    message(STATUS "Using C++20 standard")
-    target_compile_features(freelib PRIVATE cxx_std_20)
-else()
-    message(STATUS "Using C++17 standard")
-    target_compile_features(freelib PRIVATE cxx_std_17)
-endif()
 
 if(QT_VERSION_MAJOR EQUAL 6)
     qt_finalize_executable(freelib)

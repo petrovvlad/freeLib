@@ -106,6 +106,8 @@ struct Options
     void setExportDefault();
     void Load(QSharedPointer<QSettings> pSettings);
     void Save(QSharedPointer<QSettings> pSettings);
+    void readPasswords();
+    void savePasswords();
 
     static QByteArray passwordToHash(const QString& password, const QByteArray &salt);
     static QByteArray generateSalt();

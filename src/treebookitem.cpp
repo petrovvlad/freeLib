@@ -43,9 +43,9 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
             return localeStringCompare(lib.authors.at(bookThis.vIdAuthors.at(0)).getName(),
                                     lib.authors.at(bookOther.vIdAuthors.at(0)).getName());
         case 2: //Серия
-            if(bookThis.idSerial == 0 && bookOther.idSerial != 0)
+            if(bookThis.idSerial == 0)
                 return true;
-            if(bookThis.idSerial != 0 && bookOther.idSerial == 0)
+            if(bookOther.idSerial == 0)
                 return false;
             return localeStringCompare(lib.serials.at(bookThis.idSerial).sName,
                                     lib.serials.at(bookOther.idSerial).sName);

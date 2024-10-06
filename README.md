@@ -41,7 +41,7 @@ yay -S freelib
 Установить необходимые компоненты: 
 в Ubuntu ≥ 23.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev libtbb-dev
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev
 ```
 в Ubuntu < 23.04
 ```
@@ -62,7 +62,7 @@ cmake -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=/usr .. && cmake --build
 sudo cmake --install . --config Release
 ```
 
-#### FreeBSD 14.0-RELEASE
+#### FreeBSD
 ```
 pkg install qt5-qmake qt5-buildtools djvulibre
 ```
