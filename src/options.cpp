@@ -406,7 +406,6 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
         QString sExt = pSettings->value(QStringLiteral("ext")).toString();
         tools[sName].sPath = sPath;
         tools[sName].sArgs = sArgs;
-        tools[sName].sExt = sExt;
     }
     pSettings->endArray();
 
@@ -481,9 +480,9 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     index = 0;
     for(const auto &iTool :tools){
         pSettings->setArrayIndex(index);
-        pSettings->setValue(u"name"_s, iTool.second.sPath);
+        pSettings->setValue(u"name"_s, iTool.first);
+        pSettings->setValue(u"path"_s, iTool.second.sPath);
         pSettings->setValue(u"args"_s, iTool.second.sArgs);
-        pSettings->setValue(u"ext"_s, iTool.second.sExt);
         ++index;
     }
     pSettings->endArray();

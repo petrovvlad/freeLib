@@ -206,7 +206,6 @@ void SettingsDlg::LoadSettings()
         ui->ExportList->setItem(index, 0, new QTableWidgetItem(iTool.first));
         ui->ExportList->setItem(index, 1, new QTableWidgetItem(iTool.second.sPath));
         ui->ExportList->setItem(index, 2, new QTableWidgetItem(iTool.second.sArgs));
-        ui->ExportList->setItem(index, 3, new QTableWidgetItem(iTool.second.sExt));
         ++index;
     }
 
@@ -420,10 +419,8 @@ void SettingsDlg::SaveTools()
         QString sName = ui->ExportList->item(i, 0)->text();
         QString sPath = ui->ExportList->item(i, 1)->text();
         QString sArgs = ui->ExportList->item(i, 2)->text();
-        QString sExt = ui->ExportList->item(i, 3)->text();
         g::options.tools[sName].sPath = sPath;
         g::options.tools[sName].sArgs = sArgs;
-        g::options.tools[sName].sExt = sExt;
     }
 }
 
@@ -433,7 +430,6 @@ void SettingsDlg::AddExt()
     ui->ExportList->setItem(ui->ExportList->rowCount()-1, 0, new QTableWidgetItem());
     ui->ExportList->setItem(ui->ExportList->rowCount()-1, 1, new QTableWidgetItem());
     ui->ExportList->setItem(ui->ExportList->rowCount()-1, 2, new QTableWidgetItem());
-    ui->ExportList->setItem(ui->ExportList->rowCount()-1, 3, new QTableWidgetItem());
 }
 
 void SettingsDlg::DelExt()

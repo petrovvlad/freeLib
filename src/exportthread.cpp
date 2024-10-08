@@ -94,13 +94,12 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
 {
     SLib& lib = g::libs[idLib];
     Q_CHECK_PTR(pExportOptions_);
-    QString tool_path,tool_arg,tool_ext;
+    QString tool_path,tool_arg;
     for(const auto &iTool :g::options.tools){
         if(iTool.first == pExportOptions_->sCurrentTool)
         {
             tool_path = iTool.second.sPath;
             tool_arg = iTool.second.sArgs;
-            tool_ext = iTool.second.sExt;
             break;
         }
     }

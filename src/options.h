@@ -21,9 +21,8 @@ enum SendType{ST_Device, ST_Mail};
 
 struct ToolsOptions
 {
-    QString sPath;
-    QString sArgs;
-    QString sExt;
+    QString sPath; //приложение
+    QString sArgs; //параметры
 };
 
 struct FontExportOptions
