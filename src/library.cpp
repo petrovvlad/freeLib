@@ -411,6 +411,14 @@ uint SLib::findSerial(const QString &sSerial) const
     return idSerial;
 }
 
+QString removeStartDots(const QString& str)
+{
+    static auto reg = QRegularExpression(u"[^.]"_s);
+    QString result = str;
+    result.remove(0, result.indexOf(reg));
+    return result;
+}
+
 /*
 
 %a - автор книги.
@@ -465,10 +473,10 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
                 result.replace(QStringLiteral("%s"), QStringLiteral(""));
 
         }else {
-            result.replace(QStringLiteral("%s"), serials[book.idSerial].sName);
+            result.replace(u"/%s"_s, u"/"_s + removeStartDots(serials[book.idSerial].sName));
+            result.replace(u"%s"_s, serials[book.idSerial].sName);
         }
     }
-
 
     if(bNestedBlock){
         if(result.contains(QStringLiteral("%fi")) || result.contains(QStringLiteral("%nf")))
@@ -504,14 +512,14 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         result.replace(QStringLiteral("%nm"), sFirstAuthor.sMiddleName);
         result.replace(QStringLiteral("%nl"), sFirstAuthor.sLastName);
 
-        result.replace(QStringLiteral("%b"), book.sName);
-        result.replace(QStringLiteral("%a"), sFirstAuthor.getName());
         result.replace(QStringLiteral("  "), QStringLiteral(" "));
         result.replace(QStringLiteral("/ "), QStringLiteral("/"));
-        result.replace(QStringLiteral("/."), QStringLiteral("/"));
         result.replace(QStringLiteral("////"), QStringLiteral("/"));
         result.replace(QStringLiteral("///"), QStringLiteral("/"));
         result.replace(QStringLiteral("//"), QStringLiteral("/"));
+        result.replace(u"/%b"_s, u"/"_s + removeStartDots(book.sName));
+        result.replace(u"%b"_s, book.sName);
+        result.replace(QStringLiteral("%a"), sFirstAuthor.getName());
     }
 
     auto in = result.indexOf(QStringLiteral("%n"));
