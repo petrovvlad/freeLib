@@ -138,8 +138,8 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
     pSettings->setValue(QStringLiteral("coverLabel"), sCoverLabel);
     pSettings->setValue(QStringLiteral("content_placement"), nContentPlacement);
 
-    pSettings->beginWriteArray(u"fonts"_s);
     int countFont = vFontExportOptions.size();
+    pSettings->beginWriteArray(u"fonts"_s, countFont);
     for (int iFont = 0; iFont < countFont; ++iFont)
     {
         pSettings->setArrayIndex(iFont);
@@ -403,7 +403,6 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
         QString sName = pSettings->value(QStringLiteral("name")).toString();
         QString sPath = pSettings->value(QStringLiteral("path")).toString();
         QString sArgs = pSettings->value(QStringLiteral("args")).toString();
-        QString sExt = pSettings->value(QStringLiteral("ext")).toString();
         tools[sName].sPath = sPath;
         tools[sName].sArgs = sArgs;
     }
@@ -430,7 +429,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
 void Options::Save(QSharedPointer<QSettings> pSettings)
 {
     int countExport = vExportOptions.size();
-    pSettings->beginWriteArray(u"export"_s);
+    pSettings->beginWriteArray(u"export"_s, countExport);
     for(int iExport=0; iExport<countExport; iExport++){
         pSettings->setArrayIndex(iExport);
         vExportOptions[iExport].Save(pSettings);
@@ -560,8 +559,8 @@ void Options::savePasswords()
 #ifdef USE_HTTSERVER
     sProxyPassword = settings->value(u"proxy_user"_s).toString();
 #endif //USE_HTTSERVER
-    settings->beginWriteArray(u"export"_s);
     int countExport = vExportOptions.size();
+    settings->beginWriteArray(u"export"_s, countExport);
     for(int iExport=0; iExport<countExport; iExport++){
         if(vExportOptions[iExport].sSendTo == u"e-mail"){
             settings->setArrayIndex(iExport);
