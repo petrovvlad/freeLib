@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>693</width>
-    <height>425</height>
+    <width>487</width>
+    <height>424</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -37,6 +37,12 @@
    </property>
    <item>
     <widget class="QTabWidget" name="tabWidget">
+     <property name="sizePolicy">
+      <sizepolicy hsizetype="MinimumExpanding" vsizetype="Expanding">
+       <horstretch>0</horstretch>
+       <verstretch>0</verstretch>
+      </sizepolicy>
+     </property>
      <property name="currentIndex">
       <number>0</number>
      </property>
@@ -116,7 +122,7 @@
             </property>
             <property name="sizeHint" stdset="0">
              <size>
-              <width>40</width>
+              <width>1</width>
               <height>20</height>
              </size>
             </property>
@@ -151,7 +157,7 @@
            </property>
            <property name="sizeHint" stdset="0">
             <size>
-             <width>40</width>
+             <width>1</width>
              <height>20</height>
             </size>
            </property>
@@ -162,9 +168,12 @@
        <item>
         <widget class="QStackedWidget" name="stackedWidget">
          <property name="currentIndex">
-          <number>1</number>
+          <number>0</number>
          </property>
          <widget class="QWidget" name="page_3">
+          <property name="toolTip">
+           <string/>
+          </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <property name="spacing">
             <number>6</number>
@@ -232,6 +241,22 @@
                 </property>
                 <item>
                  <widget class="QLineEdit" name="ExportFileName">
+                  <property name="toolTip">
+                   <string notr="true">&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%a&lt;/span&gt; - автор книги. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nl&lt;/span&gt; - фамилия. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nm&lt;/span&gt; - отчество. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nf&lt;/span&gt; - имя. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%li&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%fi&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%mi&lt;/span&gt; - первые буквы фамилии,имени,отчества. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%abbrs&lt;/span&gt; - аббревиатура серии.&lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%b&lt;/span&gt; - заголовок книги. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%s&lt;/span&gt; - серия. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nx &lt;/span&gt;- номер в серии, где x-число знаков.
+&lt;/body&gt;
+&lt;/html&gt;</string>
+                  </property>
                   <property name="placeholderText">
                    <string notr="true">%a/%s/%n3%b</string>
                   </property>
@@ -526,7 +551,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>667</width>
+            <width>461</width>
             <height>332</height>
            </rect>
           </property>
@@ -698,7 +723,7 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>667</width>
+            <width>347</width>
             <height>304</height>
            </rect>
           </property>
@@ -1020,8 +1045,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>681</width>
-            <height>257</height>
+            <width>98</width>
+            <height>40</height>
            </rect>
           </property>
           <attribute name="label">
@@ -1108,8 +1133,8 @@
            <rect>
             <x>0</x>
             <y>0</y>
-            <width>681</width>
-            <height>257</height>
+            <width>231</width>
+            <height>165</height>
            </rect>
           </property>
           <attribute name="label">

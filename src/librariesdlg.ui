@@ -184,7 +184,7 @@
      <item row="4" column="1">
       <widget class="QLabel" name="linkOPDS2">
        <property name="text">
-        <string>&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
+        <string notr="true">&lt;a href=\&quot;localhost\&quot;&gt;localhost&lt;/a&gt;</string>
        </property>
        <property name="openExternalLinks">
         <bool>true</bool>
@@ -218,7 +218,7 @@
       <item>
        <widget class="QRadioButton" name="del_old">
         <property name="text">
-         <string>Delete old and add new</string>
+         <string>Dele&amp;te old and add new</string>
         </property>
        </widget>
       </item>
