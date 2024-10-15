@@ -66,7 +66,13 @@ opds_server::opds_server(QObject *parent) :
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("image/png"_ba, ba);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+        QHttpHeaders headers;
+        headers.append("Cache-Control"_ba,"max-age=3600"_ba);
+        response.setHeaders(std::move(headers));
+#else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+#endif
         return response;
     });
 
@@ -82,7 +88,7 @@ opds_server::opds_server(QObject *parent) :
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
         QHttpHeaders headers;
         headers.append("Cache-Control"_ba,"max-age=3600"_ba);
-        result.setHeaders(std::move(headers));
+        response.setHeaders(std::move(headers));
 #else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
 #endif
@@ -101,7 +107,7 @@ opds_server::opds_server(QObject *parent) :
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
         QHttpHeaders headers;
         headers.append("Cache-Control"_ba,"max-age=3600"_ba);
-        result.setHeaders(std::move(headers));
+        response.setHeaders(std::move(headers));
 #else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
 #endif
@@ -118,7 +124,7 @@ opds_server::opds_server(QObject *parent) :
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
         QHttpHeaders headers;
         headers.append("Cache-Control"_ba,"max-age=3600"_ba);
-        result.setHeaders(std::move(headers));
+        response.setHeaders(std::move(headers));
 #else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
 #endif
@@ -812,7 +818,7 @@ QHttpServerResponse opds_server::responseUnauthorized()
     QHttpServerResponse result("text/html"_ba, "HTTP/1.1 401 Authorization Required"_ba, QHttpServerResponder::StatusCode::Unauthorized);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
     QHttpHeaders headers;
-    headers.append(WWW-Authenticate"_ba, "Basic"_ba);
+    headers.append("WWW-Authenticate"_ba, "Basic"_ba);
     headers.append("Content-Type"_ba, "text/html;charset=utf-8");
     headers.append("Connection"_ba, "close"_ba);
     result.setHeaders(std::move(headers));
