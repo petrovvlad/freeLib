@@ -1,9 +1,9 @@
-#define QT_USE_QSTRINGBUILDER
 #include "settingsdlg.h"
 #include "ui_settingsdlg.h"
 
 #include <QStringBuilder>
 #include <QMessageBox>
+#include <QStandardItemModel>
 
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
@@ -12,6 +12,7 @@
 #endif
 
 #include "exportframe.h"
+#include "conversionframe.h"
 #include "config-freelib.h"
 #include "utilites.h"
 
@@ -21,27 +22,26 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 {
     ui->setupUi(this);
     options_ = g::options;
+    ui->stackedPages->setCurrentIndex(0);
 
     auto settings = GetSettings();
-    if(settings->contains(QStringLiteral("SettingsWnd/geometry")))
-        restoreGeometry(settings->value(QStringLiteral("SettingsWnd/geometry")).toByteArray());
-    if(settings->contains(QStringLiteral("SettingsWndExportList/geometry")))
+    if(settings->contains(u"SettingsWnd/geometry"_s))
+        restoreGeometry(settings->value(u"SettingsWnd/geometry"_s).toByteArray());
+    if(settings->contains(u"SettingsWndExportList/geometry"_s))
     {
-        ui->ExportList->restoreGeometry(settings->value(QStringLiteral("SettingsWndExportList/geometry")).toByteArray());
-        ui->ExportList->horizontalHeader()->restoreState(settings->value(QStringLiteral("SettingsWndExportList_headers/geometry")).toByteArray());
+        ui->ExportList->restoreGeometry(settings->value(u"SettingsWndExportList/geometry"_s).toByteArray());
+        ui->ExportList->horizontalHeader()->restoreState(settings->value(u"SettingsWndExportList_headers/geometry"_s).toByteArray());
     }
-    if(settings->contains(QStringLiteral("SettingsWndApplicationList/geometry")))
+    if(settings->contains(u"SettingsWndApplicationList/geometry"_s))
     {
-        ui->ApplicationList->restoreGeometry(settings->value(QStringLiteral("SettingsWndApplicationList/geometry")).toByteArray());
-        ui->ApplicationList->horizontalHeader()->restoreState(settings->value(QStringLiteral("SettingsWndApplicationList_headers/geometry")).toByteArray());
+        ui->ApplicationList->restoreGeometry(settings->value(u"SettingsWndApplicationList/geometry"_s).toByteArray());
+        ui->ApplicationList->horizontalHeader()->restoreState(settings->value(u"SettingsWndApplicationList_headers/geometry"_s).toByteArray());
     }
-
-    ui->tabWidget->setCurrentIndex(0);
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->AddExport->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QStringLiteral("plus.svg"))));
-    ui->DelExport->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QStringLiteral("minus.svg"))));
+    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
+    ui->AddExport->setIcon(QIcon::fromTheme(u"list-add"_s, QIcon(sIconsPath + u"plus.svg"_s)));
+    ui->DelExport->setIcon(QIcon::fromTheme(u"list-remove"_s, QIcon(sIconsPath + u"minus.svg"_s)));
     ui->btnOpenExport->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
     ui->btnSaveExport->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
 
@@ -50,15 +50,12 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     ui->ExportList->setColumnWidth(0, 100);
     ui->ExportList->setColumnWidth(1, 250);
     ui->ExportList->setColumnWidth(2, 150);
-    //Колонка «имя выходного файла» временно спрятана
-    ui->ExportList->hideColumn(3);
 
-
-    QStringList dirContent = QDir(QApplication::applicationDirPath() + QStringLiteral("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    QStringList dirContent = QDir(QApplication::applicationDirPath() + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     if(dirContent.isEmpty())
-        dirContent = QDir(FREELIB_DATA_DIR + QStringLiteral("/translations")).entryList(QStringList() << QStringLiteral("language_*.qm"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+        dirContent = QDir(FREELIB_DATA_DIR + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     ui->Language->clear();
-    ui->Language->addItem(QStringLiteral("english"), "en_US");
+    ui->Language->addItem(u"english"_s, "en_US");
     ui->Language->setCurrentIndex(0);
     for(const QString &str: std::as_const(dirContent))
     {
@@ -67,9 +64,9 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
         QLocale loc(lang);
         ui->Language->addItem(loc.nativeLanguageName(), loc.name());
     }
-    dirContent = QDir(QStringLiteral(":/language")).entryList(QStringList()<< QStringLiteral("abc_*.txt"), QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+    dirContent = QDir(u":/language"_s).entryList({u"abc_*.txt"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     ui->ABC->clear();
-    ui->ABC->addItem(QStringLiteral("english"));
+    ui->ABC->addItem(u"english"_s);
     ui->ABC->setCurrentIndex(0);
 
     for(const QString &str: std::as_const(dirContent))
@@ -87,12 +84,12 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->AddExp, &QAbstractButton::clicked, this, &SettingsDlg::AddExt);
     connect(ui->DelApp, &QAbstractButton::clicked, this, &SettingsDlg::DelApp);
     connect(ui->AddApp, &QAbstractButton::clicked, this, &SettingsDlg::AddApp);
-    connect(ui->AddExport, &QToolButton::clicked, this, &SettingsDlg::onAddExportClicked);
-    connect(ui->DelExport, &QPushButton::clicked, this, &SettingsDlg::onDelExportClicked);
+    connect(ui->AddExport, &QToolButton::clicked, this, &SettingsDlg::onAddExport);
+    connect(ui->DelExport, &QPushButton::clicked, this, &SettingsDlg::onDelExport);
     connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->ConversionName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged/*[](){}*/);
     connect(ui->DefaultExport, &QCheckBox::clicked, this, &SettingsDlg::onDefaultExportClicked);
     connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
-    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &SettingsDlg::onTabWidgetCurrentChanged);
     connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
     connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
     connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
@@ -100,6 +97,31 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
     connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
     connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
+
+    ui->treeWidget->setColumnWidth(0, 300);
+    auto item = new QTreeWidgetItem(ui->treeWidget);
+    item->setText(0, tr("Common"));
+    item->setData(0, Qt::UserRole, 0);
+    item = new QTreeWidgetItem(ui->treeWidget);
+    item->setText(0, tr("Export"));
+    item->setData(0, Qt::UserRole, 1);
+    itemConversion = new QTreeWidgetItem(item);
+    itemConversion->setText(0, tr("fb2 to MOBI/AZW3/EPUB conversion"));
+    itemConversion->setData(0, Qt::UserRole, 2);
+#ifdef USE_HTTSERVER
+    item = new QTreeWidgetItem(ui->treeWidget);
+    item->setText(0, tr("Network"));
+    item->setData(0, Qt::UserRole, 3);
+#endif
+    item = new QTreeWidgetItem(ui->treeWidget);
+    item->setText(0, tr("Program"));
+    item->setData(0, Qt::UserRole, 4);
+    item = new QTreeWidgetItem(ui->treeWidget);
+    item->setText(0, tr("Postprocessing tools"));
+    item->setData(0, Qt::UserRole, 5);
+    ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(0));
+
+    connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &SettingsDlg::onChangePage);
 
     QToolButton* btnDBPath = new QToolButton(this);
     btnDBPath->setFocusPolicy(Qt::NoFocus);
@@ -121,8 +143,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
     onHTTPneedPaswordClicked();
     onOpdsEnable(ui->OPDS_enable->checkState());
-#else
-    ui->tabWidget->removeTab(ui->tabWidget->indexOf(ui->tab_network));
 #endif
 
 }
@@ -130,6 +150,20 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 SettingsDlg::~SettingsDlg()
 {
     delete ui;
+}
+
+void SettingsDlg::showConversionNameItem(int nIndex, bool bShow)
+{
+    QStandardItemModel *model = qobject_cast<QStandardItemModel *>(ui->ConversionName->model());
+    if (model) {
+        QStandardItem *item = model->item(nIndex);
+        if (item) {
+            if(bShow)
+                item->setFlags(item->flags() | Qt::ItemIsEnabled);
+            else
+                item->setFlags(item->flags() & ~Qt::ItemIsEnabled);
+        }
+    }
 }
 
 void SettingsDlg::LoadSettings()
@@ -164,7 +198,7 @@ void SettingsDlg::LoadSettings()
 //    ui->settings_to_file->setChecked(QFileInfo(app->applicationDirPath()+"/../../../freeLib/freeLib.cfg").exists());
     ui->settings_to_file->setChecked(QFileInfo(app->applicationDirPath()+"/freeLib.cfg").exists());
 #else
-    ui->settings_to_file->setChecked(QFileInfo::exists(QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg")));
+    ui->settings_to_file->setChecked(QFileInfo::exists(QApplication::applicationDirPath() + u"/freeLib.cfg"_s));
 #endif
     ui->CloseExpDlg->setChecked(options_.bCloseDlgAfterExport);
     ui->uncheck_export->setChecked(options_.bUncheckAfterExport);
@@ -210,8 +244,12 @@ void SettingsDlg::LoadSettings()
     }
 
     ui->ExportName->clear();
-    while(ui->stackedWidget->count() > 0)
-        ui->stackedWidget->removeWidget(ui->stackedWidget->widget(0));
+    ui->ConversionName->clear();
+    while(ui->stackedWidget->count() > 0){
+        auto frame = ui->stackedWidget->widget(0);
+        ui->stackedWidget->removeWidget(frame);
+        frame->deleteLater();
+    }
     int iDefault = 0;
     count = options_.vExportOptions.size();
     for(int i=0; i<count; i++)
@@ -221,16 +259,26 @@ void SettingsDlg::LoadSettings()
         const ExportOptions *pExportOptions = &options_.vExportOptions.at(i);
         frame->Load(pExportOptions);
         ui->ExportName->addItem(pExportOptions->sName, pExportOptions->bDefault);
+        auto format = pExportOptions->format;
+        ui->ConversionName->addItem(pExportOptions->sName, i);
+        if(format != epub && format != azw3 && format != mobi && format != mobi7)
+        {
+            showConversionNameItem(i, false);
+        }
+
         if(pExportOptions->bDefault)
             iDefault = i;
-        connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
-        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
         connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
-#ifdef USE_HTTSERVER
         connect(frame, &ExportFrame::OutputFormatChanged, this, &SettingsDlg::onExportFormatChanged);
+#ifdef USE_HTTSERVER
         connect(frame, &ExportFrame::UseForHttpChanged, this, &SettingsDlg::onUseForHttpChanged);
-#else
 #endif
+
+        auto conversionFrame = new ConversionFrame(this);
+        ui->stackedWidgetConversion->addWidget(conversionFrame);
+        conversionFrame->Load(pExportOptions);
+        connect(conversionFrame, &ConversionFrame::ChangeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
+        connect(this, &SettingsDlg::ChangingConversionFrameTab, conversionFrame, &ConversionFrame::setCurrentTab);
     }
     ui->DelExport->setEnabled(count > 1);
     ui->ExportName->setCurrentIndex(iDefault);
@@ -296,13 +344,13 @@ void SettingsDlg::btnDBPath()
     if(!dir.isEmpty() && dir != ui->database_path->text())
     {
         g::options.sDatabasePath = ui->database_path->text().trimmed();
-        QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("libdb"), false);
+        QSqlDatabase dbase = QSqlDatabase::database(u"libdb"_s, false);
         if (dbase.isOpen())
             dbase.close();
-        if(QFile().rename(RelativeToAbsolutePath(ui->database_path->text()), dir + QStringLiteral("/freeLib.sqlite")))
+        if(QFile().rename(RelativeToAbsolutePath(ui->database_path->text()), dir + u"/freeLib.sqlite"_s))
         {
             QFile().remove(RelativeToAbsolutePath(ui->database_path->text()));
-            ui->database_path->setText(dir + QStringLiteral("/freeLib.sqlite"));
+            ui->database_path->setText(dir + u"/freeLib.sqlite"_s);
             dbase.setDatabaseName(RelativeToAbsolutePath(ui->database_path->text()));
             if(!dbase.open())
             {
@@ -310,6 +358,13 @@ void SettingsDlg::btnDBPath()
             }
         }
     }
+}
+
+void SettingsDlg::onChangePage()
+{
+    auto item = ui->treeWidget->currentItem();
+    int page = item->data(0, Qt::UserRole).toInt();
+    ui->stackedPages->setCurrentIndex(page);
 }
 
 void SettingsDlg::ChangeLanguage()
@@ -331,7 +386,7 @@ void SettingsDlg::btnOK()
         QString dir = QApplication::applicationDirPath();
 #endif
         QDir().mkpath(dir);
-        QFile cfg(dir + QStringLiteral("/freeLib.cfg"));
+        QFile cfg(dir + u"/freeLib.cfg"_s);
         if(!cfg.exists())
         {
             cfg.open(QFile::WriteOnly);
@@ -346,7 +401,7 @@ void SettingsDlg::btnOK()
 //        if(QDir(app->applicationDirPath()+"/../../../freeLib").entryList(QDir::Files).count()==0)
 //            QDir(app->applicationDirPath()+"/../../../freeLib").removeRecursively();
 #else
-        QFile().remove(QApplication::applicationDirPath() + QStringLiteral("/freeLib.cfg"));
+        QFile().remove(QApplication::applicationDirPath() + u"/freeLib.cfg"_s);
 #endif
     }
     auto settings = GetSettings(true);
@@ -396,17 +451,18 @@ void SettingsDlg::btnOK()
     {
         ExportOptions* pExportOptions = &g::options.vExportOptions[i];
         qobject_cast<ExportFrame*>(ui->stackedWidget->widget(i))->Save(pExportOptions);
+        qobject_cast<ConversionFrame*>(ui->stackedWidgetConversion->widget(i))->Save(pExportOptions);
         pExportOptions->sName = ui->ExportName->itemText(i);
         pExportOptions->bDefault = ui->ExportName->itemData(i).toBool();
     }
     g::options.Save(settings);
     g::options.savePasswords();
 
-    settings->setValue(QStringLiteral("SettingsWnd/geometry"), saveGeometry());
-    settings->setValue(QStringLiteral("SettingsWndExportList/geometry"), ui->ExportList->saveGeometry());
-    settings->setValue(QStringLiteral("SettingsWndExportList_headers/geometry"), ui->ExportList->horizontalHeader()->saveState());
-    settings->setValue(QStringLiteral("SettingsWndApplicationList/geometry"), ui->ApplicationList->saveGeometry());
-    settings->setValue(QStringLiteral("SettingsWndApplicationList_headers/geometry"), ui->ApplicationList->horizontalHeader()->saveState());
+    settings->setValue(u"SettingsWnd/geometry"_s, saveGeometry());
+    settings->setValue(u"SettingsWndExportList/geometry"_s, ui->ExportList->saveGeometry());
+    settings->setValue(u"SettingsWndExportList_headers/geometry"_s, ui->ExportList->horizontalHeader()->saveState());
+    settings->setValue(u"SettingsWndApplicationList/geometry"_s, ui->ApplicationList->saveGeometry());
+    settings->setValue(u"SettingsWndApplicationList_headers/geometry"_s, ui->ApplicationList->horizontalHeader()->saveState());
 #ifdef USE_HTTSERVER
     setProxy();
 #endif
@@ -454,7 +510,7 @@ void SettingsDlg::DelApp()
 }
 
 
-void SettingsDlg::onAddExportClicked()
+void SettingsDlg::onAddExport()
 {
     ExportOptions exportOptions;
     exportOptions.setDefault(tr("Send to ..."), asis, false);
@@ -475,9 +531,21 @@ void SettingsDlg::onAddExportClicked()
     ui->ExportName->setCurrentIndex(ui->ExportName->count() - 1);
     ui->DelExport->setDisabled(false);
     frame->Load(&exportOptions);
+    connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
+    connect(frame, &ExportFrame::OutputFormatChanged, this, &SettingsDlg::onExportFormatChanged);
+#ifdef USE_HTTSERVER
+    connect(frame, &ExportFrame::UseForHttpChanged, this, &SettingsDlg::onUseForHttpChanged);
+#endif
 
-    connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
-    connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
+    auto conversionFrame = new ConversionFrame(this);
+    ui->stackedWidgetConversion->addWidget(conversionFrame);
+    ui->ConversionName->addItem(exportOptions.sName);
+    ui->ConversionName->setCurrentIndex(ui->ExportName->count() - 1);
+
+    conversionFrame->Load(&exportOptions);
+    connect(conversionFrame, &ConversionFrame::ChangeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
+    connect(this, &SettingsDlg::ChangingConversionFrameTab, conversionFrame, &ConversionFrame::setCurrentTab);
+    itemConversion->setDisabled(true);
 }
 
 void SettingsDlg::ExportNameChanged()
@@ -485,7 +553,7 @@ void SettingsDlg::ExportNameChanged()
     ui->ExportName->setItemText(ui->ExportName->currentIndex(), ui->ExportName->lineEdit()->text());
 }
 
-void SettingsDlg::onDelExportClicked()
+void SettingsDlg::onDelExport()
 {
     if(ui->ExportName->count() <= 1)
         return;
@@ -504,14 +572,31 @@ void SettingsDlg::onExportNameCurrentIndexChanged(int index)
 {
     updateKindelegenWarring(index);
     ui->stackedWidget->setCurrentIndex(index);
+    ui->stackedWidgetConversion->setCurrentIndex(index);
     ui->DefaultExport->setChecked(ui->ExportName->currentData().toBool());
+
+    auto currentFrame = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget());
+    auto currentFormat = currentFrame->outputFormat();
+    itemConversion->setDisabled(currentFormat != epub && currentFormat!=azw3 && currentFormat !=mobi && currentFormat !=mobi7);
+
+    ui->ExportName->blockSignals(true);
+    ui->ExportName->setCurrentIndex(index);
+    ui->ExportName->blockSignals(false);
+    ui->ConversionName->blockSignals(true);
+    ui->ConversionName->setCurrentIndex(index);
+    ui->ConversionName->blockSignals(false);
 }
 
-#ifdef USE_HTTSERVER
 void SettingsDlg::onExportFormatChanged()
 {
     auto currentFrame = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget());
+    auto index = ui->stackedWidget->currentIndex();
     auto currentFormat = currentFrame->outputFormat();
+    bool bConversion  = currentFormat == epub || currentFormat == azw3 || currentFormat ==mobi || currentFormat == mobi7;
+    itemConversion->setDisabled(!bConversion);
+    showConversionNameItem(index, bConversion);
+
+#ifdef USE_HTTSERVER
     bool bCurrentUseHttp = currentFrame->getUseForHttp();
     std::unordered_map<ExportFormat, uint> formatCount;
     for(int i=0; i<ui->stackedWidget->count(); i++){
@@ -525,12 +610,12 @@ void SettingsDlg::onExportFormatChanged()
     }
     if(formatCount[currentFormat] == 1)
         currentFrame->setUseForHttp(true);
-}
 #endif
+}
 
-void SettingsDlg::onChangeExportFrameTab(int tab_id, int page_id)
+void SettingsDlg::onChangeConversionFrameTab(int index)
 {
-    emit ChangingExportFrameTab(tab_id, page_id);
+    emit ChangingConversionFrameTab(index);
 }
 
 void SettingsDlg::onDefaultExportClicked()
@@ -548,15 +633,6 @@ void SettingsDlg::onBtnDefaultSettingsClicked()
     {
         options_.setDefault();
         LoadSettings();
-    }
-}
-
-void SettingsDlg::onTabWidgetCurrentChanged(int /*index*/)
-{
-    if(ui->tabWidget->currentWidget() == ui->tab_export)
-    {
-        SaveTools();
-        emit NeedUpdateTools();
     }
 }
 
@@ -601,10 +677,10 @@ void SettingsDlg::onHTTPneedPaswordClicked()
 void SettingsDlg::onBtnSaveExportClicked()
 {
     QString file_name = QFileDialog::getSaveFileName(this, tr("Save profile"),
-        (ui->ExportName->currentText()), QStringLiteral("freeLib export (*.fle)"));
+        (ui->ExportName->currentText()), u"freeLib export (*.fle)"_s);
     if(file_name.isEmpty())
         return;
-    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/export.ini"), QSettings::IniFormat));
+    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s, QSettings::IniFormat));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     settings->setIniCodec("UTF-8");
 #endif
@@ -618,7 +694,7 @@ void SettingsDlg::onBtnSaveExportClicked()
     zip.open(QuaZip::mdCreate);
     QuaZipFile zip_file(&zip);
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("export.ini"), settings->fileName()));
+    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"export.ini"_s, settings->fileName()));
     QFile file(settings->fileName());
     file.open(QIODevice::ReadOnly);
     zip_file.write(file.readAll());
@@ -629,29 +705,29 @@ void SettingsDlg::onBtnSaveExportClicked()
     for(const QString &font: fonts_list)
     {
         QString font_file = font;
-        if(QFile::exists(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + font_file))
+        if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file))
         {
-            font_file = QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + font_file;
+            font_file = QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file;
         }
         else
         {
-            if(QFile::exists(db_path + QStringLiteral("/") + font_file))
+            if(QFile::exists(db_path % u"/"_s % font_file))
             {
-                font_file = db_path + QStringLiteral("/") + font_file;
+                font_file = db_path % u"/"_s % font_file;
             }
-            else if(QFile::exists(FREELIB_DATA_DIR + QStringLiteral("/fonts") + font_file))
+            else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % font_file))
             {
-                font_file = FREELIB_DATA_DIR + QStringLiteral("/fonts") + font_file;
+                font_file = FREELIB_DATA_DIR % u"/fonts"_s % font_file;
             }
             else
             {
                 if(!QFile::exists(font_file))
-                    font_file = QStringLiteral("");
+                    font_file = u""_s;
             }
         }
         if(!font_file.isEmpty())
         {
-            zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(QStringLiteral("Fonts/") + QFileInfo(font_file).fileName(), font_file));
+            zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"Fonts/"_s + QFileInfo(font_file).fileName(), font_file));
             file.setFileName(font_file);
             file.open(QIODevice::ReadOnly);
             zip_file.write(file.readAll());
@@ -664,7 +740,7 @@ void SettingsDlg::onBtnSaveExportClicked()
 
 void SettingsDlg::onBtnOpenExportClicked()
 {
-    QString file_name = QFileDialog::getOpenFileName(this, tr("Open profile"), QString() , QStringLiteral("freeLib export (*.fle)"));
+    QString file_name = QFileDialog::getOpenFileName(this, tr("Open profile"), QString() , u"freeLib export (*.fle)"_s);
     if(file_name.isEmpty())
         return;
     QMessageBox msgBox = QMessageBox(QMessageBox::Question, tr("Load profile"), tr("How to load profile?"), QMessageBox::Cancel, this);
@@ -686,18 +762,18 @@ void SettingsDlg::onBtnOpenExportClicked()
     {
 
         QFileInfo fi(file);
-        if(fi.path() == QStringLiteral("Fonts"))
+        if(fi.path() == u"Fonts"_s)
         {
-            if(QFile::exists(QApplication::applicationDirPath() + QStringLiteral("/xsl/fonts/") + fi.fileName()))
+            if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % fi.fileName()))
                 continue;
-            if(QFile::exists(db_path + QStringLiteral("/") + fi.fileName()))
+            if(QFile::exists(db_path % u"/"_s % fi.fileName()))
                 continue;
-            if(QFile::exists(FREELIB_DATA_DIR + QStringLiteral("/fonts/") + fi.fileName()))
+            if(QFile::exists(FREELIB_DATA_DIR % u"/fonts/"_s % fi.fileName()))
                 continue;
 
 
             {
-                QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/") + fi.fileName();
+                QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) % u"/"_s % fi.fileName();
                 setCurrentZipFileName(&zip, file);
                 QuaZipFile zip_file(&zip);
                 zip_file.open(QIODevice::ReadOnly);
@@ -707,15 +783,15 @@ void SettingsDlg::onBtnOpenExportClicked()
                 font_file.write(zip_file.readAll());
                 font_file.close();
 
-                QFile::copy(font_name, db_path + QStringLiteral("/") + fi.fileName());
+                QFile::copy(font_name, db_path % u"/"_s % fi.fileName());
             }
         }
     }
 
-    setCurrentZipFileName(&zip, QStringLiteral("export.ini"));
+    setCurrentZipFileName(&zip, u"export.ini"_s);
     QuaZipFile zip_file(&zip);
     zip_file.open(QIODevice::ReadOnly);
-    QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + QStringLiteral("/export.ini");
+    QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s;
     QFile file(ini_name);
     file.remove();
     file.open(QFile::WriteOnly);
@@ -731,10 +807,14 @@ void SettingsDlg::onBtnOpenExportClicked()
         exportOptions.Load(settings);
         frame->Load(&exportOptions);
         ui->ExportName->addItem(QFileInfo(file_name).completeBaseName(), false);
-        connect(frame, &ExportFrame::ChangeTabIndex, this, &SettingsDlg::onChangeExportFrameTab);
-        connect(this, &SettingsDlg::ChangingExportFrameTab, frame, &ExportFrame::SetTabIndex);
         connect(this, &SettingsDlg::NeedUpdateTools, frame, [=](){frame->UpdateToolComboBox();});
         ui->ExportName->setCurrentIndex(ui->ExportName->count() - 1);
+
+        auto conversionFrame = new ConversionFrame(this);
+        ui->stackedWidgetConversion->addWidget(conversionFrame);
+        conversionFrame->Load(&exportOptions);
+        connect(conversionFrame, &ConversionFrame::ChangeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
+        connect(this, &SettingsDlg::ChangingConversionFrameTab, conversionFrame, &ConversionFrame::setCurrentTab);
     }
     else
     {

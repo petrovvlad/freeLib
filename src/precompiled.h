@@ -61,6 +61,7 @@
 #include <QSqlError>
 #include <QSqlQuery>
 #include <QSslSocket>
+#include <QStandardItemModel>
 #include <QStandardPaths>
 #include <QString>
 #include <QStringBuilder>
