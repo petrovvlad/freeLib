@@ -212,7 +212,6 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
     #endif
     #ifdef Q_OS_LINUX
-        ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
         setWindowIcon(QIcon(u":/library.png"_s));
     #endif
     #ifdef Q_OS_WIN
