@@ -27,16 +27,24 @@ ExportFrame::ExportFrame(QWidget *parent) :
     connect(ui->radioEmail, &QRadioButton::toggled, this, &ExportFrame::onRadioEmailToggled);
     connect(ui->OutputFormat, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onOutputFormatChanged);
     connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
-    connect(ui->originalFileName, &QCheckBox::clicked, this, &ExportFrame::onOriginalFileNameClicked);
-    connect(ui->PostprocessingCopy, &QCheckBox::clicked, this, &ExportFrame::onPostprocessingCopyClicked);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    connect(ui->originalFileName, &QCheckBox::stateChanged, this, &ExportFrame::onOriginalFileNameChanged);
+    connect(ui->PostprocessingCopy, &QCheckBox::stateChanged, this, &ExportFrame::onPostprocessingCopyChanged);
 #ifdef USE_HTTSERVER
-    connect(ui->checkBoxUseForHttp, &QCheckBox::clicked, this, &ExportFrame::onUseForHttpChanged);
-#endif
+    connect(ui->checkBoxUseForHttp, &QCheckBox::stateChanged, this, &ExportFrame::onUseForHttpChanged);
+#endif //USE_HTTSERVER
+#else
+    connect(ui->originalFileName, &QCheckBox::checkStateChanged, this, &ExportFrame::onOriginalFileNameChanged);
+    connect(ui->PostprocessingCopy, &QCheckBox::checkStateChanged, this, &ExportFrame::onPostprocessingCopyChanged);
+#ifdef USE_HTTSERVER
+    connect(ui->checkBoxUseForHttp, &QCheckBox::checkStateChanged, this, &ExportFrame::onUseForHttpChanged);
+#endif //USE_HTTSERVER
+#endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
 
     QToolButton* btnPath = new QToolButton(this);
     btnPath->setFocusPolicy(Qt::NoFocus);
     btnPath->setCursor(Qt::ArrowCursor);
-    btnPath->setText(QStringLiteral("..."));
+    btnPath->setText(u"..."_s);
     QHBoxLayout*  layout = new QHBoxLayout(ui->Path);
     layout->addWidget(btnPath, 0, Qt::AlignRight);
     layout->setSpacing(0);
@@ -117,9 +125,6 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
         ui->radioEmail->setChecked(true);
 
     UpdateToolComboBox(pExportOptions->sCurrentTool);
-
-    onOriginalFileNameClicked();
-    onPostprocessingCopyClicked();
     connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
 }
 
@@ -187,9 +192,9 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
     }
 }
 
-void ExportFrame::onUseForHttpChanged()
+void ExportFrame::onUseForHttpChanged(int state)
 {
-    emit UseForHttpChanged();
+    emit UseForHttpChanged(state);
 }
 
 void ExportFrame::btnPath()
@@ -200,21 +205,24 @@ void ExportFrame::btnPath()
         ui->Path->setText(dir);
 }
 
-void ExportFrame::onOriginalFileNameClicked()
+void ExportFrame::onOriginalFileNameChanged(int state)
 {
-    ui->ExportFileName->setEnabled(!ui->originalFileName->isChecked());
-    ui->transliteration->setEnabled(!ui->originalFileName->isChecked());
-    ui->label_exportname->setEnabled(!ui->originalFileName->isChecked());
+    bool bUnchecked = (state == Qt::Unchecked);
+    ui->ExportFileName->setEnabled(bUnchecked);
+    ui->transliteration->setEnabled(bUnchecked);
+    ui->label_exportname->setEnabled(bUnchecked);
 }
 
-void ExportFrame::onPostprocessingCopyClicked()
+void ExportFrame::onPostprocessingCopyChanged(int state)
 {
-    ui->askPath->setEnabled(!ui->PostprocessingCopy->isChecked());
-    ui->Path->setEnabled(!ui->PostprocessingCopy->isChecked());
-    ui->ExportFileName->setEnabled(!ui->PostprocessingCopy->isChecked());
-    ui->transliteration->setEnabled(!ui->PostprocessingCopy->isChecked());
-    ui->label_exportname->setEnabled(!ui->PostprocessingCopy->isChecked());
-    ui->originalFileName->setEnabled(!ui->PostprocessingCopy->isChecked());
+    bool bUnchecked = (state == Qt::Unchecked);
+    ui->askPath->setEnabled(bUnchecked);
+    ui->Path->setEnabled(bUnchecked);
+    ui->ExportFileName->setEnabled(bUnchecked);
+    ui->transliteration->setEnabled(bUnchecked);
+    ui->label_path->setEnabled(bUnchecked);
+    ui->label_exportname->setEnabled(bUnchecked);
+    ui->originalFileName->setEnabled(bUnchecked);
 }
 
 void ExportFrame::validateEmail(QLineEdit *leEmail)

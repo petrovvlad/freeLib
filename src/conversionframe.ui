@@ -141,6 +141,9 @@
        </item>
        <item>
         <widget class="QLabel" name="label_tmplate">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="text">
           <string>Additional label for existing cover:</string>
          </property>
@@ -148,6 +151,9 @@
        </item>
        <item>
         <widget class="QLineEdit" name="coverLabel">
+         <property name="enabled">
+          <bool>false</bool>
+         </property>
          <property name="inputMask">
           <string notr="true"/>
          </property>
@@ -531,6 +537,9 @@
         <layout class="QHBoxLayout" name="horizontalLayout_8">
          <item>
           <widget class="QLabel" name="label_lavel">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="text">
             <string>Maximum caption level:</string>
            </property>
@@ -538,6 +547,9 @@
          </item>
          <item>
           <widget class="QSpinBox" name="MAXcaptionLevel">
+           <property name="enabled">
+            <bool>false</bool>
+           </property>
            <property name="minimum">
             <number>2</number>
            </property>

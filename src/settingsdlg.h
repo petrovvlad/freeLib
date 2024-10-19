@@ -121,7 +121,6 @@ private slots:
     void onDelExport();
     void onExportNameCurrentIndexChanged(int index);
     void onChangeConversionFrameTab(int index);
-    void onDefaultExportClicked();
     void onBtnDefaultSettingsClicked();
     void onTrayIconCurrentIndexChanged(int index);
     void onTrayColorCurrentIndexChanged(int index);
@@ -132,11 +131,19 @@ private slots:
     void onChangePage();
     void onExportFormatChanged();
 #ifdef USE_HTTSERVER
-    void onUseForHttpChanged();
+    void onUseForHttpChanged(int state);
     void onProxyTypeCurrentIndexChanged(int index);
-    void onHTTPneedPaswordClicked();
+
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    void onDefaultExportChanged(int state);
+    void onHttpNeedPaswordChanged(int state);
     void onOpdsEnable(int state);
-#endif
+#else
+    void onDefaultExportChanged(Qt::CheckState state);
+    void onHttpNeedPaswordChanged(Qt::CheckState state);
+    void onOpdsEnable(Qt::CheckState state);
+#endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+#endif //USE_HTTSERVER
     virtual void reject();
 
 signals:

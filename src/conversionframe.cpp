@@ -9,11 +9,17 @@ ConversionFrame::ConversionFrame(QWidget *parent) :
     ui->btnDefaultCSS->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
     connect(ui->AddFont, &QPushButton::clicked, this, [this](){this->AddFont();});
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &ConversionFrame::onTabWidgetCurrentChanged);
-    connect(ui->addCoverLabel, &QCheckBox::clicked, this, &ConversionFrame::onAddCoverLabelClicked);
-    connect(ui->createCaverAlways, &QCheckBox::clicked, this, &ConversionFrame::onCreateCaverAlwaysClicked);
-    connect(ui->createCover, &QCheckBox::clicked, this, &ConversionFrame::onCreateCoverClicked);
-    connect(ui->ml_toc, &QCheckBox::clicked, this, &ConversionFrame::onMlTocClicked);
-    connect(ui->userCSS, &QCheckBox::clicked, this, &ConversionFrame::onUserCSSclicked);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    connect(ui->addCoverLabel, &QCheckBox::stateChanged, this, &ConversionFrame::onAddCoverLabelChanged);
+    connect(ui->createCaverAlways, &QCheckBox::stateChanged, this, &ConversionFrame::onCreateCaverAlwaysChanged);
+    connect(ui->ml_toc, &QCheckBox::stateChanged, this, &ConversionFrame::onMlTocChanged);
+    connect(ui->userCSS, &QCheckBox::stateChanged, this, &ConversionFrame::onUserCssChanged);
+#else
+    connect(ui->addCoverLabel, &QCheckBox::checkStateChanged, this, &ConversionFrame::onAddCoverLabelChanged);
+    connect(ui->createCaverAlways, &QCheckBox::checkStateChanged, this, &ConversionFrame::onCreateCaverAlwaysChanged);
+    connect(ui->ml_toc, &QCheckBox::checkStateChanged, this, &ConversionFrame::onMlTocChanged);
+    connect(ui->userCSS, &QCheckBox::checkStateChanged, this, &ConversionFrame::onUserCssChanged);
+#endif
     connect(ui->btnDefaultCSS, &QToolButton::clicked, this, &ConversionFrame::onBtnDefaultCSSclicked);
 }
 
@@ -22,30 +28,27 @@ ConversionFrame::~ConversionFrame()
     delete ui;
 }
 
-void ConversionFrame::onCreateCaverAlwaysClicked()
+void ConversionFrame::onCreateCaverAlwaysChanged(int state)
 {
-    onAddCoverLabelClicked();
-    ui->addCoverLabel->setEnabled(!ui->createCaverAlways->isChecked());
+    bool bUnchecked = (state == Qt::Unchecked);
+    bool bAddCoberLabelChecked = ui->addCoverLabel->isChecked();
+    ui->addCoverLabel->setEnabled(bUnchecked);
+    ui->coverLabel->setEnabled(bUnchecked && bAddCoberLabelChecked);
+    ui->label_tmplate->setEnabled(bUnchecked && bAddCoberLabelChecked);
 }
 
-void ConversionFrame::onCreateCoverClicked()
+void ConversionFrame::onMlTocChanged(int state)
 {
-    ui->createCaverAlways->setEnabled(ui->createCover->isChecked());
-    onCreateCaverAlwaysClicked();
+    bool bChecked = (state == Qt::Checked);
+    ui->MAXcaptionLevel->setEnabled(bChecked);
+    ui->label_lavel->setEnabled(bChecked);
 }
 
-void ConversionFrame::onMlTocClicked()
+void ConversionFrame::onUserCssChanged(int state)
 {
-    ui->MAXcaptionLevel->setEnabled(ui->ml_toc->isChecked());
-    ui->label_lavel->setEnabled(ui->ml_toc->isChecked());
-}
-
-void ConversionFrame::onUserCSSclicked()
-{
-    set_userCSS_clicked();
+    userCssChanged(state);
     if(ui->UserCSStext->toPlainText().isEmpty())
         onBtnDefaultCSSclicked();
-
 }
 
 void ConversionFrame::onBtnDefaultCSSclicked()
@@ -65,13 +68,14 @@ void ConversionFrame::onBtnDefaultCSSclicked()
 
 void ConversionFrame::onTabWidgetCurrentChanged(int index)
 {
-    emit ChangeTabIndex(index);
+    emit changeTabIndex(index);
 }
 
-void ConversionFrame::set_userCSS_clicked()
+void ConversionFrame::userCssChanged(int state)
 {
-    ui->btnDefaultCSS->setEnabled(ui->userCSS->isChecked());
-    ui->UserCSStext->setEnabled(ui->userCSS->isChecked());
+    bool bChecked = (state == Qt::Checked);
+    ui->btnDefaultCSS->setEnabled(bChecked);
+    ui->UserCSStext->setEnabled(bChecked);
 }
 
 void ConversionFrame::Load(const ExportOptions *pExportOptions)
@@ -129,8 +133,6 @@ void ConversionFrame::Load(const ExportOptions *pExportOptions)
         }
         AddFont(true, id_tag, ExportOptions::sDefaultDropcapsFont, u""_s, u""_s, u""_s, size);
     }
-    onMlTocClicked();
-    set_userCSS_clicked();
 }
 
 QStringList ConversionFrame::Save(ExportOptions *pExportOptions)
@@ -189,11 +191,11 @@ void ConversionFrame::setCurrentTab(int index)
     ui->tabWidget->setCurrentIndex(index);
 }
 
-void ConversionFrame::onAddCoverLabelClicked()
+void ConversionFrame::onAddCoverLabelChanged(int state)
 {
-    ui->coverLabel->setEnabled(ui->addCoverLabel->isChecked() && !ui->createCaverAlways->isChecked());
-    ui->label_tmplate->setEnabled(ui->addCoverLabel->isChecked() && !ui->createCaverAlways->isChecked());
-
+    bool bChecked = (state == Qt::Checked);
+    ui->coverLabel->setEnabled(bChecked && !ui->createCaverAlways->isChecked());
+    ui->label_tmplate->setEnabled(bChecked && !ui->createCaverAlways->isChecked());
 }
 
 void ConversionFrame::FontMove(QWidget *font_widget, int direction)
@@ -211,7 +213,6 @@ void ConversionFrame::FontMove(QWidget *font_widget, int direction)
 void ConversionFrame::RemoveFont(QWidget *font_widget)
 {
     delete font_widget;
-
 }
 
 FontFrame *ConversionFrame::AddFont(bool use, int tag, const QString &font, const QString &font_b, const QString &font_i, const QString &font_bi, int fontSize)

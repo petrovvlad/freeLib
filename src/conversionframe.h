@@ -22,17 +22,16 @@ public:
     void setCurrentTab(int index);
 
 signals:
-    void ChangeTabIndex(int index);
+    void changeTabIndex(int index);
 private:
     Ui::ConversionFrame *ui;
-    void set_userCSS_clicked();
+    void userCssChanged(int state);
 
 private slots:
-    void onAddCoverLabelClicked();
-    void onCreateCaverAlwaysClicked();
-    void onCreateCoverClicked();
-    void onMlTocClicked();
-    void onUserCSSclicked();
+    void onAddCoverLabelChanged(int state);
+    void onCreateCaverAlwaysChanged(int state);
+    void onMlTocChanged(int state);
+    void onUserCssChanged(int state);
     void onBtnDefaultCSSclicked();
     void onTabWidgetCurrentChanged(int index);
 

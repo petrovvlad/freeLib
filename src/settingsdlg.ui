@@ -10,7 +10,7 @@
     <x>0</x>
     <y>0</y>
     <width>726</width>
-    <height>487</height>
+    <height>521</height>
    </rect>
   </property>
   <property name="sizePolicy">
@@ -99,10 +99,22 @@
      </item>
      <item>
       <widget class="QStackedWidget" name="stackedPages">
+       <property name="sizePolicy">
+        <sizepolicy hsizetype="Preferred" vsizetype="Minimum">
+         <horstretch>0</horstretch>
+         <verstretch>0</verstretch>
+        </sizepolicy>
+       </property>
        <property name="currentIndex">
-        <number>2</number>
+        <number>3</number>
        </property>
        <widget class="QWidget" name="pageCommon">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
         <layout class="QVBoxLayout" name="verticalLayout_12">
          <item>
           <widget class="QCheckBox" name="ShowDeleted">
@@ -511,7 +523,14 @@
           </layout>
          </item>
          <item>
-          <widget class="QStackedWidget" name="stackedWidgetConversion"/>
+          <widget class="QStackedWidget" name="stackedWidgetConversion">
+           <property name="sizePolicy">
+            <sizepolicy hsizetype="Expanding" vsizetype="Preferred">
+             <horstretch>0</horstretch>
+             <verstretch>0</verstretch>
+            </sizepolicy>
+           </property>
+          </widget>
          </item>
         </layout>
        </widget>
@@ -542,6 +561,9 @@
              <widget class="QCheckBox" name="OPDS_enable">
               <property name="text">
                <string>Enable</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>
@@ -644,6 +666,9 @@
              <widget class="QCheckBox" name="HTTP_need_pasword">
               <property name="text">
                <string>Password protection</string>
+              </property>
+              <property name="checked">
+               <bool>true</bool>
               </property>
              </widget>
             </item>

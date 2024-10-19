@@ -189,7 +189,7 @@
            </widget>
           </item>
           <item>
-           <widget class="QLabel" name="label_6">
+           <widget class="QLabel" name="label_path">
             <property name="text">
              <string>Path:</string>
             </property>

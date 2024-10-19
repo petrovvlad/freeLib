@@ -88,7 +88,11 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->DelExport, &QPushButton::clicked, this, &SettingsDlg::onDelExport);
     connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
     connect(ui->ConversionName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged/*[](){}*/);
-    connect(ui->DefaultExport, &QCheckBox::clicked, this, &SettingsDlg::onDefaultExportClicked);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    connect(ui->DefaultExport, &QCheckBox::stateChanged, this, &SettingsDlg::onDefaultExportChanged);
+#else
+    connect(ui->DefaultExport, &QCheckBox::checkStateChanged, this, &SettingsDlg::onDefaultExportChanged);
+#endif
     connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
     connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
     connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
@@ -133,17 +137,20 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     layout->setContentsMargins(0, 0, 0, 0);
     connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
 
-    LoadSettings();   
 
 #ifdef USE_HTTSERVER
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->OPDS_enable, &QCheckBox::stateChanged, this, &SettingsDlg::onOpdsEnable);
+    connect(ui->HTTP_need_pasword, &QCheckBox::stateChanged, this, &SettingsDlg::onHttpNeedPaswordChanged);
+#else
+    connect(ui->OPDS_enable, &QCheckBox::checkStateChanged, this, &SettingsDlg::onOpdsEnable);
+    connect(ui->HTTP_need_pasword, &QCheckBox::checkStateChanged, this, &SettingsDlg::onHttpNeedPaswordChanged);
+#endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
-    connect(ui->HTTP_need_pasword, &QCheckBox::clicked, this, &SettingsDlg::onHTTPneedPaswordClicked);
 
+    LoadSettings();
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
-    onHTTPneedPaswordClicked();
-    onOpdsEnable(ui->OPDS_enable->checkState());
-#endif
+#endif //USE_HTTSERVER
 
 }
 
@@ -277,7 +284,7 @@ void SettingsDlg::LoadSettings()
         auto conversionFrame = new ConversionFrame(this);
         ui->stackedWidgetConversion->addWidget(conversionFrame);
         conversionFrame->Load(pExportOptions);
-        connect(conversionFrame, &ConversionFrame::ChangeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
+        connect(conversionFrame, &ConversionFrame::changeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
         connect(this, &SettingsDlg::ChangingConversionFrameTab, conversionFrame, &ConversionFrame::setCurrentTab);
     }
     ui->DelExport->setEnabled(count > 1);
@@ -303,10 +310,10 @@ void SettingsDlg::updateKindelegenWarring(int iExportOpton)
 }
 
 #ifdef USE_HTTSERVER
-void SettingsDlg::onUseForHttpChanged()
+void SettingsDlg::onUseForHttpChanged(int state)
 {
     auto currentFrame = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget());
-    bool bCurrentUseHttp = currentFrame->getUseForHttp();
+    bool bCurrentUseHttp = state == Qt::Checked; //currentFrame->getUseForHttp();
     if(bCurrentUseHttp){
         auto currentFormat = currentFrame->outputFormat();
         for(int i=0; i<ui->stackedWidget->count(); i++){
@@ -543,7 +550,7 @@ void SettingsDlg::onAddExport()
     ui->ConversionName->setCurrentIndex(ui->ExportName->count() - 1);
 
     conversionFrame->Load(&exportOptions);
-    connect(conversionFrame, &ConversionFrame::ChangeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
+    connect(conversionFrame, &ConversionFrame::changeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
     connect(this, &SettingsDlg::ChangingConversionFrameTab, conversionFrame, &ConversionFrame::setCurrentTab);
     itemConversion->setDisabled(true);
 }
@@ -618,13 +625,17 @@ void SettingsDlg::onChangeConversionFrameTab(int index)
     emit ChangingConversionFrameTab(index);
 }
 
-void SettingsDlg::onDefaultExportClicked()
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+void SettingsDlg::onDefaultExportChanged(int state)
+#else
+void SettingsDlg::onDefaultExportChanged(Qt::CheckState state)
+#endif
 {
+    bool bChecked = (state == Qt::Checked);
     for(int i=0; i<ui->ExportName->count(); i++)
         ui->ExportName->setItemData(i, false);
-    ui->ExportName->setItemData(ui->ExportName->currentIndex(), ui->DefaultExport->isChecked());
+    ui->ExportName->setItemData(ui->ExportName->currentIndex(), bChecked);
 }
-
 
 void SettingsDlg::onBtnDefaultSettingsClicked()
 {
@@ -665,14 +676,19 @@ void SettingsDlg::onTrayColorCurrentIndexChanged(int index)
 }
 
 #ifdef USE_HTTSERVER
-void SettingsDlg::onHTTPneedPaswordClicked()
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+void SettingsDlg::onHttpNeedPaswordChanged(int state)
+#else
+void SettingsDlg::onHttpNeedPaswordChanged(Qt::CheckState state)
+#endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
 {
-    ui->p_password->setEnabled(ui->HTTP_need_pasword->isChecked());
-    ui->p_user->setEnabled(ui->HTTP_need_pasword->isChecked());
-    ui->HTTP_password->setEnabled(ui->HTTP_need_pasword->isChecked());
-    ui->HTTP_user->setEnabled(ui->HTTP_need_pasword->isChecked());
+    bool bChecked = (state == Qt::Checked);
+    ui->p_password->setEnabled(bChecked);
+    ui->p_user->setEnabled(bChecked);
+    ui->HTTP_password->setEnabled(bChecked);
+    ui->HTTP_user->setEnabled(bChecked);
 }
-#endif
+#endif //USE_HTTSERVER
 
 void SettingsDlg::onBtnSaveExportClicked()
 {
@@ -813,7 +829,7 @@ void SettingsDlg::onBtnOpenExportClicked()
         auto conversionFrame = new ConversionFrame(this);
         ui->stackedWidgetConversion->addWidget(conversionFrame);
         conversionFrame->Load(&exportOptions);
-        connect(conversionFrame, &ConversionFrame::ChangeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
+        connect(conversionFrame, &ConversionFrame::changeTabIndex, this, &SettingsDlg::onChangeConversionFrameTab);
         connect(this, &SettingsDlg::ChangingConversionFrameTab, conversionFrame, &ConversionFrame::setCurrentTab);
     }
     else
@@ -833,7 +849,11 @@ void SettingsDlg::onChangeAlphabetCombobox(int /*index*/)
 }
 
 #ifdef USE_HTTSERVER
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
 void SettingsDlg::onOpdsEnable(int state)
+#else
+void SettingsDlg::onOpdsEnable(Qt::CheckState state)
+#endif
 {
     bool bOpdsEnable = (state == Qt::Checked);
     ui->OPDS_port->setEnabled(bOpdsEnable);

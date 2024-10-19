@@ -25,17 +25,17 @@ public:
 
 signals:
     void OutputFormatChanged();
-    void UseForHttpChanged();
+    void UseForHttpChanged(int state);
 public slots:
     void UpdateToolComboBox(const QString &sCurrentTool = u""_s);
 private slots:
-    void onUseForHttpChanged();
+    void onUseForHttpChanged(int state);
     void onRadioDeviceToggled(bool checked);
     void onRadioEmailToggled(bool checked);
     void onOutputFormatChanged(int index);
     void onConnectionTypeChanged(int index);
-    void onOriginalFileNameClicked();
-    void onPostprocessingCopyClicked();
+    void onOriginalFileNameChanged(int state);
+    void onPostprocessingCopyChanged(int state);
     void validateEmail(QLineEdit* leEmail);
 
     void btnPath();
