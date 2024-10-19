@@ -549,10 +549,10 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_file)
 {
     QString result = str;
-    result.replace(QStringLiteral("%fn"), book_file.completeBaseName()).
-        replace(QStringLiteral("%f"), book_file.absoluteFilePath()).
-        replace(QStringLiteral("%d"), book_file.absoluteDir().path());
     result = fillParams(result, idBook);
+    result.replace(u"%fn"_s, book_file.completeBaseName()).
+        replace(u"%f"_s, book_file.absoluteFilePath()).
+        replace(u"%d"_s, book_file.absoluteDir().path());
     return result;
 }
 
