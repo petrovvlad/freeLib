@@ -135,15 +135,19 @@ private slots:
     void onProxyTypeCurrentIndexChanged(int index);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-    void onDefaultExportChanged(int state);
     void onHttpNeedPaswordChanged(int state);
     void onOpdsEnable(int state);
 #else
-    void onDefaultExportChanged(Qt::CheckState state);
     void onHttpNeedPaswordChanged(Qt::CheckState state);
     void onOpdsEnable(Qt::CheckState state);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
 #endif //USE_HTTSERVER
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    void onDefaultExportChanged(int state);
+#else
+    void onDefaultExportChanged(Qt::CheckState state);
+#endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+
     virtual void reject();
 
 signals:
