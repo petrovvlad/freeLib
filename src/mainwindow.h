@@ -142,6 +142,8 @@ private slots:
     void onChangeAlpabet(const QString &sAlphabetName);
     void onTreeView();
     void onListView();
+    void onUpdateListFont(const QFont &font);
+    void onUpdateAnnotationFont(const QFont &font);
 
     void ChangingTrayIcon(int index, int color);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);

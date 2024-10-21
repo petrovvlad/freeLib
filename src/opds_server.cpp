@@ -8,6 +8,9 @@
 #include <QStringBuilder>
 #include <QDir>
 #include <QRegularExpression>
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+#include <QHttpHeaders>
+#endif
 
 #include "config-freelib.h"
 #include "fb2mobi/fb2mobi.h"
@@ -63,7 +66,13 @@ opds_server::opds_server(QObject *parent) :
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("image/png"_ba, ba);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+        QHttpHeaders headers;
+        headers.append("Cache-Control"_ba,"max-age=3600"_ba);
+        response.setHeaders(std::move(headers));
+#else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+#endif
         return response;
     });
 
@@ -76,7 +85,13 @@ opds_server::opds_server(QObject *parent) :
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("image/svg+xml"_ba, ba);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+        QHttpHeaders headers;
+        headers.append("Cache-Control"_ba,"max-age=3600"_ba);
+        response.setHeaders(std::move(headers));
+#else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+#endif
         return response;
     });
 
@@ -89,7 +104,13 @@ opds_server::opds_server(QObject *parent) :
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("text/css"_ba, ba);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+        QHttpHeaders headers = response.headers();
+        headers.append("Cache-Control"_ba,"max-age=3600"_ba);
+        response.setHeaders(std::move(headers));
+#else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+#endif
         return response;
     });
 
@@ -100,7 +121,13 @@ opds_server::opds_server(QObject *parent) :
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("image/jpeg"_ba, ba);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+        QHttpHeaders headers = response.headers();
+        headers.append("Cache-Control"_ba,"max-age=3600"_ba);
+        response.setHeaders(std::move(headers));
+#else
         response.addHeader("Cache-Control"_ba,"max-age=3600"_ba);
+#endif
         return response;
     });
 
@@ -771,9 +798,17 @@ SLib* opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLib
 QHttpServerResponse opds_server::responseHTML()
 {
     QHttpServerResponse result("text/html"_ba, doc_.toByteArray(2));
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    QHttpHeaders headers = result.headers();
+    headers.append("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
+    headers.append("Connection"_ba, "keep-alive"_ba);
+    headers.append("Pragma"_ba, "no-cache"_ba);
+    result.setHeaders(std::move(headers));
+#else
     result.addHeader("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
     result.addHeader("Connection"_ba, "keep-alive"_ba);
     result.addHeader("Pragma"_ba, "no-cache"_ba);
+#endif
 
     return result;
 }
@@ -781,9 +816,17 @@ QHttpServerResponse opds_server::responseHTML()
 QHttpServerResponse opds_server::responseUnauthorized()
 {
     QHttpServerResponse result("text/html"_ba, "HTTP/1.1 401 Authorization Required"_ba, QHttpServerResponder::StatusCode::Unauthorized);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    QHttpHeaders headers  = result.headers();;
+    headers.append("WWW-Authenticate"_ba, "Basic"_ba);
+    headers.append("Content-Type"_ba, "text/html;charset=utf-8");
+    headers.append("Connection"_ba, "close"_ba);
+    result.setHeaders(std::move(headers));
+#else
     result.addHeader("WWW-Authenticate"_ba, "Basic"_ba);
     result.addHeader("Content-Type"_ba, "text/html;charset=utf-8");
     result.addHeader("Connection"_ba, "close"_ba);
+#endif
     return result;
 }
 
@@ -3024,9 +3067,17 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
         sContentDisposition = u"attachment; filename=\""_s % sBookFileName % u"\""_s;
     }
     QHttpServerResponse result(baBook);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+    QHttpHeaders headers = result.headers();;
+    headers.replaceOrAppend("Content-Type"_ba, baContentType);
+    if(!sContentDisposition.isEmpty())
+        headers.append("Content-Disposition"_ba, sContentDisposition.toUtf8());
+    result.setHeaders(std::move(headers));
+#else
     result.addHeader("Content-Type"_ba, baContentType);
     if(!sContentDisposition.isEmpty())
         result.addHeader("Content-Disposition"_ba, sContentDisposition.toUtf8());
+#endif
     return result;
 }
 
@@ -3041,10 +3092,19 @@ void opds_server::server_run()
     {
         if(status_ == Status::stoped)
         {
-            if(!httpServer_.listen(QHostAddress::Any, nPort_))
+#if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
+            if (!tcpServer_.listen(QHostAddress::Any, nPort_) || !httpServer_.bind(&tcpServer_))
                 qDebug() << "Unable to start the server.";
             else
                 status_ = Status::run;
+#else
+            if (!tcpServer_.listen(QHostAddress::Any, nPort_))
+                qDebug() << "Unable to start the server.";
+            else{
+                httpServer_.bind(&tcpServer_);
+                status_ = Status::run;
+            }
+#endif
         }
     }
     else

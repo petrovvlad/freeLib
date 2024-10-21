@@ -6,8 +6,8 @@
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>693</width>
-    <height>425</height>
+    <width>461</width>
+    <height>382</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -20,14 +20,14 @@
    <enum>QFrame::Shadow::Raised</enum>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_8">
-   <property name="spacing">
-    <number>8</number>
+   <property name="sizeConstraint">
+    <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
    </property>
    <property name="leftMargin">
     <number>0</number>
    </property>
    <property name="topMargin">
-    <number>0</number>
+    <number>1</number>
    </property>
    <property name="rightMargin">
     <number>0</number>
@@ -36,1196 +36,461 @@
     <number>0</number>
    </property>
    <item>
-    <widget class="QTabWidget" name="tabWidget">
+    <widget class="QGroupBox" name="groupBox_3">
+     <property name="title">
+      <string>Export parameters</string>
+     </property>
+     <layout class="QGridLayout" name="gridLayout_2">
+      <item row="0" column="1">
+       <widget class="QComboBox" name="OutputFormat">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="0">
+       <widget class="QLabel" name="label_12">
+        <property name="text">
+         <string>Convert to:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="0">
+       <widget class="QLabel" name="label_10">
+        <property name="text">
+         <string>Postprocessing:</string>
+        </property>
+       </widget>
+      </item>
+      <item row="0" column="2">
+       <widget class="QCheckBox" name="checkBoxUseForHttp">
+        <property name="text">
+         <string>Use profile for OPDS/Web server</string>
+        </property>
+       </widget>
+      </item>
+      <item row="1" column="1">
+       <widget class="QComboBox" name="CurrentTools">
+        <property name="sizePolicy">
+         <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
+          <horstretch>0</horstretch>
+          <verstretch>0</verstretch>
+         </sizepolicy>
+        </property>
+        <item>
+         <property name="text">
+          <string>nothing</string>
+         </property>
+        </item>
+       </widget>
+      </item>
+      <item row="0" column="3">
+       <spacer name="horizontalSpacer_9">
+        <property name="orientation">
+         <enum>Qt::Orientation::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>1</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <layout class="QHBoxLayout" name="horizontalLayout_5">
+     <property name="sizeConstraint">
+      <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+     </property>
+     <item>
+      <widget class="QRadioButton" name="radioDevice">
+       <property name="text">
+        <string>Send to de&amp;vice</string>
+       </property>
+       <property name="checked">
+        <bool>true</bool>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QRadioButton" name="radioEmail">
+       <property name="text">
+        <string>Se&amp;nd to e-mail</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <spacer name="horizontalSpacer">
+       <property name="orientation">
+        <enum>Qt::Orientation::Horizontal</enum>
+       </property>
+       <property name="sizeHint" stdset="0">
+        <size>
+         <width>1</width>
+         <height>20</height>
+        </size>
+       </property>
+      </spacer>
+     </item>
+    </layout>
+   </item>
+   <item>
+    <widget class="QStackedWidget" name="stackedWidget">
      <property name="currentIndex">
       <number>0</number>
      </property>
-     <widget class="QWidget" name="tab">
-      <attribute name="title">
-       <string>Export</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout_4">
+     <widget class="QWidget" name="page_3">
+      <layout class="QVBoxLayout" name="verticalLayout_3">
+       <property name="spacing">
+        <number>6</number>
+       </property>
+       <property name="sizeConstraint">
+        <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+       </property>
        <property name="leftMargin">
-        <number>5</number>
+        <number>0</number>
        </property>
        <property name="topMargin">
-        <number>5</number>
+        <number>0</number>
        </property>
        <property name="rightMargin">
-        <number>5</number>
+        <number>0</number>
        </property>
        <property name="bottomMargin">
-        <number>5</number>
+        <number>0</number>
        </property>
        <item>
-        <widget class="QGroupBox" name="groupBox_3">
+        <widget class="QGroupBox" name="groupBox_2">
          <property name="title">
-          <string>Export parameters</string>
+          <string/>
          </property>
-         <layout class="QGridLayout" name="gridLayout_2">
-          <item row="0" column="1">
-           <widget class="QComboBox" name="OutputFormat">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
-            </property>
-           </widget>
-          </item>
-          <item row="0" column="0">
-           <widget class="QLabel" name="label_12">
+         <layout class="QVBoxLayout" name="verticalLayout_6">
+          <property name="sizeConstraint">
+           <enum>QLayout::SizeConstraint::SetMinimumSize</enum>
+          </property>
+          <item>
+           <widget class="QCheckBox" name="PostprocessingCopy">
             <property name="text">
-             <string>Convert to:</string>
+             <string>Use postprocessing for copy</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="0">
-           <widget class="QLabel" name="label_10">
+          <item>
+           <widget class="QCheckBox" name="askPath">
             <property name="text">
-             <string>Postprocessing:</string>
+             <string>Ask path before export</string>
             </property>
            </widget>
           </item>
-          <item row="0" column="2">
-           <widget class="QCheckBox" name="checkBoxUseForHttp">
+          <item>
+           <widget class="QLabel" name="label_path">
             <property name="text">
-             <string>Use profile for OPDS/Web server</string>
+             <string>Path:</string>
             </property>
            </widget>
           </item>
-          <item row="1" column="1">
-           <widget class="QComboBox" name="CurrentTools">
-            <property name="sizePolicy">
-             <sizepolicy hsizetype="Fixed" vsizetype="Fixed">
-              <horstretch>0</horstretch>
-              <verstretch>0</verstretch>
-             </sizepolicy>
+          <item>
+           <widget class="QLineEdit" name="Path"/>
+          </item>
+          <item>
+           <widget class="QCheckBox" name="originalFileName">
+            <property name="text">
+             <string>Use original file name</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <widget class="QLabel" name="label_exportname">
+            <property name="text">
+             <string>File name:</string>
+            </property>
+           </widget>
+          </item>
+          <item>
+           <layout class="QHBoxLayout" name="horizontalLayout_9">
+            <property name="spacing">
+             <number>6</number>
             </property>
             <item>
-             <property name="text">
-              <string>nothing</string>
-             </property>
+             <widget class="QLineEdit" name="ExportFileName">
+              <property name="toolTip">
+               <string notr="true">&lt;html&gt;
+&lt;head/&gt;
+&lt;body&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%a&lt;/span&gt; - автор книги. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nl&lt;/span&gt; - фамилия. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nm&lt;/span&gt; - отчество. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nf&lt;/span&gt; - имя. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%li&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%fi&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%mi&lt;/span&gt; - первые буквы фамилии,имени,отчества. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%abbrs&lt;/span&gt; - аббревиатура серии.&lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%b&lt;/span&gt; - заголовок книги. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%s&lt;/span&gt; - серия. &lt;br&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nx &lt;/span&gt;- номер в серии, где x-число знаков.
+&lt;/body&gt;
+&lt;/html&gt;</string>
+              </property>
+              <property name="placeholderText">
+               <string notr="true"/>
+              </property>
+             </widget>
             </item>
-           </widget>
-          </item>
-          <item row="0" column="3">
-           <spacer name="horizontalSpacer_9">
-            <property name="orientation">
-             <enum>Qt::Orientation::Horizontal</enum>
-            </property>
-            <property name="sizeHint" stdset="0">
-             <size>
-              <width>40</width>
-              <height>20</height>
-             </size>
-            </property>
-           </spacer>
+            <item>
+             <widget class="QCheckBox" name="transliteration">
+              <property name="text">
+               <string>transliteration</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
           </item>
          </layout>
         </widget>
        </item>
        <item>
-        <layout class="QHBoxLayout" name="horizontalLayout_5">
-         <item>
-          <widget class="QRadioButton" name="radioDevice">
-           <property name="text">
-            <string>Send to de&amp;vice</string>
-           </property>
-           <property name="checked">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <widget class="QRadioButton" name="radioEmail">
-           <property name="text">
-            <string>Se&amp;nd to e-mail</string>
-           </property>
-          </widget>
-         </item>
-         <item>
-          <spacer name="horizontalSpacer">
-           <property name="orientation">
-            <enum>Qt::Orientation::Horizontal</enum>
-           </property>
-           <property name="sizeHint" stdset="0">
-            <size>
-             <width>40</width>
-             <height>20</height>
-            </size>
-           </property>
-          </spacer>
-         </item>
-        </layout>
-       </item>
-       <item>
-        <widget class="QStackedWidget" name="stackedWidget">
-         <property name="currentIndex">
-          <number>1</number>
+        <spacer name="verticalSpacer">
+         <property name="orientation">
+          <enum>Qt::Orientation::Vertical</enum>
          </property>
-         <widget class="QWidget" name="page_3">
-          <layout class="QVBoxLayout" name="verticalLayout_3">
-           <property name="spacing">
-            <number>6</number>
-           </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QGroupBox" name="groupBox_2">
-             <property name="title">
-              <string/>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_6">
-              <item>
-               <widget class="QCheckBox" name="PostprocessingCopy">
-                <property name="text">
-                 <string>Use postprocessing for copy</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="askPath">
-                <property name="text">
-                 <string>Ask path before export</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_6">
-                <property name="text">
-                 <string>Path:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="Path"/>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="originalFileName">
-                <property name="text">
-                 <string>Use original file name</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_exportname">
-                <property name="text">
-                 <string>File name:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_9">
-                <property name="spacing">
-                 <number>6</number>
-                </property>
-                <item>
-                 <widget class="QLineEdit" name="ExportFileName">
-                  <property name="placeholderText">
-                   <string notr="true">%a/%s/%n3%b</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="transliteration">
-                  <property name="text">
-                   <string>transliteration</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="page_4">
-          <layout class="QVBoxLayout" name="verticalLayout_2">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QGroupBox" name="groupBox">
-             <property name="title">
-              <string/>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_5">
-              <item>
-               <layout class="QFormLayout" name="formLayout">
-                <property name="fieldGrowthPolicy">
-                 <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
-                </property>
-                <item row="0" column="0">
-                 <widget class="QLabel" name="label_16">
-                  <property name="text">
-                   <string>From:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="0" column="1">
-                 <widget class="QLineEdit" name="from_email">
-                  <property name="inputMask">
-                   <string notr="true"/>
-                  </property>
-                  <property name="placeholderText">
-                   <string>e-mail</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="0">
-                 <widget class="QLabel" name="label">
-                  <property name="text">
-                   <string>To:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="1" column="1">
-                 <widget class="QLineEdit" name="Email">
-                  <property name="inputMask">
-                   <string notr="true"/>
-                  </property>
-                  <property name="placeholderText">
-                   <string>e-mail</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="0">
-                 <widget class="QLabel" name="label_20">
-                  <property name="text">
-                   <string>Subject:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="2" column="1">
-                 <widget class="QLineEdit" name="mail_subject">
-                  <property name="inputMask">
-                   <string notr="true"/>
-                  </property>
-                  <property name="text">
-                   <string/>
-                  </property>
-                  <property name="placeholderText">
-                   <string notr="true">freeLib</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="0">
-                 <widget class="QLabel" name="label_2">
-                  <property name="text">
-                   <string>Server:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="3" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,3">
-                  <item>
-                   <widget class="QLineEdit" name="Server">
-                    <property name="inputMask">
-                     <string notr="true"/>
-                    </property>
-                    <property name="placeholderText">
-                     <string>server address</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_3">
-                    <item>
-                     <widget class="QLabel" name="label_11">
-                      <property name="text">
-                       <string>Type:</string>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QComboBox" name="ConnectionType">
-                      <item>
-                       <property name="text">
-                        <string notr="true">Tcp</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string notr="true">Ssl</string>
-                       </property>
-                      </item>
-                      <item>
-                       <property name="text">
-                        <string notr="true">Tsl</string>
-                       </property>
-                      </item>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLabel" name="label_4">
-                      <property name="text">
-                       <string>Port:</string>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLineEdit" name="Port">
-                      <property name="inputMask">
-                       <string notr="true">00000</string>
-                      </property>
-                      <property name="placeholderText">
-                       <string>port</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </item>
-                <item row="4" column="0">
-                 <widget class="QLabel" name="label_3">
-                  <property name="text">
-                   <string>User:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="4" column="1">
-                 <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,3">
-                  <item>
-                   <widget class="QLineEdit" name="User">
-                    <property name="inputMask">
-                     <string notr="true"/>
-                    </property>
-                    <property name="placeholderText">
-                     <string>user name</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <layout class="QHBoxLayout" name="horizontalLayout_6">
-                    <item>
-                     <widget class="QLabel" name="label_5">
-                      <property name="text">
-                       <string>Password:</string>
-                      </property>
-                      <property name="alignment">
-                       <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
-                      </property>
-                     </widget>
-                    </item>
-                    <item>
-                     <widget class="QLineEdit" name="Password">
-                      <property name="inputMask">
-                       <string notr="true"/>
-                      </property>
-                      <property name="echoMode">
-                       <enum>QLineEdit::EchoMode::Password</enum>
-                      </property>
-                      <property name="placeholderText">
-                       <string>password</string>
-                      </property>
-                     </widget>
-                    </item>
-                   </layout>
-                  </item>
-                 </layout>
-                </item>
-                <item row="5" column="0">
-                 <widget class="QLabel" name="label_9">
-                  <property name="text">
-                   <string>Pause:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item row="5" column="1">
-                 <widget class="QSpinBox" name="PauseMail"/>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
-           <item>
-            <spacer name="verticalSpacer_4">
-             <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
-             </property>
-             <property name="sizeHint" stdset="0">
-              <size>
-               <width>20</width>
-               <height>40</height>
-              </size>
-             </property>
-            </spacer>
-           </item>
-          </layout>
-         </widget>
-        </widget>
+         <property name="sizeHint" stdset="0">
+          <size>
+           <width>20</width>
+           <height>5</height>
+          </size>
+         </property>
+        </spacer>
        </item>
       </layout>
      </widget>
-     <widget class="QWidget" name="tabFormat">
-      <attribute name="title">
-       <string>fb2 to MOBI/AZW3/EPUB conversion</string>
-      </attribute>
-      <layout class="QVBoxLayout" name="verticalLayout">
-       <property name="spacing">
-        <number>4</number>
-       </property>
+     <widget class="QWidget" name="page_4">
+      <layout class="QVBoxLayout" name="verticalLayout_2">
        <property name="leftMargin">
-        <number>4</number>
+        <number>0</number>
        </property>
        <property name="topMargin">
-        <number>4</number>
+        <number>0</number>
        </property>
        <property name="rightMargin">
-        <number>4</number>
+        <number>0</number>
        </property>
        <property name="bottomMargin">
-        <number>4</number>
+        <number>0</number>
        </property>
        <item>
-        <widget class="QToolBox" name="toolBox">
-         <property name="currentIndex">
-          <number>0</number>
+        <widget class="QGroupBox" name="groupBox">
+         <property name="title">
+          <string/>
          </property>
-         <widget class="QWidget" name="page_2">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>667</width>
-            <height>332</height>
-           </rect>
-          </property>
-          <attribute name="label">
-           <string>Title and cover</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_9">
-           <property name="spacing">
-            <number>0</number>
-           </property>
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QFrame" name="GB2">
-             <property name="frameShape">
-              <enum>QFrame::Shape::StyledPanel</enum>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_13">
-              <property name="leftMargin">
-               <number>4</number>
+         <layout class="QVBoxLayout" name="verticalLayout_5">
+          <item>
+           <layout class="QFormLayout" name="formLayout">
+            <property name="fieldGrowthPolicy">
+             <enum>QFormLayout::FieldGrowthPolicy::ExpandingFieldsGrow</enum>
+            </property>
+            <item row="0" column="0">
+             <widget class="QLabel" name="label_16">
+              <property name="text">
+               <string>From:</string>
               </property>
-              <property name="topMargin">
-               <number>4</number>
+             </widget>
+            </item>
+            <item row="1" column="0">
+             <widget class="QLabel" name="label">
+              <property name="text">
+               <string>To:</string>
               </property>
-              <property name="rightMargin">
-               <number>4</number>
+             </widget>
+            </item>
+            <item row="1" column="1">
+             <widget class="QLineEdit" name="Email">
+              <property name="inputMask">
+               <string notr="true"/>
               </property>
-              <property name="bottomMargin">
-               <number>4</number>
+              <property name="placeholderText">
+               <string>e-mail</string>
               </property>
+             </widget>
+            </item>
+            <item row="2" column="0">
+             <widget class="QLabel" name="label_20">
+              <property name="text">
+               <string>Subject:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="2" column="1">
+             <widget class="QLineEdit" name="mail_subject">
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="text">
+               <string/>
+              </property>
+              <property name="placeholderText">
+               <string notr="true">freeLib</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="0">
+             <widget class="QLabel" name="label_2">
+              <property name="text">
+               <string>Server:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="3" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout" stretch="0,3">
               <item>
-               <widget class="QLabel" name="label_13">
-                <property name="text">
-                 <string>Author string:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_10">
-                <item>
-                 <widget class="QLineEdit" name="authorstring">
-                  <property name="inputMask">
-                   <string notr="true"/>
-                  </property>
-                  <property name="placeholderText">
-                   <string notr="true">%nf %nm %nl</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="authorTranslit">
-                  <property name="text">
-                   <string>Transliteration</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QLabel" name="Label22">
-                <property name="text">
-                 <string>Book title:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_11">
-                <item>
-                 <widget class="QLineEdit" name="seriastring">
-                  <property name="inputMask">
-                   <string notr="true"/>
-                  </property>
-                  <property name="placeholderText">
-                   <string notr="true">(%abbrs %n2) %b</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="seriaTranslit">
-                  <property name="text">
-                   <string>Transliteration</string>
-                  </property>
-                 </widget>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="repairCover">
-                <property name="text">
-                 <string>Repair cover</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="removePersonal">
-                <property name="text">
-                 <string>Remove 'Personal' tag (AZW3 only)</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="createCover">
-                <property name="text">
-                 <string>Create cover if not exists</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="createCaverAlways">
-                <property name="text">
-                 <string>Always create cover</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="addCoverLabel">
-                <property name="text">
-                 <string>Add additional label to existing cover</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLabel" name="label_tmplate">
-                <property name="text">
-                 <string>Additional label for existing cover:</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QLineEdit" name="coverLabel">
+               <widget class="QLineEdit" name="Server">
                 <property name="inputMask">
                  <string notr="true"/>
                 </property>
                 <property name="placeholderText">
-                 <string notr="true">%abbrs - %n2</string>
+                 <string>server address</string>
                 </property>
                </widget>
               </item>
               <item>
-               <spacer name="verticalSpacer_6">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="page_5">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>667</width>
-            <height>304</height>
-           </rect>
-          </property>
-          <attribute name="label">
-           <string>Style</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_10">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QFrame" name="GB5">
-             <property name="frameShape">
-              <enum>QFrame::Shape::StyledPanel</enum>
-             </property>
-             <layout class="QHBoxLayout" name="horizontalLayout_14" stretch="0,0">
-              <property name="leftMargin">
-               <number>4</number>
-              </property>
-              <property name="topMargin">
-               <number>4</number>
-              </property>
-              <property name="rightMargin">
-               <number>4</number>
-              </property>
-              <property name="bottomMargin">
-               <number>4</number>
-              </property>
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_16">
+               <layout class="QHBoxLayout" name="horizontalLayout_3">
                 <item>
-                 <widget class="QLabel" name="label_27">
+                 <widget class="QLabel" name="label_11">
                   <property name="text">
-                   <string>Show footnotes:</string>
+                   <string>Type:</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_4">
+                 <widget class="QComboBox" name="ConnectionType">
                   <item>
-                   <widget class="QComboBox" name="footnotes">
-                    <item>
-                     <property name="text">
-                      <string>at the end of the book</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>in text</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>after paragraph</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>popup</string>
-                     </property>
-                    </item>
-                   </widget>
+                   <property name="text">
+                    <string notr="true">Tcp</string>
+                   </property>
                   </item>
                   <item>
-                   <spacer name="horizontalSpacer_2">
-                    <property name="orientation">
-                     <enum>Qt::Orientation::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
+                   <property name="text">
+                    <string notr="true">Ssl</string>
+                   </property>
                   </item>
-                 </layout>
+                  <item>
+                   <property name="text">
+                    <string notr="true">Tsl</string>
+                   </property>
+                  </item>
+                 </widget>
                 </item>
                 <item>
-                 <widget class="QLabel" name="label_15">
+                 <widget class="QLabel" name="label_4">
                   <property name="text">
-                   <string>Hyphenate:</string>
+                   <string>Port:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_7">
-                  <item>
-                   <widget class="QComboBox" name="hyphenate">
-                    <item>
-                     <property name="text">
-                      <string>no</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>soft</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>children</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_4">
-                    <property name="orientation">
-                     <enum>Qt::Orientation::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label_18">
-                  <property name="text">
-                   <string>Vignette:</string>
+                 <widget class="QLineEdit" name="Port">
+                  <property name="inputMask">
+                   <string notr="true">00000</string>
                   </property>
-                 </widget>
-                </item>
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_8">
-                  <item>
-                   <widget class="QComboBox" name="Vignette">
-                    <item>
-                     <property name="text">
-                      <string>no</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>image</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>text</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_5">
-                    <property name="orientation">
-                     <enum>Qt::Orientation::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="break_after_cupture">
-                  <property name="text">
-                   <string>Page break between chapters</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QCheckBox" name="dropcaps">
-                  <property name="text">
-                   <string>Insert dropcaps</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <widget class="QLabel" name="label_7">
-                  <property name="text">
-                   <string>Content:</string>
-                  </property>
-                 </widget>
-                </item>
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_13">
-                  <item>
-                   <widget class="QComboBox" name="content_placement">
-                    <item>
-                     <property name="text">
-                      <string>no content</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>at the beginning of the book</string>
-                     </property>
-                    </item>
-                    <item>
-                     <property name="text">
-                      <string>at the end of the book</string>
-                     </property>
-                    </item>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_7">
-                    <property name="orientation">
-                     <enum>Qt::Orientation::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <spacer name="verticalSpacer_5">
-                  <property name="orientation">
-                   <enum>Qt::Orientation::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>40</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-               </layout>
-              </item>
-              <item>
-               <layout class="QVBoxLayout" name="verticalLayout_14" stretch="0,1,0">
-                <property name="spacing">
-                 <number>0</number>
-                </property>
-                <item>
-                 <layout class="QHBoxLayout" name="horizontalLayout_15">
-                  <item>
-                   <widget class="QCheckBox" name="userCSS">
-                    <property name="text">
-                     <string>User CSS</string>
-                    </property>
-                   </widget>
-                  </item>
-                  <item>
-                   <spacer name="horizontalSpacer_8">
-                    <property name="orientation">
-                     <enum>Qt::Orientation::Horizontal</enum>
-                    </property>
-                    <property name="sizeHint" stdset="0">
-                     <size>
-                      <width>40</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                   </spacer>
-                  </item>
-                  <item>
-                   <widget class="QToolButton" name="btnDefaultCSS">
-                    <property name="maximumSize">
-                     <size>
-                      <width>20</width>
-                      <height>20</height>
-                     </size>
-                    </property>
-                    <property name="toolTip">
-                     <string>Load default CSS</string>
-                    </property>
-                    <property name="text">
-                     <string notr="true">...</string>
-                    </property>
-                    <property name="icon">
-                     <iconset theme="document-open"/>
-                    </property>
-                   </widget>
-                  </item>
-                 </layout>
-                </item>
-                <item>
-                 <widget class="QPlainTextEdit" name="UserCSStext"/>
-                </item>
-                <item>
-                 <spacer name="verticalSpacer_7">
-                  <property name="orientation">
-                   <enum>Qt::Orientation::Vertical</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>20</width>
-                    <height>5</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-               </layout>
-              </item>
-             </layout>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="page">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>681</width>
-            <height>257</height>
-           </rect>
-          </property>
-          <attribute name="label">
-           <string>Fonts</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_12">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QFrame" name="frame">
-             <property name="frameShape">
-              <enum>QFrame::Shape::StyledPanel</enum>
-             </property>
-             <layout class="QVBoxLayout" name="fontLayout">
-              <property name="spacing">
-               <number>2</number>
-              </property>
-              <property name="leftMargin">
-               <number>4</number>
-              </property>
-              <property name="topMargin">
-               <number>4</number>
-              </property>
-              <property name="rightMargin">
-               <number>4</number>
-              </property>
-              <property name="bottomMargin">
-               <number>4</number>
-              </property>
-              <item>
-               <layout class="QHBoxLayout" name="Layout">
-                <item>
-                 <spacer name="horizontalSpacer_3">
-                  <property name="orientation">
-                   <enum>Qt::Orientation::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
-                </item>
-                <item>
-                 <widget class="QPushButton" name="AddFont">
-                  <property name="text">
-                   <string>Add</string>
+                  <property name="placeholderText">
+                   <string>port</string>
                   </property>
                  </widget>
                 </item>
                </layout>
               </item>
-              <item>
-               <spacer name="verticalSpacer_2">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>195</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
              </layout>
-            </widget>
-           </item>
-          </layout>
-         </widget>
-         <widget class="QWidget" name="page_6">
-          <property name="geometry">
-           <rect>
-            <x>0</x>
-            <y>0</y>
-            <width>681</width>
-            <height>257</height>
-           </rect>
-          </property>
-          <attribute name="label">
-           <string>Advanced</string>
-          </attribute>
-          <layout class="QVBoxLayout" name="verticalLayout_11">
-           <property name="leftMargin">
-            <number>0</number>
-           </property>
-           <property name="topMargin">
-            <number>0</number>
-           </property>
-           <property name="rightMargin">
-            <number>0</number>
-           </property>
-           <property name="bottomMargin">
-            <number>0</number>
-           </property>
-           <item>
-            <widget class="QFrame" name="GB6">
-             <property name="frameShape">
-              <enum>QFrame::Shape::StyledPanel</enum>
-             </property>
-             <layout class="QVBoxLayout" name="verticalLayout_7">
-              <property name="leftMargin">
-               <number>4</number>
+            </item>
+            <item row="4" column="0">
+             <widget class="QLabel" name="label_3">
+              <property name="text">
+               <string>User:</string>
               </property>
-              <property name="topMargin">
-               <number>4</number>
-              </property>
-              <property name="rightMargin">
-               <number>4</number>
-              </property>
-              <property name="bottomMargin">
-               <number>4</number>
-              </property>
+             </widget>
+            </item>
+            <item row="4" column="1">
+             <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="2,3">
               <item>
-               <widget class="QCheckBox" name="annotation">
-                <property name="text">
-                 <string>Don't add annotation</string>
+               <widget class="QLineEdit" name="User">
+                <property name="inputMask">
+                 <string notr="true"/>
+                </property>
+                <property name="placeholderText">
+                 <string>user name</string>
                 </property>
                </widget>
               </item>
               <item>
-               <widget class="QCheckBox" name="split_file">
-                <property name="text">
-                 <string>Split into files by chapters</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="join_series">
-                <property name="text">
-                 <string>Join a series to single book</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <widget class="QCheckBox" name="ml_toc">
-                <property name="text">
-                 <string>Use multi-level table of contents</string>
-                </property>
-               </widget>
-              </item>
-              <item>
-               <layout class="QHBoxLayout" name="horizontalLayout_12" stretch="0,0,1">
+               <layout class="QHBoxLayout" name="horizontalLayout_6">
                 <item>
-                 <widget class="QLabel" name="label_lavel">
+                 <widget class="QLabel" name="label_5">
                   <property name="text">
-                   <string>Maximum caption level:</string>
+                   <string>Password:</string>
+                  </property>
+                  <property name="alignment">
+                   <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="QSpinBox" name="MAXcaptionLevel">
-                  <property name="minimum">
-                   <number>2</number>
+                 <widget class="QLineEdit" name="Password">
+                  <property name="inputMask">
+                   <string notr="true"/>
                   </property>
-                  <property name="maximum">
-                   <number>10</number>
+                  <property name="echoMode">
+                   <enum>QLineEdit::EchoMode::Password</enum>
+                  </property>
+                  <property name="placeholderText">
+                   <string>password</string>
                   </property>
                  </widget>
-                </item>
-                <item>
-                 <spacer name="horizontalSpacer_6">
-                  <property name="orientation">
-                   <enum>Qt::Orientation::Horizontal</enum>
-                  </property>
-                  <property name="sizeHint" stdset="0">
-                   <size>
-                    <width>40</width>
-                    <height>20</height>
-                   </size>
-                  </property>
-                 </spacer>
                 </item>
                </layout>
               </item>
-              <item>
-               <spacer name="verticalSpacer_3">
-                <property name="orientation">
-                 <enum>Qt::Orientation::Vertical</enum>
-                </property>
-                <property name="sizeHint" stdset="0">
-                 <size>
-                  <width>20</width>
-                  <height>40</height>
-                 </size>
-                </property>
-               </spacer>
-              </item>
              </layout>
-            </widget>
-           </item>
-          </layout>
-         </widget>
+            </item>
+            <item row="5" column="0">
+             <widget class="QLabel" name="label_9">
+              <property name="text">
+               <string>Pause:</string>
+              </property>
+             </widget>
+            </item>
+            <item row="5" column="1">
+             <widget class="QSpinBox" name="PauseMail"/>
+            </item>
+            <item row="0" column="1">
+             <widget class="QLineEdit" name="from_email">
+              <property name="inputMask">
+               <string notr="true"/>
+              </property>
+              <property name="placeholderText">
+               <string>e-mail</string>
+              </property>
+             </widget>
+            </item>
+           </layout>
+          </item>
+          <item>
+           <spacer name="verticalSpacer_4">
+            <property name="orientation">
+             <enum>Qt::Orientation::Vertical</enum>
+            </property>
+            <property name="sizeHint" stdset="0">
+             <size>
+              <width>20</width>
+              <height>40</height>
+             </size>
+            </property>
+           </spacer>
+          </item>
+         </layout>
         </widget>
        </item>
       </layout>
@@ -1250,7 +515,6 @@
   <tabstop>User</tabstop>
   <tabstop>Password</tabstop>
   <tabstop>PauseMail</tabstop>
-  <tabstop>AddFont</tabstop>
  </tabstops>
  <resources/>
  <connections/>

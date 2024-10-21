@@ -21,9 +21,8 @@ enum SendType{ST_Device, ST_Mail};
 
 struct ToolsOptions
 {
-    QString sPath;
-    QString sArgs;
-    QString sExt;
+    QString sPath; //приложение
+    QString sArgs; //параметры
 };
 
 struct FontExportOptions
@@ -46,7 +45,7 @@ struct ExportOptions
     void Load(QSharedPointer<QSettings> pSettings);
     void setDefault(const QString &_sName, ExportFormat _OtputFormat, bool _bDefault);
 
-    constexpr const static char* sDefaultEexpFileName = "%a/%s/%n2 %b";
+    constexpr const static char* sDefaultEexpFileName = "%a/[[%s/][%n2] ]%b";
     constexpr const static char* sDefaultDropcapsFont = "sangha.ttf";
     constexpr const static char* sDefaultAuthorName =  "%nf %nm %nl";
     constexpr const static char* sDefaultCoverLabel = "%abbrs - %n2";
@@ -117,6 +116,12 @@ struct Options
     QString sDatabasePath;
 
     qint64 nCacheSize;
+
+    QString sListFontFamaly;
+    QString sAnnotationFontFamaly;
+    quint8 nListFontSize;
+    quint8 nAnnotationFontSize;
+    bool bUseSytemFonts;
 
     qint8 nIconTray;
     qint8 nTrayColor;

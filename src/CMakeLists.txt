@@ -34,6 +34,7 @@ set(PROJECT_SOURCES
         librariesdlg.cpp    librariesdlg.h  librariesdlg.ui
         settingsdlg.cpp     settingsdlg.h   settingsdlg.ui
         exportframe.cpp     exportframe.h   exportframe.ui
+        conversionframe.cpp conversionframe.h conversionframe.ui
         fontframe.cpp       fontframe.h     fontframe.ui
         exportdlg.cpp       exportdlg.h     exportdlg.ui
         aboutdialog.cpp     aboutdialog.h   aboutdialog.ui

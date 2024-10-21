@@ -111,6 +111,7 @@ private:
     ExportOptions *pExportOptions_;
     QString sLanguageFilter_;
     QHttpServer httpServer_;
+    QTcpServer tcpServer_;
 };
 
 #endif // OPDS_SERVER_H

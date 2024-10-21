@@ -68,7 +68,7 @@
         </font>
        </property>
        <property name="text">
-        <string>freeLib ${VERSION}</string>
+        <string notr="true">freeLib ${VERSION}</string>
        </property>
       </widget>
      </item>

@@ -94,13 +94,12 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
 {
     SLib& lib = g::libs[idLib];
     Q_CHECK_PTR(pExportOptions_);
-    QString tool_path,tool_arg,tool_ext;
+    QString tool_path,tool_arg;
     for(const auto &iTool :g::options.tools){
         if(iTool.first == pExportOptions_->sCurrentTool)
         {
             tool_path = iTool.second.sPath;
             tool_arg = iTool.second.sArgs;
-            tool_ext = iTool.second.sExt;
             break;
         }
     }
@@ -214,23 +213,15 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
         }
         else
             book_file_name = current_out_file;
-        QProcess proc;
         if(!tool_path.isEmpty())
         {
             QFileInfo fi_tmp(book_file_name);
             QString ex = lib.fillParams(tool_path, idBook, fi_tmp);
-            QStringList listArg = tool_arg.split(QStringLiteral(" "));
+            QStringList listArg = tool_arg.split(u" "_s);
             for(int i = 0; i != listArg.size(); ++i)
                 listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
-              //Колонка «имя выходного файла» временно спрятана
-//            if(!tool_ext.isEmpty())
-//            {
-//                book_file_name = tool_ext;
-//                book_file_name = lib.fillParams(book_file_name, idBook, fi_tmp);
-//                listArg << book_file_name;
-//            }
             qDebug()<<ex<<listArg;
-            QProcess::execute(ex, listArg);
+            return (QProcess::execute(ex, listArg) == 0);
         }
         return QFileInfo::exists(book_file_name);
     }

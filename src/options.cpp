@@ -138,8 +138,8 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
     pSettings->setValue(QStringLiteral("coverLabel"), sCoverLabel);
     pSettings->setValue(QStringLiteral("content_placement"), nContentPlacement);
 
-    pSettings->beginWriteArray(u"fonts"_s);
     int countFont = vFontExportOptions.size();
+    pSettings->beginWriteArray(u"fonts"_s, countFont);
     for (int iFont = 0; iFont < countFont; ++iFont)
     {
         pSettings->setArrayIndex(iFont);
@@ -403,12 +403,17 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
         QString sName = pSettings->value(QStringLiteral("name")).toString();
         QString sPath = pSettings->value(QStringLiteral("path")).toString();
         QString sArgs = pSettings->value(QStringLiteral("args")).toString();
-        QString sExt = pSettings->value(QStringLiteral("ext")).toString();
         tools[sName].sPath = sPath;
         tools[sName].sArgs = sArgs;
-        tools[sName].sExt = sExt;
     }
     pSettings->endArray();
+
+    bUseSytemFonts = pSettings->value(u"useSystemFonts"_s, true).toBool();
+    QFont fontApp = QGuiApplication::font();
+    sListFontFamaly = pSettings->value(u"fontList"_s, fontApp.family()).toString();
+    nListFontSize = pSettings->value(u"fontListSize"_s, fontApp.pointSize()).toUInt();
+    sAnnotationFontFamaly = pSettings->value(u"fontAnnotation"_s, fontApp.family()).toString();
+    nAnnotationFontSize = pSettings->value(u"fontAnnotationSize"_s, fontApp.pointSize()).toUInt();
 
     count = pSettings->beginReadArray(u"export"_s);
     vExportOptions.resize(count);
@@ -431,7 +436,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
 void Options::Save(QSharedPointer<QSettings> pSettings)
 {
     int countExport = vExportOptions.size();
-    pSettings->beginWriteArray(u"export"_s);
+    pSettings->beginWriteArray(u"export"_s, countExport);
     for(int iExport=0; iExport<countExport; iExport++){
         pSettings->setArrayIndex(iExport);
         vExportOptions[iExport].Save(pSettings);
@@ -481,9 +486,9 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     index = 0;
     for(const auto &iTool :tools){
         pSettings->setArrayIndex(index);
-        pSettings->setValue(u"name"_s, iTool.second.sPath);
+        pSettings->setValue(u"name"_s, iTool.first);
+        pSettings->setValue(u"path"_s, iTool.second.sPath);
         pSettings->setValue(u"args"_s, iTool.second.sArgs);
-        pSettings->setValue(u"ext"_s, iTool.second.sExt);
         ++index;
     }
     pSettings->endArray();
@@ -561,8 +566,8 @@ void Options::savePasswords()
 #ifdef USE_HTTSERVER
     sProxyPassword = settings->value(u"proxy_user"_s).toString();
 #endif //USE_HTTSERVER
-    settings->beginWriteArray(u"export"_s);
     int countExport = vExportOptions.size();
+    settings->beginWriteArray(u"export"_s, countExport);
     for(int iExport=0; iExport<countExport; iExport++){
         if(vExportOptions[iExport].sSendTo == u"e-mail"){
             settings->setArrayIndex(iExport);
