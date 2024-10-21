@@ -73,6 +73,16 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnTreeView->setChecked(bTreeView_);
     ui->btnListView->setChecked(!bTreeView_);;
 
+    if(!g::options.bUseSytemFonts){
+        QFont font(QGuiApplication::font());
+        font.setFamily(g::options.sListFontFamaly);
+        font.setPointSize(g::options.nListFontSize);
+        onUpdateListFont(font);
+        font.setFamily(g::options.sAnnotationFontFamaly);
+        font.setPointSize(g::options.nAnnotationFontSize);
+        onUpdateAnnotationFont(font);
+    }
+
     ui->tabWidget->setCurrentIndex(0);
     ui->Books->setColumnWidth(0,400);
     ui->Books->setColumnWidth(3,50);
@@ -698,6 +708,9 @@ void MainWindow::Settings()
     connect(pDlg, &SettingsDlg::ChangingLanguage, this, [this](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
+    connect(pDlg, &SettingsDlg::ChangeListFont, this, &MainWindow::onUpdateListFont);
+    connect(pDlg, &SettingsDlg::ChangeAnnotationFont, this, &MainWindow::onUpdateAnnotationFont);
+
     if(pDlg->exec() == QDialog::Accepted){
         if(g::options.bShowDeleted != pDlg->options_.bShowDeleted || g::options.bUseTag != pDlg->options_.bUseTag)
         {
@@ -2374,6 +2387,21 @@ void MainWindow::onListView()
         ui->Books->header()->restoreState(aHeadersList_);
         ui->Books->header()->setSortIndicatorShown(true);
     }
+}
+
+void MainWindow::onUpdateListFont(const QFont &font)
+{
+    ui->AuthorList->setFont(font);
+    ui->searchAuthor->setFont(font);
+    ui->SeriaList->setFont(font);
+    ui->searchSeries->setFont(font);
+    ui->GenreList->setFont(font);
+    ui->Books->setFont(font);
+}
+
+void MainWindow::onUpdateAnnotationFont(const QFont &font)
+{
+    ui->Review->setFont(font);
 }
 
 void MainWindow::onSetRating(QTreeWidgetItem *item, uchar nRating)

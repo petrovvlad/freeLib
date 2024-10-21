@@ -117,6 +117,12 @@ struct Options
 
     qint64 nCacheSize;
 
+    QString sListFontFamaly;
+    QString sAnnotationFontFamaly;
+    quint8 nListFontSize;
+    quint8 nAnnotationFontSize;
+    bool bUseSytemFonts;
+
     qint8 nIconTray;
     qint8 nTrayColor;
     bool bShowDeleted;

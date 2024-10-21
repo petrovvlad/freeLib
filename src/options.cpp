@@ -408,6 +408,13 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     }
     pSettings->endArray();
 
+    bUseSytemFonts = pSettings->value(u"useSystemFonts"_s, true).toBool();
+    QFont fontApp = QGuiApplication::font();
+    sListFontFamaly = pSettings->value(u"fontList"_s, fontApp.family()).toString();
+    nListFontSize = pSettings->value(u"fontListSize"_s, fontApp.pointSize()).toUInt();
+    sAnnotationFontFamaly = pSettings->value(u"fontAnnotation"_s, fontApp.family()).toString();
+    nAnnotationFontSize = pSettings->value(u"fontAnnotationSize"_s, fontApp.pointSize()).toUInt();
+
     count = pSettings->beginReadArray(u"export"_s);
     vExportOptions.resize(count);
     std::unordered_set<ExportFormat> httpFormats;

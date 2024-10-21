@@ -106,7 +106,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>6</number>
        </property>
        <widget class="QWidget" name="pageCommon">
         <property name="sizePolicy">
@@ -1065,6 +1065,114 @@
           </layout>
          </item>
         </layout>
+       </widget>
+       <widget class="QWidget" name="pageFonts">
+        <widget class="QLabel" name="labelListFont">
+         <property name="geometry">
+          <rect>
+           <x>40</x>
+           <y>70</y>
+           <width>58</width>
+           <height>18</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>List font</string>
+         </property>
+        </widget>
+        <widget class="QFontComboBox" name="listFontComboBox">
+         <property name="geometry">
+          <rect>
+           <x>160</x>
+           <y>70</y>
+           <width>161</width>
+           <height>26</height>
+          </rect>
+         </property>
+         <property name="writingSystem">
+          <enum>QFontDatabase::WritingSystem::Cyrillic</enum>
+         </property>
+         <property name="fontFilters">
+          <set>QFontComboBox::FontFilter::ProportionalFonts|QFontComboBox::FontFilter::ScalableFonts</set>
+         </property>
+        </widget>
+        <widget class="QSpinBox" name="listFontSpinBox">
+         <property name="geometry">
+          <rect>
+           <x>340</x>
+           <y>70</y>
+           <width>42</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <property name="minimum">
+          <number>8</number>
+         </property>
+         <property name="maximum">
+          <number>24</number>
+         </property>
+        </widget>
+        <widget class="QLabel" name="labelAnnotationFont">
+         <property name="geometry">
+          <rect>
+           <x>40</x>
+           <y>120</y>
+           <width>101</width>
+           <height>18</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Annotation font</string>
+         </property>
+        </widget>
+        <widget class="QSpinBox" name="annotationFontSpinBox">
+         <property name="geometry">
+          <rect>
+           <x>340</x>
+           <y>110</y>
+           <width>42</width>
+           <height>27</height>
+          </rect>
+         </property>
+         <property name="minimum">
+          <number>8</number>
+         </property>
+         <property name="maximum">
+          <number>24</number>
+         </property>
+        </widget>
+        <widget class="QFontComboBox" name="annotationFontComboBox">
+         <property name="geometry">
+          <rect>
+           <x>160</x>
+           <y>110</y>
+           <width>161</width>
+           <height>26</height>
+          </rect>
+         </property>
+         <property name="writingSystem">
+          <enum>QFontDatabase::WritingSystem::Cyrillic</enum>
+         </property>
+         <property name="fontFilters">
+          <set>QFontComboBox::FontFilter::ProportionalFonts|QFontComboBox::FontFilter::ScalableFonts</set>
+         </property>
+        </widget>
+        <widget class="QCheckBox" name="useSystemFonts">
+         <property name="geometry">
+          <rect>
+           <x>20</x>
+           <y>20</y>
+           <width>161</width>
+           <height>24</height>
+          </rect>
+         </property>
+         <property name="text">
+          <string>Use system fonts</string>
+         </property>
+         <property name="checked">
+          <bool>false</bool>
+         </property>
+        </widget>
        </widget>
       </widget>
      </item>

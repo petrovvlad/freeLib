@@ -101,6 +101,15 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
     connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
     connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
+#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
+    connect(ui->useSystemFonts, &QCheckBox::stateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
+#else
+    connect(ui->useSystemFonts, &QCheckBox::checkStateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
+#endif
+    connect(ui->listFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onListFontChanged);
+    connect(ui->listFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onListSizeFontChanged);
+    connect(ui->annotationFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onAnnotationFontChanged);
+    connect(ui->annotationFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onAnnotationSizeFontChanged);
 
     ui->treeWidget->setColumnWidth(0, 300);
     auto item = new QTreeWidgetItem(ui->treeWidget);
@@ -120,9 +129,18 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     item = new QTreeWidgetItem(ui->treeWidget);
     item->setText(0, tr("Program"));
     item->setData(0, Qt::UserRole, 4);
+
     item = new QTreeWidgetItem(ui->treeWidget);
     item->setText(0, tr("Postprocessing tools"));
     item->setData(0, Qt::UserRole, 5);
+
+#ifdef QT_DEBUG
+    item = new QTreeWidgetItem(ui->treeWidget);
+    item->setText(0, tr("Fonts"));
+    item->setData(0, Qt::UserRole, 6);
+#endif
+
+
     ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(0));
 
     connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &SettingsDlg::onChangePage);
@@ -147,8 +165,10 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->HTTP_need_pasword, &QCheckBox::checkStateChanged, this, &SettingsDlg::onHttpNeedPaswordChanged);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
+#endif //USE_HTTSERVER
 
     LoadSettings();
+#ifdef USE_HTTSERVER
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
 #endif //USE_HTTSERVER
 
@@ -294,6 +314,14 @@ void SettingsDlg::LoadSettings()
     onExportFormatChanged();
 #endif
 
+    ui->useSystemFonts->setChecked(options_.bUseSytemFonts);
+    QFont font = QFont(options_.sListFontFamaly);
+    ui->listFontComboBox->setCurrentFont(font);
+    ui->listFontSpinBox->setValue(options_.nListFontSize);
+    font = QFont(options_.sAnnotationFontFamaly);
+    ui->listFontComboBox->setCurrentFont(font);
+    ui->annotationFontSpinBox->setValue(options_.nAnnotationFontSize);
+
 }
 
 void SettingsDlg::updateKindelegenWarring(int iExportOpton)
@@ -340,6 +368,27 @@ void SettingsDlg::reject()
 
     if(options_.nIconTray != g::options.nIconTray || options_.nTrayColor != g::options.nTrayColor){
         emit ChangingTrayIcon(g::options.nIconTray, g::options.nTrayColor);
+    }
+    if(options_.bUseSytemFonts != g::options.bUseSytemFonts){
+        QFont font(QGuiApplication::font());
+        font.setFamily(g::options.sListFontFamaly);
+        font.setPointSize(g::options.nListFontSize);
+        emit ChangeListFont(font);
+        font.setFamily(g::options.sAnnotationFontFamaly);
+        font.setPointSize(g::options.nAnnotationFontSize);
+        emit ChangeAnnotationFont(font);
+    }
+    if(options_.sAnnotationFontFamaly != g::options.sAnnotationFontFamaly || options_.nAnnotationFontSize != g::options.nAnnotationFontSize)  {
+        QFont font(QGuiApplication::font());
+        font.setFamily(g::options.sAnnotationFontFamaly);
+        font.setPointSize(g::options.nAnnotationFontSize);
+        emit ChangeAnnotationFont(font);
+    }
+    if(options_.sListFontFamaly != g::options.sListFontFamaly || options_.nListFontSize != g::options.nListFontSize)  {
+        QFont font(QGuiApplication::font());
+        font.setFamily(g::options.sListFontFamaly);
+        font.setPointSize(g::options.nListFontSize);
+        emit ChangeListFont(font);
     }
     QDialog::reject();
 }
@@ -473,6 +522,12 @@ void SettingsDlg::btnOK()
 #ifdef USE_HTTSERVER
     setProxy();
 #endif
+
+    g::options.bUseSytemFonts = options_.bUseSytemFonts;
+    g::options.sListFontFamaly = options_.sListFontFamaly;
+    g::options.nListFontSize = options_.nListFontSize;
+    g::options.sAnnotationFontFamaly = options_.sAnnotationFontFamaly;
+    g::options.nAnnotationFontSize = options_.nAnnotationFontSize;
 }
 
 void SettingsDlg::SaveTools()
@@ -635,6 +690,67 @@ void SettingsDlg::onDefaultExportChanged(Qt::CheckState state)
     for(int i=0; i<ui->ExportName->count(); i++)
         ui->ExportName->setItemData(i, false);
     ui->ExportName->setItemData(ui->ExportName->currentIndex(), bChecked);
+}
+
+void SettingsDlg::onUseSystemFontsChanged(int state)
+{
+    bool bUnchecked = (state == Qt::Unchecked);
+    ui->labelListFont->setEnabled(bUnchecked);
+    ui->listFontComboBox->setEnabled(bUnchecked);
+    ui->listFontSpinBox->setEnabled(bUnchecked);
+    ui->labelAnnotationFont->setEnabled(bUnchecked);
+    ui->annotationFontComboBox->setEnabled(bUnchecked);
+    ui->annotationFontSpinBox->setEnabled(bUnchecked);
+
+    QFont newFont = QGuiApplication::font();
+    if(bUnchecked){
+        newFont.setFamily(ui->listFontComboBox->currentFont().family());
+        newFont.setPointSize(ui->listFontSpinBox->value());
+    }
+    emit ChangeListFont(newFont);
+    if(bUnchecked){
+        newFont.setFamily(ui->annotationFontComboBox->currentFont().family());
+        newFont.setPointSize(ui->annotationFontSpinBox->value());
+    }
+    options_.bUseSytemFonts = !bUnchecked;
+    emit ChangeAnnotationFont(newFont);
+}
+
+void SettingsDlg::onListFontChanged(const QFont &font)
+{
+    QFont newFont = QGuiApplication::font();
+    newFont.setFamily(font.family());
+    newFont.setPointSize(ui->listFontSpinBox->value());
+    options_.sListFontFamaly = font.family();
+    emit ChangeListFont(newFont);
+}
+
+void SettingsDlg::onListSizeFontChanged(int i)
+{
+    QFont newFont = QGuiApplication::font();
+    newFont.setFamily(ui->listFontComboBox->font().family());
+    newFont.setPointSize(i);
+    options_.nListFontSize = i;
+    emit ChangeListFont(newFont);
+}
+
+void SettingsDlg::onAnnotationFontChanged(const QFont &font)
+{
+    QFont newFont = QGuiApplication::font();
+    newFont.setFamily(font.family());
+    newFont.setPointSize(ui->annotationFontSpinBox->value());
+    options_.sListFontFamaly = font.family();
+    emit ChangeAnnotationFont(newFont);
+
+}
+
+void SettingsDlg::onAnnotationSizeFontChanged(int i)
+{
+    QFont newFont = QGuiApplication::font();
+    newFont.setFamily(ui->annotationFontComboBox->font().family());
+    newFont.setPointSize(i);
+    options_.nAnnotationFontSize = i;
+    emit ChangeAnnotationFont(newFont);
 }
 
 void SettingsDlg::onBtnDefaultSettingsClicked()

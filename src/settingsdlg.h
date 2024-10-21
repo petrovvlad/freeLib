@@ -142,12 +142,17 @@ private slots:
     void onOpdsEnable(Qt::CheckState state);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
 #endif //USE_HTTSERVER
+
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     void onDefaultExportChanged(int state);
 #else
     void onDefaultExportChanged(Qt::CheckState state);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-
+    void onUseSystemFontsChanged(int state);
+    void onListFontChanged(const QFont &font);
+    void onListSizeFontChanged(int i);
+    void onAnnotationFontChanged(const QFont &font);
+    void onAnnotationSizeFontChanged(int i);
     virtual void reject();
 
 signals:
@@ -157,6 +162,8 @@ signals:
     void ChangingConversionFrameTab(int index);
     void NeedUpdateTools();
     void ChangingTrayIcon(int index, int color);
+    void ChangeListFont(const QFont &font);
+    void ChangeAnnotationFont(const QFont &font);
 };
 
 #endif // SETTINGSDLG_H
