@@ -107,9 +107,14 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->useSystemFonts, &QCheckBox::checkStateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
 #endif
     connect(ui->listFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onListFontChanged);
-    connect(ui->listFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onAnnotationFontChanged);
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    connect(ui->listFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onListSizeFontChanged);
+    connect(ui->annotationFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onAnnotationSizeFontChanged);
+#else
+    connect(ui->listFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onAnnotationSizeFontChanged);
+#endif
 
     ui->treeWidget->setColumnWidth(0, 300);
     auto item = new QTreeWidgetItem(ui->treeWidget);
@@ -134,12 +139,9 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     item->setText(0, tr("Postprocessing tools"));
     item->setData(0, Qt::UserRole, 5);
 
-#ifdef QT_DEBUG
     item = new QTreeWidgetItem(ui->treeWidget);
     item->setText(0, tr("Fonts"));
     item->setData(0, Qt::UserRole, 6);
-#endif
-
 
     ui->treeWidget->setCurrentItem(ui->treeWidget->topLevelItem(0));
 
