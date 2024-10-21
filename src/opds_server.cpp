@@ -105,7 +105,7 @@ opds_server::opds_server(QObject *parent) :
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("text/css"_ba, ba);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-        QHttpHeaders headers;
+        QHttpHeaders headers = response.headers();
         headers.append("Cache-Control"_ba,"max-age=3600"_ba);
         response.setHeaders(std::move(headers));
 #else
@@ -122,7 +122,7 @@ opds_server::opds_server(QObject *parent) :
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("image/jpeg"_ba, ba);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-        QHttpHeaders headers;
+        QHttpHeaders headers = response.headers();
         headers.append("Cache-Control"_ba,"max-age=3600"_ba);
         response.setHeaders(std::move(headers));
 #else
@@ -799,7 +799,7 @@ QHttpServerResponse opds_server::responseHTML()
 {
     QHttpServerResponse result("text/html"_ba, doc_.toByteArray(2));
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    QHttpHeaders headers;
+    QHttpHeaders headers = result.headers();
     headers.append("Server"_ba, "freeLib "_ba + FREELIB_VERSION);
     headers.append("Connection"_ba, "keep-alive"_ba);
     headers.append("Pragma"_ba, "no-cache"_ba);
@@ -817,7 +817,7 @@ QHttpServerResponse opds_server::responseUnauthorized()
 {
     QHttpServerResponse result("text/html"_ba, "HTTP/1.1 401 Authorization Required"_ba, QHttpServerResponder::StatusCode::Unauthorized);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    QHttpHeaders headers;
+    QHttpHeaders headers  = result.headers();;
     headers.append("WWW-Authenticate"_ba, "Basic"_ba);
     headers.append("Content-Type"_ba, "text/html;charset=utf-8");
     headers.append("Connection"_ba, "close"_ba);
@@ -3068,10 +3068,10 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     }
     QHttpServerResponse result(baBook);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-    QHttpHeaders headers;
-    headers.append("Content-Type"_ba, baContentType);
+    QHttpHeaders headers = result.headers();;
+    headers.replaceOrAppend("Content-Type"_ba, baContentType);
     if(!sContentDisposition.isEmpty())
-        headers.append("Content-Disposition"_ba, sContentDisposition);
+        headers.append("Content-Disposition"_ba, sContentDisposition.toUtf8());
     result.setHeaders(std::move(headers));
 #else
     result.addHeader("Content-Type"_ba, baContentType);
