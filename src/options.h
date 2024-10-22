@@ -36,7 +36,16 @@ struct FontExportOptions
     quint8 nTag;
 };
 
-enum ExportFormat {asis=1, epub, azw3, mobi, mobi7, pdf};
+enum ExportFormat {
+    asis = 0x01,
+    fb2 = 0x02,
+    epub = 0x04,
+    azw3 = 0x08,
+    mobi = 0x10,
+    mobi7 = 0x20,
+    pdf = 0x40
+};
+
 Q_DECLARE_METATYPE(ExportFormat)
 
 struct ExportOptions

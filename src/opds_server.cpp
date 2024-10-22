@@ -86,7 +86,7 @@ opds_server::opds_server(QObject *parent) :
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("image/svg+xml"_ba, ba);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-        QHttpHeaders headers;
+        QHttpHeaders headers = response.headers();;
         headers.append("Cache-Control"_ba,"max-age=3600"_ba);
         response.setHeaders(std::move(headers));
 #else
@@ -890,9 +890,32 @@ QHttpServerResponse opds_server::generatePageHTML(const std::vector<uint> &vBook
     return responseHTML();
 }
 
+int convertFormatAvaible()
+{
+    int result = 0;
+    bool bKindleInstallsed = kindlegenInstalled();
+    int count = g::options.vExportOptions.size();
+    for(int i=0; i<count; i++)
+    {
+        auto &exportOptions = g::options.vExportOptions[i];
+        if(exportOptions.bUseForHttp){
+            if(exportOptions.format == epub){
+                result |= epub;
+                continue;
+            }
+            if(bKindleInstallsed){
+                if(exportOptions.format == mobi)
+                    result |= mobi;
+                if(exportOptions.format == azw3)
+                    result |= azw3;
+            }
+        }
+    }
+    return result;
+}
+
 void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomElement &feed, const QString &sLibUrl, const QString &sSessionQuery, const QUrl &url, bool bShowAuthor)
 {
-    bool bKindleInstallsed = kindlegenInstalled();
     auto nMaxBooksPerPage = g::options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
@@ -905,6 +928,8 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
     uint iBookBegin = (nPage-1)*nMaxBooksPerPage;
     uint iBookEnd = std::min(static_cast<uint>(vBooks.size()), nPage*nMaxBooksPerPage);
     loadAnnotations(vBooks, lib, iBookBegin, iBookEnd);
+
+    auto convertFormats =  convertFormatAvaible();
 
     for(uint iBook = iBookBegin; iBook < iBookEnd; ++iBook){
         uint idBook = vBooks.at(iBook);
@@ -941,37 +966,18 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
         if(book.sFormat == u"fb2"_s)
         {
             addDownloadItem(entry, u"fb2"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery);
-
-            int count = g::options.vExportOptions.size();
-            for(int i=0; i<count; i++)
-            {
-                auto &exportOptions = g::options.vExportOptions[i];
-                if(exportOptions.bUseForHttp){
-                    if(exportOptions.format == epub)
-                        addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery);
-                    if(bKindleInstallsed){
-                        if(exportOptions.format == mobi)
-                            addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
-                        if(exportOptions.format == azw3)
-                            addDownloadItem(entry, u"azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery);
-                    }
-                }
-            }
+            if(convertFormats & epub)
+                addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery);
+            if(convertFormats & mobi)
+                addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
+            if(convertFormats & azw3)
+                addDownloadItem(entry, u"azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery);
         }
         else if(book.sFormat == u"epub"_s)
         {
             addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s);
-            if(bKindleInstallsed){
-                int count = g::options.vExportOptions.size();
-                for(int i=0; i<count; i++)
-                {
-                    auto &exportOptions = g::options.vExportOptions[i];
-                    if(exportOptions.bUseForHttp && exportOptions.format == mobi){
-                        addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
-                        break;
-                    }
-                }
-            }
+            if(convertFormats & mobi)
+                addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
         }
         else if(book.sFormat == u"mobi"_s)
             addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
@@ -1022,7 +1028,6 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
 
 QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle,const QString &sId, const QString &sLibUrl, const QUrl &url)
 {
-    bool bKindleInstallsed = kindlegenInstalled();
     auto nMaxBooksPerPage = g::options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
@@ -1057,6 +1062,8 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
 
         addLink(feed, u"application/atom+xml;profile=opds-catalog"_s, hrefOfPage(url, nPage), u"self"_s);
     }
+    auto convertFormats =  convertFormatAvaible();
+
 
     for(uint iBook = iBookBegin; iBook < iBookEnd; ++iBook){
         uint idBook = vBooks.at(iBook);
@@ -1082,22 +1089,24 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
         QDomElement el;
         if(book.sFormat == u"fb2"_s)
         {
-            addLink(entry, u"application/fb2"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            addLink(entry, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            if(bKindleInstallsed){
+            addLink(entry, u"application/x-fictionbook+xml"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & epub)
+                addLink(entry, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & mobi)
                 addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & azw3)
                 addLink(entry, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            }
         }
         else if(book.sFormat == u"epub"_s){
             addLink(entry, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            if(bKindleInstallsed){
+            if(convertFormats & mobi)
                 addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & azw3)
                 addLink(entry, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            }
         }else if(book.sFormat == u"mobi"_s)
             addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        addLink(entry, mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"alternate"_s, tr("Download"));
+        else
+            addLink(entry, mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"alternate"_s, tr("Download"));
 
         if(g::options.bOpdsShowCover)
         {
@@ -1125,7 +1134,6 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
 
 QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url)
 {
-    bool bKindleInstallsed = kindlegenInstalled();
     auto nMaxBooksPerPage = g::options.nOpdsBooksPerPage;
     if(nMaxBooksPerPage == 0)
         nMaxBooksPerPage = std::numeric_limits<typeof(nMaxBooksPerPage)>::max();
@@ -1160,6 +1168,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
         metadata[u"itemsPerPage"] = static_cast<int>(nMaxBooksPerPage);
         root[u"metadata"] = metadata;
     }
+    auto convertFormats =  convertFormatAvaible();
 
     QJsonArray publications;
     for(uint iBook = iBookBegin; iBook < iBookEnd; ++iBook){
@@ -1215,22 +1224,24 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
         QJsonArray links;
         if(book.sFormat == u"fb2")
         {
-            addLink(links, u"application/fb2"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            if(bKindleInstallsed){
+            addLink(links, u"application/x-fictionbook+xml"_s, sLibUrl % u"/book/"_s % sIdBook % u"/fb2"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & epub)
+                addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & mobi)
                 addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & azw3)
                 addLink(links, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            }
         }
         else if(book.sFormat == u"epub"){
             addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            if(bKindleInstallsed){
+            if(convertFormats & mobi)
                 addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+            if(convertFormats & azw3)
                 addLink(links, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-            }
         }else if(book.sFormat == u"mobi")
             addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        addLink(links,  mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
+        else
+            addLink(links,  mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         entry[u"links"] = links;
 
         if(g::options.bOpdsShowCover)
@@ -2987,7 +2998,9 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     ExportOptions *pExportOptions = nullptr;
     int count = g::options.vExportOptions.size();
     ExportFormat format;
-    if(sFormat == u"epub")
+    if(sFormat == u"fb2")
+         format = fb2;
+    else if(sFormat == u"epub")
         format = epub;
     else if(sFormat == u"azw3")
         format = azw3;
@@ -3051,6 +3064,9 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
             }
         }
         switch (format) {
+        case fb2:
+            baContentType = "application/x-fictionbook+xml"_ba;
+            break;
         case epub:
             baContentType = "application/epub+zip"_ba;
             break;
@@ -3074,7 +3090,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
         headers.append("Content-Disposition"_ba, sContentDisposition.toUtf8());
     result.setHeaders(std::move(headers));
 #else
-    result.addHeader("Content-Type"_ba, baContentType);
+    result.setHeader("Content-Type"_ba, baContentType);
     if(!sContentDisposition.isEmpty())
         result.addHeader("Content-Disposition"_ba, sContentDisposition.toUtf8());
 #endif
