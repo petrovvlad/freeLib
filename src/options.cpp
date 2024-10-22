@@ -492,6 +492,12 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
         ++index;
     }
     pSettings->endArray();
+
+    pSettings->setValue(u"useSystemFonts"_s, bUseSytemFonts);
+    pSettings->setValue(u"fontList"_s, sListFontFamaly);
+    pSettings->setValue(u"fontListSize"_s, nListFontSize);
+    pSettings->setValue(u"fontAnnotation"_s, sAnnotationFontFamaly);
+    pSettings->setValue(u"fontAnnotationSize"_s, nAnnotationFontSize);
 }
 
 void Options::readPasswords()
