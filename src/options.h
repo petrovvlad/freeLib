@@ -54,11 +54,12 @@ struct ExportOptions
     void Load(QSharedPointer<QSettings> pSettings);
     void setDefault(const QString &_sName, ExportFormat _OtputFormat, bool _bDefault);
 
-    constexpr const static char* sDefaultEexpFileName = "%a/[[%s/][%n2] ]%b";
-    constexpr const static char* sDefaultDropcapsFont = "sangha.ttf";
-    constexpr const static char* sDefaultAuthorName =  "%nf %nm %nl";
-    constexpr const static char* sDefaultCoverLabel = "%abbrs - %n2";
-    constexpr const static char* sDefaultBookTitle = "(%abbrs %n2) %b";
+    inline static const QString sDefaultEexpFileName = u"%a/[[%s/][%n2] ]%b"_s;
+    inline static const QString sDefaultDropcapsFont = u"sangha.ttf"_s;
+    inline static const QString sDefaultAuthorName =  u"%nf %nm %nl"_s;
+    inline static const QString sDefaultCoverLabel = u"%abbrs - %n2"_s;
+    inline static const QString sDefaultBookTitle = u"(%abbrs %n2) %b"_s;
+
     QString sName;
     QString sCurrentTool;
 
