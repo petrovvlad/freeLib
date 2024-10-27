@@ -12,6 +12,12 @@ if(NOT DEFINED FREELIB_QT_MAJOR_VERSION)
 endif()
 message(STATUS "FREELIB_QT_MAJOR_VERSION: ${FREELIB_QT_MAJOR_VERSION}")
 
+find_package(KF${FREELIB_QT_MAJOR_VERSION}KIO QUIET)
+if(KF${FREELIB_QT_MAJOR_VERSION}KIO_FOUND)
+    message(STATUS "Found KIO")
+    add_definitions(-DUSE_KIO=1)
+endif()
+
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
     find_package(QT NAMES Qt6 REQUIRED)
     find_package(Qt6 COMPONENTS ${QT_COMPONENTS} REQUIRED)
@@ -166,6 +172,10 @@ target_link_libraries(freelib PRIVATE
 
 if(Qt6HttpServer_FOUND)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
+endif()
+
+if(KF${FREELIB_QT_MAJOR_VERSION}KIO_FOUND)
+    target_link_libraries(freelib PRIVATE KF${FREELIB_QT_MAJOR_VERSION}::KIOCore)
 endif()
 
 if(Qt${QT_VERSION_MAJOR}Keychain_FOUND)

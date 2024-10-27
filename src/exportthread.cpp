@@ -13,6 +13,12 @@
 #include <QSqlDatabase>
 #include <unistd.h>
 
+#ifdef USE_KIO
+#include <KIO/Job>
+#include <KIO/FileCopyJob>
+#include <KIO/StatJob>
+#include <KIO/MkdirJob>
+#endif
 
 #include "SmtpClient/src/smtpclient.h"
 #include "SmtpClient/src/mimeattachment.h"
@@ -90,6 +96,39 @@ QString BuildFileName(QString filename)
             .replace('<', '.').replace('>', '.').replace('\"', '\'');
 }
 
+#ifdef USE_KIO
+bool kioMkDir(const QUrl &dir)
+{
+    auto statJob = KIO::stat(dir, KIO::HideProgressInfo);
+    statJob->start();
+    statJob->exec();
+    if (statJob->error()){
+        QUrl upDir = dir;
+        QString sPath = upDir.path();
+        sPath = sPath.left(sPath.lastIndexOf(u'/', -2));
+        if(sPath.isEmpty())
+            return false;
+        upDir.setPath(sPath);
+        if( !kioMkDir(upDir) )
+            return false;
+        auto newDir = dir;
+        sPath = newDir.path();
+        if(sPath.at(sPath.length()-1) == u'/')
+            sPath.chop(1);
+        newDir.setPath(sPath);
+        auto dirCreateJob = KIO::mkdir(newDir);
+        dirCreateJob->start();
+        dirCreateJob->exec();
+        if(dirCreateJob->error()){
+            qDebug() << dirCreateJob->errorString();
+            return false;
+        }
+        return true;
+    }else
+        return true;
+}
+#endif
+
 bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, const QString &file_name, int count, uint idBook)
 {
     SLib& lib = g::libs[idLib];
@@ -140,7 +179,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
         current_out_file = conv.convert(out_file, idBook);
     }
 
-    QString book_file_name = fi.path() % QStringLiteral("/") % fi.completeBaseName() % QStringLiteral(".") % QFileInfo(current_out_file).suffix();
+    QString sBookFileName = fi.path() % u"/"_s % fi.completeBaseName() % u"."_s % QFileInfo(current_out_file).suffix();
 
     if(send_type == ST_Mail)
     {
@@ -152,12 +191,12 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
 
        MimeMessage msg(true);
        msg.setHeaderEncoding(MimePart::Base64);
-       EmailAddress sender(pExportOptions_->sEmailFrom, QStringLiteral(""));
+       EmailAddress sender(pExportOptions_->sEmailFrom, u""_s);
        msg.setSender(sender);
-       EmailAddress to(pExportOptions_->sEmail, QStringLiteral(""));
+       EmailAddress to(pExportOptions_->sEmail, u""_s);
        msg.addRecipient(to);
        QString caption = pExportOptions_->sEmailSubject;
-       msg.setSubject(caption.isEmpty() ?QStringLiteral("freeLib") :caption);
+       msg.setSubject(caption.isEmpty() ?u"freeLib"_s :caption);
 
        QBuffer outbuff;
        QString FileName = current_out_file;
@@ -168,13 +207,13 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
        QFile book_file(FileName);
        if(!book_file.open(QFile::ReadOnly))
        {
-           qDebug()<<"Error open file name "<<FileName;
+           MyDBG  << "Error open file name " << FileName;
            return false;
        }
        outbuff.setData(book_file.readAll());
        book_file.close();
        MimeText *pText = new MimeText;
-       QString onlyFileName = QFileInfo(book_file_name).fileName();
+       QString onlyFileName = QFileInfo(sBookFileName).fileName();
        pText->setText(onlyFileName);
        msg.addPart(pText);
        msg.addPart(new MimeAttachment(outbuff.data(), onlyFileName));
@@ -185,7 +224,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
        smtp.sendMail(msg);
        if(!smtp.waitForMailSent())
        {
-           qDebug()<<"Error send e-mail.";
+           MyDBG << "Error send e-mail.";
            return false;
        }
 
@@ -194,36 +233,54 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
     }
     else
     {
-       QStringList listArg;
-       book_file_name = ValidateFileName(book_file_name);
+       sBookFileName = ValidateFileName(sBookFileName);
        if(!pExportOptions_->bPostprocessingCopy)
         {
-            //book_dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
-            if(book_file_name.startsWith(u"mtp:/")){
-                QString sArg = QStringLiteral("move \"%1\" \"%2\"").arg(current_out_file, book_file_name);
-                listArg << sArg;
-                QProcess::execute(QStringLiteral("kioclient5"), listArg);
-
-            }else{              
-                QDir dir(book_file_name);
-                dir.mkpath(book_dir.cleanPath(QFileInfo(book_file_name).absolutePath()));
-                QFile::remove(book_file_name);
-                QFile::rename(current_out_file, book_file_name);
-            }
+#ifdef USE_KIO
+           QUrl urlSrc = current_out_file;
+           if(urlSrc.scheme().isEmpty())
+               urlSrc.setScheme(u"file"_s);
+           QUrl urlDst = sBookFileName;
+           if(urlDst.scheme().isEmpty())
+               urlDst.setScheme(u"file"_s);
+           if(!kioMkDir(urlDst.adjusted(QUrl::RemoveFilename))){
+               MyDBG << "Could not make dir: " << urlDst;
+               return false;
+           }
+           KIO::FileCopyJob *jobCopy = KIO::file_move(urlSrc, urlDst, -1, KIO::Overwrite | KIO::HideProgressInfo );
+           jobCopy->start();
+           jobCopy->exec();
+           if (jobCopy->error()){
+               MyDBG << jobCopy->errorString();
+               return false;
+           }
+#else //USE_KIO
+           QDir dir(sBookFileName);
+           dir.mkpath(book_dir.cleanPath(QFileInfo(sBookFileName).absolutePath()));
+           QFile::remove(sBookFileName);
+           QFile::rename(current_out_file, sBookFileName);
+#endif //USE_KIO
         }
         else
-            book_file_name = current_out_file;
+            sBookFileName = current_out_file;
         if(!tool_path.isEmpty())
         {
-            QFileInfo fi_tmp(book_file_name);
+            QFileInfo fi_tmp(sBookFileName);
             QString ex = lib.fillParams(tool_path, idBook, fi_tmp);
             QStringList listArg = tool_arg.split(u" "_s);
             for(int i = 0; i != listArg.size(); ++i)
                 listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
-            qDebug()<<ex<<listArg;
+            //qDebug()<<ex<<listArg;
             return (QProcess::execute(ex, listArg) == 0);
         }
-        return QFileInfo::exists(book_file_name);
+#ifdef USE_KIO
+        auto statJob = KIO::stat(sBookFileName, KIO::HideProgressInfo);
+        statJob->start();
+        statJob->exec();
+        return !statJob->error();
+#else //USE_KIO
+        return QFileInfo::exists(sBookFileName);
+#endif //USE_KIO
     }
 }
 
@@ -259,7 +316,7 @@ void ExportThread::export_books()
             QuaZip uz(LibPath % QStringLiteral("/") % archive);
             if(!uz.open(QuaZip::mdUnzip))
             {
-                qDebug()<<("Error open archive!")<<" "<<archive;
+                MyDBG << "Error open archive! " << archive;
                 continue;
             }
             if(uz.getEntriesCount() > 1)
@@ -317,6 +374,8 @@ void ExportThread::export_books()
     }
 
     auto nMaxFileName = pathconf(sExportDir_.toUtf8().data(), _PC_NAME_MAX);
+    if(nMaxFileName<0)
+        nMaxFileName = 255;
     uint count = 0;
     for(const auto &vBooks: vBbooksGroup)
     {
@@ -344,7 +403,7 @@ void ExportThread::export_books()
             {
                 QString arh = book.sArchive;
                 arh = arh.left(arh.length()-4);
-                sFileName = arh.isEmpty() ?QStringLiteral("") :QStringLiteral("%1/%2.%3").arg(arh, book.sFile, book.sFormat);
+                sFileName = arh.isEmpty() ?u""_s :u"%1/%2.%3"_s.arg(arh, book.sFile, book.sFormat);
             }
             else
             {

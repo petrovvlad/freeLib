@@ -551,7 +551,7 @@ QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_
     QString result = str;
     result = fillParams(result, idBook);
     result.replace(u"%fn"_s, book_file.completeBaseName()).
-        replace(u"%f"_s, book_file.absoluteFilePath()).
+        replace(u"%f"_s, book_file.filePath()/*absoluteFilePath()*/).
         replace(u"%d"_s, book_file.absoluteDir().path());
     return result;
 }

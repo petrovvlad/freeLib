@@ -370,6 +370,7 @@ int main(int argc, char *argv[])
     }
 
     a->setApplicationName(u"freeLib"_s);
+    QGuiApplication::setDesktopFileName(u"freelib"_s);
 
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
