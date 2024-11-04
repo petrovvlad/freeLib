@@ -2397,6 +2397,25 @@ void MainWindow::onUpdateListFont(const QFont &font)
     ui->searchSeries->setFont(font);
     ui->GenreList->setFont(font);
     ui->Books->setFont(font);
+
+    QFont boldFont(font);
+    boldFont.setBold(true);
+    auto count = ui->Books->topLevelItemCount();
+    for (int i = 0; i < count; ++i) {
+        auto topItem = ui->Books->topLevelItem(i);
+        if(topItem->font(0).bold())
+            topItem->setFont(0, boldFont);
+        auto childCount = topItem->childCount();
+        for (int j = 0; j < childCount; ++j) {
+            auto item = topItem->child(j);
+            if(item->font(0).bold())
+                item->setFont(0, boldFont);
+        }
+    }
+
+    count = ui->GenreList->topLevelItemCount();
+    for(int i = 0; i < count; ++i)
+        ui->GenreList->topLevelItem(i)->setFont(0, boldFont);
 }
 
 void MainWindow::onUpdateAnnotationFont(const QFont &font)

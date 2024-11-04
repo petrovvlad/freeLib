@@ -251,7 +251,7 @@ void ExportOptions::setDefault(const QString &_sName, ExportFormat _OtputFormat,
     sName = _sName;
     format = _OtputFormat;
     bDefault = _bDefault;
-    sSendTo = QStringLiteral("device");
+    sSendTo = u"device"_s;
     nEmailServerPort = 25;
     bPostprocessingCopy = false;
     bOriginalFileName = false;
@@ -293,10 +293,11 @@ void Options::setDefault(){
     bUseTag = true;
     bShowSplash = true;
     bStorePosition = true;
-    sAlphabetName = QLocale::system().name().left(2);
     sUiLanguageName = QLocale::system().name();
-    QString sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-    sDatabasePath = sAppDir + QStringLiteral("/freeLib.sqlite");
+    sAlphabetName = sUiLanguageName.left(2);
+    setLocale(sUiLanguageName);
+    QString sAppDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
+    sDatabasePath = sAppDir + u"/freeLib.sqlite"_s;
     nIconTray = 0;
     nTrayColor = 0;
     bCloseDlgAfterExport = true;
@@ -319,6 +320,13 @@ void Options::setDefault(){
     sProxyPassword = u""_s;
 #endif
     setExportDefault();
+    tools.emplace(u"zip"_s, ToolsOptions{u"zip"_s, u"-9 -mj %d/%fn.zip %f"_s});
+    bUseSytemFonts = true;
+    QFont fontApp = QGuiApplication::font();
+    sListFontFamaly = fontApp.family();
+    nListFontSize = fontApp.pointSize();
+    sAnnotationFontFamaly = fontApp.family();
+    nAnnotationFontSize = fontApp.pointSize();
 }
 
 void Options::setExportDefault()
@@ -492,6 +500,12 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
         ++index;
     }
     pSettings->endArray();
+
+    pSettings->setValue(u"useSystemFonts"_s, bUseSytemFonts);
+    pSettings->setValue(u"fontList"_s, sListFontFamaly);
+    pSettings->setValue(u"fontListSize"_s, nListFontSize);
+    pSettings->setValue(u"fontAnnotation"_s, sAnnotationFontFamaly);
+    pSettings->setValue(u"fontAnnotationSize"_s, nAnnotationFontSize);
 }
 
 void Options::readPasswords()
@@ -520,7 +534,7 @@ void Options::readPasswords()
                 vExportOptions[iExport].sEmailPassword = job.textData();
         }
     }
-#else
+#else //USE_QTKEYCHAIN
     auto settings = GetSettings();
 #ifdef USE_HTTSERVER
     settings->setValue(u"proxy_password"_s, sProxyPassword);
@@ -561,7 +575,7 @@ void Options::savePasswords()
             loop.exec();
         }
     }
-#else
+#else //USE_QTKEYCHAIN
     auto settings = GetSettings();
 #ifdef USE_HTTSERVER
     sProxyPassword = settings->value(u"proxy_user"_s).toString();

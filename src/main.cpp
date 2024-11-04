@@ -370,15 +370,21 @@ int main(int argc, char *argv[])
     }
 
     a->setApplicationName(u"freeLib"_s);
+    QGuiApplication::setDesktopFileName(u"freelib"_s);
 
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
     auto  settings = GetSettings();
-    g::options.Load(settings);
-    g::options.readPasswords();
-    setLocale(g::options.sUiLanguageName);
+    bool bDefault = !QFile::exists(settings->fileName());
+    if(bDefault){
+        g::options.setDefault();
+    }else{
+        g::options.Load(settings);
+        g::options.readPasswords();
+        setLocale(g::options.sUiLanguageName);
+    }
     if(g::options.vExportOptions.empty())
         g::options.setExportDefault();
 

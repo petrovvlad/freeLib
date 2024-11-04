@@ -78,6 +78,10 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     }
 
     ui->ApplicationList->setItemDelegateForColumn(1, new FileItemDelegate(this));
+#if QT_VERSION > QT_VERSION_CHECK(6, 3, 0)
+    ui->listFontComboBox->setSampleTextForSystem(QFontDatabase::Cyrillic, u" "_s);
+    ui->annotationFontComboBox->setSampleTextForSystem(QFontDatabase::Cyrillic, u" "_s);
+#endif
 
     connect(ui->buttonBox, &QDialogButtonBox::accepted, this, &SettingsDlg::btnOK);
     connect(ui->DelExp, &QAbstractButton::clicked, this, &SettingsDlg::DelExt);
@@ -321,9 +325,8 @@ void SettingsDlg::LoadSettings()
     ui->listFontComboBox->setCurrentFont(font);
     ui->listFontSpinBox->setValue(options_.nListFontSize);
     font = QFont(options_.sAnnotationFontFamaly);
-    ui->listFontComboBox->setCurrentFont(font);
+    ui->annotationFontComboBox->setCurrentFont(font);
     ui->annotationFontSpinBox->setValue(options_.nAnnotationFontSize);
-
 }
 
 void SettingsDlg::updateKindelegenWarring(int iExportOpton)
@@ -513,6 +516,13 @@ void SettingsDlg::btnOK()
         pExportOptions->sName = ui->ExportName->itemText(i);
         pExportOptions->bDefault = ui->ExportName->itemData(i).toBool();
     }
+
+    g::options.bUseSytemFonts = options_.bUseSytemFonts;
+    g::options.sListFontFamaly = options_.sListFontFamaly;
+    g::options.nListFontSize = options_.nListFontSize;
+    g::options.sAnnotationFontFamaly = options_.sAnnotationFontFamaly;
+    g::options.nAnnotationFontSize = options_.nAnnotationFontSize;
+
     g::options.Save(settings);
     g::options.savePasswords();
 
@@ -524,12 +534,6 @@ void SettingsDlg::btnOK()
 #ifdef USE_HTTSERVER
     setProxy();
 #endif
-
-    g::options.bUseSytemFonts = options_.bUseSytemFonts;
-    g::options.sListFontFamaly = options_.sListFontFamaly;
-    g::options.nListFontSize = options_.nListFontSize;
-    g::options.sAnnotationFontFamaly = options_.sAnnotationFontFamaly;
-    g::options.nAnnotationFontSize = options_.nAnnotationFontSize;
 }
 
 void SettingsDlg::SaveTools()
@@ -730,7 +734,7 @@ void SettingsDlg::onListFontChanged(const QFont &font)
 void SettingsDlg::onListSizeFontChanged(int i)
 {
     QFont newFont = QGuiApplication::font();
-    newFont.setFamily(ui->listFontComboBox->font().family());
+    newFont.setFamily(ui->listFontComboBox->currentFont().family());
     newFont.setPointSize(i);
     options_.nListFontSize = i;
     emit ChangeListFont(newFont);
@@ -741,15 +745,14 @@ void SettingsDlg::onAnnotationFontChanged(const QFont &font)
     QFont newFont = QGuiApplication::font();
     newFont.setFamily(font.family());
     newFont.setPointSize(ui->annotationFontSpinBox->value());
-    options_.sListFontFamaly = font.family();
+    options_.sAnnotationFontFamaly = font.family();
     emit ChangeAnnotationFont(newFont);
-
 }
 
 void SettingsDlg::onAnnotationSizeFontChanged(int i)
 {
     QFont newFont = QGuiApplication::font();
-    newFont.setFamily(ui->annotationFontComboBox->font().family());
+    newFont.setFamily(ui->annotationFontComboBox->currentFont().family());
     newFont.setPointSize(i);
     options_.nAnnotationFontSize = i;
     emit ChangeAnnotationFont(newFont);

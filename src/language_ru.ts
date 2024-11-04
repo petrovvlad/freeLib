@@ -213,154 +213,154 @@ Kernel: %3 %4</source>
         <translation>Добавлять текст на существующую обложку</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="145"/>
+        <location filename="conversionframe.ui" line="148"/>
         <source>Additional label for existing cover:</source>
         <translation>Шаблон текста для существующей обложки:</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="176"/>
+        <location filename="conversionframe.ui" line="182"/>
         <source>Style</source>
         <translation>Стиль</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="186"/>
+        <location filename="conversionframe.ui" line="192"/>
         <source>Show footnotes:</source>
         <translation>Показывать ссылки:</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="196"/>
-        <location filename="conversionframe.ui" line="354"/>
+        <location filename="conversionframe.ui" line="202"/>
+        <location filename="conversionframe.ui" line="360"/>
         <source>at the end of the book</source>
         <translation>в конце книги</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="201"/>
+        <location filename="conversionframe.ui" line="207"/>
         <source>in text</source>
         <translation>в тексте</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="206"/>
+        <location filename="conversionframe.ui" line="212"/>
         <source>after paragraph</source>
         <translation>после абзаца</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="211"/>
+        <location filename="conversionframe.ui" line="217"/>
         <source>popup</source>
         <translation>всплывающие</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="234"/>
+        <location filename="conversionframe.ui" line="240"/>
         <source>Hyphenate:</source>
         <translation>Переносы:</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="244"/>
-        <location filename="conversionframe.ui" line="287"/>
+        <location filename="conversionframe.ui" line="250"/>
+        <location filename="conversionframe.ui" line="293"/>
         <source>no</source>
         <translation>нет</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="249"/>
+        <location filename="conversionframe.ui" line="255"/>
         <source>soft</source>
         <translation>мягкий</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="254"/>
+        <location filename="conversionframe.ui" line="260"/>
         <source>children</source>
         <translation>для детей</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="277"/>
+        <location filename="conversionframe.ui" line="283"/>
         <source>Vignette:</source>
         <translation>Виньетки:</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="292"/>
+        <location filename="conversionframe.ui" line="298"/>
         <source>image</source>
         <translation>изображение</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="297"/>
+        <location filename="conversionframe.ui" line="303"/>
         <source>text</source>
         <translation>текст</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="320"/>
+        <location filename="conversionframe.ui" line="326"/>
         <source>Page break between chapters</source>
         <translation>Каждая глава с новой страницы</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="327"/>
+        <location filename="conversionframe.ui" line="333"/>
         <source>Insert dropcaps</source>
         <translation>Использовать буквицу</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="334"/>
+        <location filename="conversionframe.ui" line="340"/>
         <source>Content:</source>
         <translation>Содержание:</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="344"/>
+        <location filename="conversionframe.ui" line="350"/>
         <source>no content</source>
         <translation>без содержания</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="349"/>
+        <location filename="conversionframe.ui" line="355"/>
         <source>at the beginning of the book</source>
         <translation>в начале книги</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="396"/>
+        <location filename="conversionframe.ui" line="402"/>
         <source>User CSS</source>
         <translation>Пользовательский CSS</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="436"/>
+        <location filename="conversionframe.ui" line="442"/>
         <source>Fonts</source>
         <translation>Шрифты</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="459"/>
+        <location filename="conversionframe.ui" line="465"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="499"/>
+        <location filename="conversionframe.ui" line="505"/>
         <source>Advanced</source>
         <translation>Дополнительные настройки</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="505"/>
+        <location filename="conversionframe.ui" line="511"/>
         <source>Don&apos;t add annotation</source>
         <translation>Не добавлять аннотацию</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="512"/>
+        <location filename="conversionframe.ui" line="518"/>
         <source>Split into files by chapters</source>
         <translation>Разбить на файлы по главам</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="519"/>
+        <location filename="conversionframe.ui" line="525"/>
         <source>Join a series to single book</source>
         <translation>Объединять книги серии в одну книгу</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="526"/>
+        <location filename="conversionframe.ui" line="532"/>
         <source>Use multi-level table of contents</source>
         <translation>Генерировать многоуровневое содержание</translation>
     </message>
     <message>
-        <location filename="conversionframe.ui" line="535"/>
+        <location filename="conversionframe.ui" line="544"/>
         <source>Maximum caption level:</source>
         <translation>Максимальное количество уровеней заголовков:</translation>
     </message>
     <message>
-        <location filename="conversionframe.cpp" line="56"/>
+        <location filename="conversionframe.cpp" line="58"/>
         <source>Load CSS</source>
         <translation>Загрузка CSS</translation>
     </message>
     <message>
-        <location filename="conversionframe.cpp" line="56"/>
+        <location filename="conversionframe.cpp" line="58"/>
         <source>Are you sure you want to load default CSS?</source>
         <translation>Вы уверены, что хотите заменить пользовательский CSS на оригинальный?</translation>
     </message>
@@ -710,7 +710,7 @@ Kernel: %3 %4</source>
         <translation type="vanished">Добавить</translation>
     </message>
     <message>
-        <location filename="exportframe.cpp" line="207"/>
+        <location filename="exportframe.cpp" line="203"/>
         <source>Select device directory</source>
         <translation>Выбрать директорию устройства</translation>
     </message>
@@ -1016,7 +1016,7 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="877"/>
-        <location filename="mainwindow.cpp" line="1734"/>
+        <location filename="mainwindow.cpp" line="1747"/>
         <source>Genre</source>
         <oldsource>Janre</oldsource>
         <translation>Жанр</translation>
@@ -1058,7 +1058,7 @@ Kernel: %3 %4</source>
         <translation type="vanished">Тег:</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="941"/>
+        <location filename="mainwindow.ui" line="951"/>
         <source>Lib&amp;rary</source>
         <oldsource>Library</oldsource>
         <translation>Библиотека</translation>
@@ -1077,19 +1077,19 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="845"/>
-        <location filename="mainwindow.cpp" line="1710"/>
+        <location filename="mainwindow.cpp" line="1723"/>
         <source>No.</source>
         <translation>№</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="835"/>
-        <location filename="mainwindow.cpp" line="1698"/>
+        <location filename="mainwindow.cpp" line="1711"/>
         <source>Author</source>
         <translation>Автор</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="840"/>
-        <location filename="mainwindow.cpp" line="1704"/>
+        <location filename="mainwindow.cpp" line="1717"/>
         <source>Serial</source>
         <translation>Серия</translation>
     </message>
@@ -1098,12 +1098,12 @@ Kernel: %3 %4</source>
         <translation type="vanished">О программе</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="995"/>
+        <location filename="mainwindow.ui" line="1005"/>
         <source>Move to author</source>
         <translation>Перейти к автору</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2467"/>
+        <location filename="mainwindow.cpp" line="2514"/>
         <source>Quit</source>
         <translation>Выход</translation>
     </message>
@@ -1112,12 +1112,12 @@ Kernel: %3 %4</source>
         <translation type="vanished">Свернуть окно</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2463"/>
+        <location filename="mainwindow.cpp" line="2510"/>
         <source>Minimize</source>
         <translation>Свернуть</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2465"/>
+        <location filename="mainwindow.cpp" line="2512"/>
         <source>Open freeLib</source>
         <translation>Открыть freeLib</translation>
     </message>
@@ -1206,69 +1206,81 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="882"/>
-        <location filename="mainwindow.cpp" line="1740"/>
+        <location filename="mainwindow.cpp" line="1753"/>
         <source>Language</source>
         <translation>Язык</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="933"/>
-        <location filename="mainwindow.ui" line="984"/>
+        <location filename="mainwindow.ui" line="905"/>
+        <source>&lt;!DOCTYPE HTML PUBLIC &quot;-//W3C//DTD HTML 4.0//EN&quot; &quot;http://www.w3.org/TR/REC-html40/strict.dtd&quot;&gt;
+&lt;html&gt;&lt;head&gt;&lt;meta name=&quot;qrichtext&quot; content=&quot;1&quot; /&gt;&lt;meta charset=&quot;utf-8&quot; /&gt;&lt;style type=&quot;text/css&quot;&gt;
+p, li { white-space: pre-wrap; }
+hr { height: 1px; border-width: 0; }
+li.unchecked::marker { content: &quot;\2610&quot;; }
+li.checked::marker { content: &quot;\2612&quot;; }
+&lt;/style&gt;&lt;/head&gt;&lt;body style=&quot; font-family:&apos;Noto Sans&apos;; font-size:10pt; font-weight:400; font-style:normal;&quot;&gt;
+&lt;p style=&quot;-qt-paragraph-type:empty; margin-top:0px; margin-bottom:0px; margin-left:0px; margin-right:0px; -qt-block-indent:0; text-indent:0px;&quot;&gt;&lt;br /&gt;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+        <translation type="unfinished"></translation>
+    </message>
+    <message>
+        <location filename="mainwindow.ui" line="943"/>
+        <location filename="mainwindow.ui" line="994"/>
         <source>&amp;Help</source>
         <translation>&amp;Справка</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="960"/>
+        <location filename="mainwindow.ui" line="970"/>
         <source>&amp;Add/Edit library</source>
         <translation>&amp;Добавить/обновить библиотеку</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="968"/>
+        <location filename="mainwindow.ui" line="978"/>
         <source>&amp;Preferences</source>
         <translation>&amp;Настройки</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="976"/>
+        <location filename="mainwindow.ui" line="986"/>
         <source>&amp;About</source>
         <translation>&amp;О программе</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1000"/>
+        <location filename="mainwindow.ui" line="1010"/>
         <source>&amp;Quit</source>
         <translation>&amp;Выход</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1011"/>
+        <location filename="mainwindow.ui" line="1021"/>
         <source>&amp;Libraries</source>
         <translation>&amp;Библиотеки</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1019"/>
+        <location filename="mainwindow.ui" line="1029"/>
         <source>Move to series</source>
         <translation>Перейти к серии</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1024"/>
+        <location filename="mainwindow.ui" line="1034"/>
         <source>&amp;Check/uncheck books</source>
         <translation>&amp;Отметить/снять отметки с книг</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1032"/>
+        <location filename="mainwindow.ui" line="1042"/>
         <source>&amp;Minimize window</source>
         <translation>Св&amp;ернуть окно</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1040"/>
+        <location filename="mainwindow.ui" line="1050"/>
         <source>&amp;Statistics</source>
         <translation>&amp;Статистика</translation>
     </message>
     <message>
-        <location filename="mainwindow.ui" line="1045"/>
+        <location filename="mainwindow.ui" line="1055"/>
         <source>Add &amp;books…</source>
         <translation>Добавить &amp;книги…</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="830"/>
-        <location filename="mainwindow.cpp" line="1692"/>
+        <location filename="mainwindow.cpp" line="1705"/>
         <source>Name</source>
         <translation>Название</translation>
     </message>
@@ -1300,20 +1312,20 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="853"/>
-        <location filename="mainwindow.cpp" line="1716"/>
+        <location filename="mainwindow.cpp" line="1729"/>
         <source>Size</source>
         <translation>Размер</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="861"/>
-        <location filename="mainwindow.cpp" line="1611"/>
-        <location filename="mainwindow.cpp" line="1722"/>
+        <location filename="mainwindow.cpp" line="1624"/>
+        <location filename="mainwindow.cpp" line="1735"/>
         <source>Mark</source>
         <translation>Оценка</translation>
     </message>
     <message>
         <location filename="mainwindow.ui" line="869"/>
-        <location filename="mainwindow.cpp" line="1728"/>
+        <location filename="mainwindow.cpp" line="1741"/>
         <source>Import date</source>
         <oldsource>Add date</oldsource>
         <translation>Добавлена</translation>
@@ -1335,7 +1347,7 @@ Kernel: %3 %4</source>
         <translation type="vanished">без тега</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="361"/>
+        <location filename="mainwindow.cpp" line="371"/>
         <source>setup ...</source>
         <translation>настроить ...</translation>
     </message>
@@ -1385,8 +1397,8 @@ Kernel: %3 %4</source>
         <translation>ПБ</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1352"/>
-        <location filename="mainwindow.cpp" line="1355"/>
+        <location filename="mainwindow.cpp" line="1365"/>
+        <location filename="mainwindow.cpp" line="1368"/>
         <source>All</source>
         <translation>Все</translation>
     </message>
@@ -1400,17 +1412,17 @@ Kernel: %3 %4</source>
         <translation type="vanished">Выберите директорию</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1596"/>
+        <location filename="mainwindow.cpp" line="1609"/>
         <source>Save as</source>
         <translation>Сохранить как</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="2255"/>
+        <location filename="mainwindow.cpp" line="2268"/>
         <source>Send to ...</source>
         <translation>Отправить на ...</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1429"/>
+        <location filename="mainwindow.cpp" line="1442"/>
         <source>Books</source>
         <translation>Книги</translation>
     </message>
@@ -1425,12 +1437,12 @@ Kernel: %3 %4</source>
     </message>
     <message>
         <location filename="mainwindow.ui" line="890"/>
-        <location filename="mainwindow.cpp" line="1746"/>
+        <location filename="mainwindow.cpp" line="1759"/>
         <source>Format</source>
         <translation>Формат</translation>
     </message>
     <message>
-        <location filename="mainwindow.cpp" line="1428"/>
+        <location filename="mainwindow.cpp" line="1441"/>
         <source>Select books to add</source>
         <translation>Выберите книги</translation>
     </message>
@@ -1455,33 +1467,33 @@ Kernel: %3 %4</source>
         <translation>Настройки</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="103"/>
+        <location filename="settingsdlg.cpp" line="125"/>
         <source>Common</source>
         <translation>Общие</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="110"/>
+        <location filename="settingsdlg.ui" line="122"/>
         <source>Show deleted books</source>
         <translation>показывать удаленные книги</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="117"/>
+        <location filename="settingsdlg.ui" line="129"/>
         <source>Remember library position</source>
         <oldsource>Store library position</oldsource>
         <translation>запоминать позицию в библиотеке</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="124"/>
+        <location filename="settingsdlg.ui" line="136"/>
         <source>Use tag</source>
         <translation>использовать теги для фильтрации</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="154"/>
+        <location filename="settingsdlg.ui" line="166"/>
         <source>don&apos;t show</source>
         <translation>не показывать</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="589"/>
+        <location filename="settingsdlg.ui" line="611"/>
         <source>Base Url:</source>
         <translation type="unfinished"></translation>
     </message>
@@ -1490,38 +1502,38 @@ Kernel: %3 %4</source>
         <translation type="vanished">Настройки экспорта:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="214"/>
+        <location filename="settingsdlg.ui" line="226"/>
         <source>Language UI:</source>
         <translation>Язык интерфейса:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="230"/>
+        <location filename="settingsdlg.ui" line="242"/>
         <source>ABC:</source>
         <translation>Национальный алфавит:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="244"/>
+        <location filename="settingsdlg.ui" line="256"/>
         <source>Database path:</source>
         <translation>Путь к файлу базы данных:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="106"/>
+        <location filename="settingsdlg.cpp" line="128"/>
         <source>Export</source>
         <translation>Экспорт</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="557"/>
-        <location filename="settingsdlg.ui" line="797"/>
+        <location filename="settingsdlg.ui" line="579"/>
+        <location filename="settingsdlg.ui" line="822"/>
         <source>Port:</source>
         <translation>Порт:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="131"/>
+        <location filename="settingsdlg.ui" line="143"/>
         <source>Don&apos;t show splash screen</source>
         <translation>не показывать заставку программы</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="140"/>
+        <location filename="settingsdlg.ui" line="152"/>
         <source>Tray icon</source>
         <translation>Иконка в трее</translation>
     </message>
@@ -1534,12 +1546,12 @@ Kernel: %3 %4</source>
         <translation type="vanished">показывать</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="159"/>
+        <location filename="settingsdlg.ui" line="171"/>
         <source>minimize to tray</source>
         <translation>сворачивать в трей</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="164"/>
+        <location filename="settingsdlg.ui" line="176"/>
         <source>minimize to tray on start</source>
         <translation>сворачивать в трей при запуске</translation>
     </message>
@@ -1548,81 +1560,96 @@ Kernel: %3 %4</source>
         <translation type="vanished">цвет</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="173"/>
+        <location filename="settingsdlg.ui" line="185"/>
         <source>colored</source>
         <translation>цветная</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="178"/>
+        <location filename="settingsdlg.ui" line="190"/>
         <source>dark</source>
         <translation>темная</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="183"/>
+        <location filename="settingsdlg.ui" line="195"/>
         <source>light</source>
         <translation>светлая</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="313"/>
-        <location filename="settingsdlg.ui" line="481"/>
+        <location filename="settingsdlg.ui" line="325"/>
+        <location filename="settingsdlg.ui" line="493"/>
         <source>Profile:</source>
         <translation>Профиль:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="349"/>
+        <location filename="settingsdlg.ui" line="361"/>
         <source>Add profile</source>
         <translation>Добавить профиль</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="365"/>
+        <location filename="settingsdlg.ui" line="377"/>
         <source>Remove profile</source>
         <translation>Удалить профиль</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="381"/>
+        <location filename="settingsdlg.ui" line="393"/>
         <source>Open export settings</source>
         <translation>Загрузить настройки экспорта</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="384"/>
+        <location filename="settingsdlg.ui" line="396"/>
         <source>Open</source>
         <translation>Загрузить</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="406"/>
+        <location filename="settingsdlg.ui" line="418"/>
         <source>Save export settings</source>
         <oldsource>Save export settings as</oldsource>
         <translation>Сохранить настройки экспорта</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="409"/>
+        <location filename="settingsdlg.ui" line="421"/>
         <source>Save</source>
         <oldsource>Save as</oldsource>
         <translation>Сохранить</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="441"/>
+        <location filename="settingsdlg.ui" line="453"/>
         <source>Extended characters in the file name</source>
         <translation>Расширеный набор символов в имени файла</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="456"/>
+        <location filename="settingsdlg.ui" line="468"/>
         <source>&lt;b&gt;kindlegen&lt;/b&gt; is not installed</source>
         <translation type="unfinished"></translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="113"/>
+        <location filename="settingsdlg.ui" line="1074"/>
+        <source>Use system fonts</source>
+        <translation type="unfinished">Использовать системный шрифт</translation>
+    </message>
+    <message>
+        <location filename="settingsdlg.ui" line="1119"/>
+        <source>Annotation font</source>
+        <translation type="unfinished">Аннотации</translation>
+    </message>
+    <message>
+        <location filename="settingsdlg.ui" line="1139"/>
+        <source>List font</source>
+        <translation type="unfinished">Списки</translation>
+    </message>
+    <message>
+        <location filename="settingsdlg.cpp" line="135"/>
         <source>Network</source>
         <translation>Сеть</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="532"/>
+        <location filename="settingsdlg.ui" line="551"/>
         <source>OPDS/Web server</source>
         <oldsource>HTTP/OPDS server</oldsource>
         <translation>OPDS/Web сервер</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="544"/>
+        <location filename="settingsdlg.ui" line="563"/>
         <source>Enable</source>
         <oldsource>Ebable</oldsource>
         <translation>Включен</translation>
@@ -1632,75 +1659,75 @@ Kernel: %3 %4</source>
         <translation type="vanished">по умолчанию</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="646"/>
+        <location filename="settingsdlg.ui" line="668"/>
         <source>Password protection</source>
         <translation>Использовать пароль для входа</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="678"/>
+        <location filename="settingsdlg.ui" line="703"/>
         <source>User:</source>
         <translation>Пользователь:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="639"/>
+        <location filename="settingsdlg.ui" line="661"/>
         <source>Show annotation</source>
         <translation>Показывать аннотацию</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="632"/>
+        <location filename="settingsdlg.ui" line="654"/>
         <source>Show covers</source>
         <translation>Показывать обложки</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="612"/>
+        <location filename="settingsdlg.ui" line="634"/>
         <source>Books per page:</source>
         <oldsource>Books per page</oldsource>
         <translation>Выводить книг на страницу:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="716"/>
+        <location filename="settingsdlg.ui" line="741"/>
         <source>Proxy server</source>
         <translation>Прокси сервер</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="757"/>
+        <location filename="settingsdlg.ui" line="782"/>
         <source>Proxy type:</source>
         <translation>Тип прокси:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="812"/>
+        <location filename="settingsdlg.ui" line="837"/>
         <source>No proxy</source>
         <translation>Отключен</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="830"/>
+        <location filename="settingsdlg.ui" line="855"/>
         <source>Host name:</source>
         <translation>Адрес сервера:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="750"/>
+        <location filename="settingsdlg.ui" line="775"/>
         <source>User name:</source>
         <translation>Пользователь:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="671"/>
-        <location filename="settingsdlg.ui" line="804"/>
+        <location filename="settingsdlg.ui" line="696"/>
+        <location filename="settingsdlg.ui" line="829"/>
         <source>Password:</source>
         <translation>Пароль:</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="272"/>
+        <location filename="settingsdlg.ui" line="284"/>
         <source>Save settings in application folder</source>
         <oldsource>Move settings to file</oldsource>
         <translation>Хранить настройки в директории программы</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="336"/>
+        <location filename="settingsdlg.ui" line="348"/>
         <source>Default</source>
         <translation>по умолчанию</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="120"/>
+        <location filename="settingsdlg.cpp" line="143"/>
         <source>Postprocessing tools</source>
         <translation>Утилиты постобработки</translation>
     </message>
@@ -1710,19 +1737,19 @@ Kernel: %3 %4</source>
         <translation type="vanished">Имя выходного файла</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="1059"/>
-        <location filename="settingsdlg.cpp" line="631"/>
+        <location filename="settingsdlg.ui" line="1188"/>
+        <location filename="settingsdlg.cpp" line="763"/>
         <source>Load default</source>
         <translation>Настройки по умолчанию</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="434"/>
+        <location filename="settingsdlg.ui" line="446"/>
         <source>Uncheck successfully export</source>
         <oldsource>Uncheck seccesfully export</oldsource>
         <translation>Снимать отметку с экспортированных книг</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="954"/>
+        <location filename="settingsdlg.ui" line="979"/>
         <source>%fn - file name without extension
 %f - file name
 %d - path to file</source>
@@ -1735,12 +1762,12 @@ Kernel: %3 %4</source>
 %d - путь к файлу</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="987"/>
+        <location filename="settingsdlg.ui" line="1012"/>
         <source>Name</source>
         <translation>Название</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="997"/>
+        <location filename="settingsdlg.ui" line="1022"/>
         <source>Params</source>
         <translation>Параметры</translation>
     </message>
@@ -1750,35 +1777,35 @@ Kernel: %3 %4</source>
         <translation>Буквица</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="117"/>
+        <location filename="settingsdlg.cpp" line="139"/>
         <source>Program</source>
         <translation>Программы</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="900"/>
+        <location filename="settingsdlg.ui" line="925"/>
         <source>Ext</source>
         <translation>Расширение</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="905"/>
-        <location filename="settingsdlg.ui" line="992"/>
+        <location filename="settingsdlg.ui" line="930"/>
+        <location filename="settingsdlg.ui" line="1017"/>
         <source>Application</source>
         <translation>Приложение</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="938"/>
-        <location filename="settingsdlg.ui" line="1029"/>
+        <location filename="settingsdlg.ui" line="963"/>
+        <location filename="settingsdlg.ui" line="1054"/>
         <source>Add</source>
         <translation>Добавить</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="931"/>
-        <location filename="settingsdlg.ui" line="1036"/>
+        <location filename="settingsdlg.ui" line="956"/>
+        <location filename="settingsdlg.ui" line="1061"/>
         <source>Del</source>
         <translation>Удалить</translation>
     </message>
     <message>
-        <location filename="settingsdlg.ui" line="427"/>
+        <location filename="settingsdlg.ui" line="439"/>
         <source>Close dialog after export</source>
         <translation>Закрыть диалог после завершения</translation>
     </message>
@@ -1830,68 +1857,73 @@ Kernel: %3 %4</source>
         <translation>Книга</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="129"/>
+        <location filename="settingsdlg.cpp" line="157"/>
         <source>Move to ...</source>
         <translation>Переместить ...</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="516"/>
+        <location filename="settingsdlg.cpp" line="584"/>
         <source>Send to ...</source>
         <translation>Сохранить в ...</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="109"/>
+        <location filename="settingsdlg.cpp" line="131"/>
         <source>fb2 to MOBI/AZW3/EPUB conversion</source>
         <translation>Конвертация из fb2 в MOBI/AZW3/EPUB</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="343"/>
+        <location filename="settingsdlg.cpp" line="147"/>
+        <source>Fonts</source>
+        <translation>Шрифты</translation>
+    </message>
+    <message>
+        <location filename="settingsdlg.cpp" line="404"/>
         <source>Select database directory</source>
         <translation>Выбор директории базы данных</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="560"/>
+        <location filename="settingsdlg.cpp" line="628"/>
         <source>Delete export settings</source>
         <oldsource>Delete export settings.</oldsource>
         <translation>Удаление настроек экспорта</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="560"/>
+        <location filename="settingsdlg.cpp" line="628"/>
         <source>Are you sure you want to delete the current export settings?</source>
         <translation>Вы уверены, что хотите удалить текущие настройки экспорта?</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="631"/>
+        <location filename="settingsdlg.cpp" line="763"/>
         <source>Are you sure you want to load the default settings?</source>
         <translation>Вы уверены, что хотите загрузить настройки по умолчанию?</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="688"/>
+        <location filename="settingsdlg.cpp" line="816"/>
         <source>Save profile</source>
         <translation>Сохранить профиль</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="752"/>
+        <location filename="settingsdlg.cpp" line="880"/>
         <source>Open profile</source>
         <translation>Загрузить профиль</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="755"/>
+        <location filename="settingsdlg.cpp" line="883"/>
         <source>Load profile</source>
         <translation>Загрузить профиль</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="755"/>
+        <location filename="settingsdlg.cpp" line="883"/>
         <source>How to load profile?</source>
         <translation>Выберите вариант загрузки профиля.</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="756"/>
+        <location filename="settingsdlg.cpp" line="884"/>
         <source>Replace current</source>
         <translation>Заменить текущий</translation>
     </message>
     <message>
-        <location filename="settingsdlg.cpp" line="757"/>
+        <location filename="settingsdlg.cpp" line="885"/>
         <source>Load to new</source>
         <translation>Создать новый</translation>
     </message>
@@ -2018,29 +2050,29 @@ Kernel: %3 %4</source>
 <context>
     <name>opds_server</name>
     <message>
-        <location filename="opds_server.cpp" line="2024"/>
-        <location filename="opds_server.cpp" line="2038"/>
-        <location filename="opds_server.cpp" line="2055"/>
-        <location filename="opds_server.cpp" line="2447"/>
-        <location filename="opds_server.cpp" line="2461"/>
-        <location filename="opds_server.cpp" line="2477"/>
+        <location filename="opds_server.cpp" line="2035"/>
+        <location filename="opds_server.cpp" line="2049"/>
+        <location filename="opds_server.cpp" line="2066"/>
+        <location filename="opds_server.cpp" line="2458"/>
+        <location filename="opds_server.cpp" line="2472"/>
+        <location filename="opds_server.cpp" line="2488"/>
         <source>Books of sequence</source>
         <translation>Книги по сериям</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1860"/>
-        <location filename="opds_server.cpp" line="1874"/>
-        <location filename="opds_server.cpp" line="1891"/>
+        <location filename="opds_server.cpp" line="1871"/>
+        <location filename="opds_server.cpp" line="1885"/>
+        <location filename="opds_server.cpp" line="1902"/>
         <source>Books by ABC</source>
         <translation>Книги по алфавиту</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1785"/>
-        <location filename="opds_server.cpp" line="1813"/>
-        <location filename="opds_server.cpp" line="1840"/>
-        <location filename="opds_server.cpp" line="2070"/>
-        <location filename="opds_server.cpp" line="2084"/>
-        <location filename="opds_server.cpp" line="2101"/>
+        <location filename="opds_server.cpp" line="1796"/>
+        <location filename="opds_server.cpp" line="1824"/>
+        <location filename="opds_server.cpp" line="1851"/>
+        <location filename="opds_server.cpp" line="2081"/>
+        <location filename="opds_server.cpp" line="2095"/>
+        <location filename="opds_server.cpp" line="2112"/>
         <source>Books without sequence</source>
         <translation>Книги вне серий</translation>
     </message>
@@ -2049,7 +2081,7 @@ Kernel: %3 %4</source>
         <translation type="vanished">Следующая страница</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1100"/>
+        <location filename="opds_server.cpp" line="1109"/>
         <source>Download</source>
         <translation>Скачать</translation>
     </message>
@@ -2058,68 +2090,68 @@ Kernel: %3 %4</source>
         <translation type="vanished">Предыдущая страница</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1319"/>
-        <location filename="opds_server.cpp" line="1344"/>
-        <location filename="opds_server.cpp" line="1559"/>
-        <location filename="opds_server.cpp" line="1666"/>
+        <location filename="opds_server.cpp" line="1330"/>
+        <location filename="opds_server.cpp" line="1355"/>
+        <location filename="opds_server.cpp" line="1570"/>
+        <location filename="opds_server.cpp" line="1677"/>
         <source>Books by authors</source>
         <translation>По авторам</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1285"/>
-        <location filename="opds_server.cpp" line="1319"/>
+        <location filename="opds_server.cpp" line="1296"/>
+        <location filename="opds_server.cpp" line="1330"/>
         <source>Finding books by authors</source>
         <translation>Поиск книг по авторам</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1289"/>
-        <location filename="opds_server.cpp" line="1320"/>
+        <location filename="opds_server.cpp" line="1300"/>
+        <location filename="opds_server.cpp" line="1331"/>
         <source>Finding books by sequences</source>
         <translation>Поиск книг по сериям</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1321"/>
-        <location filename="opds_server.cpp" line="1346"/>
-        <location filename="opds_server.cpp" line="2512"/>
-        <location filename="opds_server.cpp" line="2579"/>
-        <location filename="opds_server.cpp" line="2608"/>
-        <location filename="opds_server.cpp" line="2653"/>
-        <location filename="opds_server.cpp" line="2680"/>
+        <location filename="opds_server.cpp" line="1332"/>
+        <location filename="opds_server.cpp" line="1357"/>
+        <location filename="opds_server.cpp" line="2523"/>
+        <location filename="opds_server.cpp" line="2590"/>
+        <location filename="opds_server.cpp" line="2619"/>
+        <location filename="opds_server.cpp" line="2664"/>
+        <location filename="opds_server.cpp" line="2691"/>
         <source>Books by genre</source>
         <translation>Книги по жанру</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1293"/>
-        <location filename="opds_server.cpp" line="1321"/>
+        <location filename="opds_server.cpp" line="1304"/>
+        <location filename="opds_server.cpp" line="1332"/>
         <source>Finding books by genre</source>
         <translation>Поиск книг по жанру</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1455"/>
-        <location filename="opds_server.cpp" line="2743"/>
-        <location filename="opds_server.cpp" line="2824"/>
-        <location filename="opds_server.cpp" line="2847"/>
-        <location filename="opds_server.cpp" line="2910"/>
-        <location filename="opds_server.cpp" line="2935"/>
+        <location filename="opds_server.cpp" line="1466"/>
+        <location filename="opds_server.cpp" line="2754"/>
+        <location filename="opds_server.cpp" line="2835"/>
+        <location filename="opds_server.cpp" line="2858"/>
+        <location filename="opds_server.cpp" line="2921"/>
+        <location filename="opds_server.cpp" line="2946"/>
         <source>Finding authors</source>
         <oldsource>Search authors: </oldsource>
         <translation>Поиск авторов</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1298"/>
-        <location filename="opds_server.cpp" line="2715"/>
-        <location filename="opds_server.cpp" line="2829"/>
-        <location filename="opds_server.cpp" line="2911"/>
+        <location filename="opds_server.cpp" line="1309"/>
+        <location filename="opds_server.cpp" line="2726"/>
+        <location filename="opds_server.cpp" line="2840"/>
+        <location filename="opds_server.cpp" line="2922"/>
         <source>Finding books by title</source>
         <translation>Поиск книг по названию</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="2147"/>
-        <location filename="opds_server.cpp" line="2783"/>
-        <location filename="opds_server.cpp" line="2834"/>
-        <location filename="opds_server.cpp" line="2875"/>
-        <location filename="opds_server.cpp" line="2912"/>
-        <location filename="opds_server.cpp" line="2960"/>
+        <location filename="opds_server.cpp" line="2158"/>
+        <location filename="opds_server.cpp" line="2794"/>
+        <location filename="opds_server.cpp" line="2845"/>
+        <location filename="opds_server.cpp" line="2886"/>
+        <location filename="opds_server.cpp" line="2923"/>
+        <location filename="opds_server.cpp" line="2971"/>
         <source>Finding sequence</source>
         <translation>Поиск серии</translation>
     </message>
@@ -2138,7 +2170,7 @@ Kernel: %3 %4</source>
         <translation type="vanished">Поиск книг по названию/автору:</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1403"/>
+        <location filename="opds_server.cpp" line="1414"/>
         <source>Find</source>
         <translation>Найти</translation>
     </message>
@@ -2147,7 +2179,7 @@ Kernel: %3 %4</source>
         <translation type="vanished">серий начинающихся с</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="2622"/>
+        <location filename="opds_server.cpp" line="2633"/>
         <source>Books of genre</source>
         <translation>Книги жанра</translation>
     </message>
@@ -2157,22 +2189,22 @@ Kernel: %3 %4</source>
         <translation type="vanished">авторов на</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1538"/>
-        <location filename="opds_server.cpp" line="1644"/>
-        <location filename="opds_server.cpp" line="2226"/>
-        <location filename="opds_server.cpp" line="2551"/>
-        <location filename="opds_server.cpp" line="2618"/>
-        <location filename="opds_server.cpp" line="2759"/>
-        <location filename="opds_server.cpp" line="2791"/>
-        <location filename="opds_server.cpp" line="2859"/>
-        <location filename="opds_server.cpp" line="2880"/>
+        <location filename="opds_server.cpp" line="1549"/>
+        <location filename="opds_server.cpp" line="1655"/>
+        <location filename="opds_server.cpp" line="2237"/>
+        <location filename="opds_server.cpp" line="2562"/>
+        <location filename="opds_server.cpp" line="2629"/>
+        <location filename="opds_server.cpp" line="2770"/>
+        <location filename="opds_server.cpp" line="2802"/>
+        <location filename="opds_server.cpp" line="2870"/>
+        <location filename="opds_server.cpp" line="2891"/>
         <source>books</source>
         <oldsource> books </oldsource>
         <translation>книг</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="2868"/>
-        <location filename="opds_server.cpp" line="2926"/>
+        <location filename="opds_server.cpp" line="2879"/>
+        <location filename="opds_server.cpp" line="2937"/>
         <source>Books search</source>
         <translation>Поиск книг</translation>
     </message>
@@ -2185,53 +2217,53 @@ Kernel: %3 %4</source>
         <translation type="vanished">Отправить</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="2172"/>
-        <location filename="opds_server.cpp" line="2282"/>
+        <location filename="opds_server.cpp" line="2183"/>
+        <location filename="opds_server.cpp" line="2293"/>
         <source>series beginning with</source>
         <oldsource>sequence beginning with</oldsource>
         <translation>серий начинающихся с</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1477"/>
-        <location filename="opds_server.cpp" line="1597"/>
+        <location filename="opds_server.cpp" line="1488"/>
+        <location filename="opds_server.cpp" line="1608"/>
         <source>authors beginning with</source>
         <translation>авторов начинающихся с</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1910"/>
-        <location filename="opds_server.cpp" line="1949"/>
-        <location filename="opds_server.cpp" line="1987"/>
+        <location filename="opds_server.cpp" line="1921"/>
+        <location filename="opds_server.cpp" line="1960"/>
+        <location filename="opds_server.cpp" line="1998"/>
         <source>Book sequences</source>
         <translation>Книжные серии</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1929"/>
-        <location filename="opds_server.cpp" line="1966"/>
+        <location filename="opds_server.cpp" line="1940"/>
+        <location filename="opds_server.cpp" line="1977"/>
         <source>books in sequence</source>
         <translation>Книги в серии</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1777"/>
-        <location filename="opds_server.cpp" line="1810"/>
-        <location filename="opds_server.cpp" line="1836"/>
+        <location filename="opds_server.cpp" line="1788"/>
+        <location filename="opds_server.cpp" line="1821"/>
+        <location filename="opds_server.cpp" line="1847"/>
         <source>Books by</source>
         <translation>Книги автора</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1320"/>
-        <location filename="opds_server.cpp" line="1345"/>
-        <location filename="opds_server.cpp" line="1781"/>
-        <location filename="opds_server.cpp" line="1812"/>
-        <location filename="opds_server.cpp" line="1839"/>
-        <location filename="opds_server.cpp" line="2247"/>
-        <location filename="opds_server.cpp" line="2347"/>
+        <location filename="opds_server.cpp" line="1331"/>
+        <location filename="opds_server.cpp" line="1356"/>
+        <location filename="opds_server.cpp" line="1792"/>
+        <location filename="opds_server.cpp" line="1823"/>
+        <location filename="opds_server.cpp" line="1850"/>
+        <location filename="opds_server.cpp" line="2258"/>
+        <location filename="opds_server.cpp" line="2358"/>
         <source>Books by sequences</source>
         <translation>Книги по сериям</translation>
     </message>
     <message>
-        <location filename="opds_server.cpp" line="1789"/>
-        <location filename="opds_server.cpp" line="1814"/>
-        <location filename="opds_server.cpp" line="1841"/>
+        <location filename="opds_server.cpp" line="1800"/>
+        <location filename="opds_server.cpp" line="1825"/>
+        <location filename="opds_server.cpp" line="1852"/>
         <source>All books</source>
         <translation>Книги по алфавиту</translation>
     </message>
