@@ -240,9 +240,14 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            QUrl urlSrc = current_out_file;
            if(urlSrc.scheme().isEmpty())
                urlSrc.setScheme(u"file"_s);
-           QUrl urlDst = sBookFileName;
-           if(urlDst.scheme().isEmpty())
+           QUrl urlDst = QUrl(sBookFileName, QUrl::TolerantMode);
+           if(urlDst.scheme().isEmpty()){
                urlDst.setScheme(u"file"_s);
+               if(sBookFileName.contains(u'?')){
+                   urlDst.setPath(sBookFileName);
+                   urlDst.setQuery(u""_s);
+               }
+           }
            if(!kioMkDir(urlDst.adjusted(QUrl::RemoveFilename))){
                MyDBG << "Could not make dir: " << urlDst;
                return false;
@@ -254,11 +259,18 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
                MyDBG << jobCopy->errorString();
                return false;
            }
+
+           auto statJob = KIO::stat(urlDst, KIO::HideProgressInfo);
+           statJob->start();
+           statJob->exec();
+           return !statJob->error();
+
 #else //USE_KIO
            QDir dir(sBookFileName);
            dir.mkpath(book_dir.cleanPath(QFileInfo(sBookFileName).absolutePath()));
            QFile::remove(sBookFileName);
            QFile::rename(current_out_file, sBookFileName);
+           return QFileInfo::exists(sBookFileName);
 #endif //USE_KIO
         }
         else
@@ -270,18 +282,10 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
             QStringList listArg = tool_arg.split(u" "_s);
             for(int i = 0; i != listArg.size(); ++i)
                 listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
-            //qDebug()<<ex<<listArg;
             return (QProcess::execute(ex, listArg) == 0);
         }
-#ifdef USE_KIO
-        auto statJob = KIO::stat(sBookFileName, KIO::HideProgressInfo);
-        statJob->start();
-        statJob->exec();
-        return !statJob->error();
-#else //USE_KIO
-        return QFileInfo::exists(sBookFileName);
-#endif //USE_KIO
     }
+    return false;
 }
 
 void ExportThread::export_books()
