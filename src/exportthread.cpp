@@ -34,34 +34,31 @@
 #include "utilites.h"
 #include "bookfile.h"
 
-QString ValidateFileName(QString str)
+QString validateFileName(QString str)
 {
-    bool windows = false;
-    bool mac = false;
-#ifdef WIN32
-    windows=true;
-#endif
-#ifdef Q_OS_MAC
-    mac=true;
-#endif
-
-    if(!g::options.bExtendedSymbols || windows)
+    if(!g::options.bExtendedSymbols)
     {
-
         str = str.replace('\"', '\'');
-        static const QRegularExpression re(QStringLiteral("^([a-zA-Z]\\:|\\\\\\\\[^\\/\\\\:*?\"<>|]+\\\\[^\\/\\\\:*?\"<>|]+)(\\\\[^\\/\\\\:*?\"<>|]+)+(\\.[^\\/\\\\:*?\"<>|]+)$"));
-        str = str.replace(re, QStringLiteral("_"));
-        bool bMtp = str.startsWith(u"mtp:");
-        str = str.left(bMtp ?4 :2) + str.mid(bMtp ?4 :2).replace(':', '_');
+        static const QRegularExpression re(u"[?!*<>|]"_s);
+        str.replace(re, u""_s);
     }
-    else
-    {
-        if(mac){
-            static const QRegularExpression re(QStringLiteral("[:]"));
-            str = str.replace(re, QStringLiteral("_"));
-        }
-    }
+#ifdef Q_OS_MAC
+    static const QRegularExpression re(u"[:]"_s);
+    str = str.replace(re, u"_"_s);
+#endif
     return str;
+}
+
+void validateFileName(QUrl &url)
+{
+    if(!g::options.bExtendedSymbols)
+    {
+        QString sPath = url.path();
+        sPath = sPath.replace('\"', '\'');
+        static const QRegularExpression re(u"[?!*<>|:]"_s);
+        sPath.replace(re, u""_s);
+        url.setPath(sPath);
+    }
 }
 
 ExportThread::ExportThread(const ExportOptions *pExportOptions) :
@@ -233,7 +230,9 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
     }
     else
     {
-       sBookFileName = ValidateFileName(sBookFileName);
+#ifndef USE_KIO
+        sBookFileName = validateFileName(sBookFileName);
+#endif
        if(!pExportOptions_->bPostprocessingCopy)
         {
 #ifdef USE_KIO
@@ -241,6 +240,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            if(urlSrc.scheme().isEmpty())
                urlSrc.setScheme(u"file"_s);
            QUrl urlDst = QUrl(sBookFileName, QUrl::TolerantMode);
+           validateFileName(urlDst);
            if(urlDst.scheme().isEmpty()){
                urlDst.setScheme(u"file"_s);
                if(sBookFileName.contains(u'?')){
