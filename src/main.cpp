@@ -134,16 +134,13 @@ int main(int argc, char *argv[])
         // Edit libraries
         if (cmdparam.contains(QStringLiteral("--lib"))){
             a = std::unique_ptr<QCoreApplication>(new QCoreApplication(argc, argv));
-            a->setOrganizationName(QStringLiteral("freeLib"));
-            a->setApplicationName(QStringLiteral("freeLib"));
+            a->setApplicationName(u"freeLib"_s);
 
             auto settings = GetSettings();
             g::options.Load(settings);
 
-
             openDB(QStringLiteral("libdb"));
             UpdateLibs();
-
 
             setLocale(g::options.sUiLanguageName);
 
