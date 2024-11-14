@@ -230,7 +230,9 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
     }
     else
     {
-#ifndef USE_KIO
+#ifdef USE_KIO
+        QUrl urlDst = QUrl(sBookFileName, QUrl::TolerantMode);
+#else
         sBookFileName = validateFileName(sBookFileName);
 #endif
        if(!pExportOptions_->bPostprocessingCopy)
@@ -239,7 +241,6 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            QUrl urlSrc = current_out_file;
            if(urlSrc.scheme().isEmpty())
                urlSrc.setScheme(u"file"_s);
-           QUrl urlDst = QUrl(sBookFileName, QUrl::TolerantMode);
            validateFileName(urlDst);
            if(urlDst.scheme().isEmpty()){
                urlDst.setScheme(u"file"_s);
@@ -278,11 +279,15 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
             sBookFileName = current_out_file;
         if(!tool_path.isEmpty())
         {
-            QFileInfo fi_tmp(sBookFileName);
-            QString ex = lib.fillParams(tool_path, idBook, fi_tmp);
+#ifdef USE_KIO
+            QFileInfo fiTmp(urlDst.path());
+#else
+            QFileInfo fiTmp(sBookFileName);
+#endif
+            QString ex = lib.fillParams(tool_path, idBook, fiTmp);
             QStringList listArg = tool_arg.split(u" "_s);
             for(int i = 0; i != listArg.size(); ++i)
-                listArg[i] = lib.fillParams(listArg[i], idBook, fi_tmp);
+                listArg[i] = lib.fillParams(listArg[i], idBook, fiTmp);
             return (QProcess::execute(ex, listArg) == 0);
         }
     }
