@@ -263,7 +263,8 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            auto statJob = KIO::stat(urlDst, KIO::HideProgressInfo);
            statJob->start();
            statJob->exec();
-           return !statJob->error();
+           if(tool_path.isEmpty())
+               return !statJob->error();
 
 #else //USE_KIO
            QDir dir(sBookFileName);
