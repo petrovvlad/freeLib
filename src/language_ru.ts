@@ -1450,10 +1450,10 @@ li.checked::marker { content: &quot;\2612&quot;; }
 <context>
     <name>QApplication</name>
     <message>
-        <location filename="options.cpp" line="329"/>
-        <location filename="options.cpp" line="330"/>
-        <location filename="options.cpp" line="331"/>
-        <location filename="options.cpp" line="332"/>
+        <location filename="options.cpp" line="337"/>
+        <location filename="options.cpp" line="338"/>
+        <location filename="options.cpp" line="339"/>
+        <location filename="options.cpp" line="340"/>
         <source>Save as</source>
         <oldsource>Send as</oldsource>
         <translation>Сохранить как</translation>
@@ -1615,7 +1615,7 @@ li.checked::marker { content: &quot;\2612&quot;; }
     <message>
         <location filename="settingsdlg.ui" line="453"/>
         <source>Extended characters in the file name</source>
-        <translation>Расширеный набор символов в имени файла</translation>
+        <translation>Расширенный набор символов в имени файла</translation>
     </message>
     <message>
         <location filename="settingsdlg.ui" line="468"/>
