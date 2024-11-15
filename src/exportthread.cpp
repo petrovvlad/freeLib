@@ -241,7 +241,6 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            QUrl urlSrc = current_out_file;
            if(urlSrc.scheme().isEmpty())
                urlSrc.setScheme(u"file"_s);
-           validateFileName(urlDst);
            if(urlDst.scheme().isEmpty()){
                urlDst.setScheme(u"file"_s);
                if(sBookFileName.contains(u'?')){
@@ -249,6 +248,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
                    urlDst.setQuery(u""_s);
                }
            }
+           validateFileName(urlDst);
            if(!kioMkDir(urlDst.adjusted(QUrl::RemoveFilename))){
                MyDBG << "Could not make dir: " << urlDst;
                return false;
