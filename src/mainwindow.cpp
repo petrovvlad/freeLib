@@ -231,7 +231,7 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->actionExit->setShortcut(QKeySequence(Qt::ALT, Qt::Key_F4));
     #endif
     connect(ui->AuthorList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectAuthor);
-    connect(ui->Books, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectBook);
+    connect(ui->Books, &QTreeWidget::itemSelectionChanged, this, &MainWindow::selectBook);
     connect(ui->Books, &QTreeWidget::itemDoubleClicked, this, &MainWindow::BookDblClick);
     connect(ui->GenreList, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectGenre);
     connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectSeria);
@@ -1192,12 +1192,12 @@ void MainWindow::SelectAuthor()
     }
 }
 
-void MainWindow::SelectBook()
+void MainWindow::selectBook()
 {
     if(ui->Books->selectedItems().count() == 0)
     {
         ExportBookListBtn(false);
-        ui->Review->setHtml(QStringLiteral(""));
+        ui->Review->setHtml(u""_s);
         pCover->setImage(QImage());;
         return;
     }
@@ -1206,7 +1206,7 @@ void MainWindow::SelectBook()
     if(item->type() != ITEM_TYPE_BOOK)
     {
         ui->btnOpenBook->setEnabled(false);
-        ui->Review->setHtml(QStringLiteral(""));
+        ui->Review->setHtml(u""_s);
         pCover->setImage(QImage());;
         return;
     }
@@ -1220,10 +1220,11 @@ void MainWindow::SelectBook()
     if(book.sAnnotation.isEmpty())
         book.sAnnotation = file.annotation();
 
-    QString seria;
+    QString sSequence;
     if(book.idSerial > 0){
-        seria = u"<a href=seria_%3%1>%2</a>"_s.arg(QString::number(book.idSerial),
-                lib.serials[book.idSerial].sName, lib.serials[book.idSerial].sName.at(0).toUpper());
+        sSequence = u"<tr><td><b>Серия:</b></td><td><a href=seria_%3%1>%2</a></td></tr>"_s
+            .arg(QString::number(book.idSerial),
+             lib.serials[book.idSerial].sName, lib.serials[book.idSerial].sName.at(0).toUpper());
     }
 
     QString sAuthors;
@@ -1252,7 +1253,7 @@ void MainWindow::SelectBook()
             replace(u"#title#"_s, book.sName).
             replace(u"#author#"_s, sAuthors).
             replace(u"#genre#"_s, sGenres).
-            replace(u"#series#"_s, seria).
+            replace(u"#sequence#"_s, sSequence).
             replace(u"#file_path#"_s, file.filePath()).
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
             replace(u"#file_size#"_s, size>0 ?locale.formattedDataSize(file.fileSize(), 1, QLocale::DataSizeTraditionalFormat) : u""_s).
@@ -2208,7 +2209,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
         ScrollItem->setSelected(true);
         ui->Books->scrollToItem(ScrollItem);
     }
-    SelectBook();
+    selectBook();
 
     ui->Books->blockSignals(wasBlocked);
     if(g::bVerbose){
@@ -2216,7 +2217,6 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
         qDebug()<< "FillListBooks " << timeEnd - timeStart << "msec";
     }
 }
-
 
 bool MainWindow::IsBookInList(const SBook &book)
 {

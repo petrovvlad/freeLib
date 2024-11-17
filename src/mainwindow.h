@@ -118,7 +118,7 @@ private slots:
     void btnSearch();
     void DoSearch();
     void SelectAuthor();
-    void SelectBook();
+    void selectBook();
     void SelectGenre();
     void SelectSeria();
     void onItemChanged(QTreeWidgetItem*,int);
