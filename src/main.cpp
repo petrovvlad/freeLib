@@ -73,6 +73,10 @@ std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]
 #ifdef USE_HTTSERVER
              "-s,\t--server\tStart server\n"
                     "\t\t-lang [lang]\tLanguage filter\n"
+            "\t--set\t Set server parameters\n"
+                "\t\t-u [user]\n"
+                "\t\t-p [password]\n"
+                "\t\t-port [port]\n"
 #endif
              "-v,\t--version\tShow version and exit\n"
              "\t--verbose\tVerbose mode\n"
@@ -131,6 +135,31 @@ int main(int argc, char *argv[])
             return 0;
         }
 
+#ifdef USE_HTTSERVER
+        if (cmdparam == u"--set"){
+            auto settings = GetSettings();
+            QString sUser = parseOption(argc-(i), &argv[i], "-u");
+            if(!sUser.isEmpty()){
+                settings->setValue(u"HTTP_user"_s, sUser);
+            }
+            QString sPassword = parseOption(argc-(i), &argv[i], "-p");
+            if(!sPassword.isEmpty()){
+                QByteArray baSalt = Options::generateSalt();
+                QByteArray baHash =  Options::passwordToHash(sPassword, baSalt);
+                settings->setValue(u"httpPassword"_s, QString(baSalt.toBase64()) + u":"_s + QString(baHash.toBase64()));
+                settings->setValue(u"HTTP_need_pasword"_s, true);
+            }
+            QString sPort = parseOption(argc-(i), &argv[i], "-port");
+            if(!sPort.isEmpty()){
+                ushort nPort = sPort.toUShort();
+                if(nPort>0){
+                    settings->setValue(u"portHttp"_s, nPort);
+                }
+            }
+            return 0;
+        }
+#endif
+
         // Edit libraries
         if (cmdparam.contains(QStringLiteral("--lib"))){
             a = std::unique_ptr<QCoreApplication>(new QCoreApplication(argc, argv));
@@ -186,7 +215,7 @@ int main(int argc, char *argv[])
                         << "Books dir:\t" << g::libs[nId].path.toStdString() << "\n"
                         << "Version:\t" << g::libs[nId].sVersion.toStdString() << "\n";
 #ifdef USE_HTTSERVER
-                    std::string sBaseUrl = g::options.sBaseUrl.isEmpty() ?"http://localhost:" + std::to_string(g::options.nOpdsPort) :g::options.sBaseUrl.toStdString();
+                    std::string sBaseUrl = g::options.sBaseUrl.isEmpty() ?"http://localhost:" + std::to_string(g::options.nHttpPort) :g::options.sBaseUrl.toStdString();
                     std::string sIdLib = std::to_string(nId);
                     std::cout
                         << QApplication::translate("LibrariesDlg", "OPDS server").toStdString() << " "
