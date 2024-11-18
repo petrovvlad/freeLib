@@ -238,7 +238,7 @@ void LibrariesDlg::SelectLibrary()
     ui->BookDir->setDisabled(idCurrentLib_ == 0);
     ui->btnUpdate->setDisabled(idCurrentLib_ == 0);
 #ifdef USE_HTTSERVER
-    QString sBaseUrl = g::options.sBaseUrl.isEmpty() ?u"http://localhost:%1"_s.arg(g::options.nOpdsPort) :g::options.sBaseUrl;
+    QString sBaseUrl = g::options.sBaseUrl.isEmpty() ?u"http://localhost:%1"_s.arg(g::options.nHttpPort) :g::options.sBaseUrl;
     QString sIdLib = QString::number(idCurrentLib_);
     ui->linkOPDS->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/opds/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/opds/"_s % sIdLib % u"</a>"_s);
     ui->linkOPDS2->setText(idCurrentLib_ == 0 ?u""_s :u"<a href=\""_s % sBaseUrl % u"/opds2/"_s % sIdLib % u"\">"_s % sBaseUrl % u"/opds2/"_s % sIdLib % u"</a>"_s);

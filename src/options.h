@@ -144,7 +144,7 @@ struct Options
     bool bExtendedSymbols;
 
 #ifdef USE_HTTSERVER
-    const static ushort nDefaultOpdsPort = 8080;
+    const static ushort nDefaultHttpPort = 8080;
     const static ushort  nDefaultProxyPort = 8080;
 
     QString sOpdsUser;
@@ -154,7 +154,7 @@ struct Options
     QString sProxyUser;
     QString sProxyPassword;
     QString sBaseUrl;
-    quint16 nOpdsPort;
+    quint16 nHttpPort;
     quint16 nOpdsBooksPerPage;
     quint16 nProxyPort;
     quint8 nProxyType;

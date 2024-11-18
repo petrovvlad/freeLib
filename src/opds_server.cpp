@@ -3099,11 +3099,11 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
 
 void opds_server::server_run()
 {
-    if(g::options.nOpdsPort != nPort_ && status_ == Status::run)
+    if(g::options.nHttpPort != nPort_ && status_ == Status::run)
     {
         stop_server();
     }
-    nPort_ = g::options.nOpdsPort;
+    nPort_ = g::options.nHttpPort;
     if(g::options.bOpdsEnable)
     {
         if(status_ == Status::stoped)

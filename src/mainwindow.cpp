@@ -721,7 +721,7 @@ void MainWindow::Settings()
             FillListBooks();
         }
 #ifdef USE_HTTSERVER
-        if(g::options.bOpdsEnable != pDlg->options_.bOpdsEnable || g::options.nOpdsPort != pDlg->options_.nOpdsPort || g::options.sBaseUrl != pDlg->options_.sBaseUrl ||
+        if(g::options.bOpdsEnable != pDlg->options_.bOpdsEnable || g::options.nHttpPort != pDlg->options_.nHttpPort || g::options.sBaseUrl != pDlg->options_.sBaseUrl ||
            g::options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || g::options.sOpdsUser != pDlg->options_.sOpdsUser ||
            g::options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash)
         {

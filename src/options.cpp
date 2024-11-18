@@ -311,7 +311,7 @@ void Options::setDefault(){
     sOpdsUser = u""_s;
     baOpdsPasswordSalt.clear();
     baOpdsPasswordHash.clear();
-    nOpdsPort = nDefaultOpdsPort;
+    nHttpPort = nDefaultHttpPort;
     nOpdsBooksPerPage = 15;
     nProxyType = 0;
     nProxyPort = nDefaultProxyPort;
@@ -373,10 +373,10 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
             }
         }
     }else{
-        QString sOpdsPassword = pSettings->value(u"HTTP_password"_s).toString();
-        if(!sOpdsPassword.isEmpty()){
+        QString sHttpPassword = pSettings->value(u"HTTP_password"_s).toString();
+        if(!sHttpPassword.isEmpty()){
             baOpdsPasswordSalt = generateSalt();
-            baOpdsPasswordHash = passwordToHash(sOpdsPassword, baOpdsPasswordSalt);
+            baOpdsPasswordHash = passwordToHash(sHttpPassword, baOpdsPasswordSalt);
             pSettings->setValue(u"httpPassword"_s, QString(baOpdsPasswordSalt.toBase64()) + u":"_s + QString(baOpdsPasswordHash.toBase64()));
             pSettings->remove(u"HTTP_password"_s);
         }
@@ -384,7 +384,12 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     sBaseUrl = pSettings->value(u"BaseUrl"_s).toString();
     if(sBaseUrl.endsWith(u"/"))
         sBaseUrl.chop(1);
-    nOpdsPort = pSettings->value(u"OPDS_port"_s, nDefaultOpdsPort).toInt();
+    nHttpPort = pSettings->value(u"OPDS_port"_s, 0).toInt();
+    if(nHttpPort>0){
+        pSettings->setValue(u"portHttp"_s, nHttpPort);
+        pSettings->remove(u"OPDS_port"_s);
+    }else
+        nHttpPort = pSettings->value(u"portHttp"_s, nDefaultHttpPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
     nProxyType = pSettings->value(QStringLiteral("proxy_type"), 0).toInt();
     nProxyPort = pSettings->value(QStringLiteral("proxy_port"), nDefaultProxyPort).toInt();
@@ -471,7 +476,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"BaseUrl"_s, sBaseUrl);
     pSettings->setValue(u"srv_annotation"_s, bOpdsShowAnotation);
     pSettings->setValue(u"srv_covers"_s, bOpdsShowCover);
-    pSettings->setValue(u"OPDS_port"_s, nOpdsPort);
+    pSettings->setValue(u"portHttp"_s, nHttpPort);
     pSettings->setValue(u"books_per_page"_s, nOpdsBooksPerPage);
     pSettings->setValue(u"proxy_type"_s, nProxyType);
     pSettings->setValue(u"proxy_port"_s, nProxyPort);
