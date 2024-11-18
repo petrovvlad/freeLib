@@ -272,7 +272,8 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            dir.mkpath(book_dir.cleanPath(QFileInfo(sBookFileName).absolutePath()));
            QFile::remove(sBookFileName);
            QFile::rename(current_out_file, sBookFileName);
-           return QFileInfo::exists(sBookFileName);
+           if(tool_path.isEmpty())
+               return QFileInfo::exists(sBookFileName);
 #endif //USE_KIO
         }
         else
