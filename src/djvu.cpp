@@ -1,5 +1,6 @@
 #include "djvu.h"
 
+#include <QImage>
 #include <algorithm>
 #include <libdjvu/miniexp.h>
 

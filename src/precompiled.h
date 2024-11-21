@@ -31,9 +31,11 @@
 #include <QFile>
 #include <QFileDialog>
 #include <QFileInfo>
+#include <QFont>
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QHeaderView>
+#include <QImage>
 #include <QIODevice>
 #include <QItemDelegate>
 #include <QLabel>
@@ -52,6 +54,7 @@
 #include <QPainter>
 #include <QProcess>
 #include <QRegularExpression>
+#include <QRegularExpressionValidator>
 #include <QResizeEvent>
 #include <QSettings>
 #include <QSharedPointer>

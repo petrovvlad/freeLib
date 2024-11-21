@@ -4,6 +4,7 @@
 #include <QString>
 #include <QSqlDatabase>
 #include <QSettings>
+#include <QtConcurrent>
 
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazip.h"

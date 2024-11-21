@@ -3,6 +3,8 @@
 
 #include <QFrame>
 #include <QSettings>
+#include <QLineEdit>
+#include <QRegularExpressionValidator>
 
 #include "options.h"
 

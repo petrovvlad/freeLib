@@ -1,6 +1,8 @@
 #include "conversionframe.h"
 #include "ui_conversionframe.h"
 
+#include <QMessageBox>
+
 ConversionFrame::ConversionFrame(QWidget *parent) :
     QFrame(parent),
     ui(new Ui::ConversionFrame)

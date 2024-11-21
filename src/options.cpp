@@ -5,6 +5,8 @@
 #include <QFileInfo>
 #include <QStringBuilder>
 #include <QSharedPointer>
+#include <QFont>
+#include <unordered_set>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
 #include <QPasswordDigestor>
 #endif
