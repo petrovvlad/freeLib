@@ -17,7 +17,6 @@
 #include "utilites.h"
 #include "bookfile.h"
 
-#define SAVE_INDEX  4
 #define MAX_COLUMN_COUNT    3
 
 QString mime(QStringView sFormat)
@@ -435,7 +434,7 @@ void opds_server::addEntry(QDomElement &feed, const QString &sId, const QString 
     addLink(entry, u"application/atom+xml;profile=opds-catalog"_s, sHRef);
 }
 
-QString siplifySearchString(const QString &str)
+QString simplifySearchString(const QString &str)
 {
     QString sSimplified = str;
     const static QRegularExpression simpl(u"[.,«»?!-\"'()]"_s);
@@ -510,12 +509,12 @@ std::vector<uint> opds_server::listGenreBooks(const SLib &lib, ushort idGenre)
 
 std::vector<uint> opds_server::searchTitle(const SLib &lib, const QString &sTitle)
 {
-    QString sSearch = siplifySearchString(sTitle);
+    QString sSearch = simplifySearchString(sTitle);
     std::vector<uint> vBooks;
     if(!sSearch.isEmpty()){
         vBooks = blockingFiltered(lib.books, [&](const auto &book){
             if(!book.bDeleted){
-                QString sName = siplifySearchString(book.sName);
+                QString sName = simplifySearchString(book.sName);
                 if(sName.contains(sSearch)){
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
                         return true;
@@ -534,13 +533,13 @@ std::vector<uint> opds_server::searchTitle(const SLib &lib, const QString &sTitl
 std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuthor, const QString &sTitle)
 {
     auto vAuthors = searchAuthors(lib, sAuthor);
-    QString sSimplifiedTitle = siplifySearchString(sTitle);
+    QString sSimplifiedTitle = simplifySearchString(sTitle);
     std::unordered_set<uint>stIdAuthors(vAuthors.begin(), vAuthors.end());
     std::vector<uint> vBooks;
 
     vBooks = blockingFiltered(lib.books, [&](const auto &book){
         if(!book.bDeleted){
-            QString sName = siplifySearchString(book.sName);
+            QString sName = simplifySearchString(book.sName);
             if(sName.contains(sSimplifiedTitle)){
                 if(sAuthor.isEmpty() || std::any_of(book.vIdAuthors.begin(), book.vIdAuthors.end(), [&stIdAuthors](auto idAuthor){return stIdAuthors.contains(idAuthor);}))
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
@@ -559,7 +558,7 @@ std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuth
 
 auto opds_server::searchSequence(const SLib &lib, const QString &sSequence)
 {
-    QString sSearchSimplefied = siplifySearchString(sSequence);
+    QString sSearchSimplefied = simplifySearchString(sSequence);
     SerialComparator comporator(lib.serials);
     std::map<uint, uint, SerialComparator> mSequence(comporator);
 
@@ -573,7 +572,7 @@ auto opds_server::searchSequence(const SLib &lib, const QString &sSequence)
         if(book.idSerial != 0 && !book.bDeleted){
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage]){
                 const auto &secuence = lib.serials.at(book.idSerial);
-                QString sName  = siplifySearchString(secuence.sName);
+                QString sName  = simplifySearchString(secuence.sName);
                 if(sName.contains(sSearchSimplefied)){
                     std::lock_guard<std::mutex> guard(m);
                     mSequence[book.idSerial]++;
@@ -589,26 +588,26 @@ auto opds_server::searchSequence(const SLib &lib, const QString &sSequence)
 std::vector<uint> opds_server::searchAuthors(const SLib &lib, const QString &sAuthor)
 {
     std::vector<uint> vResult;
-    auto sListSearch = siplifySearchString(sAuthor).split(u" "_s, Qt::SkipEmptyParts);
+    auto sListSearch = simplifySearchString(sAuthor).split(u" "_s, Qt::SkipEmptyParts);
     if(sListSearch.isEmpty())
         return vResult;
 
-    for(const auto &iAuthor :lib.authors){
+    vResult = blockingFiltered(lib.authors, [&sListSearch](const auto &author){
         bool bMatch = true;
         bool bMatchF = false;
         bool bMatchM = false;
         bool bMatchL = false;
         for(const auto &sSubSearch :std::as_const(sListSearch)){
             bool bMatchAny = false;
-            if(!bMatchF && iAuthor.second.sFirstName.toCaseFolded().startsWith(sSubSearch)){
+            if(!bMatchF && author.sFirstName.toCaseFolded().startsWith(sSubSearch)){
                 bMatchF = true;
                 bMatchAny = true;
             }
-            if(!bMatchAny && !bMatchM && iAuthor.second.sMiddleName.toCaseFolded().startsWith(sSubSearch)){
+            if(!bMatchAny && !bMatchM && author.sMiddleName.toCaseFolded().startsWith(sSubSearch)){
                 bMatchM = true;
                 bMatchAny = true;
             }
-            if(!bMatchAny && !bMatchL && iAuthor.second.sLastName.toCaseFolded().startsWith(sSubSearch)){
+            if(!bMatchAny && !bMatchL && author.sLastName.toCaseFolded().startsWith(sSubSearch)){
                 bMatchL = true;
                 bMatchAny = true;
             }
@@ -617,9 +616,8 @@ std::vector<uint> opds_server::searchAuthors(const SLib &lib, const QString &sAu
                 break;
             }
         }
-        if(bMatch)
-            vResult.push_back(iAuthor.first);
-    }
+        return bMatch;
+    });
 
     return vResult;
 }
