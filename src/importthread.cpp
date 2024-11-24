@@ -19,8 +19,6 @@
 #include "utilites.h"
 #include "options.h"
 
-QString RelativeToAbsolutePath(QString path);
-
 ImportThread::ImportThread(QObject *parent) :
     QObject(parent)
 {
@@ -215,18 +213,20 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
         if(lib.books.empty()){
             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
             query.setForwardOnly(true);
-            query.prepare(QStringLiteral("SELECT id FROM book WHERE id_lib=:id_lib;"));
-            query.bindValue(QStringLiteral(":id_lib"),idLib_);
+            query.prepare(u"SELECT id FROM book WHERE id_lib=:id_lib;"_s);
+            query.bindValue(u":id_lib"_s,idLib_);
             if(!query.exec())
                 MyDBG << query.lastError().text();
             else{
                 while (query.next()){
-                    vIdBookInLib_.push_back(query.value(0).toUInt());
+                    stIdBookInLib_.insert(query.value(0).toUInt());
                 }
             }
         }else{
+            stIdBookInLib_.reserve(lib.books.size());
             for(const auto &book :lib.books)
-                vIdBookInLib_.push_back(book.second.idInLib);
+                stIdBookInLib_.insert(book.second.idInLib);
+
         }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -894,7 +894,7 @@ void ImportThread::process()
             if(substrings.count() > field_index[_ID_IN_LIB])
             {
                 idInLib = substrings[field_index[_ID_IN_LIB]].trimmed().toUInt();
-                if(nUpdateType_ == UT_NEW && contains(vIdBookInLib_, idInLib))
+                if(nUpdateType_ == UT_NEW && stIdBookInLib_.contains(idInLib))
                     continue;
             }
             bool deleted = 0;
