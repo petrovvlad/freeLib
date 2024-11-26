@@ -3,6 +3,7 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <unordered_set>
 
 #include "library.h"
 

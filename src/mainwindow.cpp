@@ -1899,7 +1899,11 @@ void MainWindow::FillAuthors()
         }
     });
 
+#ifdef __cpp_lib_execution
     std::sort(g::executionpolicy, vItems.begin(), vItems.end(), [](auto item1, auto item2){
+#else
+    std::sort(vItems.begin(), vItems.end(), [](auto item1, auto item2){
+#endif
         return localeStringCompare(item1->text(), item2->text());
     });
 
@@ -1950,7 +1954,11 @@ void MainWindow::FillSerials()
     std::vector<uint> vIdSequence;
     for(auto iSequnce :mCounts)
         vIdSequence.push_back(iSequnce.first);
+#ifdef __cpp_lib_execution
     std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
+#else
+    std::sort(vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
+#endif
         return localeStringCompare(squences.at(id1).sName, squences.at(id2).sName);
     });
 
