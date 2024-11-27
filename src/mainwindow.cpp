@@ -236,10 +236,11 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->GenreList, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectGenre);
     connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectSeria);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabWidgetChanged);
-    connect(ui->do_search, &QAbstractButton::clicked, this, &MainWindow::StartSearch);
-    connect(ui->s_author, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
-    connect(ui->s_seria, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
-    connect(ui->s_name, &QLineEdit::returnPressed, this, &MainWindow::StartSearch);
+    connect(ui->do_search, &QAbstractButton::clicked, this, &MainWindow::onStartSearch);
+    connect(ui->s_author, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
+    connect(ui->s_seria, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
+    connect(ui->s_name, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
+    connect(ui->s_FileName, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::About);
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::onItemChanged);
     connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageFilterChanged);
@@ -972,7 +973,7 @@ void MainWindow::ExportBookListBtn(bool Enable)
     ui->btnOpenBook->setEnabled(false);
 }
 
-void MainWindow::StartSearch()
+void MainWindow::onStartSearch()
 {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
 
@@ -982,6 +983,7 @@ void MainWindow::StartSearch()
     QString sName = ui->s_name->text().trimmed();
     QString sAuthor = ui->s_author->text().trimmed();
     QString sSeria = ui->s_seria->text().trimmed();
+    QString sFile = ui->s_FileName->text().trimmed();
     QDate dateFrom = ui->date_from->date();
     QDate dateTo = ui->date_to->date();
     int nMaxCount = ui->maxBooks->value();
@@ -1028,9 +1030,15 @@ void MainWindow::StartSearch()
         }else
             bMatchAuthor = true;
 
-        if((g::options.bShowDeleted || !book.second.bDeleted)&&
-                book.second.date>= dateFrom && book.second.date <= dateTo &&
-                bMatchAuthor &&
+        bool bMatchFile;
+        if(sFile.isEmpty())
+            bMatchFile = true;
+        else
+            bMatchFile = book.second.sFile.contains(sFile, Qt::CaseInsensitive);
+
+        if((g::options.bShowDeleted || !book.second.bDeleted) &&
+                book.second.date >= dateFrom && book.second.date <= dateTo &&
+                bMatchAuthor && bMatchFile &&
                 (sName.isEmpty() || book.second.sName.contains(sName, Qt::CaseInsensitive)) &&
                 (sSeria.isEmpty() || (book.second.idSerial>0 && lib.serials[book.second.idSerial].sName.contains(sSeria, Qt::CaseInsensitive))) &&
                 (idLanguage == -1 ||(book.second.idLanguage == idLanguage)))
@@ -1055,7 +1063,7 @@ void MainWindow::StartSearch()
     ui->find_books->setText(QString::number(nCount));
 
 
-    FillListBooks(vBooks_, std::vector<uint>(), 0);
+    FillListBooks(vBooks_ ,{} , 0);
 
     QApplication::restoreOverrideCursor();
 }

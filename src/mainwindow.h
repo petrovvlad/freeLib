@@ -125,7 +125,7 @@ private slots:
     void BookDblClick();
     void About();
 //    void LanguageChange();
-    void StartSearch();
+    void onStartSearch();
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);
