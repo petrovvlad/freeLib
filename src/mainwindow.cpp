@@ -1033,8 +1033,10 @@ void MainWindow::onStartSearch()
         bool bMatchFile;
         if(sFile.isEmpty())
             bMatchFile = true;
-        else
-            bMatchFile = book.second.sFile.contains(sFile, Qt::CaseInsensitive);
+        else{
+            QString sBookFileName = book.second.sFile % u"."_s % book.second.sFormat;
+            bMatchFile = sBookFileName.contains(sFile, Qt::CaseInsensitive);
+        }
 
         if((g::options.bShowDeleted || !book.second.bDeleted) &&
                 book.second.date >= dateFrom && book.second.date <= dateTo &&
@@ -1061,7 +1063,6 @@ void MainWindow::onStartSearch()
             break;
     }
     ui->find_books->setText(QString::number(nCount));
-
 
     FillListBooks(vBooks_ ,{} , 0);
 
