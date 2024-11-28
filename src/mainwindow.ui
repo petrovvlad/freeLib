@@ -288,6 +288,16 @@
                 <widget class="QLineEdit" name="s_seria"/>
                </item>
                <item>
+                <widget class="QLabel" name="label">
+                 <property name="text">
+                  <string>File name:</string>
+                 </property>
+                </widget>
+               </item>
+               <item>
+                <widget class="QLineEdit" name="s_FileName"/>
+               </item>
+               <item>
                 <widget class="QLabel" name="label_6">
                  <property name="text">
                   <string>Import date:</string>

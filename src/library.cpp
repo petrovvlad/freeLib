@@ -434,6 +434,7 @@ QString removeStartDots(const QString& str)
 %fn - имя файла книги без пути и расширения.
 %d - полный путь к файлу книги.
 %app_dir - путь к директории программы.
+%id - id книги в библиотеке
 
 */
 
@@ -465,12 +466,12 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 
     const SAuthor& sFirstAuthor = authors[book.idFirstAuthor];
 
-    if(result.contains(QStringLiteral("%s"))){
+    if(result.contains(u"%s"_s)){
         if(book.idSerial == 0){
             if(bNestedBlock)
-                return QStringLiteral("");
+                return u""_s;
             else
-                result.replace(QStringLiteral("%s"), QStringLiteral(""));
+                result.replace(u"%s"_s, u""_s);
 
         }else {
             result.replace(u"/%s"_s, u"/"_s + removeStartDots(serials[book.idSerial].sName));
@@ -479,24 +480,27 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
     }
 
     if(bNestedBlock){
-        if(result.contains(QStringLiteral("%fi")) || result.contains(QStringLiteral("%nf")))
+        if(result.contains(u"%fi"_s) || result.contains(u"%nf"_s))
             if(sFirstAuthor.sFirstName.isEmpty())
-                return QStringLiteral("");
-        if(result.contains(QStringLiteral("%mi")) || result.contains(QStringLiteral("%nm")))
+                return u""_s;
+        if(result.contains(u"%mi"_s) || result.contains(u"%nm"_s))
             if(sFirstAuthor.sMiddleName.isEmpty())
-                return QStringLiteral("");
-        if(result.contains(QStringLiteral("%li")) || result.contains(QStringLiteral("%nl")))
+                return u""_s;
+        if(result.contains(u"%li"_s) || result.contains(u"%nl"_s))
             if(sFirstAuthor.sLastName.isEmpty())
-                return QStringLiteral("");
-        if(result.contains(QStringLiteral("%abbrs")))
+                return u""_s;
+        if(result.contains(u"%abbrs"_s))
             if(book.idSerial == 0)
-                return QStringLiteral("");
+                return u""_s;
+        if(result.contains(u"%id"_s))
+            if(book.idInLib == 0)
+                return u""_s;
     }else{
-        result.replace(QStringLiteral("%app_dir"), QApplication::applicationDirPath() + QStringLiteral("/"));
+        result.replace(u"%app_dir"_s, QApplication::applicationDirPath() + u"/"_s);
 
-        QString abbr = QStringLiteral("");
+        QString abbr = u""_s;
         if(book.idSerial != 0){
-            const auto listSerials =  serials[book.idSerial].sName.split(QStringLiteral(" "));
+            const auto listSerials =  serials[book.idSerial].sName.split(u" "_s);
             for(const QString &sSerial: listSerials)
             {
                 if(!sSerial.isEmpty())
@@ -505,24 +509,25 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         }
         result.replace(u"%abbrs"_s, abbr.toLower());
 
-        result.replace(QStringLiteral("%fi"), sFirstAuthor.sFirstName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sFirstName.at(0)));
-        result.replace(QStringLiteral("%mi"), sFirstAuthor.sMiddleName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sMiddleName.at(0)));
-        result.replace(QStringLiteral("%li"), sFirstAuthor.sLastName.isEmpty() ?QStringLiteral("") :(sFirstAuthor.sLastName.at(0)));
-        result.replace(QStringLiteral("%nf"), sFirstAuthor.sFirstName);
-        result.replace(QStringLiteral("%nm"), sFirstAuthor.sMiddleName);
-        result.replace(QStringLiteral("%nl"), sFirstAuthor.sLastName);
+        result.replace(u"%fi"_s, sFirstAuthor.sFirstName.isEmpty() ?u""_s :(sFirstAuthor.sFirstName.at(0)));
+        result.replace(u"%mi"_s, sFirstAuthor.sMiddleName.isEmpty() ?u""_s :(sFirstAuthor.sMiddleName.at(0)));
+        result.replace(u"%li"_s, sFirstAuthor.sLastName.isEmpty() ?u""_s :(sFirstAuthor.sLastName.at(0)));
+        result.replace(u"%nf"_s, sFirstAuthor.sFirstName);
+        result.replace(u"%nm"_s, sFirstAuthor.sMiddleName);
+        result.replace(u"%nl"_s, sFirstAuthor.sLastName);
+        result.replace(u"%id"_s, QString::number( book.idInLib ));
 
-        result.replace(QStringLiteral("  "), QStringLiteral(" "));
-        result.replace(QStringLiteral("/ "), QStringLiteral("/"));
-        result.replace(QStringLiteral("////"), QStringLiteral("/"));
-        result.replace(QStringLiteral("///"), QStringLiteral("/"));
-        result.replace(QStringLiteral("//"), QStringLiteral("/"));
+        result.replace(u"  "_s, u" "_s);
+        result.replace(u"/ "_s, u"/"_s);
+        result.replace(u"////"_s, u"/"_s);
+        result.replace(u"///"_s, u"/"_s);
+        result.replace(u"//"_s, u"/"_s);
         result.replace(u"/%b"_s, u"/"_s + removeStartDots(book.sName));
         result.replace(u"%b"_s, book.sName);
-        result.replace(QStringLiteral("%a"), sFirstAuthor.getName());
+        result.replace(u"%a"_s, sFirstAuthor.getName());
     }
 
-    auto in = result.indexOf(QStringLiteral("%n"));
+    auto in = result.indexOf(u"%n"_s);
     if(in >= 0)
     {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -532,14 +537,14 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 #endif
         if(book.numInSerial == 0){
             if(bNestedBlock)
-                return QStringLiteral("");
+                return u""_s;
             else
-                result.replace("%n" + QString::number(len), QStringLiteral(""));
+                result.replace("%n" + QString::number(len), u""_s);
         }else{
             QString sNumInSeria = QString::number(book.numInSerial);
             QString zerro;
-            result.replace(QStringLiteral("%n") + (len>0 ?QString::number(len) :QStringLiteral("")),
-                           (len>0 ?zerro.fill(u'0', len-sNumInSeria.length()) :QStringLiteral("")) + sNumInSeria);
+            result.replace(u"%n"_s + (len>0 ?QString::number(len) :u""_s),
+                           (len>0 ?zerro.fill(u'0', len-sNumInSeria.length()) :u""_s) + sNumInSeria);
         }
     }
 

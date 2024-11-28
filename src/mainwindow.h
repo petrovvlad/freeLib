@@ -118,14 +118,14 @@ private slots:
     void btnSearch();
     void DoSearch();
     void SelectAuthor();
-    void SelectBook();
+    void selectBook();
     void SelectGenre();
     void SelectSeria();
     void onItemChanged(QTreeWidgetItem*,int);
     void BookDblClick();
     void About();
 //    void LanguageChange();
-    void StartSearch();
+    void onStartSearch();
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);

@@ -3,6 +3,7 @@
 
 #include <QSqlDatabase>
 #include <QSqlQuery>
+#include <unordered_set>
 
 #include "library.h"
 
@@ -42,7 +43,8 @@ private:
     bool bFirstAuthorOnly_;
     bool bWoDeleted_;
     std::atomic_bool stopped_;
-    std::vector<uint> vIdBookInLib_;
+    std::unordered_set<uint> stIdBookInLib_;
+
     QStringList listFiles_;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     std::unordered_map<SAuthor, uint> hashAuthors_;

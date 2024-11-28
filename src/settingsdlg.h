@@ -11,6 +11,7 @@
 #include <QFileDialog>
 #include <QSettings>
 #include <QToolButton>
+#include <QTreeWidgetItem>
 
 #include "options.h"
 

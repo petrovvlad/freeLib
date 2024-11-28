@@ -1,5 +1,15 @@
 #include "bookfile.h"
 
+#include <QFont>
+#include <QImage>
+#include <QPainter>
+#include <QDomDocument>
+#ifdef QUAZIP_STATIC
+#include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazipfile.h>
+#endif
+
 #include "utilites.h"
 #include "options.h"
 #ifdef USE_DEJVULIBRE

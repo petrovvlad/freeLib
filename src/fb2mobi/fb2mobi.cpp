@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QRegularExpression>
+#include <unordered_set>
 
 #ifdef QUAZIP_STATIC
 #include "../quazip/quazip/quazip.h"

@@ -242,7 +242,7 @@ void SettingsDlg::LoadSettings()
     ui->extended_symbols->setChecked(options_.bExtendedSymbols);
 #ifdef USE_HTTSERVER
     ui->OPDS_enable->setChecked(options_.bOpdsEnable);
-    ui->OPDS_port->setValue(options_.nOpdsPort);
+    ui->portHttp->setValue(options_.nHttpPort);
     ui->baseUrl->setText(options_.sBaseUrl);
     ui->HTTP_need_pasword->setChecked(options_.bOpdsNeedPassword);
     ui->HTTP_user->setText(options_.sOpdsUser);
@@ -487,7 +487,7 @@ void SettingsDlg::btnOK()
     g::options.sOpdsUser = ui->HTTP_user->text();
     g::options.baOpdsPasswordHash = ui->HTTP_password->getPasswordHash();
     g::options.baOpdsPasswordSalt = ui->HTTP_password->getPasswordSalt();
-    g::options.nOpdsPort = ui->OPDS_port->value();
+    g::options.nHttpPort = ui->portHttp->value();
     g::options.sBaseUrl = ui->baseUrl->text();
     g::options.nOpdsBooksPerPage = ui->books_per_page->value();
     g::options.nProxyType = ui->proxy_type->currentIndex();
@@ -977,7 +977,7 @@ void SettingsDlg::onOpdsEnable(Qt::CheckState state)
 #endif
 {
     bool bOpdsEnable = (state == Qt::Checked);
-    ui->OPDS_port->setEnabled(bOpdsEnable);
+    ui->portHttp->setEnabled(bOpdsEnable);
     ui->baseUrl->setEnabled(bOpdsEnable);
     ui->label_20->setEnabled(bOpdsEnable);
     ui->label_23->setEnabled(bOpdsEnable);

@@ -298,8 +298,12 @@ QSharedPointer<QSettings> GetSettings(bool bReopen)
     if(bReopen || !pSettings)
     {
         QString sFile = QApplication::applicationDirPath() + u"/freeLib.cfg"_s;
-        if(!QFile::exists(sFile))
-            sFile = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation) + u"/freeLib.conf"_s;
+        if(!QFile::exists(sFile)){
+            sFile = QStandardPaths::writableLocation(QStandardPaths::AppConfigLocation);
+            if(!sFile.endsWith(u"freeLib"_s))
+                sFile += u"/freeLib"_s;
+            sFile += u"/freeLib.conf"_s;
+        }
         pSettings = QSharedPointer<QSettings> (new QSettings(sFile, QSettings::IniFormat));
         #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         pSettings->setIniCodec("UTF-8");
@@ -380,11 +384,12 @@ bool kindlegenInstalled()
     if(fi.isExecutable())
         return true;
 
-    //Проверка установленного kindlegen через pkg-config
+    // Проверка установленного kindlegen через which
     QProcess process;
-    process.start(u"pkg-config"_s, QStringList() << u"--exists"_s << u"kindlegen"_s);
+    process.start(u"which"_s, {u"kindlegen"_s});
     process.waitForFinished();
-    return process.exitCode() == 0;
+    // Проверяем, что команда завершилась успешно и вывод не пустой
+    return process.exitCode() == 0 && !process.readAllStandardOutput().isEmpty();
 }
 
 bool localeStringCompare(const QString &str1, const QString &str2)

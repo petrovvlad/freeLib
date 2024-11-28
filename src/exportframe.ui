@@ -121,7 +121,7 @@
      <item>
       <widget class="QRadioButton" name="radioEmail">
        <property name="text">
-        <string>Se&amp;nd to e-mail</string>
+        <string>Send &amp;to e-mail</string>
        </property>
       </widget>
      </item>
@@ -223,17 +223,18 @@
                <string notr="true">&lt;html&gt;
 &lt;head/&gt;
 &lt;body&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%a&lt;/span&gt; - автор книги. &lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%nl&lt;/span&gt; - фамилия. &lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%nm&lt;/span&gt; - отчество. &lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%nf&lt;/span&gt; - имя. &lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%li&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%fi&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%mi&lt;/span&gt; - первые буквы фамилии,имени,отчества. &lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%abbrs&lt;/span&gt; - аббревиатура серии.&lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%b&lt;/span&gt; - заголовок книги. &lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%s&lt;/span&gt; - серия. &lt;br&gt;
-&lt;span style=&quot; font-weight:700;&quot;&gt;%nx &lt;/span&gt;- номер в серии, где x-число знаков.
-&lt;/body&gt;
-&lt;/html&gt;</string>
+&lt;p&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%a&lt;/span&gt; - автор книги. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nl&lt;/span&gt; - фамилия. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nm&lt;/span&gt; - отчество. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nf&lt;/span&gt; - имя. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%li&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%fi&lt;/span&gt;, &lt;span style=&quot; font-weight:700;&quot;&gt;%mi&lt;/span&gt; - первые буквы фамилии,имени,отчества. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%abbrs&lt;/span&gt; - аббревиатура серии.&lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%b&lt;/span&gt; - заголовок книги. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%s&lt;/span&gt; - серия. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%nx &lt;/span&gt;- номер в серии, где x-число знаков. &lt;br/&gt;
+&lt;span style=&quot; font-weight:700;&quot;&gt;%id&lt;/span&gt; - id книги в библиотеке
+&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</string>
               </property>
               <property name="placeholderText">
                <string notr="true"/>
