@@ -15,7 +15,7 @@ message(STATUS "FREELIB_QT_MAJOR_VERSION: ${FREELIB_QT_MAJOR_VERSION}")
 find_package(KF${FREELIB_QT_MAJOR_VERSION}KIO QUIET)
 if(KF${FREELIB_QT_MAJOR_VERSION}KIO_FOUND)
     message(STATUS "Found KIO")
-    add_definitions(-DUSE_KIO=1)
+    add_compile_definitions(USE_KIO=1)
 endif()
 
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
@@ -57,7 +57,6 @@ set(PROJECT_SOURCES
         utilites.cpp        utilites.h
         passwordlineedit.cpp            passwordlineedit.h
         genresortfilterproxymodel.cpp   genresortfilterproxymodel.h
-        languagesortfilterproxymodel.cpp    languagesortfilterproxymodel.h
         fb2mobi/hyphenations.cpp            fb2mobi/hyphenations.h
         fb2mobi/fb2mobi.cpp                 fb2mobi/fb2mobi.h
         mobiEdit/mobiedit.cpp               mobiEdit/mobiedit.h
@@ -88,14 +87,14 @@ if((FREELIB_QT_MAJOR_VERSION EQUAL 6) AND (QT_VERSION_MINOR GREATER_EQUAL 4))
         ${PROJECT_SOURCES}
         opds_server.cpp     opds_server.h
     )
-    add_definitions(-DUSE_HTTSERVER=1)
+    add_compile_definitions(USE_HTTSERVER=1)
    endif()
 endif()
 
 find_package(Qt${QT_VERSION_MAJOR}Keychain QUIET)
 if(Qt${QT_VERSION_MAJOR}Keychain_FOUND)
     message(STATUS "Found QtKeychain")
-    add_definitions(-DUSE_QTKEYCHAIN=1)
+    add_compile_definitions(USE_QTKEYCHAIN=1)
 endif()
 
 find_package(QuaZip-Qt${QT_VERSION_MAJOR} QUIET)
@@ -111,13 +110,13 @@ if(DJVULIBRE_FOUND)
         ${PROJECT_SOURCES}
         djvu.cpp            djvu.h
     )
-    add_definitions(-DUSE_DEJVULIBRE=1)
+    add_compile_definitions(USE_DEJVULIBRE=1)
 endif()
 
 find_package(TBB QUIET)
 if(TBB_FOUND)
     message(STATUS "Found TBB")
-    add_definitions(-DUSE_TBB=1)
+    add_compile_definitions(USE_TBB=1)
 endif()
 
 #configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)

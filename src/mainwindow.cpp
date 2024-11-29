@@ -22,7 +22,6 @@
 #include "bookeditdlg.h"
 #include "treebookitem.h"
 #include "genresortfilterproxymodel.h"
-#include "languagesortfilterproxymodel.h"
 #include "library.h"
 #include "starsdelegate.h"
 #include "statisticsdialog.h"
@@ -148,18 +147,6 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->s_genre->model()->setParent(MyProxySortModel);
     ui->s_genre->setModel(MyProxySortModel);
     MyProxySortModel->setDynamicSortFilter(false);
-
-    LanguageSortFilterProxyModel *langProxySortModel = new LanguageSortFilterProxyModel(ui->language);
-    langProxySortModel->setSourceModel(ui->language->model());
-    ui->language->model()->setParent(langProxySortModel);
-    ui->language->setModel(langProxySortModel);
-    langProxySortModel->setDynamicSortFilter(false);
-
-    langProxySortModel = new LanguageSortFilterProxyModel(ui->findLanguage);
-    langProxySortModel->setSourceModel(ui->findLanguage->model());
-    ui->findLanguage->model()->setParent(langProxySortModel);
-    ui->findLanguage->setModel(langProxySortModel);
-    langProxySortModel->setDynamicSortFilter(false);
 
     StarsDelegate* delegate = new StarsDelegate(this);
     ui->Books->setItemDelegateForColumn(5, delegate);
@@ -1064,7 +1051,10 @@ void MainWindow::onStartSearch()
     }
     ui->find_books->setText(QString::number(nCount));
 
+    auto tempLang = idCurrentLanguage_;
+    idCurrentLanguage_ = idLanguage;
     FillListBooks(vBooks_ ,{} , 0);
+    idCurrentLanguage_ = tempLang;
 
     QApplication::restoreOverrideCursor();
 }
@@ -1185,19 +1175,21 @@ void MainWindow::SelectSeria()
 void MainWindow::SelectAuthor()
 {
     ExportBookListBtn(false);
-    if(ui->AuthorList->selectedItems().count() == 0)
+    if(ui->AuthorList->selectedItems().count() == 0){
+        ui->Books->clear();
         return;
-    QListWidgetItem* cur_item =ui->AuthorList->selectedItems().at(0);
-    idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
+    }
+    QListWidgetItem* pItem =ui->AuthorList->selectedItems().at(0);
+    idCurrentAuthor_ = pItem->data(Qt::UserRole).toUInt();
     vBooks_.clear();
     for (auto it = g::libs[g::idCurrentLib].authorBooksLink.equal_range(idCurrentAuthor_); it.first != it.second; ++it.first) {
         vBooks_.push_back(it.first->second);
     }
-    FillListBooks(vBooks_, std::vector<uint>(), idCurrentAuthor_);
+    FillListBooks(vBooks_, {}, idCurrentAuthor_);
 
     if(g::options.bStorePosition){
         auto settings = GetSettings();
-        settings->setValue(QStringLiteral("current_author_id"), idCurrentAuthor_);
+        settings->setValue(u"current_author_id"_s, idCurrentAuthor_);
     }
 }
 
@@ -1380,28 +1372,77 @@ void MainWindow::fillLanguages()
 
     auto settings = GetSettings();
     QString sCurrentLanguage = settings->value(u"BookLanguage"_s, u"*"_s).toString();
-    for(int iLang = 0; iLang<currentLib.vLaguages.size(); iLang++){
-        QString sAbbrLanguage = currentLib.vLaguages[iLang];
+    QLocale locale;
+    auto sLocale = locale.name().left(2);
+
+    auto vLaguages = currentLib.vLaguages;
+    std::ranges::sort(vLaguages, [&sLocale](auto i1, auto i2)
+    {
+        bool bFavorite1 = contains(g::options.vFavoriteLanguges, i1);
+        bool bFavorite2 = contains(g::options.vFavoriteLanguges, i2);
+
+        if(!(bFavorite1 & bFavorite2)){
+            if(bFavorite1)
+                return true;
+            if(bFavorite2)
+                return false;
+        }
+
+        if(i1 == sLocale)
+            return true;
+        if(i2 == sLocale)
+            return false;
+
+        QString sLanguage1;
+        if(mLanguges.contains(i1))
+            sLanguage1 = mLanguges.at(i1);
+        else
+            sLanguage1 = i1;
+        QString sLanguage2;
+        if(mLanguges.contains(i2))
+            sLanguage2 = mLanguges.at(i2);
+        else
+            sLanguage2 = i2;
+
+        return localeStringCompare(sLanguage1, sLanguage2);
+    });
+
+    int iCurrentLang = 0;
+    for(int iLang = 0; iLang<vLaguages.size(); iLang++){
+        QString sAbbrLanguage = vLaguages[iLang];
         if(!sAbbrLanguage.isEmpty() && sAbbrLanguage != u"un"){
             QString sLanguage;
             if(mLanguges.contains(sAbbrLanguage))
                 sLanguage = mLanguges.at(sAbbrLanguage);
             else
                 sLanguage = sAbbrLanguage;
-            ui->language->addItem(sLanguage, iLang);
-            ui->findLanguage->addItem(sLanguage, iLang);
-            if(sAbbrLanguage == sCurrentLanguage){
-                ui->language->setCurrentIndex(ui->language->count()-1);
-                idCurrentLanguage_ = iLang;
+
+            auto it = std::ranges::find(currentLib.vLaguages, sAbbrLanguage);
+            if(it != currentLib.vLaguages.end()){
+                int id = it - currentLib.vLaguages.begin();
+                ui->language->addItem(sLanguage, id);
+                ui->findLanguage->addItem(sLanguage, id);
+
+                if(sAbbrLanguage == sCurrentLanguage){
+                    iCurrentLang = iLang + 1;
+                    idCurrentLanguage_ = id;
+                }
             }
         }
     }
+
+    if(!g::options.vFavoriteLanguges.empty()){
+        int iSeparator = std::ranges::count_if(g::options.vFavoriteLanguges, [&vLaguages](auto sLang)
+            { return contains(vLaguages, sLang); }) + 1;
+        ui->language->insertSeparator(iSeparator);
+        ui->findLanguage->insertSeparator(iSeparator);
+    }
+    ui->language->setCurrentIndex(iCurrentLang);
+
 #ifdef USE_HTTSERVER
     if(pOpds_)
         pOpds_->setLanguageFilter(sCurrentLanguage);
 #endif
-    ui->language->model()->sort(0);
-    ui->findLanguage->model()->sort(0);
     settings->setValue(u"BookLanguage"_s, sCurrentLanguage);
     ui->language->blockSignals(false);
     ui->findLanguage->blockSignals(false);
