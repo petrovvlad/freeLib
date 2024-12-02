@@ -81,6 +81,7 @@ private:
     std::vector<uint> vBooks_;
     CoverLabel *pCover;
     bool bTreeView_;
+    bool bCollapsed_;
     QByteArray aHeadersTree_;
     QByteArray aHeadersList_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
@@ -91,7 +92,7 @@ private:
     QThread *pThread_;
 
 protected:
-    void showEvent(QShowEvent *ev) override;
+    // void showEvent(QShowEvent *ev) override;
     void closeEvent(QCloseEvent *event) override;
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
@@ -142,6 +143,8 @@ private slots:
     void onChangeAlpabet(const QString &sAlphabetName);
     void onTreeView();
     void onListView();
+    void onCollapseAll();
+    void onExpandAll();
     void onUpdateListFont(const QFont &font);
     void onUpdateAnnotationFont(const QFont &font);
 

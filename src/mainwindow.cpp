@@ -53,6 +53,34 @@ QString sizeToString(uint size)
 }
 #endif
 
+void addShortcutToToolTip(QToolButton *btn, const QString &sShortCut)
+{
+    if(!sShortCut.isEmpty()){
+        QString sToolTip = btn->toolTip();
+        QColor shortcutTextColor = QApplication::palette().color(QPalette::ToolTipText);
+        QString sShortCutTextColorName;
+        if (shortcutTextColor.value() == 0) {
+            sShortCutTextColorName = u"gray"_s;  // special handling for black because lighter() does not work there [QTBUG-9343].
+        } else {
+            int factor = (shortcutTextColor.value() < 128) ? 150 : 50;
+            sShortCutTextColorName = shortcutTextColor.lighter(factor).name();
+        }
+        btn->setToolTip(u"<p style='white-space:pre'>%1&nbsp;&nbsp;<code style='color:%2; font-size:small'>%3</code></p>"_s
+                            .arg(sToolTip, sShortCutTextColorName, sShortCut));
+    }
+}
+
+void addShortcutToToolTip(QToolButton *btn, QAction *action)
+{
+    addShortcutToToolTip(btn, action->shortcut().toString(QKeySequence::NativeText));
+
+}
+
+void addShortcutToToolTip(QToolButton *btn)
+{
+    addShortcutToToolTip(btn, btn->shortcut().toString(QKeySequence::NativeText));
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -68,9 +96,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
     bTreeView_ = true;
+    bCollapsed_ = false;
     bTreeView_ = settings->value(QStringLiteral("TreeView"), true).toBool();
     ui->btnTreeView->setChecked(bTreeView_);
-    ui->btnListView->setChecked(!bTreeView_);;
+    ui->btnListView->setChecked(!bTreeView_);
+    ui->btnCollapseAll->setVisible(bTreeView_);
+    ui->btnExpandAll->setVisible(bTreeView_);
 
     if(!g::options.bUseSytemFonts){
         QFont font(QGuiApplication::font());
@@ -133,14 +164,14 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->header()->setSortIndicatorShown(true);
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
-    ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QStringLiteral("pen.svg"))));
-    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QStringLiteral("checkbox.svg"))));
-    ui->btnLibrary->setIcon(QIcon(sIconsPath + QStringLiteral("library.svg")));
-    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"), QIcon(sIconsPath + QStringLiteral("settings.svg"))));
-    ui->btnTreeView->setIcon(QIcon(sIconsPath + QStringLiteral("view-tree.svg")));
-    ui->btnListView->setIcon(QIcon(sIconsPath + QStringLiteral("view-list.svg")));
+    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
+    ui->btnOpenBook->setIcon(QIcon(sIconsPath + u"book.svg"_s));
+    ui->btnEdit->setIcon(QIcon::fromTheme(u"document-edit"_s, QIcon(sIconsPath + u"pen.svg"_s)));
+    ui->btnCheck->setIcon(QIcon::fromTheme(u"checkbox"_s, QIcon(sIconsPath + u"checkbox.svg"_s)));
+    ui->btnLibrary->setIcon(QIcon(sIconsPath + u"library.svg"_s));
+    ui->btnOption->setIcon(QIcon::fromTheme(u"settings-configure"_s, QIcon(sIconsPath + u"settings.svg"_s)));
+    ui->btnTreeView->setIcon(QIcon(sIconsPath + u"view-tree.svg"_s));
+    ui->btnListView->setIcon(QIcon(sIconsPath + u"view-list.svg"_s));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
@@ -204,6 +235,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnEdit, &QAbstractButton::clicked, this, &MainWindow::EditBooks);
     connect(ui->btnTreeView, &QAbstractButton::clicked, this, &MainWindow::onTreeView);
     connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
+    connect(ui->btnCollapseAll, &QAbstractButton::clicked, this, &MainWindow::onCollapseAll);
+    connect(ui->btnExpandAll, &QAbstractButton::clicked, this, &MainWindow::onExpandAll);
     connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
@@ -274,12 +307,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
     connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
+
+    addShortcutToToolTip(ui->btnCheck, ui->actionCheck_uncheck);
+    addShortcutToToolTip(ui->btnLibrary, ui->actionAddLibrary);
+    addShortcutToToolTip(ui->btnCollapseAll);
+    addShortcutToToolTip(ui->btnExpandAll);
 }
 
-void MainWindow::showEvent(QShowEvent *ev)
-{
-    QMainWindow::showEvent(ev);
-}
+// void MainWindow::showEvent(QShowEvent *ev)
+// {
+//     QMainWindow::showEvent(ev);
+// }
 
 void MainWindow::UpdateTags()
 {
@@ -1996,8 +2034,7 @@ void MainWindow::FillSerials()
            IsBookInList(book.second) && (sSearch == u"*" || (sSearch == u"#" && !squences.at(book.second.idSerial).sName.left(1).contains(re)) ||
            squences.at(book.second.idSerial).sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
-
-                mCounts[book.second.idSerial]++;
+            mCounts[book.second.idSerial]++;
         }
     }
 
@@ -2005,10 +2042,11 @@ void MainWindow::FillSerials()
     for(auto iSequnce :mCounts)
         vIdSequence.push_back(iSequnce.first);
 #ifdef __cpp_lib_execution
-    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
+    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2)
 #else
-    std::sort(vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
+    std::sort(vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2)
 #endif
+    {
         return localeStringCompare(squences.at(id1).sName, squences.at(id2).sName);
     });
 
@@ -2112,7 +2150,6 @@ void MainWindow::FillListBooks()
         case 2:
             SelectGenre();
         break;
-
     }
 }
 
@@ -2267,6 +2304,8 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
         ScrollItem->setSelected(true);
         ui->Books->scrollToItem(ScrollItem);
     }
+    if(bCollapsed_)
+        ui->Books->collapseAll();
     selectBook();
 
     ui->Books->blockSignals(wasBlocked);
@@ -2428,6 +2467,8 @@ void MainWindow::onTreeView()
         aHeadersList_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersTree_);
         ui->Books->header()->setSortIndicatorShown(true);
+        ui->btnCollapseAll->show();
+        ui->btnExpandAll->show();
     }
 }
 
@@ -2444,7 +2485,21 @@ void MainWindow::onListView()
         aHeadersTree_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersList_);
         ui->Books->header()->setSortIndicatorShown(true);
+        ui->btnCollapseAll->hide();
+        ui->btnExpandAll->hide();
     }
+}
+
+void MainWindow::onCollapseAll()
+{
+    ui->Books->collapseAll();
+    bCollapsed_ = true;
+}
+
+void MainWindow::onExpandAll()
+{
+    ui->Books->expandAll();
+    bCollapsed_ = false;
 }
 
 void MainWindow::onUpdateListFont(const QFont &font)
