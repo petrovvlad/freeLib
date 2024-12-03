@@ -626,17 +626,16 @@ void MainWindow::onSetTag()
             id = item->data(0, Qt::UserRole).toUInt();
             switch (item->type()) {
             case ITEM_TYPE_BOOK:
-                setTag(idTag, id, g::libs[g::idCurrentLib].books[id].vIdTags, u"book"_s, bSet);
+                setTagBook(idTag, id, bSet);
                 break;
 
             case ITEM_TYPE_SERIA:
-                setTag(idTag, id, g::libs[g::idCurrentLib].serials[id].vIdTags, u"seria"_s, bSet);
+                setTagSequence(idTag, id, bSet);
 
                 break;
 
             case ITEM_TYPE_AUTHOR:
-                setTag(idTag, id, g::libs[g::idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
-
+                setTagAuthor(idTag, id, bSet);
                 break;
 
             default:
@@ -647,37 +646,156 @@ void MainWindow::onSetTag()
     else if(currentListForTag_ == ui->AuthorList)
     {
         id = ui->AuthorList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, g::libs[g::idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
+        setTagAuthor(idTag, id, bSet);
     }
     else if(currentListForTag_ == ui->SeriaList)
     {
         id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, g::libs[g::idCurrentLib].serials[id].vIdTags, QStringLiteral("seria"), bSet);
+        setTagSequence(idTag, id, bSet);
     }
 
     //TODO оптимизировать обновление иконок при большом количестве отображаемых авторов/книг
     updateIcons();
 }
 
-void MainWindow::setTag(uint idTag, uint id, std::vector<uint> &vIdTags,  QString sTable, bool bSet)
+void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
 {
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    QString sQuery;
-    QIcon icon;
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    auto &author = g::libs[g::idCurrentLib].authors[idAuthor];
+    auto &vIdTags = author.vIdTags;
     if(bSet){
         vIdTags.push_back(idTag);
-        sQuery = QStringLiteral("INSERT INTO %1_tag (id_%1,id_tag) VALUES(%2,%3)").
-                arg(sTable, QString::number(id), QString::number(idTag));
-        icon = iconsTags_[idTag];
+        query.prepare(u"INSERT INTO author_tag (id_author,id_tag) VALUES(:idAuthor, :idTag)"_s);
+        query.bindValue(u":idAuthor"_s, idAuthor);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"INSERT INTO author_tag (id_author,id_tag) "
+                       "SELECT id, :idTag FROM author WHERE name1=:name1 AND name2=:name2 AND name3=:name3 AND id_lib!=:idLib"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name1"_s, author.sLastName);
+        query.bindValue(u":name2"_s, author.sFirstName);
+        query.bindValue(u":name3"_s, author.sMiddleName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+        for(auto &lib :g::libs){
+            if(lib.first != g::idCurrentLib && lib.second.bLoaded){
+                auto it = std::find_if(lib.second.authors.begin(), lib.second.authors.end(), [&author](auto &&iAuthor)
+                {
+                    return  iAuthor.second.getName() == author.getName();
+                });
+                if(it != lib.second.authors.end()){
+                    it->second.vIdTags.push_back(idTag);
+                }
+            }
+        }
     }else{
         auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
         if(it != vIdTags.end())
             vIdTags.erase(it);
-        query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-        sQuery = QStringLiteral("DELETE FROM %1_tag WHERE (id_%1=%2) AND (id_tag=%3)").
-                arg(sTable, QString::number(id), QString::number(idTag));
+        query.exec(u"PRAGMA foreign_keys = ON"_s);
+        query.prepare(u"DELETE FROM author_tag WHERE (id_author=:idAuthor) AND (id_tag=:idTag)"_s);
+        query.bindValue(u":id_author"_s, idAuthor);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"DELETE FROM author_tag WHERE (id_tag=:idTag) AND id_author IN ("
+                      "SELECT id FROM author WHERE name1=:name1 AND name2=:name2 AND name3=:name3 AND id_lib!=:idLib);"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name1"_s, author.sLastName);
+        query.bindValue(u":name2"_s, author.sFirstName);
+        query.bindValue(u":name3"_s, author.sMiddleName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
     }
-    query.exec(sQuery);
+}
+
+void MainWindow::setTagBook(uint idTag, uint idBook, bool bSet)
+{
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    auto &book = g::libs[g::idCurrentLib].books.at(idBook);
+    auto &vIdTags = book.vIdTags;
+    if(bSet){
+        vIdTags.push_back(idTag);
+        query.prepare(u"INSERT INTO book_tag (id_book,id_tag) VALUES(:idBook,:idTag)"_s);
+        query.bindValue(u":idBook"_s, idBook);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"INSERT INTO book_tag (id_book,id_tag) "
+                      "SELECT id, :idTag FROM book WHERE id_inlib=:idInLib AND archive=:archive AND id_lib!=:idLib"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":idInLib"_s, book.idInLib);
+        query.bindValue(u":archive"_s, book.sArchive);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }else{
+        auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
+        if(it != vIdTags.end())
+            vIdTags.erase(it);
+        query.exec(u"PRAGMA foreign_keys = ON"_s);
+        query.prepare(u"DELETE FROM book_tag WHERE (id_book=:idBook) AND (id_tag=:idTag)"_s);
+        query.bindValue(u":idBook"_s, idBook);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"DELETE FROM book_tag WHERE (id_tag=:idTag) AND id_book IN ("
+                      "SELECT id FROM book WHERE id_inlib=:idInLib AND archive=:archive AND id_lib!=:idLib);"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":idInLib"_s, book.idInLib);
+        query.bindValue(u":archive"_s, book.sArchive);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }
+}
+
+void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
+{
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    auto &sequence = g::libs[g::idCurrentLib].serials.at(idSequence);
+    auto &vIdTags = sequence.vIdTags;
+    if(bSet){
+        vIdTags.push_back(idTag);
+        query.prepare(u"INSERT INTO seria_tag (id_seria,id_tag) VALUES(:idSequence,:idTag)"_s);
+        query.bindValue(u":idSequence"_s, idSequence);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"INSERT INTO seria_tag (id_seria,id_tag) "
+                      "SELECT id, :idTag FROM seria WHERE name=:name AND id_lib!=:idLib"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name"_s, sequence.sName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }else{
+        auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
+        if(it != vIdTags.end())
+            vIdTags.erase(it);
+        query.exec(u"PRAGMA foreign_keys = ON"_s);
+        query.prepare(u"DELETE FROM seria_tag WHERE (id_seria=:idSequence) AND (id_tag=:idTag)"_s);
+        query.bindValue(u":idSequence"_s, idSequence);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"DELETE FROM seria_tag WHERE (id_tag=:idTag) AND id_book IN ("
+                      "SELECT id FROM seria WHERE name=:name AND id_lib!=:idLib);"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name"_s, sequence.sName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }
 }
 
 void MainWindow::onTagFilterChanged(int index)
@@ -1490,15 +1608,32 @@ void MainWindow::fillLanguages()
 void MainWindow::ManageLibrary()
 {
     SaveLibPosition();
+    uint idOldLib = g::idCurrentLib;
     LibrariesDlg al(this);
     al.exec();
     if(al.bLibChanged){
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+        QFuture<void> future;
+        if(g::idCurrentLib != idOldLib){
+            auto &oldLib = g::libs[idOldLib];
+            if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
+                future = QtConcurrent::run([&oldLib]()
+                {
+                    oldLib.bLoaded = false;
+                    oldLib.books.clear();
+                    oldLib.authors.clear();
+                    oldLib.serials.clear();
+                    oldLib.authorBooksLink.clear();
+                    oldLib.vLaguages.clear();
+                });
+            }
+        }
         loadLibrary(g::idCurrentLib);
 
-        UpdateTags();
         fillLanguages();
+        FillAuthors();
+        FillSerials();
         switch(ui->tabWidget->currentIndex()){
         case TabAuthors:
             onSerachAuthorsChanded(ui->searchAuthor->text());
@@ -1510,6 +1645,8 @@ void MainWindow::ManageLibrary()
         updateTitle();
         FillLibrariesMenu();
         FillGenres();
+        if(future.isValid())
+            future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
 }
@@ -2299,13 +2436,13 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                 ScrollItem = item_book;
         }
     }
+    if(bCollapsed_ && bTreeView_)
+        ui->Books->collapseAll();
     if(ScrollItem)
     {
         ScrollItem->setSelected(true);
         ui->Books->scrollToItem(ScrollItem);
     }
-    if(bCollapsed_)
-        ui->Books->collapseAll();
     selectBook();
 
     ui->Books->blockSignals(wasBlocked);

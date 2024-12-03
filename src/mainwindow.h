@@ -61,7 +61,9 @@ private:
     std::vector<uint> getCheckedBooks(bool bCheckedOnly = false);
     void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, std::vector<uint> *pList);
     QList<QTreeWidgetItem *> checkedItemsBookList(const QTreeWidgetItem *item = nullptr);
-    void setTag(uint idTag, uint id, std::vector<uint> &vIdTags, QString sTable, bool bSet);
+    void setTagAuthor(uint idTag, uint idAuthor, bool bSet);
+    void setTagBook(uint idTag, uint idBook, bool bSet);
+    void setTagSequence(uint idTag, uint idSequence, bool bSet);
     void updateIcons();
     void updateItemIcon(QTreeWidgetItem *item);
     QIcon getTagIcon(const std::vector<uint> &vIdTags);
