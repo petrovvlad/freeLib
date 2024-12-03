@@ -44,6 +44,9 @@ private:
     bool bWoDeleted_;
     std::atomic_bool stopped_;
     std::unordered_set<uint> stIdBookInLib_;
+    std::unordered_map<QString, std::vector<uint>> mAuthorsTags_;
+    std::unordered_map<uint, std::vector<uint>> mBooksTags_;
+    std::unordered_map<QString, std::vector<uint>> mSequenceTags_;
 
     QStringList listFiles_;
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -55,6 +58,9 @@ private:
     QSqlQuery queryInsertBookAuthor_;
     QSqlQuery queryInsertBookGenre_;
     QSqlQuery queryInsertSeria_;
+    QSqlQuery queryInsertAuthorTag_;
+    QSqlQuery queryInsertBookTag_;
+    QSqlQuery queryInsertSequennceTag_;
 
     std::unordered_map <QString, ushort> mGenreKeys_;
     uint AddSeria(const QString &str, qlonglong libID, const QVariantList *pTags = nullptr);
