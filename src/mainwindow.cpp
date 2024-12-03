@@ -1645,8 +1645,7 @@ void MainWindow::ManageLibrary()
         updateTitle();
         FillLibrariesMenu();
         FillGenres();
-        if(future.isValid())
-            future.waitForFinished();
+        future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
 }
