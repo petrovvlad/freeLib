@@ -697,7 +697,7 @@ void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
             vIdTags.erase(it);
         query.exec(u"PRAGMA foreign_keys = ON"_s);
         query.prepare(u"DELETE FROM author_tag WHERE (id_author=:idAuthor) AND (id_tag=:idTag)"_s);
-        query.bindValue(u":id_author"_s, idAuthor);
+        query.bindValue(u":idAuthor"_s, idAuthor);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec())
             MyDBG << query.lastError().text();
@@ -1637,9 +1637,11 @@ void MainWindow::ManageLibrary()
         switch(ui->tabWidget->currentIndex()){
         case TabAuthors:
             onSerachAuthorsChanded(ui->searchAuthor->text());
+            SelectAuthor();
             break;
         case TabSeries:
             onSerachSeriesChanded(ui->searchSeries->text());
+            SelectSeria();
             break;
         }
         updateTitle();
