@@ -915,9 +915,11 @@ void ImportThread::process()
         outbuff.setData(zip_file.readAll());
         zip_file.close();
         const QStringList lines = (QString::fromUtf8(outbuff.data())).split('\n');
+        uint iLine = 0;
         uint count = 0;
         for(const auto &line: lines)
         {
+            iLine++;
             if(line.isEmpty())
                 continue;
 
@@ -1133,7 +1135,13 @@ void ImportThread::process()
                 nBooksCount++;
                 if(count == 500)
                 {
-                    emit progress(nBooksCount, (float)(i - iStart)/(float)(listInpFiles.count() - iStart));
+                    float fProgress;
+                    if(listInpFiles.count()>1)
+                        fProgress = (float)(i - iStart)/(float)(listInpFiles.count() - iStart);
+                    else
+                        fProgress = (float)(iLine - iStart)/(float)(lines.count() - iStart);
+
+                    emit progress(nBooksCount, fProgress);
                     count = 0;
                 }
             }
