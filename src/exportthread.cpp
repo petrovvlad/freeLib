@@ -529,11 +529,11 @@ void ExportThread::export_lib()
     version.close();
     QFile collection(collection_file);
     collection.open(QFile::WriteOnly);
-    const auto &lib = g::libs[g::idCurrentLib];
+    const auto &lib = g::libs[idLib_];
     collection.write((lib.name + u"\r\n"_s).toUtf8());
     collection.write((lib.name + u"\r\n"_s).toUtf8());
-    collection.write(QStringLiteral("0\r\n").toUtf8());
-    collection.write(QStringLiteral("freeLib\r\n").toUtf8());
+    collection.write(u"0\r\n"_s.toUtf8());
+    collection.write(u"freeLib\r\n"_s.toUtf8());
     collection.close();
     inpx.open(QFile::WriteOnly);
     if(!inpx.isOpen())
@@ -542,8 +542,6 @@ void ExportThread::export_lib()
         return;
     }
 
-
-    // const SLib &lib = g::libs[idLib_];
     uint nCount = 0;
     for(const auto &book :lib.books){
         QString sBookTags;
