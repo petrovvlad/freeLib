@@ -604,8 +604,18 @@ QString SLib::nameFromInpx(const QString &sInpx)
                 QuaZipFile zip_file(&uz);
                 zip_file.open(QIODevice::ReadOnly);
                 outbuff.setData(zip_file.readAll());
+                uint nMarkerSize;
+                auto data = outbuff.data();
+                if(outbuff.size()>4){
+                    quint32 marker = *((uint*)(data.data())) & 0x00ffffff;
+                    if((marker & 0x00ffffff) == 0x00bfbbef) //UTF8
+                        nMarkerSize = 3;
+                    else
+                        nMarkerSize = 0;
+                }
                 zip_file.close();
-                sName = QString::fromUtf8(outbuff.data().left(outbuff.data().indexOf('\n')));
+                sName = QString::fromUtf8(data.mid(nMarkerSize, data.indexOf('\n', nMarkerSize)-nMarkerSize));
+
             }
     }
     return sName.simplified();
