@@ -36,7 +36,7 @@ private slots:
     void StartImport();
     void SelectLibrary();
     void DeleteLibrary();
-    void Add_Library();
+    void onAddLibrary();
     void EndUpdate();
     void terminateImport();
     void reject();

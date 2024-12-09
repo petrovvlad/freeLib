@@ -54,7 +54,7 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     connect(ui->btnAddBook, &QPushButton::clicked, this, &LibrariesDlg::addBook);
     connect(ui->ExistingLibs, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [this](int index){this->onComboboxLibraryChanged(index);});
     connect(ui->Del, &QAbstractButton::clicked, this, &LibrariesDlg::DeleteLibrary);
-    connect(ui->Add, &QAbstractButton::clicked, this, &LibrariesDlg::Add_Library);
+    connect(ui->Add, &QAbstractButton::clicked, this, &LibrariesDlg::onAddLibrary);
     connect(ui->ExistingLibs->lineEdit(), &QLineEdit::editingFinished, this, &LibrariesDlg::ExistingLibsChanged);
     ui->add_new->setChecked(true);
 
@@ -78,7 +78,7 @@ LibrariesDlg::~LibrariesDlg()
     delete ui;
 }
 
-void LibrariesDlg::Add_Library()
+void LibrariesDlg::onAddLibrary()
 {
     idCurrentLib_ = 0;
     QString sNewName = UniqueName( tr("new") );
@@ -90,7 +90,7 @@ void LibrariesDlg::Add_Library()
     lib.bWoDeleted = false;
     SaveLibrary(lib);
     ui->ExistingLibs->blockSignals(false);
-    emit ui->ExistingLibs->currentIndexChanged(ui->ExistingLibs->count()-1);
+    SelectLibrary();
 }
 
 void LibrariesDlg::progressImport(uint nBooksAdded, float fProgress)
