@@ -22,7 +22,6 @@
 #include "bookeditdlg.h"
 #include "treebookitem.h"
 #include "genresortfilterproxymodel.h"
-#include "languagesortfilterproxymodel.h"
 #include "library.h"
 #include "starsdelegate.h"
 #include "statisticsdialog.h"
@@ -54,6 +53,34 @@ QString sizeToString(uint size)
 }
 #endif
 
+void addShortcutToToolTip(QToolButton *btn, const QString &sShortCut)
+{
+    if(!sShortCut.isEmpty()){
+        QString sToolTip = btn->toolTip();
+        QColor shortcutTextColor = QApplication::palette().color(QPalette::ToolTipText);
+        QString sShortCutTextColorName;
+        if (shortcutTextColor.value() == 0) {
+            sShortCutTextColorName = u"gray"_s;  // special handling for black because lighter() does not work there [QTBUG-9343].
+        } else {
+            int factor = (shortcutTextColor.value() < 128) ? 150 : 50;
+            sShortCutTextColorName = shortcutTextColor.lighter(factor).name();
+        }
+        btn->setToolTip(u"<p style='white-space:pre'>%1&nbsp;&nbsp;<code style='color:%2; font-size:small'>%3</code></p>"_s
+                            .arg(sToolTip, sShortCutTextColorName, sShortCut));
+    }
+}
+
+void addShortcutToToolTip(QToolButton *btn, QAction *action)
+{
+    addShortcutToToolTip(btn, action->shortcut().toString(QKeySequence::NativeText));
+
+}
+
+void addShortcutToToolTip(QToolButton *btn)
+{
+    addShortcutToToolTip(btn, btn->shortcut().toString(QKeySequence::NativeText));
+}
+
 MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
@@ -69,9 +96,12 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->setupUi(this);
     ui->btnEdit->setVisible(false);
     bTreeView_ = true;
+    bCollapsed_ = false;
     bTreeView_ = settings->value(QStringLiteral("TreeView"), true).toBool();
     ui->btnTreeView->setChecked(bTreeView_);
-    ui->btnListView->setChecked(!bTreeView_);;
+    ui->btnListView->setChecked(!bTreeView_);
+    ui->btnCollapseAll->setVisible(bTreeView_);
+    ui->btnExpandAll->setVisible(bTreeView_);
 
     if(!g::options.bUseSytemFonts){
         QFont font(QGuiApplication::font());
@@ -134,32 +164,20 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->Books->header()->setSortIndicatorShown(true);
 
     bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->btnOpenBook->setIcon(QIcon(sIconsPath + QStringLiteral("book.svg")));
-    ui->btnEdit->setIcon(QIcon::fromTheme(QStringLiteral("document-edit"),QIcon(sIconsPath + QStringLiteral("pen.svg"))));
-    ui->btnCheck->setIcon(QIcon::fromTheme(QStringLiteral("checkbox"), QIcon(sIconsPath + QStringLiteral("checkbox.svg"))));
-    ui->btnLibrary->setIcon(QIcon(sIconsPath + QStringLiteral("library.svg")));
-    ui->btnOption->setIcon(QIcon::fromTheme(QStringLiteral("settings-configure"), QIcon(sIconsPath + QStringLiteral("settings.svg"))));
-    ui->btnTreeView->setIcon(QIcon(sIconsPath + QStringLiteral("view-tree.svg")));
-    ui->btnListView->setIcon(QIcon(sIconsPath + QStringLiteral("view-list.svg")));
+    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
+    ui->btnOpenBook->setIcon(QIcon(sIconsPath + u"book.svg"_s));
+    ui->btnEdit->setIcon(QIcon::fromTheme(u"document-edit"_s, QIcon(sIconsPath + u"pen.svg"_s)));
+    ui->btnCheck->setIcon(QIcon::fromTheme(u"checkbox"_s, QIcon(sIconsPath + u"checkbox.svg"_s)));
+    ui->btnLibrary->setIcon(QIcon(sIconsPath + u"library.svg"_s));
+    ui->btnOption->setIcon(QIcon::fromTheme(u"settings-configure"_s, QIcon(sIconsPath + u"settings.svg"_s)));
+    ui->btnTreeView->setIcon(QIcon(sIconsPath + u"view-tree.svg"_s));
+    ui->btnListView->setIcon(QIcon(sIconsPath + u"view-list.svg"_s));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
     ui->s_genre->model()->setParent(MyProxySortModel);
     ui->s_genre->setModel(MyProxySortModel);
     MyProxySortModel->setDynamicSortFilter(false);
-
-    LanguageSortFilterProxyModel *langProxySortModel = new LanguageSortFilterProxyModel(ui->language);
-    langProxySortModel->setSourceModel(ui->language->model());
-    ui->language->model()->setParent(langProxySortModel);
-    ui->language->setModel(langProxySortModel);
-    langProxySortModel->setDynamicSortFilter(false);
-
-    langProxySortModel = new LanguageSortFilterProxyModel(ui->findLanguage);
-    langProxySortModel->setSourceModel(ui->findLanguage->model());
-    ui->findLanguage->model()->setParent(langProxySortModel);
-    ui->findLanguage->setModel(langProxySortModel);
-    langProxySortModel->setDynamicSortFilter(false);
 
     StarsDelegate* delegate = new StarsDelegate(this);
     ui->Books->setItemDelegateForColumn(5, delegate);
@@ -217,6 +235,8 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->btnEdit, &QAbstractButton::clicked, this, &MainWindow::EditBooks);
     connect(ui->btnTreeView, &QAbstractButton::clicked, this, &MainWindow::onTreeView);
     connect(ui->btnListView, &QAbstractButton::clicked, this, &MainWindow::onListView);
+    connect(ui->btnCollapseAll, &QAbstractButton::clicked, this, &MainWindow::onCollapseAll);
+    connect(ui->btnExpandAll, &QAbstractButton::clicked, this, &MainWindow::onExpandAll);
     connect(ui->actionExit, &QAction::triggered, qApp, &QApplication::quit);
     #ifdef Q_OS_MACX
         ui->actionExit->setShortcut(QKeySequence(Qt::CTRL, Qt::Key_Q));
@@ -287,12 +307,17 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
     connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
+
+    addShortcutToToolTip(ui->btnCheck, ui->actionCheck_uncheck);
+    addShortcutToToolTip(ui->btnLibrary, ui->actionAddLibrary);
+    addShortcutToToolTip(ui->btnCollapseAll);
+    addShortcutToToolTip(ui->btnExpandAll);
 }
 
-void MainWindow::showEvent(QShowEvent *ev)
-{
-    QMainWindow::showEvent(ev);
-}
+// void MainWindow::showEvent(QShowEvent *ev)
+// {
+//     QMainWindow::showEvent(ev);
+// }
 
 void MainWindow::UpdateTags()
 {
@@ -601,17 +626,16 @@ void MainWindow::onSetTag()
             id = item->data(0, Qt::UserRole).toUInt();
             switch (item->type()) {
             case ITEM_TYPE_BOOK:
-                setTag(idTag, id, g::libs[g::idCurrentLib].books[id].vIdTags, u"book"_s, bSet);
+                setTagBook(idTag, id, bSet);
                 break;
 
             case ITEM_TYPE_SERIA:
-                setTag(idTag, id, g::libs[g::idCurrentLib].serials[id].vIdTags, u"seria"_s, bSet);
+                setTagSequence(idTag, id, bSet);
 
                 break;
 
             case ITEM_TYPE_AUTHOR:
-                setTag(idTag, id, g::libs[g::idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
-
+                setTagAuthor(idTag, id, bSet);
                 break;
 
             default:
@@ -622,37 +646,156 @@ void MainWindow::onSetTag()
     else if(currentListForTag_ == ui->AuthorList)
     {
         id = ui->AuthorList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, g::libs[g::idCurrentLib].authors[id].vIdTags, u"author"_s, bSet);
+        setTagAuthor(idTag, id, bSet);
     }
     else if(currentListForTag_ == ui->SeriaList)
     {
         id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTag(idTag, id, g::libs[g::idCurrentLib].serials[id].vIdTags, QStringLiteral("seria"), bSet);
+        setTagSequence(idTag, id, bSet);
     }
 
     //TODO оптимизировать обновление иконок при большом количестве отображаемых авторов/книг
     updateIcons();
 }
 
-void MainWindow::setTag(uint idTag, uint id, std::vector<uint> &vIdTags,  QString sTable, bool bSet)
+void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
 {
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    QString sQuery;
-    QIcon icon;
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    auto &author = g::libs[g::idCurrentLib].authors[idAuthor];
+    auto &vIdTags = author.vIdTags;
     if(bSet){
         vIdTags.push_back(idTag);
-        sQuery = QStringLiteral("INSERT INTO %1_tag (id_%1,id_tag) VALUES(%2,%3)").
-                arg(sTable, QString::number(id), QString::number(idTag));
-        icon = iconsTags_[idTag];
+        query.prepare(u"INSERT INTO author_tag (id_author,id_tag) VALUES(:idAuthor, :idTag)"_s);
+        query.bindValue(u":idAuthor"_s, idAuthor);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"INSERT INTO author_tag (id_author,id_tag) "
+                       "SELECT id, :idTag FROM author WHERE name1=:name1 AND name2=:name2 AND name3=:name3 AND id_lib!=:idLib"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name1"_s, author.sLastName);
+        query.bindValue(u":name2"_s, author.sFirstName);
+        query.bindValue(u":name3"_s, author.sMiddleName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+        for(auto &lib :g::libs){
+            if(lib.first != g::idCurrentLib && lib.second.bLoaded){
+                auto it = std::find_if(lib.second.authors.begin(), lib.second.authors.end(), [&author](auto &&iAuthor)
+                {
+                    return  iAuthor.second.getName() == author.getName();
+                });
+                if(it != lib.second.authors.end()){
+                    it->second.vIdTags.push_back(idTag);
+                }
+            }
+        }
     }else{
         auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
         if(it != vIdTags.end())
             vIdTags.erase(it);
-        query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-        sQuery = QStringLiteral("DELETE FROM %1_tag WHERE (id_%1=%2) AND (id_tag=%3)").
-                arg(sTable, QString::number(id), QString::number(idTag));
+        query.exec(u"PRAGMA foreign_keys = ON"_s);
+        query.prepare(u"DELETE FROM author_tag WHERE (id_author=:idAuthor) AND (id_tag=:idTag)"_s);
+        query.bindValue(u":idAuthor"_s, idAuthor);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"DELETE FROM author_tag WHERE (id_tag=:idTag) AND id_author IN ("
+                      "SELECT id FROM author WHERE name1=:name1 AND name2=:name2 AND name3=:name3 AND id_lib!=:idLib);"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name1"_s, author.sLastName);
+        query.bindValue(u":name2"_s, author.sFirstName);
+        query.bindValue(u":name3"_s, author.sMiddleName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
     }
-    query.exec(sQuery);
+}
+
+void MainWindow::setTagBook(uint idTag, uint idBook, bool bSet)
+{
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    auto &book = g::libs[g::idCurrentLib].books.at(idBook);
+    auto &vIdTags = book.vIdTags;
+    if(bSet){
+        vIdTags.push_back(idTag);
+        query.prepare(u"INSERT INTO book_tag (id_book,id_tag) VALUES(:idBook,:idTag)"_s);
+        query.bindValue(u":idBook"_s, idBook);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"INSERT INTO book_tag (id_book,id_tag) "
+                      "SELECT id, :idTag FROM book WHERE id_inlib=:idInLib AND archive=:archive AND id_lib!=:idLib"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":idInLib"_s, book.idInLib);
+        query.bindValue(u":archive"_s, book.sArchive);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }else{
+        auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
+        if(it != vIdTags.end())
+            vIdTags.erase(it);
+        query.exec(u"PRAGMA foreign_keys = ON"_s);
+        query.prepare(u"DELETE FROM book_tag WHERE (id_book=:idBook) AND (id_tag=:idTag)"_s);
+        query.bindValue(u":idBook"_s, idBook);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"DELETE FROM book_tag WHERE (id_tag=:idTag) AND id_book IN ("
+                      "SELECT id FROM book WHERE id_inlib=:idInLib AND archive=:archive AND id_lib!=:idLib);"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":idInLib"_s, book.idInLib);
+        query.bindValue(u":archive"_s, book.sArchive);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }
+}
+
+void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
+{
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    auto &sequence = g::libs[g::idCurrentLib].serials.at(idSequence);
+    auto &vIdTags = sequence.vIdTags;
+    if(bSet){
+        vIdTags.push_back(idTag);
+        query.prepare(u"INSERT INTO seria_tag (id_seria,id_tag) VALUES(:idSequence,:idTag)"_s);
+        query.bindValue(u":idSequence"_s, idSequence);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"INSERT INTO seria_tag (id_seria,id_tag) "
+                      "SELECT id, :idTag FROM seria WHERE name=:name AND id_lib!=:idLib"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name"_s, sequence.sName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }else{
+        auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
+        if(it != vIdTags.end())
+            vIdTags.erase(it);
+        query.exec(u"PRAGMA foreign_keys = ON"_s);
+        query.prepare(u"DELETE FROM seria_tag WHERE (id_seria=:idSequence) AND (id_tag=:idTag)"_s);
+        query.bindValue(u":idSequence"_s, idSequence);
+        query.bindValue(u":idTag"_s, idTag);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+
+        query.prepare(u"DELETE FROM seria_tag WHERE (id_tag=:idTag) AND id_book IN ("
+                      "SELECT id FROM seria WHERE name=:name AND id_lib!=:idLib);"_s);
+        query.bindValue(u":idTag"_s, idTag);
+        query.bindValue(u":idLib"_s, g::idCurrentLib);
+        query.bindValue(u":name"_s, sequence.sName);
+        if(!query.exec())
+            MyDBG << query.lastError().text();
+    }
 }
 
 void MainWindow::onTagFilterChanged(int index)
@@ -1064,7 +1207,10 @@ void MainWindow::onStartSearch()
     }
     ui->find_books->setText(QString::number(nCount));
 
+    auto tempLang = idCurrentLanguage_;
+    idCurrentLanguage_ = idLanguage;
     FillListBooks(vBooks_ ,{} , 0);
+    idCurrentLanguage_ = tempLang;
 
     QApplication::restoreOverrideCursor();
 }
@@ -1185,19 +1331,21 @@ void MainWindow::SelectSeria()
 void MainWindow::SelectAuthor()
 {
     ExportBookListBtn(false);
-    if(ui->AuthorList->selectedItems().count() == 0)
+    if(ui->AuthorList->selectedItems().count() == 0){
+        ui->Books->clear();
         return;
-    QListWidgetItem* cur_item =ui->AuthorList->selectedItems().at(0);
-    idCurrentAuthor_ = cur_item->data(Qt::UserRole).toUInt();
+    }
+    QListWidgetItem* pItem =ui->AuthorList->selectedItems().at(0);
+    idCurrentAuthor_ = pItem->data(Qt::UserRole).toUInt();
     vBooks_.clear();
     for (auto it = g::libs[g::idCurrentLib].authorBooksLink.equal_range(idCurrentAuthor_); it.first != it.second; ++it.first) {
         vBooks_.push_back(it.first->second);
     }
-    FillListBooks(vBooks_, std::vector<uint>(), idCurrentAuthor_);
+    FillListBooks(vBooks_, {}, idCurrentAuthor_);
 
     if(g::options.bStorePosition){
         auto settings = GetSettings();
-        settings->setValue(QStringLiteral("current_author_id"), idCurrentAuthor_);
+        settings->setValue(u"current_author_id"_s, idCurrentAuthor_);
     }
 }
 
@@ -1380,28 +1528,77 @@ void MainWindow::fillLanguages()
 
     auto settings = GetSettings();
     QString sCurrentLanguage = settings->value(u"BookLanguage"_s, u"*"_s).toString();
-    for(int iLang = 0; iLang<currentLib.vLaguages.size(); iLang++){
-        QString sAbbrLanguage = currentLib.vLaguages[iLang];
+    QLocale locale;
+    auto sLocale = locale.name().left(2);
+
+    auto vLaguages = currentLib.vLaguages;
+    std::ranges::sort(vLaguages, [&sLocale](auto i1, auto i2)
+    {
+        bool bFavorite1 = contains(g::options.vFavoriteLanguges, i1);
+        bool bFavorite2 = contains(g::options.vFavoriteLanguges, i2);
+
+        if(!(bFavorite1 & bFavorite2)){
+            if(bFavorite1)
+                return true;
+            if(bFavorite2)
+                return false;
+        }
+
+        if(i1 == sLocale)
+            return true;
+        if(i2 == sLocale)
+            return false;
+
+        QString sLanguage1;
+        if(mLanguges.contains(i1))
+            sLanguage1 = mLanguges.at(i1);
+        else
+            sLanguage1 = i1;
+        QString sLanguage2;
+        if(mLanguges.contains(i2))
+            sLanguage2 = mLanguges.at(i2);
+        else
+            sLanguage2 = i2;
+
+        return localeStringCompare(sLanguage1, sLanguage2);
+    });
+
+    int iCurrentLang = 0;
+    for(int iLang = 0; iLang<vLaguages.size(); iLang++){
+        QString sAbbrLanguage = vLaguages[iLang];
         if(!sAbbrLanguage.isEmpty() && sAbbrLanguage != u"un"){
             QString sLanguage;
             if(mLanguges.contains(sAbbrLanguage))
                 sLanguage = mLanguges.at(sAbbrLanguage);
             else
                 sLanguage = sAbbrLanguage;
-            ui->language->addItem(sLanguage, iLang);
-            ui->findLanguage->addItem(sLanguage, iLang);
-            if(sAbbrLanguage == sCurrentLanguage){
-                ui->language->setCurrentIndex(ui->language->count()-1);
-                idCurrentLanguage_ = iLang;
+
+            auto it = std::ranges::find(currentLib.vLaguages, sAbbrLanguage);
+            if(it != currentLib.vLaguages.end()){
+                int id = it - currentLib.vLaguages.begin();
+                ui->language->addItem(sLanguage, id);
+                ui->findLanguage->addItem(sLanguage, id);
+
+                if(sAbbrLanguage == sCurrentLanguage){
+                    iCurrentLang = iLang + 1;
+                    idCurrentLanguage_ = id;
+                }
             }
         }
     }
+
+    if(!g::options.vFavoriteLanguges.empty()){
+        int iSeparator = std::ranges::count_if(g::options.vFavoriteLanguges, [&vLaguages](auto sLang)
+            { return contains(vLaguages, sLang); }) + 1;
+        ui->language->insertSeparator(iSeparator);
+        ui->findLanguage->insertSeparator(iSeparator);
+    }
+    ui->language->setCurrentIndex(iCurrentLang);
+
 #ifdef USE_HTTSERVER
     if(pOpds_)
         pOpds_->setLanguageFilter(sCurrentLanguage);
 #endif
-    ui->language->model()->sort(0);
-    ui->findLanguage->model()->sort(0);
     settings->setValue(u"BookLanguage"_s, sCurrentLanguage);
     ui->language->blockSignals(false);
     ui->findLanguage->blockSignals(false);
@@ -1411,26 +1608,46 @@ void MainWindow::fillLanguages()
 void MainWindow::ManageLibrary()
 {
     SaveLibPosition();
+    uint idOldLib = g::idCurrentLib;
     LibrariesDlg al(this);
     al.exec();
     if(al.bLibChanged){
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
+        QFuture<void> future;
+        if(g::idCurrentLib != idOldLib){
+            auto &oldLib = g::libs[idOldLib];
+            if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
+                future = QtConcurrent::run([&oldLib]()
+                {
+                    oldLib.bLoaded = false;
+                    oldLib.books.clear();
+                    oldLib.authors.clear();
+                    oldLib.serials.clear();
+                    oldLib.authorBooksLink.clear();
+                    oldLib.vLaguages.clear();
+                });
+            }
+        }
         loadLibrary(g::idCurrentLib);
 
-        UpdateTags();
         fillLanguages();
+        FillAuthors();
+        FillSerials();
         switch(ui->tabWidget->currentIndex()){
         case TabAuthors:
             onSerachAuthorsChanded(ui->searchAuthor->text());
+            SelectAuthor();
             break;
         case TabSeries:
             onSerachSeriesChanded(ui->searchSeries->text());
+            SelectSeria();
             break;
         }
         updateTitle();
         FillLibrariesMenu();
         FillGenres();
+        future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
 }
@@ -1955,8 +2172,7 @@ void MainWindow::FillSerials()
            IsBookInList(book.second) && (sSearch == u"*" || (sSearch == u"#" && !squences.at(book.second.idSerial).sName.left(1).contains(re)) ||
            squences.at(book.second.idSerial).sName.startsWith(sSearch, Qt::CaseInsensitive)))
         {
-
-                mCounts[book.second.idSerial]++;
+            mCounts[book.second.idSerial]++;
         }
     }
 
@@ -1964,10 +2180,11 @@ void MainWindow::FillSerials()
     for(auto iSequnce :mCounts)
         vIdSequence.push_back(iSequnce.first);
 #ifdef __cpp_lib_execution
-    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
+    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2)
 #else
-    std::sort(vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2){
+    std::sort(vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2)
 #endif
+    {
         return localeStringCompare(squences.at(id1).sName, squences.at(id2).sName);
     });
 
@@ -2071,7 +2288,6 @@ void MainWindow::FillListBooks()
         case 2:
             SelectGenre();
         break;
-
     }
 }
 
@@ -2221,6 +2437,8 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                 ScrollItem = item_book;
         }
     }
+    if(bCollapsed_ && bTreeView_)
+        ui->Books->collapseAll();
     if(ScrollItem)
     {
         ScrollItem->setSelected(true);
@@ -2387,6 +2605,8 @@ void MainWindow::onTreeView()
         aHeadersList_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersTree_);
         ui->Books->header()->setSortIndicatorShown(true);
+        ui->btnCollapseAll->show();
+        ui->btnExpandAll->show();
     }
 }
 
@@ -2403,7 +2623,21 @@ void MainWindow::onListView()
         aHeadersTree_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersList_);
         ui->Books->header()->setSortIndicatorShown(true);
+        ui->btnCollapseAll->hide();
+        ui->btnExpandAll->hide();
     }
+}
+
+void MainWindow::onCollapseAll()
+{
+    ui->Books->collapseAll();
+    bCollapsed_ = true;
+}
+
+void MainWindow::onExpandAll()
+{
+    ui->Books->expandAll();
+    bCollapsed_ = false;
 }
 
 void MainWindow::onUpdateListFont(const QFont &font)

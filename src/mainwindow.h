@@ -61,7 +61,9 @@ private:
     std::vector<uint> getCheckedBooks(bool bCheckedOnly = false);
     void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, std::vector<uint> *pList);
     QList<QTreeWidgetItem *> checkedItemsBookList(const QTreeWidgetItem *item = nullptr);
-    void setTag(uint idTag, uint id, std::vector<uint> &vIdTags, QString sTable, bool bSet);
+    void setTagAuthor(uint idTag, uint idAuthor, bool bSet);
+    void setTagBook(uint idTag, uint idBook, bool bSet);
+    void setTagSequence(uint idTag, uint idSequence, bool bSet);
     void updateIcons();
     void updateItemIcon(QTreeWidgetItem *item);
     QIcon getTagIcon(const std::vector<uint> &vIdTags);
@@ -81,6 +83,7 @@ private:
     std::vector<uint> vBooks_;
     CoverLabel *pCover;
     bool bTreeView_;
+    bool bCollapsed_;
     QByteArray aHeadersTree_;
     QByteArray aHeadersList_;
     enum TabIndex{TabAuthors = 0, TabSeries = 1, TabGenres = 2, TabSearch = 3};
@@ -91,7 +94,7 @@ private:
     QThread *pThread_;
 
 protected:
-    void showEvent(QShowEvent *ev) override;
+    // void showEvent(QShowEvent *ev) override;
     void closeEvent(QCloseEvent *event) override;
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
@@ -142,6 +145,8 @@ private slots:
     void onChangeAlpabet(const QString &sAlphabetName);
     void onTreeView();
     void onListView();
+    void onCollapseAll();
+    void onExpandAll();
     void onUpdateListFont(const QFont &font);
     void onUpdateAnnotationFont(const QFont &font);
 

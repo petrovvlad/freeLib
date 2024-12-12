@@ -170,6 +170,7 @@ struct Options
     std::unordered_map<QString, QString> applications;
     std::unordered_map<QString, ToolsOptions> tools;
     std::vector<ExportOptions> vExportOptions;
+    std::vector<QString> vFavoriteLanguges;
 
 private:
 #if QT_VERSION >= QT_VERSION_CHECK(5, 12, 0)

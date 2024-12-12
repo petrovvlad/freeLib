@@ -6,6 +6,7 @@
 #include <QStringBuilder>
 #include <QSharedPointer>
 #include <QFont>
+#include <algorithm>
 #include <unordered_set>
 #if QT_VERSION >= QT_VERSION_CHECK(5, 15, 0)
 #include <QPasswordDigestor>
@@ -446,6 +447,8 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
 #endif
     }
     pSettings->endArray();
+    auto listFavoriteLang = pSettings->value(u"favoriteLanguges"_s).toStringList();
+    std::ranges::copy(listFavoriteLang, std::back_inserter(vFavoriteLanguges));
 }
 
 void Options::Save(QSharedPointer<QSettings> pSettings)

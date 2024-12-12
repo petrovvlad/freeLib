@@ -57,15 +57,26 @@ uint ImportThread::AddSeria(const QString &str, qlonglong libID, const QVariantL
         MyDBG << queryInsertSeria_.lastError().text();
     uint id = queryInsertSeria_.lastInsertId().toLongLong();
 
-    if(pTags != nullptr && pTags->size()>0){
-        QVariantList listSerials;
-        for(int i=0; i<pTags->size(); ++i)
-            listSerials << id;
-        query_.prepare(QStringLiteral("INSERT INTO seria_tag(id_seria, id_tag) values(:idSeria, :idTag)"));
-        query_.bindValue(QStringLiteral(":idSeria"), listSerials);
-        query_.bindValue(QStringLiteral(":idTag"), *pTags);
-        if(!query_.execBatch())
-            MyDBG << query_.lastError().text();
+    QVariantList lTags;
+    if(pTags != nullptr )
+        lTags = *pTags;
+    if(mSequenceTags_.contains(name)){
+        const auto &vTags = mSequenceTags_.at(name);
+        std::ranges::copy(vTags, std::back_inserter(lTags));
+    }
+
+    if(lTags.size()>0){
+        QVariantList listIdSequence;
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        listIdSequence.fill(id, lTags.size());
+#else
+        for(int i=0; i<lTags.size(); ++i)
+            listIdSequence << id;
+#endif
+        queryInsertSequennceTag_.bindValue(QStringLiteral(":idSeria"), listIdSequence);
+        queryInsertSequennceTag_.bindValue(QStringLiteral(":idTag"), lTags);
+        if(!queryInsertSequennceTag_.execBatch())
+            MyDBG << queryInsertSequennceTag_.lastError().text();
     }
     return id;
 }
@@ -87,44 +98,57 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
         idAuthor = query_.value(0).toLongLong();
     }
 #endif
+    QVariantList lTags;
+    if(pTags != nullptr )
+        lTags = *pTags;
+
     if(idAuthor == 0)
     {
-        queryInsertAuthor_.bindValue(QStringLiteral(":name1"), author.sLastName);
-        queryInsertAuthor_.bindValue(QStringLiteral(":name2"), author.sFirstName);
-        queryInsertAuthor_.bindValue(QStringLiteral(":name3"), author.sMiddleName);
-        queryInsertAuthor_.bindValue(QStringLiteral(":id_lib"), libID);
+        queryInsertAuthor_.bindValue(u":name1"_s, author.sLastName);
+        queryInsertAuthor_.bindValue(u":name2"_s, author.sFirstName);
+        queryInsertAuthor_.bindValue(u":name3"_s, author.sMiddleName);
+        queryInsertAuthor_.bindValue(u":id_lib"_s, libID);
         if(!queryInsertAuthor_.exec())
             MyDBG << queryInsertAuthor_.lastError().text();
         idAuthor = queryInsertAuthor_.lastInsertId().toLongLong();
+        if(mAuthorsTags_.contains(author.getName()))
+        {
+            const auto &vTags = mAuthorsTags_.at(author.getName());
+            std::ranges::copy(vTags, std::back_inserter(lTags));
+        }
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-        hashAuthors_[author] = idAuthor;
+        hashAuthors_[author] = idAuthor;       
 #endif
     }
     else
     {
     }
     if(bFirstAuthor){
-        if(!query_.exec(QStringLiteral("UPDATE book SET first_author_id=") + QString::number(idAuthor) + QStringLiteral(" WHERE id=") + QString::number(idBook)))
+        if(!query_.exec(u"UPDATE book SET first_author_id="_s % QString::number(idAuthor) % u" WHERE id="_s % QString::number(idBook)))
             MyDBG << query_.lastError().text();
     }
 
-    queryInsertBookAuthor_.bindValue(QStringLiteral(":idBook"), idBook);
-    queryInsertBookAuthor_.bindValue(QStringLiteral(":idAuthor"), idAuthor);
-    queryInsertBookAuthor_.bindValue(QStringLiteral(":idLib"), libID);
+    queryInsertBookAuthor_.bindValue(u":idBook"_s, idBook);
+    queryInsertBookAuthor_.bindValue(u":idAuthor"_s, idAuthor);
+    queryInsertBookAuthor_.bindValue(u":idLib"_s, libID);
     if(!queryInsertBookAuthor_.exec()){
         MyDBG << queryInsertBookAuthor_.lastError().text();
         return 0;
     }
 
-    if(pTags != nullptr && pTags->size()>0){
+    if(lTags.size()>0){
         QVariantList listAuthors;
-        for(int i=0; i<pTags->size(); ++i)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        listAuthors.fill(idAuthor, lTags.size());
+#else
+        for(int i=0; i<lTags.size(); ++i)
             listAuthors << idAuthor;
-        query_.prepare(QStringLiteral("INSERT INTO author_tag(id_author, id_tag) values(:idAuthor, :idTag)"));
-        query_.bindValue(QStringLiteral(":idAuthor"), listAuthors);
-        query_.bindValue(QStringLiteral(":idTag"), *pTags);
-        if(!query_.execBatch())
-            MyDBG << query_.lastError().text();
+#endif
+        queryInsertAuthorTag_.bindValue(u":idAuthor"_s, listAuthors);
+        queryInsertAuthorTag_.bindValue(u":idTag"_s, lTags);
+        if(!queryInsertAuthorTag_.execBatch())
+            MyDBG << queryInsertAuthorTag_.lastError().text();
     }
     return idAuthor;
 }
@@ -166,15 +190,26 @@ uint ImportThread::AddBook(qlonglong star, QString &name, qlonglong id_seria, in
 
     uint id = queryInsertBook_.lastInsertId().toUInt();
 
-    if(pTags != nullptr && pTags->size()>0){
+    QVariantList lTags;
+    if(pTags != nullptr )
+        lTags = *pTags;
+    if(mBooksTags_.contains(IDinLib)){
+        auto &vTags = mBooksTags_.at(IDinLib);
+        std::ranges::copy(vTags, std::back_inserter(lTags));
+    }
+
+    if(lTags.size()>0){
         QVariantList listIdBook;
-        for(int i=0; i<pTags->size(); ++i)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
+        listIdBook.fill(id, lTags.size());
+#else
+        for(int i=0; i<lTags.size(); ++i)
             listIdBook << id;
-        query_.prepare(QStringLiteral("INSERT INTO book_tag(id_book, id_tag) values(:idBook, :idTag)"));
-        query_.bindValue(QStringLiteral(":idBook"), listIdBook);
-        query_.bindValue(QStringLiteral(":idTag"), *pTags);
-        if(!query_.execBatch())
-            MyDBG << query_.lastError().text();
+#endif
+        queryInsertBookTag_.bindValue(u":idBook"_s, listIdBook);
+        queryInsertBookTag_.bindValue(u":idTag"_s, lTags);
+        if(!queryInsertBookTag_.execBatch())
+            MyDBG << queryInsertBookTag_.lastError().text();
     }
     return id;
 }
@@ -226,7 +261,6 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
             stIdBookInLib_.reserve(lib.books.size());
             for(const auto &book :lib.books)
                 stIdBookInLib_.insert(book.second.idInLib);
-
         }
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
@@ -246,10 +280,27 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
                 hashAuthors_[author] = idAuthor;
             }
         }else{
-            for(const auto &iAuthor :lib.authors)
+            for(const auto &iAuthor :lib.authors){
                 hashAuthors_[iAuthor.second] = iAuthor.first;
+            }
         }
 #endif
+    }
+    if(nUpdateType_ == UT_FULL){
+        for(const auto &[idAuthor, author] :lib.authors){
+            if(!author.vIdTags.empty())
+                mAuthorsTags_[author.getName()] = std::move(author.vIdTags);
+        }
+
+        for(const auto &[idBook, book] :lib.books){
+            if(!book.vIdTags.empty() && book.idInLib!=0)
+                mBooksTags_[book.idInLib] = std::move(book.vIdTags);
+        }
+
+        for(const auto &[idSequence, sequence] :lib.serials){
+            if(!sequence.vIdTags.empty())
+                mSequenceTags_[sequence.sName] = std::move(sequence.vIdTags);
+        }
     }
 }
 
@@ -321,7 +372,7 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
 
     qlonglong id_seria = AddSeria(sSeria, idLib_);
     qlonglong id_book = AddBook(0, sTitle, id_seria, numInSerial, file_name, (file_size == 0 ?ba.size() :file_size), 0, false, fi.suffix(), QDate::currentDate(),
-                                sLanguage, QStringLiteral(""), idLib_, arh_name);
+                                sLanguage, u""_s, idLib_, arh_name);
 
     bool first_author = true;
     for(const SAuthor &author: vAuthors)
@@ -443,8 +494,8 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
     {
         return;
     }
-    uint idBook = AddBook(0, sTitle, 0, 0, file_name, (file_size == 0 ?ba.size() :file_size), 0, false, QStringLiteral("epub"), QDate::currentDate(),
-                                sLanguage, QStringLiteral(""), idLib_, arh_name);
+    uint idBook = AddBook(0, sTitle, 0, 0, file_name, (file_size == 0 ?ba.size() :file_size), 0, false, u"epub"_s, QDate::currentDate(),
+                                sLanguage, u""_s, idLib_, arh_name);
 
     bool first_author = true;
     for(const SAuthor &author: vAuthors)
@@ -677,6 +728,16 @@ void ImportThread::process()
     queryInsertBookGenre_ = QSqlQuery(dbase);
     queryInsertBookGenre_.prepare(QStringLiteral("INSERT OR IGNORE INTO book_genre(id_book,id_genre,id_lib) values(:idBook,:idGenre,:idLib);"));
 
+    queryInsertAuthorTag_ = QSqlQuery(dbase);
+    queryInsertAuthorTag_.prepare(u"INSERT INTO author_tag (id_author,id_tag) VALUES(:idAuthor, :idTag)"_s);
+
+    queryInsertBookTag_ = QSqlQuery(dbase);
+    queryInsertBookTag_.prepare(u"INSERT INTO book_tag(id_book, id_tag) values(:idBook, :idTag)"_s);
+
+    queryInsertSequennceTag_ = QSqlQuery(dbase);
+    queryInsertSequennceTag_.prepare(u"INSERT INTO seria_tag(id_seria, id_tag) values(:idSeria, :idTag)"_s);
+
+
     if(!listFiles_.isEmpty()){
         QFileInfoList listFilInfo;
         listFilInfo.reserve(listFiles_.count());
@@ -854,9 +915,11 @@ void ImportThread::process()
         outbuff.setData(zip_file.readAll());
         zip_file.close();
         const QStringList lines = (QString::fromUtf8(outbuff.data())).split('\n');
+        uint iLine = 0;
         uint count = 0;
         for(const auto &line: lines)
         {
+            iLine++;
             if(line.isEmpty())
                 continue;
 
@@ -1072,7 +1135,13 @@ void ImportThread::process()
                 nBooksCount++;
                 if(count == 500)
                 {
-                    emit progress(nBooksCount, (float)(i - iStart)/(float)(listInpFiles.count() - iStart));
+                    float fProgress;
+                    if(listInpFiles.count()>1)
+                        fProgress = (float)(i - iStart)/(float)(listInpFiles.count() - iStart);
+                    else
+                        fProgress = (float)(iLine - iStart)/(float)(lines.count() - iStart);
+
+                    emit progress(nBooksCount, fProgress);
                     count = 0;
                 }
             }
