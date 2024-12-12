@@ -87,12 +87,13 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
     uint idAuthor = hashAuthors_[author];
 #else
     uint idAuthor = 0;
-    QString sQuery = QStringLiteral("SELECT id FROM author WHERE id_lib=%1 and %2 and %3 and %4").arg(
+    QString sQuery = u"SELECT id FROM author WHERE id_lib=%1 and %2 and %3 and %4"_s.arg(
                 QString::number(libID),
-                (author.sLastName.isEmpty() ?QStringLiteral("(name1 is null or name1=\"\")") :(QStringLiteral("name1=\"") + author.sLastName + QStringLiteral("\""))),
-                (author.sFirstName.isEmpty() ?QStringLiteral("(name2 is null or name2=\"\")") :(QStringLiteral("name2=\"") + author.sFirstName + QStringLiteral("\""))),
-                (author.sMiddleName.isEmpty() ?QStringLiteral("(name3 is null or name3=\"\")") :(QStringLiteral("name3=\"") + author.sMiddleName + QStringLiteral("\""))));
-    query_.exec(sQuery);
+                (author.sLastName.isEmpty() ?u"(name1 is null or name1='')"_s :(u"name1='"_s % author.sLastName % u"'"_s)),
+                (author.sFirstName.isEmpty() ?u"(name2 is null or name2='')"_s :(u"name2='"_s % author.sFirstName % u"'"_s)),
+                (author.sMiddleName.isEmpty() ?u"(name3 is null or name3='')"_s :(u"name3='"_s % author.sMiddleName % u"'"_s)));
+    if(query_.exec(sQuery))
+        MyDBG << query_.lastError().text();
     if(query_.next())
     {
         idAuthor = query_.value(0).toLongLong();
