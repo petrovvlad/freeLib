@@ -26,17 +26,20 @@ public:
 
 };
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 template <>
 struct std::hash<SAuthor>
 {
     std::size_t operator()(const SAuthor& k, size_t seed = 0) const noexcept
     {
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         return qHashMulti(seed, k.sFirstName, k.sMiddleName, k.sLastName);
+#else
+        return static_cast<std::size_t>(qHash(k.sFirstName, seed)) << 32 ^
+               static_cast<std::size_t>(qHash(k.sMiddleName, seed)) << 16 ^
+               static_cast<std::size_t>(qHash(k.sLastName, seed));
+#endif
     }
 };
-#endif
-
 
 struct SBook
 {

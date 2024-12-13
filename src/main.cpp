@@ -347,7 +347,7 @@ int main(int argc, char *argv[])
                 if(g::libs.contains(nId)){
                     auto thread = new QThread;
                     auto imp_tr = new ImportThread();
-                    const SLib &lib = g::libs[nId];
+                    SLib &lib = g::libs[nId];
 
                     imp_tr->init(nId, lib, UT_NEW);
                     imp_tr->moveToThread(thread);

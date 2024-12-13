@@ -18,8 +18,8 @@ class ImportThread : public QObject
     Q_OBJECT
 public:
     explicit ImportThread(QObject *parent = 0);
-    void init(uint id, const SLib &lib, uchar nUpdateType);
-    void init(uint id, const SLib &lib, const QStringList &files);
+    void init(uint id, SLib &lib, uchar nUpdateType);
+    void init(uint id, SLib &lib, const QStringList &files);
 signals:
     void progress(uint nAddedBooks, float fProgress);
     void End();
@@ -44,14 +44,12 @@ private:
     bool bWoDeleted_;
     std::atomic_bool stopped_;
     std::unordered_set<uint> stIdBookInLib_;
-    std::unordered_map<QString, std::vector<uint>> mAuthorsTags_;
+    std::unordered_set<SAuthor> stTagetAuthors_;
+    std::unordered_map<SAuthor, uint> hashAuthors_;
     std::unordered_map<uint, std::vector<uint>> mBooksTags_;
     std::unordered_map<QString, std::vector<uint>> mSequenceTags_;
 
     QStringList listFiles_;
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-    std::unordered_map<SAuthor, uint> hashAuthors_;
-#endif
     QSqlQuery query_;
     QSqlQuery queryInsertBook_;
     QSqlQuery queryInsertAuthor_;

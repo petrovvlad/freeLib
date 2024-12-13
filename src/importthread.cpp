@@ -83,22 +83,7 @@ uint ImportThread::AddSeria(const QString &str, qlonglong libID, const QVariantL
 
 uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags)
 {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     uint idAuthor = hashAuthors_[author];
-#else
-    uint idAuthor = 0;
-    QString sQuery = u"SELECT id FROM author WHERE id_lib=%1 and %2 and %3 and %4"_s.arg(
-                QString::number(libID),
-                (author.sLastName.isEmpty() ?u"(name1 is null or name1='')"_s :(u"name1='"_s % author.sLastName % u"'"_s)),
-                (author.sFirstName.isEmpty() ?u"(name2 is null or name2='')"_s :(u"name2='"_s % author.sFirstName % u"'"_s)),
-                (author.sMiddleName.isEmpty() ?u"(name3 is null or name3='')"_s :(u"name3='"_s % author.sMiddleName % u"'"_s)));
-    if(query_.exec(sQuery))
-        MyDBG << query_.lastError().text();
-    if(query_.next())
-    {
-        idAuthor = query_.value(0).toLongLong();
-    }
-#endif
     QVariantList lTags;
     if(pTags != nullptr )
         lTags = *pTags;
@@ -112,15 +97,13 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
         if(!queryInsertAuthor_.exec())
             MyDBG << queryInsertAuthor_.lastError().text();
         idAuthor = queryInsertAuthor_.lastInsertId().toLongLong();
-        if(mAuthorsTags_.contains(author.getName()))
+        auto it = stTagetAuthors_.find(author);
+        if(it != stTagetAuthors_.end())
         {
-            const auto &vTags = mAuthorsTags_.at(author.getName());
+            const auto &vTags = it->vIdTags;
             std::ranges::copy(vTags, std::back_inserter(lTags));
         }
-
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         hashAuthors_[author] = idAuthor;       
-#endif
     }
     else
     {
@@ -231,7 +214,7 @@ void ImportThread::AddGenre(uint idBook, const QString &sGenre, uint idLib)
         qDebug() << "Неизвестный жанр: " + sGenre;
 }
 
-void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
+void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
 {
     sInpxFile_ = RelativeToAbsolutePath(lib.sInpx);
     if(!QFileInfo::exists(sInpxFile_) || !QFileInfo(sInpxFile_).isFile())
@@ -264,12 +247,11 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
                 stIdBookInLib_.insert(book.second.idInLib);
         }
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
         if(lib.authors.empty()){
             QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
             query.setForwardOnly(true);
             query.prepare(QStringLiteral("SELECT id, name1, name2, name3 FROM author WHERE id_lib=:idLib;"));
-            //                                     0          1      2      3
+            //                                   0   1      2      3
             query.bindValue(QStringLiteral(":idLib"), idLib_);
             query.exec();
             while (query.next()) {
@@ -285,12 +267,11 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
                 hashAuthors_[iAuthor.second] = iAuthor.first;
             }
         }
-#endif
     }
     if(nUpdateType_ == UT_FULL){
-        for(const auto &[idAuthor, author] :lib.authors){
+        for(auto &[idAuthor, author] :lib.authors){
             if(!author.vIdTags.empty())
-                mAuthorsTags_[author.getName()] = std::move(author.vIdTags);
+                stTagetAuthors_.insert(std::move(author));
         }
 
         for(const auto &[idBook, book] :lib.books){
@@ -305,7 +286,7 @@ void ImportThread::init(uint id, const SLib &lib, uchar nUpdateType)
     }
 }
 
-void ImportThread::init(uint id, const SLib &lib, const QStringList &files)
+void ImportThread::init(uint id, SLib &lib, const QStringList &files)
 {
     idLib_ = id;
     listFiles_ = files;

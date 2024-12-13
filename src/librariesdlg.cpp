@@ -177,7 +177,7 @@ void LibrariesDlg::StartImport()
         delete lib;
 }
 
-void LibrariesDlg::StartImport(const SLib &lib)
+void LibrariesDlg::StartImport(SLib &lib)
 {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 
