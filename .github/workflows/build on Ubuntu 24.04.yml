@@ -16,7 +16,7 @@ jobs:
         with:
           submodules: true
       - name: Install Dependencies
-        run: "sudo DEBIAN_FRONTEND=noninteractive apt-get update\nsudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg libquazip1-qt6-dev libdjvulibre-dev libtbb-dev qtkeychain-qt6-dev\n  \n"
+        run: "sudo DEBIAN_FRONTEND=noninteractive apt-get update\nsudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libdjvulibre-dev libtbb-dev qtkeychain-qt6-dev\n  \n"
       - name: Configure CMake
         # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
         # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
