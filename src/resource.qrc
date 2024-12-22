@@ -11,28 +11,20 @@
         <file>img/tray1.png</file>
         <file>img/tray2.png</file>
         <file>img/tray0.png</file>
-        <file>img/icons/dark/checkbox.svg</file>
-        <file>img/icons/dark/book.svg</file>
-        <file>img/icons/dark/library.svg</file>
-        <file>img/icons/dark/pen.svg</file>
-        <file>img/icons/dark/settings.svg</file>
-        <file>img/icons/dark/streamline.svg</file>
-        <file>img/icons/light/book.svg</file>
-        <file>img/icons/light/checkbox.svg</file>
-        <file>img/icons/light/library.svg</file>
-        <file>img/icons/light/pen.svg</file>
-        <file>img/icons/light/settings.svg</file>
-        <file>img/icons/light/streamline.svg</file>
-        <file>img/icons/dark/plus.svg</file>
-        <file>img/icons/dark/minus.svg</file>
-        <file>img/icons/light/minus.svg</file>
-        <file>img/icons/light/plus.svg</file>
-        <file>img/icons/dark/up.svg</file>
-        <file>img/icons/dark/down.svg</file>
-        <file>img/icons/light/up.svg</file>
-        <file>img/icons/light/down.svg</file>
-        <file>img/icons/dark/close.svg</file>
-        <file>img/icons/light/close.svg</file>
+        <file>img/icons/checkbox.svg</file>
+        <file>img/icons/book.svg</file>
+        <file>img/icons/settings-configure.svg</file>
+        <file>img/icons/list-add.svg</file>
+        <file>img/icons/list-remove.svg</file>
+        <file>img/icons/close.svg</file>
+        <file>img/icons/library.svg</file>
+        <file>img/icons/view-list-details.svg</file>
+        <file>img/icons/view-list-tree.svg</file>
+        <file>img/icons/collapse-all.svg</file>
+        <file>img/icons/expand-all.svg</file>
+        <file>img/icons/document-send.svg</file>
+        <file>img/icons/multitags.svg</file>
+
         <file alias="language/abc_ru.txt">ABC/abc_ru.txt</file>
         <file alias="language/abc_uk.txt">ABC/abc_uk.txt</file>
         <file>xsl/hyphenations/de.txt</file>
@@ -56,57 +48,17 @@
         <file>xsl/opds/favicon.ico</file>
         <file>xsl/opds/icon_256x256.png</file>
         <file>xsl/opds/splash_opera.png</file>
-        <file>img/icons/dark/multitags.svg</file>
-        <file>img/icons/light/multitags.svg</file>
-        <file>img/icons/dark/view-list.svg</file>
-        <file>img/icons/dark/view-tree.svg</file>
-        <file>img/icons/light/view-list.svg</file>
-        <file>img/icons/light/view-tree.svg</file>
-        <file>img/icons/dark/send.svg</file>
-        <file>img/icons/light/send.svg</file>
         <file>xsl/opds/styles.css</file>
         <file>xsl/opds/download.svg</file>
-    </qresource>
-    <qresource prefix="/icons">
-        <file>img/icons/settings.png</file>
-        <file>img/icons/settings@2x.png</file>
-        <file>img/icons/arrow_sans_up.png</file>
-        <file>img/icons/arrow_sans_up@2x.png</file>
-        <file>img/icons/arrow_sans_down.png</file>
-        <file>img/icons/arrow_sans_down@2x.png</file>
-        <file>img/icons/close.png</file>
-        <file>img/icons/close@2x.png</file>
-        <file>img/icons/Streamline_big.png</file>
-        <file>img/icons/Streamline_big@2x.png</file>
-        <file>img/icons/Streamline@2x.png</file>
-        <file>img/icons/Streamline.png</file>
-        <file>img/icons/book.png</file>
-        <file>img/icons/book@2x.png</file>
-        <file>img/icons/contact_big.png</file>
-        <file>img/icons/contact_big@2x.png</file>
-        <file>img/icons/contact.png</file>
-        <file>img/icons/contact@2x.png</file>
-        <file>img/icons/library.png</file>
-        <file>img/icons/library@2x.png</file>
-        <file>img/icons/clear.png</file>
-        <file>img/icons/clear@2x.png</file>
-        <file>img/icons/minus.png</file>
-        <file>img/icons/minus@2x.png</file>
-        <file>img/icons/plus.png</file>
-        <file>img/icons/plus@2x.png</file>
-        <file>img/icons/checkbox@2x.png</file>
-        <file>img/icons/open.png</file>
-        <file>img/icons/open@2x.png</file>
-        <file>img/icons/save.png</file>
-        <file>img/icons/save@2x.png</file>
-        <file>img/icons/pen_alt_fill.png</file>
-        <file>img/icons/pen_alt_fill@2x.png</file>
+
         <file>img/icons/stars/0star.svg</file>
         <file>img/icons/stars/1star.svg</file>
         <file>img/icons/stars/2star.svg</file>
         <file>img/icons/stars/3star.svg</file>
         <file>img/icons/stars/4star.svg</file>
         <file>img/icons/stars/5star.svg</file>
+    </qresource>
+    <qresource prefix="/icons">
         <file>img/icons/freelib.png</file>
     </qresource>
 </RCC>

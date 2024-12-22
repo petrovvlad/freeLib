@@ -11,34 +11,6 @@
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg">
-  <sodipodi:namedview
-     id="namedview8"
-     pagecolor="#ffffff"
-     bordercolor="#666666"
-     borderopacity="1.0"
-     inkscape:pageshadow="2"
-     inkscape:pageopacity="0.0"
-     inkscape:pagecheckerboard="true"
-     showgrid="false"
-     inkscape:zoom="1.9792945"
-     inkscape:cx="68.711352"
-     inkscape:cy="108.62456"
-     inkscape:window-width="1859"
-     inkscape:window-height="1049"
-     inkscape:window-x="61"
-     inkscape:window-y="0"
-     inkscape:window-maximized="1"
-     inkscape:current-layer="svg6" />
-  <defs
-     id="defs3051">
-    <style
-       type="text/css"
-       id="current-color-scheme">
-      .ColorScheme-Text {
-        color:#232629;
-      }
-      </style>
-  </defs>
   <rect
      style="fill:none;stroke:#000000;stroke-width:16;stroke-linecap:square;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none"
      id="rect1053"
@@ -55,18 +27,18 @@
      y="158" />
   <path
      style="fill:#ff0000;stroke:#000000;stroke-width:16;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     d="M 128,8 H 255.99999"
+     d="M 128,8 H 256"
      id="path1400" />
   <path
      style="fill:#ff0000;stroke:#000000;stroke-width:16;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     d="M 128,72 H 255.99999"
+     d="M 128,72 H 256"
      id="path1482" />
   <path
      style="fill:#ff0000;stroke:#000000;stroke-width:16;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     d="m 128,157.99999 h 85.99999"
+     d="m 128,158 h 86"
      id="path1517" />
   <path
      style="fill:#ff0000;stroke:#000000;stroke-width:16;stroke-linecap:butt;stroke-linejoin:miter;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
-     d="m 128,222 h 85.99999"
+     d="m 128,222 h 86"
      id="path1712" />
 </svg>

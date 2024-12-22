@@ -10,6 +10,7 @@
 #include <QTextCodec>
 #include <QLibraryInfo>
 #include <QProcess>
+#include <QSvgRenderer>
 
 #include "options.h"
 #include "config-freelib.h"
@@ -411,3 +412,25 @@ bool localeStringCompare(const QString &str1, const QString &str2)
     return collator.compare(str1, str2) < 0;
 }
 
+QIcon themedIcon(const QString &sIcon)
+{
+    if(QIcon::hasThemeIcon(sIcon))
+        return QIcon::fromTheme(sIcon);
+
+    QSvgRenderer svgRenderer(u":/img/icons/"_s % sIcon % u".svg"_s);
+    QPixmap pixmap(32, 32); // Размер иконки
+    pixmap.fill(Qt::transparent); // Заполняем прозрачным цветом
+    QPainter painter(&pixmap);
+    painter.setBrush(Qt::white);
+    painter.setPen(Qt::white);
+
+    QPalette palette = QApplication::palette();
+    painter.setRenderHint(QPainter::Antialiasing);
+    svgRenderer.render(&painter);
+    if (palette.color(QPalette::Window).lightness() < 128){
+        painter.setCompositionMode(QPainter::/*CompositionMode_SourceAtop*/CompositionMode_SourceIn);
+        painter.fillRect(pixmap.rect(), Qt::white);
+    }
+
+    return QIcon(pixmap);
+}

@@ -163,15 +163,14 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->Books->header()->restoreState(aHeadersList_);
     ui->Books->header()->setSortIndicatorShown(true);
 
-    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
-    ui->btnOpenBook->setIcon(QIcon(sIconsPath + u"book.svg"_s));
-    ui->btnEdit->setIcon(QIcon::fromTheme(u"document-edit"_s, QIcon(sIconsPath + u"pen.svg"_s)));
-    ui->btnCheck->setIcon(QIcon::fromTheme(u"checkbox"_s, QIcon(sIconsPath + u"checkbox.svg"_s)));
-    ui->btnLibrary->setIcon(QIcon(sIconsPath + u"library.svg"_s));
-    ui->btnOption->setIcon(QIcon::fromTheme(u"settings-configure"_s, QIcon(sIconsPath + u"settings.svg"_s)));
-    ui->btnTreeView->setIcon(QIcon(sIconsPath + u"view-tree.svg"_s));
-    ui->btnListView->setIcon(QIcon(sIconsPath + u"view-list.svg"_s));
+    ui->btnOpenBook->setIcon(themedIcon(u"book"_s));
+    ui->btnCheck->setIcon(themedIcon(u"checkbox"_s));
+    ui->btnLibrary->setIcon(themedIcon(u"library"_s));
+    ui->btnOption->setIcon(themedIcon(u"settings-configure"_s));
+    ui->btnTreeView->setIcon(themedIcon(u"view-list-tree"_s));
+    ui->btnListView->setIcon(themedIcon(u"view-list-details"_s));
+    ui->btnCollapseAll->setIcon(themedIcon(u"collapse-all"_s));
+    ui->btnExpandAll->setIcon(themedIcon(u"expand-all"_s));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
@@ -331,8 +330,8 @@ void MainWindow::UpdateTags()
     group->setExclusive(true);
 
     iconsTags_.clear();
-    QString sMultiTagsIcon = QStringLiteral(":/img/icons/") +(darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/")) + QStringLiteral("multitags.svg");
-    iconsTags_[0] = QIcon(sMultiTagsIcon);
+    iconsTags_[0] = themedIcon(u"multitags"_s);
+
     QMap<uint, QIcon> icons;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec(QStringLiteral("SELECT id, light_theme, dark_theme FROM icon"));
@@ -377,7 +376,7 @@ void MainWindow::UpdateTags()
         if(bLatin1)
             sTagName = TagDialog::tr(sTagName.toLatin1().data());
         ui->TagFilter->addItem(sTagName, idTag);
-        if(settings->value(QStringLiteral("current_tag")).toInt() == ui->TagFilter->count()-1 && g::options.bUseTag)
+        if(settings->value(u"current_tag"_s).toInt() == ui->TagFilter->count()-1 && g::options.bUseTag)
             ui->TagFilter->setCurrentIndex(ui->TagFilter->count()-1);
         QAction *ac;
         uint idIcon = query.value(2).toUInt();
@@ -2521,16 +2520,11 @@ void MainWindow::UpdateExportMenu()
     QFont font(ui->btnExport->defaultAction()->font());
     font.setBold(true);
     ui->btnExport->defaultAction()->setFont(font);
-
-    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
-    ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+    ui->btnExport->setIcon(themedIcon(u"document-send"_s));
 
     //костыль предотвращающий изменение иконки
     connect(ui->btnExport->defaultAction(), &QAction::changed, this, [this](){
-        bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-        QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
-        ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+        ui->btnExport->setIcon(themedIcon(u"document-send"_s));
     });
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);
 }

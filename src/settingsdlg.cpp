@@ -38,10 +38,8 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
         ui->ApplicationList->horizontalHeader()->restoreState(settings->value(u"SettingsWndApplicationList_headers/geometry"_s).toByteArray());
     }
 
-    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
-    ui->AddExport->setIcon(QIcon::fromTheme(u"list-add"_s, QIcon(sIconsPath + u"plus.svg"_s)));
-    ui->DelExport->setIcon(QIcon::fromTheme(u"list-remove"_s, QIcon(sIconsPath + u"minus.svg"_s)));
+    ui->AddExport->setIcon(themedIcon(u"list-add"_s));
+    ui->DelExport->setIcon(themedIcon(u"list-remove"_s));
     ui->btnOpenExport->setIcon(style()->standardIcon(QStyle::SP_DialogOpenButton));
     ui->btnSaveExport->setIcon(style()->standardIcon(QStyle::SP_DialogSaveButton));
 

@@ -4,14 +4,13 @@
 #include <QString>
 #include <QSqlDatabase>
 #include <QSettings>
-#include <QtConcurrent>
+#include <QtConcurrent/QtConcurrentFilter>
 
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazip.h"
 #else
 #include <quazip/quazip.h>
 #endif
-
 
 #define MyDBG (qDebug()<<__FILE__<<__LINE__<<__PRETTY_FUNCTION__)
 
@@ -71,6 +70,7 @@ QSharedPointer<QSettings> GetSettings(bool bReopen = false);
 void setLocale(const QString &sLocale);
 bool setCurrentZipFileName(QuaZip *zip, const QString &name);
 bool kindlegenInstalled();
+QIcon themedIcon(const QString &sIcon);
 
 template <typename T, typename SequenceType, typename KeepFunctor>
 std::vector<T> blockingFiltered(const std::unordered_map<T, SequenceType> &sequence, KeepFunctor &&keep)

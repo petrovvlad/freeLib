@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Generator: Adobe Illustrator 17.1.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 
 <svg
    version="1.1"
@@ -11,89 +10,14 @@
    sodipodi:docname="library.svg"
    width="256"
    height="256"
-   inkscape:version="1.1 (c4e8f9ed74, 2021-05-24)"
    xmlns:inkscape="http://www.inkscape.org/namespaces/inkscape"
    xmlns:sodipodi="http://sodipodi.sourceforge.net/DTD/sodipodi-0.dtd"
    xmlns="http://www.w3.org/2000/svg"
    xmlns:svg="http://www.w3.org/2000/svg"
    xmlns:rdf="http://www.w3.org/1999/02/22-rdf-syntax-ns#"
-   xmlns:cc="http://creativecommons.org/ns#"><defs
-   id="defs37" /><sodipodi:namedview
-   id="namedview35"
-   pagecolor="#ffffff"
-   bordercolor="#666666"
-   borderopacity="1.0"
-   inkscape:pageshadow="2"
-   inkscape:pageopacity="0.0"
-   inkscape:pagecheckerboard="true"
-   showgrid="false"
-   width="256px"
-   inkscape:zoom="2"
-   inkscape:cx="42.75"
-   inkscape:cy="174.5"
-   inkscape:window-width="1862"
-   inkscape:window-height="1054"
-   inkscape:window-x="58"
-   inkscape:window-y="0"
-   inkscape:window-maximized="1"
-   inkscape:current-layer="Capa_1"
-   showguides="true"
-   inkscape:guide-bbox="true"
-   inkscape:snap-bbox="false" />
+   xmlns:cc="http://creativecommons.org/ns#">
 
-<g
-   id="g4">
-</g>
-<g
-   id="g6">
-</g>
-<g
-   id="g8">
-</g>
-<g
-   id="g10">
-</g>
-<g
-   id="g12">
-</g>
-<g
-   id="g14">
-</g>
-<g
-   id="g16">
-</g>
-<g
-   id="g18">
-</g>
-<g
-   id="g20">
-</g>
-<g
-   id="g22">
-</g>
-<g
-   id="g24">
-</g>
-<g
-   id="g26">
-</g>
-<g
-   id="g28">
-</g>
-<g
-   id="g30">
-</g>
-<g
-   id="g32">
-</g>
-<metadata
-   id="metadata39"><rdf:RDF><cc:Work
-       rdf:about=""><cc:license
-         rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" /></cc:Work><cc:License
-       rdf:about="http://creativecommons.org/publicdomain/zero/1.0/"><cc:permits
-         rdf:resource="http://creativecommons.org/ns#Reproduction" /><cc:permits
-         rdf:resource="http://creativecommons.org/ns#Distribution" /><cc:permits
-         rdf:resource="http://creativecommons.org/ns#DerivativeWorks" /></cc:License></rdf:RDF></metadata><path
+<path
    style="fill:none;stroke:#000000;stroke-width:6;stroke-linecap:round;stroke-linejoin:round;stroke-opacity:1;stroke-miterlimit:4;stroke-dasharray:none"
    d="M 231.88953,82.164978 252.2805,82.128558 128.08851,12.935793 3.8781161,82.257176 214.78064,82.324778"
    id="path2102"
@@ -213,4 +137,5 @@
    style="fill:none;stroke:#000000;stroke-width:3;stroke-linecap:round;stroke-linejoin:round;stroke-miterlimit:4;stroke-dasharray:none;stroke-opacity:1"
    d="M 128,72 V 67"
    id="path5421"
-   sodipodi:nodetypes="cc" /></svg>
+   sodipodi:nodetypes="cc" />
+</svg>
