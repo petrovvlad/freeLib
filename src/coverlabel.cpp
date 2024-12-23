@@ -12,8 +12,8 @@ CoverLabel::CoverLabel(QWidget *parent)
 void CoverLabel::setImage(const QImage &image)
 {
     if(!image.isNull()){
-        pix = QPixmap::fromImage(image);
-        pix.setDevicePixelRatio(devicePixelRatioF());
+        pix_ = QPixmap::fromImage(image);
+        pix_.setDevicePixelRatio(devicePixelRatioF());
         QLabel::setPixmap(scaledPixmap());
         show();
     }else
@@ -22,18 +22,20 @@ void CoverLabel::setImage(const QImage &image)
 
 QPixmap CoverLabel::scaledPixmap() const
 {
-    return pix.scaledToHeight(this->size().height()*devicePixelRatioF(), Qt::SmoothTransformation);
+    return pix_.scaledToHeight(this->size().height()*devicePixelRatioF(), Qt::SmoothTransformation);
 }
 
 QSize CoverLabel::sizeHint() const
 {
     int h = height();
-    return pix.isNull() ?size() :QSize( (float)h * pix.width() / pix.height(), h );
+    return pix_.isNull() ?size() :QSize( (float)h * pix_.width() / pix_.height(), h );
 }
 
 void CoverLabel::resizeEvent(QResizeEvent */*event*/)
 {
-    if(!pix.isNull())
+    if(!pix_.isNull()){
+        pix_.setDevicePixelRatio(devicePixelRatioF());
         QLabel::setPixmap(scaledPixmap());
+    }
 }
 

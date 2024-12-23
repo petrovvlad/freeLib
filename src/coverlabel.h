@@ -16,7 +16,7 @@ protected:
     void resizeEvent(QResizeEvent *event);
 
 private:
-    QPixmap pix;
+    QPixmap pix_;
 };
 
 #endif // COVERLABEL_H
