@@ -6,6 +6,7 @@
 #include <QDir>
 #include <QDebug>
 #include <QRegularExpression>
+#include <QStringBuilder>
 #include <unordered_set>
 
 #ifdef QUAZIP_STATIC

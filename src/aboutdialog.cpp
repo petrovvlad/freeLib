@@ -1,6 +1,8 @@
 #include "aboutdialog.h"
 #include "ui_aboutdialog.h"
 
+#include <QStringBuilder>
+
 #include "config-freelib.h"
 #include "git-info.h"
 #include "utilites.h"

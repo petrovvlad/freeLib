@@ -2,7 +2,12 @@
 #include "utilites.h"
 
 #include <QFileInfo>
+#include <QCollator>
 #include <QDir>
+#include <QIcon>
+#include <QPainter>
+#include <QPalette>
+#include <QPixmap>
 #include <QSettings>
 #include <QSqlQuery>
 #include <QNetworkProxy>
@@ -421,8 +426,6 @@ QIcon themedIcon(const QString &sIcon)
     QPixmap pixmap(32, 32); // Размер иконки
     pixmap.fill(Qt::transparent); // Заполняем прозрачным цветом
     QPainter painter(&pixmap);
-    painter.setBrush(Qt::white);
-    painter.setPen(Qt::white);
 
     QPalette palette = QApplication::palette();
     painter.setRenderHint(QPainter::Antialiasing);
