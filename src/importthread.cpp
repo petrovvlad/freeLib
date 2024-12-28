@@ -230,9 +230,9 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
         if(lib.books.empty()){
-            QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+            QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
             query.setForwardOnly(true);
-            query.prepare(u"SELECT id FROM book WHERE id_lib=:id_lib;"_s);
+            query.prepare(u"SELECT id_inlib FROM book WHERE id_lib=:id_lib;"_s);
             query.bindValue(u":id_lib"_s,idLib_);
             if(!query.exec())
                 MyDBG << query.lastError().text();
@@ -248,11 +248,11 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
         }
 
         if(lib.authors.empty()){
-            QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+            QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
             query.setForwardOnly(true);
-            query.prepare(QStringLiteral("SELECT id, name1, name2, name3 FROM author WHERE id_lib=:idLib;"));
+            query.prepare(u"SELECT id, name1, name2, name3 FROM author WHERE id_lib=:idLib;"_s);
             //                                   0   1      2      3
-            query.bindValue(QStringLiteral(":idLib"), idLib_);
+            query.bindValue(u":idLib"_s, idLib_);
             query.exec();
             while (query.next()) {
                 uint idAuthor = query.value(0).toUInt();
@@ -916,6 +916,8 @@ void ImportThread::process()
             if(substrings.count() > field_index[_NAME])
             {
                 name = substrings[field_index[_NAME]].trimmed();
+                if(name.isEmpty())
+                    continue;
             }
             QString Seria;
             if(substrings.count() > field_index[_SERIA])
