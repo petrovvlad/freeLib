@@ -97,7 +97,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnEdit->setVisible(false);
     bTreeView_ = true;
     bCollapsed_ = false;
-    bTreeView_ = settings->value(QStringLiteral("TreeView"), true).toBool();
+    bTreeView_ = settings->value(u"TreeView"_s, true).toBool();
+    bCollapsed_ = settings->value(u"collapseAll"_s, false).toBool();
     ui->btnTreeView->setChecked(bTreeView_);
     ui->btnListView->setChecked(!bTreeView_);
     ui->btnCollapseAll->setVisible(bTreeView_);
@@ -2436,8 +2437,13 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                 ScrollItem = item_book;
         }
     }
-    if(bCollapsed_ && bTreeView_)
+    if(bCollapsed_ && bTreeView_){
         ui->Books->collapseAll();
+        if(mAuthorItems.size()==1){
+            auto item = mAuthorItems.begin()->second;
+            item->setExpanded(true);
+        }
+    }
     if(ScrollItem)
     {
         ScrollItem->setSelected(true);
@@ -2625,6 +2631,13 @@ void MainWindow::onListView()
 void MainWindow::onCollapseAll()
 {
     ui->Books->collapseAll();
+    if(ui->Books->topLevelItemCount()==1){
+        auto item = ui->Books->topLevelItem(0);
+        if(item)
+            item->setExpanded(true);
+    }
+    auto settings = GetSettings();
+    settings->setValue(u"collapseAll"_s, true);
     bCollapsed_ = true;
 }
 
@@ -2632,6 +2645,8 @@ void MainWindow::onExpandAll()
 {
     ui->Books->expandAll();
     bCollapsed_ = false;
+    auto settings = GetSettings();
+    settings->setValue(u"collapseAll"_s, false);
 }
 
 void MainWindow::onUpdateListFont(const QFont &font)
