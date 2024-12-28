@@ -3,7 +3,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 configure_file(config-freelib.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/config-freelib.h)
 configure_file(git-info.h.cmake ${CMAKE_CURRENT_BINARY_DIR}/git-info.h)
-set(QT_COMPONENTS Core Network Widgets Gui Sql Xml Concurrent)
+set(QT_COMPONENTS Core Network Widgets Gui Svg Sql Xml Concurrent)
 
 find_package(QT NAMES Qt6 Qt5 QUIET COMPONENTS Core)
 message(STATUS "Found Qt ${QT_VERSION_MAJOR} VERSION")
@@ -164,6 +164,7 @@ endif()
 target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Widgets
     Qt${QT_VERSION_MAJOR}::Network
+    Qt${QT_VERSION_MAJOR}::Svg
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Xml
     Qt${QT_VERSION_MAJOR}::Concurrent    

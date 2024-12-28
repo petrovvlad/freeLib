@@ -162,12 +162,9 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
         ui->tag->addItem(iTag.name);
     }
 
-//    QPalette palette = QApplication::style()->standardPalette();
-//    bool darkTheme = palette.color(QPalette::Window).lightness()<127;
-//    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->Up->setIcon(style()->standardIcon(QStyle::SP_ArrowUp)/*QIcon::fromTheme(QStringLiteral("go-up"),QIcon(sIconsPath + QStringLiteral("up.svg")))*/);
-    ui->Down->setIcon(style()->standardIcon(QStyle::SP_ArrowDown)/*QIcon::fromTheme(QStringLiteral("go-down"),QIcon(sIconsPath + QStringLiteral("down.svg")))*/);
-    ui->del->setIcon(style()->standardIcon(QStyle::SP_DialogDiscardButton)/*QIcon::fromTheme(QStringLiteral("edit-delete"),QIcon(sIconsPath + QStringLiteral("close.svg")))*/);
+    ui->Up->setIcon(style()->standardIcon(QStyle::SP_ArrowUp));
+    ui->Down->setIcon(style()->standardIcon(QStyle::SP_ArrowDown));
+    ui->del->setIcon(style()->standardIcon(QStyle::SP_DialogDiscardButton));
 
     connect(ui->Use, &QAbstractButton::toggled, this, &FontFrame::UseChange);
     connect(ui->del, &QAbstractButton::clicked, this, &FontFrame::DelPress);

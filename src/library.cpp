@@ -375,7 +375,7 @@ uint SLib::findAuthor(SAuthor &author) const
     uint idAuthor = 0;
 #ifdef __cpp_lib_ranges
     auto it = std::ranges::find_if(authors, [&author](const auto &a){
-        return author.sFirstName == a.second.sFirstName && author.sMiddleName == a.second.sMiddleName && author.sLastName == a.second.sLastName;
+        return author == a.second;
     });
     if(it != authors.cend())
         idAuthor = it->first;

@@ -11,6 +11,7 @@
 #include <QSqlQuery>
 #include <QRegularExpression>
 #include <QSqlDatabase>
+#include <QUrl>
 #include <unistd.h>
 
 #ifdef USE_KIO

@@ -17,7 +17,7 @@ class LibrariesDlg : public QDialog
 public:
     explicit LibrariesDlg(QWidget *parent = 0);
     ~LibrariesDlg();
-    void StartImport(const SLib &lib);
+    void StartImport(SLib &lib);
     bool bLibChanged;
     
 private:

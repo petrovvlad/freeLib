@@ -39,10 +39,8 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     layout->setSpacing(0);
     layout->setContentsMargins(0, 0, 0, 0);
 
-    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = QStringLiteral(":/img/icons/") + (darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/"));
-    ui->Add->setIcon(QIcon::fromTheme(QStringLiteral("list-add"), QIcon(sIconsPath + QStringLiteral("plus.svg"))));
-    ui->Del->setIcon(QIcon::fromTheme(QStringLiteral("list-remove"), QIcon(sIconsPath + QStringLiteral("minus.svg"))));
+    ui->Add->setIcon(themedIcon(u"list-add"_s));
+    ui->Del->setIcon(themedIcon(u"list-remove"_s));
 
     idCurrentLib_ = g::idCurrentLib;
     UpdateLibList();
@@ -177,7 +175,7 @@ void LibrariesDlg::StartImport()
         delete lib;
 }
 
-void LibrariesDlg::StartImport(const SLib &lib)
+void LibrariesDlg::StartImport(SLib &lib)
 {
     QApplication::setOverrideCursor(QCursor(Qt::BusyCursor));
 

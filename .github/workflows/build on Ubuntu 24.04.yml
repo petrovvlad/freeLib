@@ -1,35 +1,26 @@
 name: build on Ubuntu 24.04
-
 on:
   push:
-    branches: [ "master", "develop"]
+    branches: ["master", "develop"]
 #  pull_request:
 #    branches: [ "master" ]
 
 env:
   # Customize the CMake build type here (Release, Debug, RelWithDebInfo, etc.)
   BUILD_TYPE: Release
-
 jobs:
   build:
     runs-on: ubuntu-24.04
-
     steps:
-    - uses: actions/checkout@v4
-      with:
-        submodules: true
-
-    - name: Install Dependencies
-      run: |
-        sudo DEBIAN_FRONTEND=noninteractive apt-get update
-        sudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev libdjvulibre-dev libtbb-dev qtkeychain-qt6-dev
-          
-    - name: Configure CMake
-      # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
-      # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
-      run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
-
-    - name: Build
-      # Build your program with the given configuration
-      run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j2
-
+      - uses: actions/checkout@v4
+        with:
+          submodules: true
+      - name: Install Dependencies
+        run: "sudo DEBIAN_FRONTEND=noninteractive apt-get update\nsudo DEBIAN_FRONTEND=noninteractive apt-get install -y build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libdjvulibre-dev libtbb-dev qtkeychain-qt6-dev\n  \n"
+      - name: Configure CMake
+        # Configure CMake in a 'build' subdirectory. `CMAKE_BUILD_TYPE` is only required if you are using a single-configuration generator such as make.
+        # See https://cmake.org/cmake/help/latest/variable/CMAKE_BUILD_TYPE.html?highlight=cmake_build_type
+        run: cmake -B ${{github.workspace}}/build -DCMAKE_BUILD_TYPE=${{env.BUILD_TYPE}}
+      - name: Build
+        # Build your program with the given configuration
+        run: cmake --build ${{github.workspace}}/build --config ${{env.BUILD_TYPE}} -j4

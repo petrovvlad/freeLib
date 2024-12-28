@@ -97,7 +97,8 @@ MainWindow::MainWindow(QWidget *parent) :
     ui->btnEdit->setVisible(false);
     bTreeView_ = true;
     bCollapsed_ = false;
-    bTreeView_ = settings->value(QStringLiteral("TreeView"), true).toBool();
+    bTreeView_ = settings->value(u"TreeView"_s, true).toBool();
+    bCollapsed_ = settings->value(u"collapseAll"_s, false).toBool();
     ui->btnTreeView->setChecked(bTreeView_);
     ui->btnListView->setChecked(!bTreeView_);
     ui->btnCollapseAll->setVisible(bTreeView_);
@@ -163,15 +164,14 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->Books->header()->restoreState(aHeadersList_);
     ui->Books->header()->setSortIndicatorShown(true);
 
-    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
-    ui->btnOpenBook->setIcon(QIcon(sIconsPath + u"book.svg"_s));
-    ui->btnEdit->setIcon(QIcon::fromTheme(u"document-edit"_s, QIcon(sIconsPath + u"pen.svg"_s)));
-    ui->btnCheck->setIcon(QIcon::fromTheme(u"checkbox"_s, QIcon(sIconsPath + u"checkbox.svg"_s)));
-    ui->btnLibrary->setIcon(QIcon(sIconsPath + u"library.svg"_s));
-    ui->btnOption->setIcon(QIcon::fromTheme(u"settings-configure"_s, QIcon(sIconsPath + u"settings.svg"_s)));
-    ui->btnTreeView->setIcon(QIcon(sIconsPath + u"view-tree.svg"_s));
-    ui->btnListView->setIcon(QIcon(sIconsPath + u"view-list.svg"_s));
+    ui->btnOpenBook->setIcon(themedIcon(u"book"_s));
+    ui->btnCheck->setIcon(themedIcon(u"checkbox"_s));
+    ui->btnLibrary->setIcon(themedIcon(u"library"_s));
+    ui->btnOption->setIcon(themedIcon(u"settings-configure"_s));
+    ui->btnTreeView->setIcon(themedIcon(u"view-list-tree"_s));
+    ui->btnListView->setIcon(themedIcon(u"view-list-details"_s));
+    ui->btnCollapseAll->setIcon(themedIcon(u"collapse-all"_s));
+    ui->btnExpandAll->setIcon(themedIcon(u"expand-all"_s));
 
     GenreSortFilterProxyModel *MyProxySortModel = new GenreSortFilterProxyModel(ui->s_genre);
     MyProxySortModel->setSourceModel(ui->s_genre->model());
@@ -331,8 +331,8 @@ void MainWindow::UpdateTags()
     group->setExclusive(true);
 
     iconsTags_.clear();
-    QString sMultiTagsIcon = QStringLiteral(":/img/icons/") +(darkTheme ?QStringLiteral("dark/") :QStringLiteral("light/")) + QStringLiteral("multitags.svg");
-    iconsTags_[0] = QIcon(sMultiTagsIcon);
+    iconsTags_[0] = themedIcon(u"multitags"_s);
+
     QMap<uint, QIcon> icons;
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec(QStringLiteral("SELECT id, light_theme, dark_theme FROM icon"));
@@ -377,7 +377,7 @@ void MainWindow::UpdateTags()
         if(bLatin1)
             sTagName = TagDialog::tr(sTagName.toLatin1().data());
         ui->TagFilter->addItem(sTagName, idTag);
-        if(settings->value(QStringLiteral("current_tag")).toInt() == ui->TagFilter->count()-1 && g::options.bUseTag)
+        if(settings->value(u"current_tag"_s).toInt() == ui->TagFilter->count()-1 && g::options.bUseTag)
             ui->TagFilter->setCurrentIndex(ui->TagFilter->count()-1);
         QAction *ac;
         uint idIcon = query.value(2).toUInt();
@@ -1850,13 +1850,13 @@ void MainWindow::ContextMenu(QPoint point)
             if(item->type() == ITEM_TYPE_BOOK){
                 QMenu *rate = menu.addMenu(tr("Mark"));
                 auto starSize = 16;//rate->fontInfo().pixelSize();
-                QString sStyle = QStringLiteral("QWidget:hover {background: %1;}").arg(palette().color(QPalette::QPalette::Highlight).name());
+                QString sStyle = u"QWidget:hover {background: %1;}"_s.arg(palette().color(QPalette::QPalette::Highlight).name());
                 for(int i=0; i<=5; i++){
                     QWidgetAction *labelAction = new QWidgetAction(rate);
                     QLabel *label = new QLabel(rate);
                     label->setStyleSheet(sStyle);
                     label->setMargin(starSize/3);
-                    QPixmap mypix (QIcon(QStringLiteral(":/icons/img/icons/stars/%1star.svg").arg(i)).pixmap(QSize(starSize*5, starSize)));
+                    QPixmap mypix (QIcon(u":/img/icons/stars/%1star.svg"_s.arg(i)).pixmap(QSize(starSize*5, starSize)));
                     label->setPixmap(mypix);
                     labelAction->setDefaultWidget(label);
                     connect(labelAction, &QAction::triggered, this, [this, item, i](){onSetRating(item, i);});
@@ -2437,8 +2437,13 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                 ScrollItem = item_book;
         }
     }
-    if(bCollapsed_ && bTreeView_)
+    if(bCollapsed_ && bTreeView_){
         ui->Books->collapseAll();
+        if(mAuthorItems.size()==1){
+            auto item = mAuthorItems.begin()->second;
+            item->setExpanded(true);
+        }
+    }
     if(ScrollItem)
     {
         ScrollItem->setSelected(true);
@@ -2521,16 +2526,11 @@ void MainWindow::UpdateExportMenu()
     QFont font(ui->btnExport->defaultAction()->font());
     font.setBold(true);
     ui->btnExport->defaultAction()->setFont(font);
-
-    bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-    QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
-    ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+    ui->btnExport->setIcon(themedIcon(u"document-send"_s));
 
     //костыль предотвращающий изменение иконки
     connect(ui->btnExport->defaultAction(), &QAction::changed, this, [this](){
-        bool darkTheme = palette().color(QPalette::Window).lightness() < 127;
-        QString sIconsPath = u":/img/icons/"_s + (darkTheme ?u"dark/"_s :u"light/"_s);
-        ui->btnExport->setIcon(QIcon::fromTheme(u"document-send"_s, QIcon(sIconsPath + u"send.svg"_s)));
+        ui->btnExport->setIcon(themedIcon(u"document-send"_s));
     });
     ui->btnExport->setEnabled(ui->Books->selectedItems().count() > 0);
 }
@@ -2631,6 +2631,13 @@ void MainWindow::onListView()
 void MainWindow::onCollapseAll()
 {
     ui->Books->collapseAll();
+    if(ui->Books->topLevelItemCount()==1){
+        auto item = ui->Books->topLevelItem(0);
+        if(item)
+            item->setExpanded(true);
+    }
+    auto settings = GetSettings();
+    settings->setValue(u"collapseAll"_s, true);
     bCollapsed_ = true;
 }
 
@@ -2638,6 +2645,8 @@ void MainWindow::onExpandAll()
 {
     ui->Books->expandAll();
     bCollapsed_ = false;
+    auto settings = GetSettings();
+    settings->setValue(u"collapseAll"_s, false);
 }
 
 void MainWindow::onUpdateListFont(const QFont &font)

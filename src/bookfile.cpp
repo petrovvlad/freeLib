@@ -1,9 +1,11 @@
 #include "bookfile.h"
 
+#include <QDir>
+#include <QDomDocument>
 #include <QFont>
 #include <QImage>
 #include <QPainter>
-#include <QDomDocument>
+#include <QStringBuilder>
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
 #else

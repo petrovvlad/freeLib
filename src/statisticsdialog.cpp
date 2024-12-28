@@ -1,4 +1,5 @@
 #include <QLocale>
+#include <QStringBuilder>
 
 #include "statisticsdialog.h"
 #include "ui_statisticsdialog.h"

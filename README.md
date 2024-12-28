@@ -33,7 +33,7 @@ sudo apt install freelib
 [Инструкция](https://notesalexp.org/freelib/)
 #### Arch Linux
 ```
-yay -S freelib
+yay -S freelib-git
 ```
 ### Сборка и установка из исходников
 Для конвертации книг в AZW3, MOBI необходимо установить **kindlegen**.
@@ -45,7 +45,7 @@ sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt
 ```
 в Ubuntu < 23.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qtbase5-dev libqt5sql5-sqlite libquazip5-dev libtbb-dev
+sudo apt update && sudo apt install git cmake build-essential qtbase5-dev libqt5svg5-dev libqt5sql5-sqlite libquazip5-dev libtbb-dev
 ```
 Для отображения обложек djvu файлов установить библиотеку [DjVuLibre](https://djvu.sourceforge.net/)
 ```

@@ -35,8 +35,9 @@
 #include <QFrame>
 #include <QHBoxLayout>
 #include <QHeaderView>
-#include <QImage>
 #include <QIODevice>
+#include <QIcon>
+#include <QImage>
 #include <QItemDelegate>
 #include <QLabel>
 #include <QLibrary>
@@ -52,6 +53,8 @@
 #include <QMultiMap>
 #include <QObject>
 #include <QPainter>
+#include <QPalette>
+#include <QPixmap>
 #include <QProcess>
 #include <QRegularExpression>
 #include <QRegularExpressionValidator>
@@ -70,6 +73,7 @@
 #include <QStringBuilder>
 #include <QStringList>
 #include <QStyledItemDelegate>
+#include <QSvgRenderer>
 #include <QSystemTrayIcon>
 #include <QTextBrowser>
 #include <QTextCodec>
@@ -94,6 +98,7 @@
 #include <typeinfo>
 #include <unistd.h>
 #include <unordered_set>
+#include <vector>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QByteArrayView>

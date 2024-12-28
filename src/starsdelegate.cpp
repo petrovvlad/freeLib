@@ -1,11 +1,12 @@
 #include "starsdelegate.h"
 
 #include <QApplication>
+#include "utilites.h"
 
 StarsDelegate::StarsDelegate(QObject *parent) : QStyledItemDelegate(parent)
 {
     for(int i=0; i<=5; i++){
-        iconStars[i] = QIcon(QStringLiteral(":/icons/img/icons/stars/%1star.svg").arg(i));
+        iconStars[i] = QIcon(u":/img/icons/stars/%1star.svg"_s.arg(i));
     }
 
 }

@@ -1,5 +1,4 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
-<!-- Generator: Adobe Illustrator 16.0.0, SVG Export Plug-In . SVG Version: 6.00 Build 0)  -->
 
 <svg
    version="1.1"
@@ -28,72 +27,11 @@
    inkscape:pagecheckerboard="0"
    showgrid="false"
    width="256px"
-   inkscape:zoom="2.1625"
-   inkscape:cx="77.225433"
-   inkscape:cy="85.549133"
-   inkscape:window-width="1859"
-   inkscape:window-height="1049"
-   inkscape:window-x="61"
-   inkscape:window-y="0"
-   inkscape:window-maximized="1"
-   inkscape:current-layer="Capa_1" />
-<g
-   id="g4"
+   />
+<g id="g4"
    transform="matrix(5.12,0,0,5.12,0,-0.26912)">
 	<path
    d="m 48.336,7.54 c -0.701,0 -1.359,0.007 -2.018,0.024 V 5.326 H 45.584 C 31.322,5.326 26.541,8.737 24.999,10.578 23.457,8.737 18.676,5.326 4.414,5.326 H 3.68 V 7.563 C 3.022,7.545 2.364,7.54 1.664,7.54 H 0 v 32.35 h 1.664 c 17.595,0 21.186,4.035 21.698,4.784 h 3.302 C 27.221,43.89 30.882,39.89 48.337,39.89 H 50 V 7.54 Z M 23.899,38.431 C 21.442,36.619 16.288,34.517 5.516,34.377 V 7.175 c 15.087,0.194 18.001,4.327 18.383,5 z m 20.585,-4.054 c -10.772,0.14 -15.926,2.24 -18.383,4.054 V 12.184 C 26.517,11.447 29.513,7.37 44.484,7.177 Z"
    id="path2" />
 </g>
-<g
-   id="g6">
-</g>
-<g
-   id="g8">
-</g>
-<g
-   id="g10">
-</g>
-<g
-   id="g12">
-</g>
-<g
-   id="g14">
-</g>
-<g
-   id="g16">
-</g>
-<g
-   id="g18">
-</g>
-<g
-   id="g20">
-</g>
-<g
-   id="g22">
-</g>
-<g
-   id="g24">
-</g>
-<g
-   id="g26">
-</g>
-<g
-   id="g28">
-</g>
-<g
-   id="g30">
-</g>
-<g
-   id="g32">
-</g>
-<g
-   id="g34">
-</g>
-<metadata
-   id="metadata41"><rdf:RDF><cc:License
-       rdf:about="http://creativecommons.org/publicdomain/zero/1.0/"><cc:permits
-         rdf:resource="http://creativecommons.org/ns#Reproduction" /><cc:permits
-         rdf:resource="http://creativecommons.org/ns#Distribution" /><cc:permits
-         rdf:resource="http://creativecommons.org/ns#DerivativeWorks" /></cc:License><cc:Work
-       rdf:about=""><cc:license
-         rdf:resource="http://creativecommons.org/publicdomain/zero/1.0/" /></cc:Work></rdf:RDF></metadata></svg>
+</svg>
