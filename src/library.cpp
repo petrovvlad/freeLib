@@ -293,8 +293,8 @@ void loadLibrary(uint idLibrary)
 #else
             QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
             QString sDbFile = fi.canonicalFilePath();
-            QSqlDatabase dbReadAuthors = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("readauthors"));
-            dbReadAuthors.setDatabaseName(sDbFile);
+            QSqlDatabase dbReadSequence = QSqlDatabase::addDatabase(u"QSQLITE"_s, u"readsequences"_s);
+            dbReadSequence.setDatabaseName(sDbFile);
 #endif
             if (!dbReadSequence.open())
             {
