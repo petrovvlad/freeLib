@@ -43,7 +43,9 @@ private:
     bool bFirstAuthorOnly_;
     bool bWoDeleted_;
     std::atomic_bool stopped_;
-    std::unordered_set<uint> stIdBookInLib_;
+    std::unordered_map<uint, uint> mIdBookInLib_;
+    std::unordered_map<uint, std::vector<uint>> mBookSequences_;
+    std::unordered_map<QString, uint> mSequences_;
     std::unordered_set<SAuthor> stTagetAuthors_;
     std::unordered_map<SAuthor, uint> hashAuthors_;
     std::unordered_map<uint, std::vector<uint>> mBooksTags_;
@@ -54,6 +56,7 @@ private:
     QSqlQuery queryInsertBook_;
     QSqlQuery queryInsertAuthor_;
     QSqlQuery queryInsertBookAuthor_;
+    QSqlQuery queryInsertBookSequence_;
     QSqlQuery queryInsertBookGenre_;
     QSqlQuery queryInsertSeria_;
     QSqlQuery queryInsertAuthorTag_;
@@ -61,10 +64,10 @@ private:
     QSqlQuery queryInsertSequennceTag_;
 
     std::unordered_map <QString, ushort> mGenreKeys_;
-    uint AddSeria(const QString &str, qlonglong libID, const QVariantList *pTags = nullptr);
+    void addSequence(const QString &str, uint idLib, uint idBook, uint numInSequence, const QVariantList *pTags = nullptr);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);
-    uint AddBook(qlonglong star, QString &name, qlonglong id_seria, int num_in_seria, const QString &file,
-                 int size, int IDinLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
+    uint addBook(uchar star, QString &name, int num_in_seria, const QString &file,
+                 int size, uint idInLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
 
     void AddGenre(uint idBook, const QString &sGenre, uint idLib);
 

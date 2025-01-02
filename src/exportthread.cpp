@@ -364,10 +364,11 @@ void ExportThread::export_books()
     for(auto idBook: vBbooks_)
     {
         const SBook &book = lib.books.at(idBook);
-        if(bNeedGroupSeries && book.idSerial != 0){
+        if(bNeedGroupSeries && !book.mSequences.empty()){
             auto iBookGroup = vBbooksGroup.begin();
             while(iBookGroup != vBbooksGroup.end()){
-                if(lib.books.at(iBookGroup->front()).idSerial == book.idSerial){
+                auto &groupeSequence = lib.books.at(iBookGroup->front()).mSequences;
+                if(!groupeSequence.empty() && groupeSequence.begin()->first == book.mSequences.begin()->first){
                     break;
                 }
                 ++iBookGroup;
@@ -544,53 +545,54 @@ void ExportThread::export_lib()
     }
 
     uint nCount = 0;
-    for(const auto &book :lib.books){
+    for(const auto &iBook :lib.books){
+        const auto &book = iBook.second;
         QString sBookTags;
-        for(auto idTag: book.second.vIdTags)
+        for(auto idTag: book.vIdTags)
             sBookTags += tagsName[idTag] + ":";
 
         QString sAuthors;
-        for(auto idAuthor : book.second.vIdAuthors){
+        for(auto idAuthor : book.vIdAuthors){
             const SAuthor &author = lib.authors.at(idAuthor);
             sAuthors += author.sLastName % "," % author.sFirstName % ","  % author.sMiddleName % ":";
         }
 
         QString sAuthorTags;
-        auto &firstAuthor = lib.authors.at(book.second.vIdAuthors.front());
+        auto &firstAuthor = lib.authors.at(book.vIdAuthors.front());
         for(auto idTag :firstAuthor.vIdTags)
             sAuthorTags += tagsName[idTag] + u':';
 
         QString sSerialTags;
-        if(book.second.idSerial != 0){
-            const auto &vIdTags = lib.serials.at(book.second.idSerial).vIdTags;
+        if(!book.mSequences.empty()){
+            const auto &vIdTags = lib.serials.at(book.mSequences.begin()->first).vIdTags;
             for(auto idTag :vIdTags){
                 sSerialTags += tagsName[idTag] + ":";
             }
         }
 
         QString sGenres;
-        for(auto idGenre :book.second.vIdGenres){
+        for(auto idGenre :book.vIdGenres){
             sGenres += g::genres.at(idGenre).listKeys.constFirst() + ":";
         }
         QString sLine = (u"%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8"_s.arg(
                              sAuthors,                                                   //AUTHOR
-                             book.second.sName,                                               //TITLE
-                             book.second.idSerial !=0 ?lib.serials.at(book.second.idSerial).sName :u""_s,     //SERIES
-                             QString::number(book.second.numInSerial),                                            //SERNO
+                             book.sName,                                               //TITLE
+                             !book.mSequences.empty() ?lib.serials.at(book.mSequences.begin()->first/*second.idSerial*/).sName :u""_s,     //SERIES
+                             QString::number(book.mSequences.begin()->second/*numInSerial*/),                                            //SERNO
                              sGenres, //GENRE
-                             QString::number(book.second.idInLib),                                      //LIBID
-                             book.second.sFile,                                                         //FILE
-                             book.second.sArchive                                                       //FOLDER
+                             QString::number(book.idInLib),                                      //LIBID
+                             book.sFile,                                                         //FILE
+                             book.sArchive                                                       //FOLDER
                          ) %
                          u"\4%1\4%2\4%3\4%4\4%5\4%6\4%7"_s.arg
                         (
-                            book.second.sFormat,                         //EXT
-                            QString::number(book.second.nSize),          //SIZE
-                            lib.vLaguages[book.second.idLanguage],       //LANG
-                            QString::number(book.second.nStars),         //STARS
-                            book.second.date.toString(u"yyyy-MM-dd"_s),  //DATE
-                            book.second.bDeleted ?"1" :"",                            //DEL
-                            book.second.sKeywords                                     //KEYWORDS
+                            book.sFormat,                         //EXT
+                            QString::number(book.nSize),          //SIZE
+                            lib.vLaguages[book.idLanguage],       //LANG
+                            QString::number(book.nStars),         //STARS
+                            book.date.toString(u"yyyy-MM-dd"_s),  //DATE
+                            book.bDeleted ?"1" :"",                            //DEL
+                            book.sKeywords                                     //KEYWORDS
                         ) %
                         u"\4%1\4%2\4%3\r\n"_s.arg
                         (

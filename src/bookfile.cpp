@@ -397,13 +397,16 @@ QImage BookFile::createCover()
     paintText(painter, QRect(delta, delta+r_heigthTopBottom+delta2, r_width, r_heigth-r_heigthTopBottom*2-delta2*2),
               Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, book.sName);
 
-    font.setBold(false);
-    font.setPixelSize(img.height() / 17);
-    painter->setFont(font);
-    paintText(painter, QRect(delta, delta+r_heigth-r_heigthTopBottom+delta2, r_width, r_heigthTopBottom-delta2),
-              Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
-              (book.idSerial ==0 ?u""_s :pLib_->serials[book.idSerial].sName) +
-                  (book.numInSerial>0 ?u"\n"_s + QString::number(book.numInSerial) :u""_s));
+    if(!book.mSequences.empty()){
+        font.setBold(false);
+        font.setPixelSize(img.height() / 17);
+        painter->setFont(font);
+        const auto &sequence = book.mSequences.begin();
+        QString sSequence = pLib_->serials[sequence->first].sName;
+        paintText(painter, QRect(delta, delta+r_heigth-r_heigthTopBottom+delta2, r_width, r_heigthTopBottom-delta2),
+                  Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
+                  (sSequence % (sequence->second>0 ?u"\n"_s % QString::number(sequence->second) :u""_s)));
+    }
     delete painter;
     return img;
 }
