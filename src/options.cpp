@@ -1,5 +1,3 @@
-
-#define QT_USE_QSTRINGBUILDER
 #include "options.h"
 
 #include <QFileInfo>
@@ -23,6 +21,7 @@
 #endif
 #endif //USE_QTKEYCHAIN
 
+#ifndef USE_QTKEYCHAIN
 static const quint8 key[] = {1,65,245,245,235,2,34,61,0,32,54,12,66};
 QString encodeStr(const QString& str)
 {
@@ -54,6 +53,7 @@ QString decodeStr(const QString &str)
     }
     return QString::fromUtf8(arr);
 }
+#endif
 
 QByteArray Options::generateSalt()
 {
@@ -183,7 +183,9 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     sEmailServer = pSettings->value(QStringLiteral("EmailServer")).toString();
     nEmailServerPort = pSettings->value(QStringLiteral("EmailPort"), 25).toUInt();
     sEmailUser = pSettings->value(QStringLiteral("EmailUser")).toString();
+#ifndef USE_QTKEYCHAIN
     sEmailPassword =  decodeStr(pSettings->value(QStringLiteral("EmailPassword")).toString()); //TO DO: удалить позже
+#endif
     bPostprocessingCopy = pSettings->value(QStringLiteral("PostprocessingCopy"), false).toBool();
     sDevicePath = pSettings->value(QStringLiteral("DevicePath"),HomeDir).toString();
     bOriginalFileName = pSettings->value(QStringLiteral("originalFileName"), false).toBool();
@@ -524,15 +526,20 @@ void Options::readPasswords()
     QKeychain::ReadPasswordJob job(u"freelib"_s);
     job.setAutoDelete(false);
     QEventLoop loop;
-    job.connect( &job, SIGNAL(finished(QKeychain::Job*)), &loop, SLOT(quit()) );
+    job.connect( &job, &QKeychain::ReadPasswordJob::finished, &loop, &QEventLoop::quit );
 #ifdef USE_HTTSERVER
     job.setKey(u"proxy"_s);
     job.start();
     loop.exec();
-    if (job.error())
-        qDebug() << "Error read password " <<  job.errorString();
-    else
+    switch(job.error()){
+    case QKeychain::NoError:
         sProxyPassword = job.textData();
+        break;
+    case QKeychain::EntryNotFound:
+        break;
+    default:
+        qDebug() << "Error read password " <<  job.errorString();
+    }
 #endif //USE_HTTSERVER
     int countExport = vExportOptions.size();
     for(int iExport=0; iExport<countExport; iExport++){
@@ -567,7 +574,7 @@ void Options::savePasswords()
     QKeychain::WritePasswordJob job( u"freelib"_s );
     job.setAutoDelete(false);
     QEventLoop loop;
-    job.connect( &job, SIGNAL(finished(QKeychain::Job*)), &loop, SLOT(quit()) );
+    job.connect( &job, &QKeychain::WritePasswordJob::finished, &loop, &QEventLoop::quit  );
 #ifdef USE_HTTSERVER
     job.setKey(u"proxy"_s);
     job.setTextData( sProxyPassword );
