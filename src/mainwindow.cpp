@@ -1284,11 +1284,11 @@ void MainWindow::SelectLibrary()
 */
 void MainWindow::SelectGenre()
 {
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     ui->Books->clear();
     ExportBookListBtn(false);
     if(ui->GenreList->selectedItems().count() == 0)
         return;
+    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QTreeWidgetItem* cur_item = ui->GenreList->selectedItems()[0];
     ushort idGenre = cur_item->data(0, Qt::UserRole).toUInt();
     vBooks_.clear();
@@ -1307,7 +1307,7 @@ void MainWindow::SelectGenre()
     FillListBooks(vBooks_, std::vector<uint>(), 0);
     auto settings = GetSettings();
     if(g::options.bStorePosition){
-        settings->setValue(QStringLiteral("current_genre_id"), idCurrentGenre_);
+        settings->setValue(u"current_genre_id"_s, idCurrentGenre_);
     }
     QApplication::restoreOverrideCursor();
 }
