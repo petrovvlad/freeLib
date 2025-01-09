@@ -91,7 +91,7 @@ const QString fb2mobi::sHtmlFoot_ = u"</body></html>"_s;
 void fb2mobi::parse_description(const QDomNode &elem)
 {
     if(join_seria)
-        sBookName_ = pBook_->idSerial==0 ?u""_s :g::libs[idLib_].serials[pBook_->idSerial].sName;
+        sBookName_ = pBook_->mSequences.empty() ?u""_s :g::libs[idLib_].serials[pBook_->mSequences.begin()->first].sName;
     else
         sBookName_ = pBook_->sName;
     book_author = authorstring;
@@ -1134,7 +1134,7 @@ void fb2mobi::generate_opf_epub()
     buf = u"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"_s;
     buf += u"<package xmlns=\"http://www.idpf.org/2007/opf\" xmlns:dc=\"http://purl.org/dc/elements/1.1/\" unique-identifier=\"bookid\" version=\"2.0\">\n"
                           "<metadata xmlns:opf=\"http://www.idpf.org/2007/opf\">\n"_s;
-    if(pBook_->idSerial == 0)
+    if(pBook_->mSequences.empty())
         buf += u"<dc:title>%1</dc:title>\n"_s.arg(sBookName_);
     else
     {
@@ -1219,7 +1219,7 @@ void fb2mobi::generate_opf()
     SLib& lib = g::libs[idLib_];
     buf = u"<?xml version=\"1.0\" encoding=\"utf-8\"?>\n"_s;
     buf += u"<package><metadata><dc-metadata xmlns:dc=\"http://\">"_s;
-    if(pBook_->idSerial == 0)
+    if(pBook_->mSequences.empty())
         buf += u"<dc:Title>%1</dc:Title>"_s.arg(sBookName_);
     else
     {
@@ -1461,12 +1461,16 @@ void fb2mobi::InsertSeriaNumberToCover(const QString &number, CreateCover create
         painter->setFont(font);
         PaintText(painter, QRect(delta, delta+r_heigthTopBottom+delta2, r_width, r_heigth-r_heigthTopBottom*2-delta2*2), Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, sBookName_);
 
-        font.setBold(false);
-        font.setPixelSize(img.height() / 17);
-        painter->setFont(font);
-        PaintText(painter,QRect(delta, delta+r_heigth-r_heigthTopBottom+delta2, r_width, r_heigthTopBottom-delta2), Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
-                  (pBook_->idSerial ==0 ?u""_s :g::libs[idLib_].serials[pBook_->idSerial].sName) +
-                  (pBook_->numInSerial>0 ?u"\n"_s + QString::number(pBook_->numInSerial) :u""_s));
+        if(!pBook_->mSequences.empty()){
+            font.setBold(false);
+            font.setPixelSize(img.height() / 17);
+            painter->setFont(font);
+            auto sequence = pBook_->mSequences.begin();
+            QString sSequence = g::libs[idLib_].serials[sequence->first].sName;
+            uint numInSquence = sequence->second;
+            PaintText(painter, QRect(delta, delta+r_heigth-r_heigthTopBottom+delta2, r_width, r_heigthTopBottom-delta2), Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
+                      (sSequence % (numInSquence>0 ?u"\n"_s % QString::number(numInSquence) :u""_s)));
+        }
     }
     img.save(sTmpDir_ % u"/OEBPS/"_s % sFileCover_);
     delete painter;
@@ -1923,7 +1927,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         if(title.isEmpty())
             title = ExportOptions::sDefaultCoverLabel;
         title = g::libs[idLib_].fillParams(title, idBook_);
-        if(pBook_->numInSerial == 0 || !pExportOptions_->bAddCoverLabel)
+        if(pBook_->mSequences.empty() || pBook_->mSequences.begin()->second == 0 || !pExportOptions_->bAddCoverLabel)
             title = u""_s;
         InsertSeriaNumberToCover(title, (pExportOptions_->bCreateCoverAlways ?cc_always :(pExportOptions_->bCreateCover ?cc_if_not_exists :cc_no)));
         if(height == 0){

@@ -119,6 +119,9 @@
          <property name="editable">
           <bool>true</bool>
          </property>
+         <property name="insertPolicy">
+          <enum>QComboBox::InsertPolicy::NoInsert</enum>
+         </property>
         </widget>
        </item>
        <item>
@@ -211,7 +214,7 @@
       <item>
        <widget class="QRadioButton" name="add_new">
         <property name="text">
-         <string>Add new</string>
+         <string>Add &amp;new</string>
         </property>
        </widget>
       </item>
@@ -225,7 +228,7 @@
       <item>
        <widget class="QRadioButton" name="update_all">
         <property name="text">
-         <string>Recreate library</string>
+         <string>&amp;Recreate library</string>
         </property>
        </widget>
       </item>
@@ -373,7 +376,7 @@
         <bool>false</bool>
        </property>
        <property name="default">
-        <bool>true</bool>
+        <bool>false</bool>
        </property>
       </widget>
      </item>

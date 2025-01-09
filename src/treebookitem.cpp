@@ -43,14 +43,33 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
             return localeStringCompare(lib.authors.at(bookThis.vIdAuthors.at(0)).getName(),
                                     lib.authors.at(bookOther.vIdAuthors.at(0)).getName());
         case 2: //Серия
-            if(bookThis.idSerial == 0)
+            if(bookThis.mSequences.empty()/*idSerial == 0*/)
                 return true;
-            if(bookOther.idSerial == 0)
+            if(bookOther.mSequences.empty()/*idSerial == 0*/)
                 return false;
-            return localeStringCompare(lib.serials.at(bookThis.idSerial).sName,
-                                    lib.serials.at(bookOther.idSerial).sName);
+            return localeStringCompare(lib.serials.at(bookThis.mSequences.begin()->first).sName,
+                                    lib.serials.at(bookOther.mSequences.begin()->first).sName);
         case 3: //Номер в серии
-            return bookThis.numInSerial < bookOther.numInSerial;
+            if(bookThis.mSequences.empty())
+                return true;
+            if(bookOther.mSequences.empty())
+                return false;
+            if(parent() && other.parent() && parent()->type() == ITEM_TYPE_SERIA && other.parent()->type()){
+                uint idSequenceThis = parent()->data(0, Qt::UserRole).toUInt();
+                uint idSequenceOther = parent()->data(0, Qt::UserRole).toUInt();
+                if(idSequenceThis == idSequenceOther){
+                    uint numInSequenceThis = bookThis.mSequences.at(idSequenceThis);
+                    uint numInSequenceOther = bookOther.mSequences.at(idSequenceThis);
+                    return numInSequenceThis < numInSequenceOther;
+                }
+
+            }
+            if(bookThis.mSequences.size()>1)
+                return true;
+            if(bookOther.mSequences.size()>1)
+                return false;
+            return bookThis.mSequences.begin()->second < bookOther.mSequences.begin()->second;
+
         case 4: //Размер
             return bookThis.nSize < bookOther.nSize;
         case 5: //рейтинг

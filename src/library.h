@@ -55,10 +55,9 @@ struct SBook
     std::vector<ushort> vIdGenres;
     std::vector<uint> vIdAuthors;
     std::vector<uint> vIdTags;
+    std::unordered_map<uint, uint> mSequences;
     uint idInLib;
-    uint idSerial;
     uint idFirstAuthor;
-    uint numInSerial;
     uint nSize;
     uchar nStars;
     uchar idLanguage;

@@ -360,7 +360,25 @@ void LibrariesDlg::onBreak()
 
 void LibrariesDlg::ExistingLibsChanged()
 {
-    ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(),ui->ExistingLibs->lineEdit()->text());
+    QString sCurrentName;
+    if(idCurrentLib_>0)
+        sCurrentName = g::libs[idCurrentLib_].name; //ui->ExistingLibs->itemText(ui->ExistingLibs->currentIndex());
+    QString sNewName = ui->ExistingLibs->lineEdit()->text().simplified();
+    if(sCurrentName != sNewName){
+        ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), ui->ExistingLibs->lineEdit()->text());
+        if(idCurrentLib_>0)
+        {
+            g::libs[idCurrentLib_].name = sNewName;
+            QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+
+            query.prepare(u"UPDATE Lib SET name=:name WHERE ID=:id;"_s);
+            query.bindValue(u":name"_s, sNewName);
+            query.bindValue(u":id"_s, idCurrentLib_);
+            if(!query.exec())
+                MyDBG << query.lastError().databaseText();
+
+        }
+    }
 }
 
 void LibrariesDlg::ExportLib()
@@ -442,8 +460,11 @@ void LibrariesDlg::addBook()
 void LibrariesDlg::onComboboxLibraryChanged(int index)
 {
     if(index >= 0){
-        idCurrentLib_ = ui->ExistingLibs->itemData(index).toInt();
-        SelectLibrary();
+        uint id = ui->ExistingLibs->itemData(index).toInt();
+        if(id>0){
+            idCurrentLib_ = id;
+            SelectLibrary();
+        }
     }
 }
 
@@ -452,7 +473,7 @@ QString LibrariesDlg::UniqueName(const QString &sName)
     QString sResult = sName;
     int i = 1;
     while(ui->ExistingLibs->findText(sResult) != -1){
-        sResult = QStringLiteral("%1 (%2)").arg(sName, QString::number(i++));
+        sResult = u"%1 (%2)"_s.arg(sName, QString::number(i++));
     }
     return sResult;
 }
