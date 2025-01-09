@@ -1664,12 +1664,12 @@ void MainWindow::ManageLibrary()
             SelectSeria();
             break;
         }
-        updateTitle();
-        FillLibrariesMenu();
         FillGenres();
         future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
+    updateTitle();
+    FillLibrariesMenu();
 }
 
 /*
