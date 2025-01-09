@@ -325,7 +325,7 @@ void Options::setDefault(){
     sProxyPassword = u""_s;
 #endif
     setExportDefault();
-    tools.emplace(u"zip"_s, ToolsOptions{u"zip"_s, u"-9 -mj %d/%fn.zip %f"_s});
+    tools.emplace(u"zip"_s, ToolsOptions{u"zip"_s, u"-9 -mj %f.zip %f"_s});
     bUseSytemFonts = true;
     QFont fontApp = QGuiApplication::font();
     sListFontFamaly = fontApp.family();
