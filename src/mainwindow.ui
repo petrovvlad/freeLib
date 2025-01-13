@@ -70,7 +70,7 @@
            </size>
           </property>
           <property name="currentIndex">
-           <number>0</number>
+           <number>3</number>
           </property>
           <widget class="QWidget" name="tabWidgetPage1">
            <attribute name="title">
@@ -293,7 +293,11 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="s_seria"/>
+                <widget class="QLineEdit" name="s_seria">
+                 <property name="clearButtonEnabled">
+                  <bool>true</bool>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label">
@@ -303,7 +307,11 @@
                 </widget>
                </item>
                <item>
-                <widget class="QLineEdit" name="s_FileName"/>
+                <widget class="QLineEdit" name="s_FileName">
+                 <property name="clearButtonEnabled">
+                  <bool>true</bool>
+                 </property>
+                </widget>
                </item>
                <item>
                 <widget class="QLabel" name="label_6">
