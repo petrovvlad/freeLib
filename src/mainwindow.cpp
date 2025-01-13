@@ -258,6 +258,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectSeria);
     connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabWidgetChanged);
     connect(ui->do_search, &QAbstractButton::clicked, this, &MainWindow::onStartSearch);
+    connect(ui->buttonClear, &QAbstractButton::clicked, this, &MainWindow::onClearSearch);
     connect(ui->s_author, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
     connect(ui->s_seria, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
     connect(ui->s_name, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
@@ -1135,7 +1136,7 @@ void MainWindow::onStartSearch()
     int idLanguage = ui->findLanguage->currentData().toInt();
 
     SLib& lib = g::libs[g::idCurrentLib];
-    vBooks_.clear();
+    vFoundBooks_.clear();
     int nCount = 0;
     std::vector<uint> vPosFound;
     for(const auto &[idBook, book] :lib.books){
@@ -1203,12 +1204,12 @@ void MainWindow::onStartSearch()
             if(bSequence){
                 if(idGenre == 0){
                     nCount++;
-                    vBooks_.push_back(idBook);
+                    vFoundBooks_.push_back(idBook);
                 }else{
                     for(auto id: book.vIdGenres) {
                         if(id == idGenre){
                             nCount++;
-                            vBooks_.push_back(idBook);
+                            vFoundBooks_.push_back(idBook);
                             break;
                         }
                     }
@@ -1222,10 +1223,21 @@ void MainWindow::onStartSearch()
 
     auto tempLang = idCurrentLanguage_;
     idCurrentLanguage_ = idLanguage;
-    FillListBooks(vBooks_ ,{} , 0);
+    FillListBooks(vFoundBooks_ ,{} , 0);
     idCurrentLanguage_ = tempLang;
 
     QApplication::restoreOverrideCursor();
+}
+
+void MainWindow::onClearSearch()
+{
+    ui->Books->clear();
+    ui->s_name->clear();
+    ui->s_author->clear();
+    ui->s_seria->clear();
+    ui->s_FileName->clear();
+    ui->find_books->clear();
+    vFoundBooks_.clear();
 }
 
 void MainWindow::SelectLibrary()
@@ -1270,8 +1282,11 @@ void MainWindow::SelectLibrary()
         case TabGenres:
             SelectGenre();
             break;
+        case TabSearch:
+            ui->Books->clear();
         }
-
+        vFoundBooks_.clear();
+        ui->find_books->clear();
         updateTitle();
         future.waitForFinished();
     }
@@ -1756,11 +1771,6 @@ void MainWindow::About()
     AboutDialog* dlg = new AboutDialog(this);
     dlg->exec();
     delete dlg;
-}
-
-void MainWindow::DoSearch()
-{
-
 }
 
 void MainWindow::checkLetter(const QChar cLetter)
@@ -2302,15 +2312,15 @@ void MainWindow::FillGenres()
 void MainWindow::FillListBooks()
 {
     switch(ui->tabWidget->currentIndex()){
-        case 0:
+        case TabAuthors:
             SelectAuthor();
         break;
 
-        case 1:
+        case TabSeries:
             SelectSeria();
         break;
 
-        case 2:
+        case TabGenres:
             SelectGenre();
         break;
     }
@@ -2679,9 +2689,13 @@ void MainWindow::onTreeView()
     if(!bTreeView_){
         bTreeView_ = true;
         std::vector<uint> vCheckedBooks = getCheckedBooks(true);
-        FillListBooks(vBooks_, vCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        auto currentTab = ui->tabWidget->currentIndex();
+        if(ui->tabWidget->currentIndex() != TabSearch)
+            FillListBooks(vBooks_, vCheckedBooks, currentTab==TabAuthors ? idCurrentAuthor_ :0);
+        else
+            FillListBooks(vFoundBooks_, vCheckedBooks, 0);
         auto settings = GetSettings();
-        settings->setValue(QStringLiteral("TreeView"), true);
+        settings->setValue(u"TreeView"_s, true);
         aHeadersList_ = ui->Books->header()->saveState();
         ui->Books->header()->restoreState(aHeadersTree_);
         ui->Books->header()->setSortIndicatorShown(true);
@@ -2698,7 +2712,11 @@ void MainWindow::onListView()
     if(bTreeView_){
         bTreeView_ = false;
         std::vector<uint> vCheckedBooks = getCheckedBooks(true);
-        FillListBooks(vBooks_, vCheckedBooks, ui->tabWidget->currentIndex()==0 ? idCurrentAuthor_ :0);
+        auto currentTab = ui->tabWidget->currentIndex();
+        if(ui->tabWidget->currentIndex() != TabSearch)
+            FillListBooks(vBooks_, vCheckedBooks, currentTab==TabAuthors ? idCurrentAuthor_ :0);
+        else
+            FillListBooks(vFoundBooks_, vCheckedBooks, 0);
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("TreeView"), false);
         aHeadersTree_ = ui->Books->header()->saveState();
@@ -2819,8 +2837,7 @@ void MainWindow::onTabWidgetChanged(int index)
     case TabSearch: //Поиск
         ui->frame_3->setEnabled(false);
         ui->language->setEnabled(false);
-        ui->Books->clear();
-        ui->find_books->setText(QStringLiteral("0"));
+        FillListBooks(vFoundBooks_ ,{} , 0);
         ExportBookListBtn(false);
         break;
     }
