@@ -218,9 +218,8 @@ MainWindow::MainWindow(QWidget *parent) :
     loadLibrary(g::idCurrentLib);
     fillLanguages();
 
-//    FillAuthors();
-//    FillSerials();
     FillGenres();
+    ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
 
     connect(ui->searchAuthor, &QLineEdit::textChanged, this, &MainWindow::onSerachAuthorsChanded);
     connect(ui->searchSeries, &QLineEdit::textChanged, this, &MainWindow::onSerachSeriesChanded);
@@ -1287,6 +1286,7 @@ void MainWindow::SelectLibrary()
         }
         vFoundBooks_.clear();
         ui->find_books->clear();
+        ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
         updateTitle();
         future.waitForFinished();
     }
@@ -1664,7 +1664,10 @@ void MainWindow::ManageLibrary()
                 });
             }
         }
+        ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
+        ui->find_books->clear();
         loadLibrary(g::idCurrentLib);
+        vFoundBooks_.clear();
 
         fillLanguages();
         FillAuthors();
@@ -1678,6 +1681,8 @@ void MainWindow::ManageLibrary()
             onSerachSeriesChanded(ui->searchSeries->text());
             SelectSeria();
             break;
+        case TabSearch:
+            ui->Books->clear();
         }
         FillGenres();
         future.waitForFinished();
