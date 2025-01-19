@@ -55,14 +55,22 @@ void ImportThread::addSequence(const QString &str, uint idLib, uint idBook, uint
             MyDBG << queryInsertSeria_.lastError().text();
         id = queryInsertSeria_.lastInsertId().toUInt();
         mSequences_[name] = id;
+    }
+    auto it = mBookSequences_.find(idBook);
+    bool bFoundBookSequence = false;
+    if(it != mBookSequences_.end()){
+        auto  &v = it->second;
+        if(contains(v, id))
+            bFoundBookSequence = true;
+    }
+    if(!bFoundBookSequence){
+        queryInsertBookSequence_.bindValue(u":idBook"_s, idBook);
+        queryInsertBookSequence_.bindValue(u":idSequence"_s, id);
+        queryInsertBookSequence_.bindValue(u":numInSequence"_s, numInSequence);
+        if(!queryInsertBookSequence_.exec())
+            MyDBG << queryInsertBookSequence_.lastError().text();
         mBookSequences_[idBook].push_back(id);
     }
-
-    queryInsertBookSequence_.bindValue(u":idBook"_s, idBook);
-    queryInsertBookSequence_.bindValue(u":idSequence"_s, id);
-    queryInsertBookSequence_.bindValue(u":numInSequence"_s, numInSequence);
-    if(!queryInsertBookSequence_.exec())
-        MyDBG << queryInsertBookSequence_.lastError().text();
 
     QVariantList lTags;
     if(pTags != nullptr )
@@ -147,7 +155,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
 uint ImportThread::addBook(uchar star, QString &name, int num_in_seria, const QString &file,
              int size, uint idInLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags)
 {
-    if(mIdBookInLib_.contains(idInLib)){
+    if(idInLib!=0 && mIdBookInLib_.contains(idInLib)){
         uint idBook = mIdBookInLib_[idInLib];
         return idBook;
     }
