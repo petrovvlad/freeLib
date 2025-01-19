@@ -81,6 +81,7 @@ private:
     uint idCurrentSerial_;
     uint idCurrentBook_;
     std::vector<uint> vBooks_;
+    std::vector<uint> vFoundBooks_;
     CoverLabel *pCover;
     bool bTreeView_;
     bool bCollapsed_;
@@ -119,7 +120,6 @@ private slots:
     void onSerachAuthorsChanded(const QString& str);
     void onSerachSeriesChanded(const QString& str);
     void btnSearch();
-    void DoSearch();
     void SelectAuthor();
     void selectBook();
     void SelectGenre();
@@ -129,6 +129,7 @@ private slots:
     void About();
 //    void LanguageChange();
     void onStartSearch();
+    void onClearSearch();
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);

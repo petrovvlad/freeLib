@@ -119,12 +119,12 @@ void loadLibrary(uint idLibrary)
         {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
             QSqlDatabase dbReadBooks = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("readdb"));
-#else
+#else //QT_VERSION
             QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
             QString sDbFile = fi.canonicalFilePath();
             QSqlDatabase dbReadBooks = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));
             dbReadBooks.setDatabaseName(sDbFile);
-#endif
+#endif //QT_VERSION
             uint nBuff = 0;
             if (!dbReadBooks.open())
             {
@@ -162,7 +162,6 @@ void loadLibrary(uint idLibrary)
     });
 
     lib.books.clear();
-    lib.vLaguages.clear();
     uint nBuff = 0;
     uint nTotalCount{0};
     while(!abFinished || nTotalCount != anTotalCount){
@@ -188,6 +187,8 @@ void loadLibrary(uint idLibrary)
             book.nSize = buff[k + 5].toUInt();
             book.bDeleted = buff[k + 6].toBool();
             book.date = buff[k + 7].toDate();
+            if(lib.earliestDate_.isNull() || book.date<lib.earliestDate_)
+                lib.earliestDate_ = book.date;
             book.sFormat = buff[k + 8].toString();
             book.idInLib = buff[k + 9].toUInt();
             book.sArchive = buff[k + 10].toString();
@@ -199,11 +200,11 @@ void loadLibrary(uint idLibrary)
         nBuff = (nBuff==0) ?1 :0;
     }
     delete[] buff;
-#else
+#else //__cpp_lib_atomic_wait
     lib.books.clear();
     query.prepare(u"SELECT id, name, star, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, keys FROM book WHERE id_lib=:id_lib;"_s);
-    //                                    0  1     2     3         4     5     6        7     8       9         10       11               12
-    query.bindValue(QStringLiteral(":id_lib"),idLibrary);
+    //                     0   1     2     3         4     5     6        7     8       9         10       11               12
+    query.bindValue(u":id_lib"_s,idLibrary);
     if(!query.exec())
         qDebug() << query.lastError().text();
     while (query.next()) {
@@ -224,13 +225,15 @@ void loadLibrary(uint idLibrary)
         book.nSize = query.value(5).toUInt();
         book.bDeleted = query.value(6).toBool();
         book.date = query.value(7).toDate();
+        if(lib.earliestDate_.isNull() || book.date<lib.earliestDate_)
+            lib.earliestDate_ = book.date;
         book.sFormat = query.value(8).toString();
         book.idInLib = query.value(9).toUInt();
         book.sArchive = query.value(10).toString();
         book.idFirstAuthor = query.value(11).toUInt();
         book.sKeywords = query.value(12).toString();
     }
-#endif
+#endif //__cpp_lib_atomic_wait
     future.waitForFinished();
 
 #ifdef __cpp_lib_atomic_wait
@@ -363,10 +366,10 @@ void loadGenres()
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
 
     g::genres.clear();
-    query.prepare(QStringLiteral("SELECT id, name, id_parent, sort_index, keys FROM genre;"));
+    query.prepare(u"SELECT id, name, id_parent, sort_index, keys FROM genre;"_s);
     //                                   0   1     2          3           4
     if(!query.exec())
-        qDebug() << query.lastError().text();
+        MyDBG << query.lastError().text();
     while (query.next()) {
         ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
         SGenre &genre = g::genres[idGenre];

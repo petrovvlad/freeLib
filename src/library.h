@@ -92,6 +92,7 @@ public:
     QString path;
     QString sInpx;
     QString sVersion;
+    QDate earliestDate_; //Самая ранняя дата добавления книги
     bool bFirstAuthor;
     bool bWoDeleted;
     bool bLoaded = false;
