@@ -190,12 +190,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QString sFilter;
     if(g::options.bStorePosition)
     {
-        idCurrentAuthor_= settings->value(QStringLiteral("current_author_id"), 0).toUInt();
-        idCurrentSerial_ = settings->value(QStringLiteral("current_serial_id"), 0).toUInt();
-        idCurrentBook_ = settings->value(QStringLiteral("current_book_id"), 0).toUInt();
-        idCurrentGenre_ = settings->value(QStringLiteral("current_genre_id"), 0).toUInt();
-        nCurrentTab = settings->value(QStringLiteral("current_tab"), 0).toInt();
-        sFilter = settings->value(QStringLiteral("filter_set")).toString();
+        idCurrentAuthor_= settings->value(u"current_author_id"_s, 0).toUInt();
+        idCurrentSerial_ = settings->value(u"current_serial_id"_s, 0).toUInt();
+        idCurrentBook_ = settings->value(u"current_book_id"_s, 0).toUInt();
+        idCurrentGenre_ = settings->value(u"current_genre_id"_s, 0).toUInt();
+        nCurrentTab = settings->value(u"current_tab"_s, 0).toInt();
+        sFilter = settings->value(u"filter_set"_s).toString();
     }
     else
     {
@@ -283,6 +283,7 @@ MainWindow::MainWindow(QWidget *parent) :
     case TabSeries:
         ui->searchSeries->setText(sFilter);
         ui->searchSeries->setFocus();
+        SelectSeria();
         break;
     }
 
@@ -1308,11 +1309,11 @@ void MainWindow::SelectGenre()
     ushort idGenre = cur_item->data(0, Qt::UserRole).toUInt();
     vBooks_.clear();
     SLib& lib = g::libs[g::idCurrentLib];
-    for(const auto &book :lib.books){
-        if((idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.second.idLanguage)){
-            for(auto iGenre: book.second.vIdGenres) {
+    for(const auto &[idBook, book] :lib.books){
+        if(IsBookInList(book)){
+            for(auto iGenre: book.vIdGenres) {
                 if(iGenre == idGenre){
-                    vBooks_.push_back(book.first);
+                    vBooks_.push_back(idBook);
                     break;
                 }
             }
@@ -1334,24 +1335,25 @@ void MainWindow::SelectSeria()
 {
     ui->Books->clear();
     ExportBookListBtn(false);
-    if(ui->SeriaList->selectedItems().count() == 0)
+    if(ui->SeriaList->selectedItems().count() == 0){
+        ui->Books->clear();
         return;
+    }
     QListWidgetItem* cur_item = ui->SeriaList->selectedItems().at(0);
-    uint idSerial = cur_item->data(Qt::UserRole).toUInt();
+    idCurrentSerial_ = cur_item->data(Qt::UserRole).toUInt();
     vBooks_.clear();
     SLib& lib = g::libs[g::idCurrentLib];
 
     for(const auto &[idBook, book] :lib.books){
-        if(book.mSequences.contains(idSerial) && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.idLanguage)){
+        if(book.mSequences.contains(idCurrentSerial_) && (idCurrentLanguage_ == -1 || idCurrentLanguage_ == book.idLanguage)){
             vBooks_.push_back(idBook);
         }
     }
     FillListBooks(vBooks_, std::vector<uint>(), 0);
 
-    idCurrentSerial_= idSerial;
     if(g::options.bStorePosition){
         auto settings = GetSettings();
-        settings->setValue(u"current_serial_id"_s, idSerial);
+        settings->setValue(u"current_serial_id"_s, idCurrentSerial_);
     }
 }
 
@@ -1365,11 +1367,16 @@ void MainWindow::SelectAuthor()
         ui->Books->clear();
         return;
     }
-    QListWidgetItem* pItem =ui->AuthorList->selectedItems().at(0);
+    QListWidgetItem* pItem = ui->AuthorList->selectedItems().at(0);
     idCurrentAuthor_ = pItem->data(Qt::UserRole).toUInt();
     vBooks_.clear();
+    SLib &currentLib = g::libs[g::idCurrentLib];
+
     for (auto it = g::libs[g::idCurrentLib].authorBooksLink.equal_range(idCurrentAuthor_); it.first != it.second; ++it.first) {
-        vBooks_.push_back(it.first->second);
+        uint id = it.first->second;
+        const auto &book = currentLib.books.at(id);
+        if(IsBookInList(book))
+            vBooks_.push_back(it.first->second);
     }
     FillListBooks(vBooks_, {}, idCurrentAuthor_);
 
@@ -2139,7 +2146,7 @@ void MainWindow::FillAuthors()
         int count = 0;
         for (auto it = currentLib.authorBooksLink.equal_range(idAuthor); it.first != it.second; ++it.first) {
             SBook &book = currentLib.books[it.first->second];
-            if(IsBookInList(book))
+            if( IsBookInList(book))
                 count++;
         }
         if(count>0){
@@ -2228,6 +2235,8 @@ void MainWindow::FillSerials()
         return localeStringCompare(squences.at(id1).sName, squences.at(id2).sName);
     });
 
+    QListWidgetItem *selectedItem = nullptr;
+
     for(auto idSequnce :vIdSequence)
     {
         QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(squences.at(idSequnce).sName).arg(mCounts.at(idSequnce)));
@@ -2237,10 +2246,12 @@ void MainWindow::FillSerials()
         ui->SeriaList->addItem(item);
         if(idSequnce == idCurrentSerial_)
         {
+            selectedItem = item;
             item->setSelected(true);
-            ui->SeriaList->scrollToItem(item);
-         }
+        }
     }
+    if(selectedItem != nullptr)
+        ui->SeriaList->setCurrentItem(selectedItem);
 
     ui->SeriaList->blockSignals(wasBlocked);
     if(g::bVerbose){
