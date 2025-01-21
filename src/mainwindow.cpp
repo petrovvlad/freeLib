@@ -1133,6 +1133,7 @@ void MainWindow::onStartSearch()
     QDate dateTo = ui->date_to->date();
     int nMaxCount = ui->maxBooks->value();
     ushort idGenre = ui->s_genre->currentData().toUInt();
+    bool bTopGenre = idGenre<100;
     int idLanguage = ui->findLanguage->currentData().toInt();
 
     SLib& lib = g::libs[g::idCurrentLib];
@@ -1207,7 +1208,7 @@ void MainWindow::onStartSearch()
                     vFoundBooks_.push_back(idBook);
                 }else{
                     for(auto id: book.vIdGenres) {
-                        if(id == idGenre){
+                        if((bTopGenre && g::genres.at(id).idParrentGenre == idGenre) || id == idGenre){
                             nCount++;
                             vFoundBooks_.push_back(idBook);
                             break;
