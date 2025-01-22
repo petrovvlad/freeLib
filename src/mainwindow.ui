@@ -42,7 +42,7 @@
     <item>
      <widget class="QSplitter" name="splitterH">
       <property name="orientation">
-       <enum>Qt::Orientation::Horizontal</enum>
+       <enum>Qt::Horizontal</enum>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -113,10 +113,10 @@
             <item>
              <widget class="QListWidget" name="AuthorList">
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarAlwaysOff</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+               <set>QAbstractItemView::NoEditTriggers</set>
               </property>
               <property name="sortingEnabled">
                <bool>false</bool>
@@ -159,10 +159,10 @@
             <item>
              <widget class="QListWidget" name="SeriaList">
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarAlwaysOff</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+               <set>QAbstractItemView::NoEditTriggers</set>
               </property>
               <property name="sortingEnabled">
                <bool>false</bool>
@@ -191,13 +191,13 @@
             <item>
              <widget class="QTreeWidget" name="GenreList">
               <property name="focusPolicy">
-               <enum>Qt::FocusPolicy::WheelFocus</enum>
+               <enum>Qt::WheelFocus</enum>
               </property>
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarAlwaysOff</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+               <set>QAbstractItemView::NoEditTriggers</set>
               </property>
               <property name="headerHidden">
                <bool>true</bool>
@@ -255,13 +255,13 @@
                </size>
               </property>
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarAlwaysOff</enum>
               </property>
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
               <property name="alignment">
-               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
+               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
               </property>
               <widget class="QWidget" name="scrollAreaWidgetContents">
                <property name="geometry">
@@ -294,12 +294,6 @@
                 </item>
                 <item>
                  <widget class="QLineEdit" name="s_name">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>24</height>
-                   </size>
-                  </property>
                   <property name="clearButtonEnabled">
                    <bool>true</bool>
                   </property>
@@ -314,12 +308,6 @@
                 </item>
                 <item>
                  <widget class="QLineEdit" name="s_author">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>24</height>
-                   </size>
-                  </property>
                   <property name="clearButtonEnabled">
                    <bool>true</bool>
                   </property>
@@ -334,12 +322,6 @@
                 </item>
                 <item>
                  <widget class="QComboBox" name="s_genre">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>24</height>
-                   </size>
-                  </property>
                   <property name="maxVisibleItems">
                    <number>15</number>
                   </property>
@@ -464,14 +446,7 @@
                  </widget>
                 </item>
                 <item>
-                 <widget class="QComboBox" name="findLanguage">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>24</height>
-                   </size>
-                  </property>
-                 </widget>
+                 <widget class="QComboBox" name="findLanguage"/>
                 </item>
                 <item>
                  <widget class="QLabel" name="label_15">
@@ -482,23 +457,11 @@
                 </item>
                 <item>
                  <widget class="StarsComboBox" name="comboMinimalRating">
-                  <property name="minimumSize">
-                   <size>
-                    <width>0</width>
-                    <height>24</height>
-                   </size>
-                  </property>
                   <property name="focusPolicy">
-                   <enum>Qt::FocusPolicy::NoFocus</enum>
-                  </property>
-                  <property name="currentText">
-                   <string notr="true"/>
+                   <enum>Qt::NoFocus</enum>
                   </property>
                   <property name="currentIndex">
                    <number>-1</number>
-                  </property>
-                  <property name="placeholderText">
-                   <string notr="true"/>
                   </property>
                  </widget>
                 </item>
@@ -530,7 +493,7 @@
                   <item>
                    <spacer name="horizontalSpacer_5">
                     <property name="orientation">
-                     <enum>Qt::Orientation::Horizontal</enum>
+                     <enum>Qt::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -575,7 +538,7 @@
                    <string notr="true">0</string>
                   </property>
                   <property name="alignment">
-                   <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
+                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -606,10 +569,10 @@
            <string>List view</string>
           </property>
           <property name="frameShape">
-           <enum>QFrame::Shape::NoFrame</enum>
+           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Shadow::Raised</enum>
+           <enum>QFrame::Raised</enum>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
            <property name="spacing">
@@ -636,10 +599,10 @@
               <string notr="true">...</string>
              </property>
              <property name="popupMode">
-              <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+              <enum>QToolButton::MenuButtonPopup</enum>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonIconOnly</enum>
+              <enum>Qt::ToolButtonIconOnly</enum>
              </property>
             </widget>
            </item>
@@ -685,7 +648,7 @@
               <string notr="true">...</string>
              </property>
              <property name="popupMode">
-              <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
+              <enum>QToolButton::MenuButtonPopup</enum>
              </property>
             </widget>
            </item>
@@ -705,10 +668,10 @@
            <item>
             <spacer name="horizontalSpacer">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Policy::Maximum</enum>
+              <enum>QSizePolicy::Maximum</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -752,7 +715,7 @@
               <bool>false</bool>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonStyle::ToolButtonIconOnly</enum>
+              <enum>Qt::ToolButtonIconOnly</enum>
              </property>
             </widget>
            </item>
@@ -791,10 +754,10 @@
            <item>
             <spacer name="horizontalSpacer_8">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Policy::Fixed</enum>
+              <enum>QSizePolicy::Fixed</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -823,20 +786,20 @@
               <number>20</number>
              </property>
              <property name="insertPolicy">
-              <enum>QComboBox::InsertPolicy::NoInsert</enum>
+              <enum>QComboBox::NoInsert</enum>
              </property>
              <property name="sizeAdjustPolicy">
-              <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+              <enum>QComboBox::AdjustToContents</enum>
              </property>
             </widget>
            </item>
            <item>
             <spacer name="horizontalSpacer_9">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Policy::Fixed</enum>
+              <enum>QSizePolicy::Fixed</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -863,17 +826,17 @@
            <item>
             <widget class="QComboBox" name="TagFilter">
              <property name="insertPolicy">
-              <enum>QComboBox::InsertPolicy::NoInsert</enum>
+              <enum>QComboBox::NoInsert</enum>
              </property>
              <property name="sizeAdjustPolicy">
-              <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
+              <enum>QComboBox::AdjustToContents</enum>
              </property>
             </widget>
            </item>
            <item>
             <spacer name="horizontalSpacer_3">
              <property name="orientation">
-              <enum>Qt::Orientation::Horizontal</enum>
+              <enum>Qt::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -910,10 +873,10 @@
            <item>
             <widget class="QFrame" name="abc">
              <property name="frameShape">
-              <enum>QFrame::Shape::NoFrame</enum>
+              <enum>QFrame::NoFrame</enum>
              </property>
              <property name="frameShadow">
-              <enum>QFrame::Shadow::Raised</enum>
+              <enum>QFrame::Raised</enum>
              </property>
             </widget>
            </item>
@@ -923,10 +886,10 @@
         <item>
          <widget class="QFrame" name="frame_2">
           <property name="frameShape">
-           <enum>QFrame::Shape::NoFrame</enum>
+           <enum>QFrame::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Shadow::Sunken</enum>
+           <enum>QFrame::Sunken</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <property name="leftMargin">
@@ -944,20 +907,20 @@
            <item>
             <widget class="QSplitter" name="splitterV">
              <property name="orientation">
-              <enum>Qt::Orientation::Vertical</enum>
+              <enum>Qt::Vertical</enum>
              </property>
              <widget class="QTreeWidget" name="Books">
               <property name="frameShape">
-               <enum>QFrame::Shape::StyledPanel</enum>
+               <enum>QFrame::StyledPanel</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
+               <set>QAbstractItemView::NoEditTriggers</set>
               </property>
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
               <property name="selectionBehavior">
-               <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
+               <enum>QAbstractItemView::SelectRows</enum>
               </property>
               <property name="indentation">
                <number>15</number>
@@ -1123,7 +1086,7 @@
     <string>&amp;Preferences</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::MenuRole::PreferencesRole</enum>
+    <enum>QAction::PreferencesRole</enum>
    </property>
   </action>
   <action name="actionAbout">
@@ -1131,7 +1094,7 @@
     <string>&amp;About</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::MenuRole::AboutRole</enum>
+    <enum>QAction::AboutRole</enum>
    </property>
   </action>
   <action name="actionHelp">
@@ -1158,7 +1121,7 @@
     <string notr="true">Ctrl+Q</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::MenuRole::QuitRole</enum>
+    <enum>QAction::QuitRole</enum>
    </property>
   </action>
   <action name="actionLibraries">
