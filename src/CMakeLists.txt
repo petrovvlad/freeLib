@@ -54,6 +54,7 @@ set(PROJECT_SOURCES
         treebookitem.cpp    treebookitem.h
         coverlabel.cpp      coverlabel.h
         starsdelegate.cpp   starsdelegate.h
+        starscombobox.cpp   starscombobox.h
         utilites.cpp        utilites.h
         passwordlineedit.cpp            passwordlineedit.h
         genresortfilterproxymodel.cpp   genresortfilterproxymodel.h

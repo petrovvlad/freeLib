@@ -181,10 +181,11 @@ MainWindow::MainWindow(QWidget *parent) :
     MyProxySortModel->setDynamicSortFilter(false);
 
     StarsDelegate* delegate = new StarsDelegate(this);
+    delegate->setAlinment(Qt::AlignCenter);
     ui->Books->setItemDelegateForColumn(5, delegate);
 
+    ui->comboMinimalRating->setCurrentIndex(0);
     idCurrentLanguage_ = -1;
-
     int nCurrentTab;
 
     QString sFilter;
@@ -1135,12 +1136,15 @@ void MainWindow::onStartSearch()
     ushort idGenre = ui->s_genre->currentData().toUInt();
     bool bTopGenre = idGenre<100;
     int idLanguage = ui->findLanguage->currentData().toInt();
+    uint nMinimalRating = ui->comboMinimalRating->currentData().toUInt();
 
     SLib& lib = g::libs[g::idCurrentLib];
     vFoundBooks_.clear();
     int nCount = 0;
     std::vector<uint> vPosFound;
     for(const auto &[idBook, book] :lib.books){
+        if(book.nStars < nMinimalRating)
+            continue;
         bool bMatchAuthor = false;
         if(!sAuthor.isEmpty()){
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
@@ -1238,6 +1242,7 @@ void MainWindow::onClearSearch()
     ui->s_seria->clear();
     ui->s_FileName->clear();
     ui->find_books->clear();
+    ui->comboMinimalRating->setCurrentIndex(0);
     vFoundBooks_.clear();
 }
 
