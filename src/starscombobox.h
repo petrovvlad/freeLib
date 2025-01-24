@@ -11,7 +11,7 @@ public:
     explicit StarsComboBox(QWidget *parent = nullptr);
 
 protected:
-    void paintEvent(QPaintEvent *event) override;
+    // void paintEvent(QPaintEvent *event) override;
 };
 
 #endif // STARSCOMBOBOX_H
