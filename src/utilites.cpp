@@ -69,9 +69,9 @@ bool openDB(const QString &sName)
         creatDB(sFileDB);
     QSqlDatabase dbase = QSqlDatabase::database(sName, false);
     dbase.setDatabaseName(sFileDB);
-    if (!dbase.open())
+    if (!dbase.open()) [[unlikely]]
     {
-        qDebug() << ("Error connect! ") << sFileDB;
+        MyDBG << "Error connect! " << sFileDB;
         return false;
     }
     QSqlQuery query(dbase);
@@ -84,9 +84,9 @@ bool openDB(const QString &sName)
     if(version != 7){
         dbase.close();
         creatDB(sFileDB);
-        if (!dbase.open())
+        if (!dbase.open()) [[unlikely]]
         {
-            qDebug() << ("Error connect! ")<<sFileDB;
+            MyDBG << "Error connect! " << sFileDB;
             return false;
         }
     }
@@ -96,7 +96,7 @@ bool openDB(const QString &sName)
     {
         nMinorVersion = query.value(0).toUInt();
     }
-    if(nMinorVersion == 0){
+    if(nMinorVersion == 0) [[unlikely]]{
         query.exec(u"ALTER TABLE 'favorite' RENAME TO 'tag';"_s);
         query.exec(u"ALTER TABLE 'tag' ADD COLUMN 'id_icon' INTEGER;"_s);
         query.exec(u"ALTER TABLE author RENAME COLUMN 'favorite' TO 'id_tag';"_s);
@@ -119,10 +119,8 @@ bool openDB(const QString &sName)
         query.exec(u"CREATE TABLE book_tag (id_book INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_book) REFERENCES book (id) ON DELETE CASCADE, UNIQUE (id_book, id_tag) ON CONFLICT IGNORE);"_s);
         query.exec(u"CREATE TABLE seria_tag (id_seria INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_seria) REFERENCES seria (id) ON DELETE CASCADE, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, UNIQUE (id_seria, id_tag) ON CONFLICT IGNORE);"_s);
         query.exec(u"CREATE TABLE author_tag (id_author INTEGER NOT NULL, id_tag INTEGER NOT NULL, FOREIGN KEY (id_tag) REFERENCES tag (id) ON DELETE CASCADE, FOREIGN KEY (id_author) REFERENCES author (id) ON DELETE CASCADE, UNIQUE (id_author, id_tag) ON CONFLICT IGNORE);"_s);
-
-        query.exec(u"INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 4)"_s);
     }else
-    if(nMinorVersion < 4){
+    if(nMinorVersion < 4) [[unlikely]]{
         query.exec(u"PRAGMA foreign_keys = 0;"_s);
         query.exec(u"BEGIN TRANSACTION;"_s);
         query.exec(u"CREATE TABLE temp_table AS SELECT * FROM book_tag;"_s);
@@ -145,7 +143,7 @@ bool openDB(const QString &sName)
 
         query.exec(QStringLiteral("COMMIT;"));
     }
-    if(nMinorVersion < 5){
+    if(nMinorVersion < 5) [[unlikely]]{
         query.exec(u"PRAGMA foreign_keys = 0;"_s);
         query.exec(u"BEGIN TRANSACTION;"_s);
 
@@ -158,12 +156,9 @@ bool openDB(const QString &sName)
         query.exec(u"CREATE INDEX book_genre_id_book ON book_genre (id_book);"_s);
 
         query.exec(u"UPDATE genre SET keys='prose;prose_all;' WHERE id=207;"_s);
-
-        query.exec(u"INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 5)"_s);
-
         query.exec(u"COMMIT;"_s);
     }
-    if(nMinorVersion < 3){
+    if(nMinorVersion < 3) [[unlikely]]{
         query.exec(u"BEGIN TRANSACTION;"_s);
 
         query.exec(u"CREATE TABLE temp_table AS SELECT * FROM lib;"_s);
@@ -174,7 +169,7 @@ bool openDB(const QString &sName)
 
         query.exec(u"COMMIT;"_s);
     }
-    if(nMinorVersion < 2){
+    if(nMinorVersion < 2) [[unlikely]]{
         query.exec(u"BEGIN TRANSACTION;"_s);
 
         query.exec(u"CREATE TABLE temp_table AS SELECT * FROM author;"_s);
@@ -207,7 +202,7 @@ bool openDB(const QString &sName)
         query.exec(u"CREATE INDEX seria_name ON seria (\"name\" ASC, \"id_lib\" ASC);"_s);
         query.exec(u"COMMIT;"_s);
     }
-    if(nMinorVersion < 6){
+    if(nMinorVersion < 6) [[unlikely]]{
         query.exec(u"BEGIN TRANSACTION;"_s);
         query.exec(u"CREATE TABLE book_sequence (id_book INTEGER REFERENCES book (id) ON DELETE CASCADE, id_sequence INTEGER REFERENCES seria (id) ON DELETE CASCADE, num_in_sequence INTEGER, PRIMARY KEY (id_book, id_sequence));"_s);
         query.exec(u"CREATE INDEX book_sequence_id_book ON book_sequence (id_book)"_s);

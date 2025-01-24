@@ -1,11 +1,11 @@
 #include "tagdialog.h"
 #include "ui_tagdialog.h"
 
+#include <algorithm>
 #include <QComboBox>
 #include <QMessageBox>
 #include <QSqlError>
 #include <QDebug>
-#include <algorithm>
 #include <QSqlQuery>
 
 #include "library.h"
@@ -106,8 +106,8 @@ void TagDialog::btnOk()
         query.bindValue(QStringLiteral(":name"), ui->tableWidget->item(i,0)->text().trimmed());
         QVariant idIcon = qobject_cast<QComboBox*>(ui->tableWidget->cellWidget(i, 1))->currentData();
         query.bindValue(QStringLiteral(":id_icon"), idIcon);
-        if(!query.exec())
-            qDebug() << query.lastError().text();
+        if(!query.exec()) [[unlikely]]
+            MyDBG << query.lastError().text();
     }
 }
 

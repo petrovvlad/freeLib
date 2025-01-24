@@ -580,8 +580,8 @@ void Options::savePasswords()
     job.setTextData( sProxyPassword );
     job.start();
     loop.exec();
-    if (job.error())
-        qDebug() << "Error save password " <<  job.errorString();
+    if (job.error()) [[unlikely]]
+        MyDBG << "Error save password " << job.errorString();
 #endif //USE_HTTSERVER
     int countExport = vExportOptions.size();
     for(int iExport=0; iExport<countExport; iExport++){

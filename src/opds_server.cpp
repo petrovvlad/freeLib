@@ -117,7 +117,7 @@ opds_server::opds_server(QObject *parent) :
     httpServer_.route(u"/<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
     {
         QByteArray ba = cover(idLib, idBook);
-        if(ba.isEmpty())
+        if(ba.isEmpty()) [[unlikely]]
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response("image/jpeg"_ba, ba);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
@@ -133,7 +133,7 @@ opds_server::opds_server(QObject *parent) :
     httpServer_.route(u"/opds/<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
     {
         QByteArray ba = cover(idLib, idBook);
-        if(ba.isEmpty())
+        if(ba.isEmpty()) [[unlikely]]
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         return QHttpServerResponse("image/jpeg"_ba, ba);
     });
@@ -141,7 +141,7 @@ opds_server::opds_server(QObject *parent) :
     httpServer_.route(u"/opds2/<arg>/covers/<arg>/cover.jpg"_s, QHttpServerRequest::Method::Get,  [this](uint idLib, uint idBook/*, const QHttpServerRequest &request*/)
     {
         QByteArray ba = cover(idLib, idBook);
-        if(ba.isEmpty())
+        if(ba.isEmpty()) [[unlikely]]
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         return QHttpServerResponse("image/jpeg"_ba, ba);
     });
@@ -322,7 +322,7 @@ QDomElement opds_server::AddTextNode(const QString &name, const QString &text, Q
 {
     QDomElement el = doc_.createElement(name);
     node.appendChild(el);
-    if(!text.isEmpty())
+    if(!text.isEmpty()) [[likely]]
     {
         QDomText txt = doc_.createTextNode(text);
         el.appendChild(txt);
@@ -335,7 +335,7 @@ void opds_server::addTextNode(QDomNode &node, const QString &sName, const QStrin
     QDomElement el = doc_.createElement(sName);
     node.appendChild(el);
     el.setAttribute(u"class"_s, sClass);
-    if(!sText.isEmpty())
+    if(!sText.isEmpty()) [[likely]]
     {
         QDomText txt = doc_.createTextNode(sText);
         el.appendChild(txt);
@@ -450,7 +450,9 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
         auto range = lib.authorBooksLink.equal_range(idAuthor);
         for (auto it = range.first; it != range.second; ++it) {
             auto &book = lib.books.at(it->second);
-            if(!book.bDeleted && book.mSequences.contains(idSeria))
+            if(book.bDeleted) [[unlikely]]
+                continue;
+            if(book.mSequences.contains(idSeria))
                 if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
                     vBooks.push_back(it->second);
         }
@@ -469,14 +471,16 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
         if(sequenceless){
             for (auto it = range.first; it != range.second; ++it) {
                 auto &book = lib.books.at(it->second);
-                if(!lib.books.at(it->second).bDeleted && lib.books.at(it->second).mSequences.empty()/*idSerial == 0*/)
+                if(book.bDeleted) [[unlikely]]
+                    continue;
+                if(book.mSequences.empty())
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
                         vBooks.push_back(it->second);
             }
         }else{
             for (auto it = range.first; it != range.second; ++it) {
                 auto &book = lib.books.at(it->second);
-                if(!lib.books.at(it->second).bDeleted)
+                if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
                         vBooks.push_back(it->second);
             }
@@ -484,10 +488,12 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
         std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName); });
     }
     if(idAuthor == 0 && idSeria != 0){
-        for(const auto &iBook :lib.books){
-            if(!iBook.second.bDeleted && iBook.second.mSequences.contains(idSeria)/*idSerial == idSeria*/)
-                if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage])
-                    vBooks.push_back(iBook.first);
+        for(const auto &[idBook, book] :lib.books){
+            if(book.bDeleted) [[unlikely]]
+                continue;
+            if(book.mSequences.contains(idSeria))
+                if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
+                    vBooks.push_back(idBook);
         }
         std::sort(vBooks.begin(), vBooks.end(),[&lib](uint id1, uint id2)
         {
@@ -504,14 +510,14 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
 std::vector<uint> opds_server::listGenreBooks(const SLib &lib, ushort idGenre)
 {
     std::vector<uint> vBooks;
-    for(const auto &iBook :lib.books){
-        if(!iBook.second.bDeleted){
-            for(auto iGenre: iBook.second.vIdGenres){
-                if(iGenre == idGenre){
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage]){
-                        vBooks.push_back(iBook.first);
-                        break;
-                    }
+    for(const auto &[idBook, book] :lib.books){
+        if(book.bDeleted) [[unlikely]]
+            continue;
+        for(auto iGenre: book.vIdGenres){
+            if(iGenre == idGenre){
+                if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage]){
+                    vBooks.push_back(idBook);
+                    break;
                 }
             }
         }
@@ -527,7 +533,7 @@ std::vector<uint> opds_server::searchTitle(const SLib &lib, const QString &sTitl
     std::vector<uint> vBooks;
     if(!sSearch.isEmpty()){
         vBooks = blockingFiltered(lib.books, [&](const auto &book){
-            if(!book.bDeleted){
+            if(!book.bDeleted) [[likely]]{
                 QString sName = simplifySearchString(book.sName);
                 if(sName.contains(sSearch)){
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
@@ -552,7 +558,7 @@ std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuth
     std::vector<uint> vBooks;
 
     vBooks = blockingFiltered(lib.books, [&](const auto &book){
-        if(!book.bDeleted){
+        if(!book.bDeleted) [[likely]]{
             QString sName = simplifySearchString(book.sName);
             if(sName.contains(sSimplifiedTitle)){
                 if(sAuthor.isEmpty() || std::any_of(book.vIdAuthors.begin(), book.vIdAuthors.end(), [&stIdAuthors](auto idAuthor){return stIdAuthors.contains(idAuthor);}))
@@ -588,7 +594,7 @@ auto opds_server::searchSequence(const SLib &lib, const QString &sSequence)
                 for(const auto &iSequance :book.mSequences){
                     const auto &secuence = lib.serials.at(iSequance.first);
                     QString sName  = simplifySearchString(secuence.sName);
-                    if(sName.contains(sSearchSimplefied)){
+                    if(sName.contains(sSearchSimplefied)) [[unlikely]]{
                         std::lock_guard<std::mutex> guard(m);
                         mSequence[iSequance.first]++;
                     }
@@ -801,7 +807,7 @@ SLib* opds_server::getLib(uint &idLib, const QString &sTypeServer, QString *pLib
         *pLibUrl = g::options.sBaseUrl % sTypeServer % u"/"_s % QString::number(idLib);
     if(!g::libs.contains(idLib) || !g::libs.at(idLib).bLoaded)
         loadLibrary(idLib);
-    if(!g::libs.contains(idLib))
+    if(!g::libs.contains(idLib)) [[unlikely]]
         return nullptr;
     SLib &lib = g::libs[idLib];
     lib.timeHttp = std::chrono::system_clock::now();
@@ -1453,7 +1459,7 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
     for(const auto &iBook :pLib->books){
-        if(!iBook.second.bDeleted){
+        if(!iBook.second.bDeleted) [[likely]]{
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
                 for(auto idAuthor :iBook.second.vIdAuthors)
                     stIdAuthors.insert(idAuthor);
@@ -1551,7 +1557,7 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
             auto range = pLib->authorBooksLink.equal_range(iIndex);
             for (auto it = range.first; it != range.second; ++it) {
                 auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted)
+                if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
@@ -1574,7 +1580,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -1590,7 +1596,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
     for(const auto &iBook :pLib->books){
-        if(!iBook.second.bDeleted){
+        if(!iBook.second.bDeleted) [[likely]]{
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
                 for(auto idAuthor :iBook.second.vIdAuthors)
                     stIdAuthors.insert(idAuthor);
@@ -1660,7 +1666,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
             auto range = pLib->authorBooksLink.equal_range(iIndex);
             for (auto it = range.first; it != range.second; ++it) {
                 auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted)
+                if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
@@ -1681,7 +1687,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -1697,7 +1703,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
     for(const auto &iBook :pLib->books){
-        if(!iBook.second.bDeleted){
+        if(!iBook.second.bDeleted) [[likely]]{
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
                 for(auto idAuthor :iBook.second.vIdAuthors)
                     stIdAuthors.insert(idAuthor);
@@ -1765,7 +1771,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
             auto range = pLib->authorBooksLink.equal_range(iIndex);
             for (auto it = range.first; it != range.second; ++it) {
                 auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted)
+                if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
@@ -1823,7 +1829,7 @@ QHttpServerResponse opds_server::authorOPDS(uint idLib, uint idAuthor, const QHt
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -1849,7 +1855,7 @@ QHttpServerResponse opds_server::authorOPDS2(uint idLib, uint idAuthor, const QH
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -1878,7 +1884,7 @@ QHttpServerResponse opds_server::authorBooksHTML(uint idLib, uint idAuthor, cons
     if(!checkAuth(request, url))
         return responseUnauthorized();
     SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, false);
@@ -1892,7 +1898,7 @@ QHttpServerResponse opds_server::authorBooksOPDS(uint idLib, uint idAuthor, cons
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, false);
@@ -1909,7 +1915,7 @@ QHttpServerResponse opds_server::authorBooksOPDS2(uint idLib, uint idAuthor, con
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, false);
@@ -1924,7 +1930,7 @@ QHttpServerResponse opds_server::authorSequencesHTML(uint idLib, uint idAuthor, 
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -1939,7 +1945,9 @@ QHttpServerResponse opds_server::authorSequencesHTML(uint idLib, uint idAuthor, 
     auto range = pLib->authorBooksLink.equal_range(idAuthor);
     for (auto it = range.first; it != range.second; ++it) {
         const SBook& book = pLib->books.at(it->second);
-        if(!book.bDeleted && !book.mSequences.empty())
+        if(book.bDeleted) [[unlikely]]
+            continue;
+        if(!book.mSequences.empty())
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSequence :book.mSequences)
                     ++mCountBooks[iSequence.first];
@@ -1964,7 +1972,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -1979,7 +1987,9 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
     auto range = pLib->authorBooksLink.equal_range(idAuthor);
     for (auto it = range.first; it != range.second; ++it) {
         const SBook& book = pLib->books.at(it->second);
-        if(!book.bDeleted && !book.mSequences.empty()){
+        if(book.bDeleted) [[unlikely]]
+            continue;
+        if(!book.mSequences.empty()){
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSequenc :book.mSequences)
                     ++mCountBooks[iSequenc.first];
@@ -2003,7 +2013,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS2(uint idLib, uint idAuthor,
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2018,7 +2028,9 @@ QHttpServerResponse opds_server::authorSequencesOPDS2(uint idLib, uint idAuthor,
     auto range = pLib->authorBooksLink.equal_range(idAuthor);
     for (auto it = range.first; it != range.second; ++it) {
         const SBook& book = pLib->books.at(it->second);
-        if(!book.bDeleted && !book.mSequences.empty()){
+        if(book.bDeleted) [[unlikely]]
+            continue;
+        if(!book.mSequences.empty()){
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSequenc :book.mSequences)
                     ++mCountBooks[iSequenc.first];
@@ -2059,7 +2071,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS(uint idLib, uint idAuthor, 
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->serials.contains(idSequence))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->serials.contains(idSequence)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, idSequence, 0);
@@ -2076,7 +2088,7 @@ QHttpServerResponse opds_server::authorSequencesOPDS2(uint idLib, uint idAuthor,
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->serials.contains(idSequence))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->serials.contains(idSequence)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, idSequence, 0);
@@ -2091,7 +2103,7 @@ QHttpServerResponse opds_server::authorSequencelessHTML(uint idLib, uint idAutho
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, true);
@@ -2105,7 +2117,7 @@ QHttpServerResponse opds_server::authorSequencelessOPDS(uint idLib, uint idAutho
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, true);
@@ -2122,7 +2134,7 @@ QHttpServerResponse opds_server::authorSequencelessOPDS2(uint idLib, uint idAuth
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->authors.contains(idAuthor))
+    if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, idAuthor, 0, true);
@@ -2137,7 +2149,7 @@ QHttpServerResponse opds_server::sequencesIndexHTML(uint idLib, const QString &s
         return responseUnauthorized();
     QString sLibUrl;
     const SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2154,7 +2166,9 @@ QHttpServerResponse opds_server::sequencesIndexHTML(uint idLib, const QString &s
     QString sLowerIndex = sIndex.toCaseFolded();
     for(const auto &iBook :pLib->books){
         const auto &book = iBook.second;
-        if(!book.mSequences.empty() && !book.bDeleted){
+        if(book.bDeleted) [[unlikely]]
+            continue;
+        if(!book.mSequences.empty()){
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSequenc :book.mSequences)
                     stIdSerials.insert(iSequenc.first);
@@ -2246,7 +2260,9 @@ QHttpServerResponse opds_server::sequencesIndexHTML(uint idLib, const QString &s
             for(const auto &iBook :pLib->books)
             {
                 const auto &book = iBook.second;
-                if(!book.bDeleted && book.mSequences.contains(idSerial)/*iBook.second.idSerial == idSerial*/)
+                if(book.bDeleted) [[unlikely]]
+                    continue;
+                if(book.mSequences.contains(idSerial))
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
@@ -2285,7 +2301,9 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
 
     for(const auto &iBook :pLib->books){
         const auto &book = iBook.second;
-        if(!book.mSequences.empty() && !book.bDeleted){
+        if(book.bDeleted) [[unlikely]]
+            continue;
+        if(!book.mSequences.empty()){
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSequence :book.mSequences)
                     stIdSerials.insert(iSequence.first);
@@ -2353,7 +2371,9 @@ QHttpServerResponse opds_server::sequencesIndexOPDS(uint idLib, const QString &s
             for(const auto &iBook :pLib->books)
             {
                 const auto &book = iBook.second;
-                if(!iBook.second.bDeleted && book.mSequences.contains(iIndex)/*iBook.second.idSerial == iIndex*/)
+                if(book.bDeleted) [[unlikely]]
+                    continue;
+                if(book.mSequences.contains(iIndex))
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])                            
                         nBooksCount++;
             }
@@ -2388,7 +2408,9 @@ QHttpServerResponse opds_server::sequencesIndexOPDS2(uint idLib, const QString &
 
     for(const auto &iBook :pLib->books){
         const auto &book = iBook.second;
-        if(!book.mSequences.empty() && !book.bDeleted){
+        if(book.bDeleted) [[unlikely]]
+            continue;
+        if(!book.mSequences.empty()){
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSequence :book.mSequences)
                     stIdSerials.insert(iSequence.first);
@@ -2456,7 +2478,9 @@ QHttpServerResponse opds_server::sequencesIndexOPDS2(uint idLib, const QString &
             for(const auto &iBook :pLib->books)
             {
                 const auto &book = iBook.second;
-                if(!book.bDeleted && book.mSequences.contains(iIndex))
+                if(book.bDeleted) [[unlikely]]
+                    continue;
+                if(book.mSequences.contains(iIndex))
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
@@ -2507,7 +2531,7 @@ QHttpServerResponse opds_server::sequenceBooksOPDS2(uint idLib, uint idSequence,
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || !pLib->serials.contains(idSequence))
+    if(pLib == nullptr || !pLib->serials.contains(idSequence)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     std::vector<uint> vBooks = book_list(*pLib, 0, idSequence, 0);
@@ -2532,7 +2556,7 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre)))
+    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre))) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2553,7 +2577,7 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
                 vIdGenres.push_back(iGenre.first);
         }
         for(const auto &iBook :pLib->books){
-            if(!iBook.second.bDeleted){
+            if(!iBook.second.bDeleted) [[likely]]{
                 for(auto iGenre: iBook.second.vIdGenres){
                     if(g::genres[iGenre].idParrentGenre == idParentGenre){
                         if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
@@ -2599,7 +2623,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre)))
+    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre))) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2622,7 +2646,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
                 vIdGenres.push_back(iGenre.first);
         }
         for(const auto &iBook :pLib->books){
-            if(!iBook.second.bDeleted){
+            if(!iBook.second.bDeleted) [[likely]]{
                 for(auto iGenre: iBook.second.vIdGenres){
                     if(g::genres[iGenre].idParrentGenre == idParentGenre){
                         if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
@@ -2674,7 +2698,7 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre)))
+    if(pLib == nullptr || (idParentGenre!=0 && !g::genres.contains(idParentGenre))) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2695,7 +2719,7 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
                 vIdGenres.push_back(iGenre.first);
         }
         for(const auto &iBook :pLib->books){
-            if(!iBook.second.bDeleted){
+            if(!iBook.second.bDeleted) [[likely]]{
                 for(auto idGenre: iBook.second.vIdGenres){
                     if(g::genres[idGenre].idParrentGenre == idParentGenre){
                         if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
@@ -2738,7 +2762,7 @@ QHttpServerResponse opds_server::searchTitleHTML(uint idLib, const QHttpServerRe
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2762,7 +2786,7 @@ QHttpServerResponse opds_server::searchAuthorHTML(uint idLib, const QHttpServerR
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2784,7 +2808,7 @@ QHttpServerResponse opds_server::searchAuthorHTML(uint idLib, const QHttpServerR
         auto range = pLib->authorBooksLink.equal_range(idAuthor);
         for (auto it = range.first; it != range.second; ++it) {
             auto &book = pLib->books.at(it->second);
-            if(!book.bDeleted)
+            if(!book.bDeleted) [[likely]]
                 if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                     nBooksCount++;
         }
@@ -2807,7 +2831,7 @@ QHttpServerResponse opds_server::searchSequenceHTML(uint idLib, const QHttpServe
         return responseUnauthorized();
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u""_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
@@ -2839,7 +2863,7 @@ QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest
     QUrlQuery urlquery(url);
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QString sSearchString = urlquery.queryItemValue(u"q"_s, QUrl::FullyDecoded).replace(u'+', u' ');
@@ -2887,7 +2911,7 @@ QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest
             auto range = pLib->authorBooksLink.equal_range(idAuthor);
             for (auto it = range.first; it != range.second; ++it) {
                 auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted)
+                if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
@@ -2931,7 +2955,7 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
     QUrlQuery urlquery(url);
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
-    if(pLib == nullptr)
+    if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QString sSearchString = urlquery.queryItemValue(u"query"_s, QUrl::FullyDecoded).replace(u'+', u' ');
@@ -2976,11 +3000,11 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
             auto range = pLib->authorBooksLink.equal_range(idAuthor);
             for (auto it = range.first; it != range.second; ++it) {
                 auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted)
+                if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
-            if(nBooksCount >0 ){
+            if(nBooksCount >0 ) [[likely]]{
                 addNavigation(navigation, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery);
             }
             root[u"navigation"] = navigation;
@@ -3047,7 +3071,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
         }
     }
 
-    if(baBook.size() != 0)
+    if(baBook.size() != 0) [[likely]]
     {
         QString sBookFileName;
         if(pExportOptions != nullptr)

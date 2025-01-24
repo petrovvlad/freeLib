@@ -96,14 +96,14 @@ void BookFile::open()
                     uz.setIoDevice(&tmpBuffer);
                 }
 
-                if (!uz.open(QuaZip::mdUnzip))
+                if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
                 {
                     MyDBG << "Error open archive! " << sArchive;
                     return;
                 }
                 zipFile.setZip(&uz);
                 setCurrentZipFileName(&uz, sZipChain[i]);
-                if(!zipFile.open(QIODevice::ReadOnly))
+                if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
                 {
                     MyDBG << "Error open file: " << sZipChain[i];
                 }
@@ -117,14 +117,14 @@ void BookFile::open()
             }
         }else
             uz.setZipName(sArchive);
-        if( !uz.open(QuaZip::mdUnzip) )
+        if( !uz.open(QuaZip::mdUnzip) ) [[unlikely]]
         {
             MyDBG << "Error open archive! " << sArchive;
             return;
         }
         setCurrentZipFileName(&uz, sFile);
         zipFile.setZip(&uz);
-        if(!zipFile.open(QIODevice::ReadOnly))
+        if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
         {
             MyDBG << "Error open file: " << sFile;
         }else {
@@ -152,10 +152,10 @@ QImage BookFile::cover()
     QString sFormat = book.sFormat;
     if(sFormat == u"fb2")
         img = coverFb2();
-    if(sFormat == u"epub")
+    else if(sFormat == u"epub")
         img = coverAnnotationEpub();
 #ifdef USE_DEJVULIBRE
-    if(sFormat == u"djvu" || sFormat == u"djv")
+    else if(sFormat == u"djvu" || sFormat == u"djv")
         img = coverDjvu();
 #endif
 
@@ -229,7 +229,7 @@ QImage BookFile::coverAnnotationEpub()
     }
 
     zip.open(QuaZip::mdUnzip);
-    if(!setCurrentZipFileName(&zip, u"META-INF/container.xml"_s)){
+    if(!setCurrentZipFileName(&zip, u"META-INF/container.xml"_s)) [[unlikely]] {
         MyDBG << "Error open file: " << u"META-INF/container.xml"_s;
         return img;
     }
@@ -309,7 +309,7 @@ QImage BookFile::coverAnnotationEpub()
                     if(!sCoverImg.isEmpty()){
                         sCoverImg = sCoverImg.replace(u"%40"_s, u"@"_s);
                         setCurrentZipFileName(&zip, sCoverImg);
-                        if(!zipFile.open(QIODevice::ReadOnly))
+                        if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
                             MyDBG << "Error open file: " << sCoverImg;
                         else{
                             QByteArray ba = zipFile.readAll();
@@ -323,7 +323,7 @@ QImage BookFile::coverAnnotationEpub()
         }
     }
     zip.close();
-    if(sAnnotation_.isEmpty())
+    if(sAnnotation_.isEmpty()) [[unlikely]]
         sAnnotation_  = u" "_s;
 
     return img;

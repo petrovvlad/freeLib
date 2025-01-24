@@ -162,7 +162,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
         file.write(buf->data());
         file.close();
     }
-    if(out_file.size() == 0)
+    if(out_file.size() == 0) [[unlikely]]
         return false;
     QString current_out_file = out_file.front();
     if(
@@ -203,7 +203,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            return false;
        }
        QFile book_file(FileName);
-       if(!book_file.open(QFile::ReadOnly))
+       if(!book_file.open(QFile::ReadOnly)) [[unlikely]]
        {
            MyDBG  << "Error open file name " << FileName;
            return false;
@@ -220,7 +220,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
        smtp.login(pExportOptions_->sEmailUser, pExportOptions_->sEmailPassword);
        smtp.waitForAuthenticated();
        smtp.sendMail(msg);
-       if(!smtp.waitForMailSent())
+       if(!smtp.waitForMailSent()) [[unlikely]]
        {
            MyDBG << "Error send e-mail.";
            return false;
@@ -247,14 +247,14 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            urlDst.setPath(sBookFileName);
            urlDst.setQuery(u""_s);
            validateFileName(urlDst);
-           if(!kioMkDir(urlDst.adjusted(QUrl::RemoveFilename))){
+           if(!kioMkDir(urlDst.adjusted(QUrl::RemoveFilename))) [[unlikely]]{
                MyDBG << "Could not make dir: " << urlDst;
                return false;
            }
            KIO::FileCopyJob *jobCopy = KIO::file_move(urlSrc, urlDst, -1, KIO::Overwrite | KIO::HideProgressInfo );
            jobCopy->start();
            jobCopy->exec();
-           if (jobCopy->error()){
+           if (jobCopy->error()) [[unlikely]]{
                MyDBG << jobCopy->errorString();
                return false;
            }
@@ -323,7 +323,7 @@ void ExportThread::export_books()
                 continue;
             }
             QuaZip uz(LibPath % QStringLiteral("/") % archive);
-            if(!uz.open(QuaZip::mdUnzip))
+            if(!uz.open(QuaZip::mdUnzip)) [[unlikely]]
             {
                 MyDBG << "Error open archive! " << archive;
                 continue;
@@ -404,7 +404,7 @@ void ExportThread::export_books()
             BookFile fileBook(g::idCurrentLib, idBook);
             QByteArray baBook = fileBook.data();
             vBuffers.back()->setData(baBook);
-            if(baBook.size() == 0)
+            if(baBook.size() == 0) [[unlikely]]
             {
                 emit Progress(count * 100 / vBbooks_.size(), count);
                 continue;
@@ -493,9 +493,9 @@ void ExportThread::export_lib()
         QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("exportbdb"), false);
 #endif
 
-        if (!dbase.open())
+        if (!dbase.open()) [[unlikely]]
         {
-            qDebug() << dbase.lastError().text();
+            MyDBG << dbase.lastError().text();
             return;
         }
         QSqlQuery query(dbase);
@@ -535,9 +535,9 @@ void ExportThread::export_lib()
     collection.write(u"freeLib\r\n"_s.toUtf8());
     collection.close();
     inpx.open(QFile::WriteOnly);
-    if(!inpx.isOpen())
+    if(!inpx.isOpen()) [[unlikely]]
     {
-        qDebug()<<"Error create file: " + sInpxFile;
+        MyDBG << "Error create file: " + sInpxFile;
         return;
     }
 
@@ -600,7 +600,7 @@ void ExportThread::export_lib()
 
         inpx.write(sLine.toUtf8());
         nCount++;
-        if(uint(nCount / 1000) * 1000 == nCount)
+        if(uint(nCount / 1000) * 1000 == nCount) [[unlikely]]
             emit Progress( nCount * 100 / lib.books.size(), nCount );
     }
     inpx.close();

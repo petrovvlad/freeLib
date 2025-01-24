@@ -41,39 +41,39 @@ DjVu::~DjVu()
 bool DjVu::loadLibrary()
 {
 
-    if ( !djvu_context_create && !(djvu_context_create = (DjvuContextCreate)libDjVu.resolve("ddjvu_context_create")) )
+    if ( !djvu_context_create && !(djvu_context_create = (DjvuContextCreate)libDjVu.resolve("ddjvu_context_create")) ) [[unlikely]]
         return false;
-    if ( !djvu_context_release && !(djvu_context_release = (DjvuContextRelease)libDjVu.resolve("ddjvu_context_release")) )
+    if ( !djvu_context_release && !(djvu_context_release = (DjvuContextRelease)libDjVu.resolve("ddjvu_context_release")) ) [[unlikely]]
         return false;
-    if( !djvu_document_create_by_filename_utf8 && !(djvu_document_create_by_filename_utf8 = (DjvuDocumentCreateByFilenameUtf8)libDjVu.resolve("ddjvu_document_create_by_filename_utf8")) )
+    if( !djvu_document_create_by_filename_utf8 && !(djvu_document_create_by_filename_utf8 = (DjvuDocumentCreateByFilenameUtf8)libDjVu.resolve("ddjvu_document_create_by_filename_utf8")) ) [[unlikely]]
         return false;
-    if( !djvu_document_job && !(djvu_document_job = (DjvuDocumentJob)libDjVu.resolve("ddjvu_document_job")) )
+    if( !djvu_document_job && !(djvu_document_job = (DjvuDocumentJob)libDjVu.resolve("ddjvu_document_job")) ) [[unlikely]]
         return false;
-    if( !djvu_job_status && !(djvu_job_status = (DjvuJobStatus)libDjVu.resolve("ddjvu_job_status")) )
+    if( !djvu_job_status && !(djvu_job_status = (DjvuJobStatus)libDjVu.resolve("ddjvu_job_status")) ) [[unlikely]]
         return false;
-    if( !djvu_job_release && !(djvu_job_release = (DjvuJobRelease)libDjVu.resolve("ddjvu_job_release")) )
+    if( !djvu_job_release && !(djvu_job_release = (DjvuJobRelease)libDjVu.resolve("ddjvu_job_release")) ) [[unlikely]]
         return false;
-    if( !djvu_message_wait && !(djvu_message_wait = (DjvuMessageWait)libDjVu.resolve("ddjvu_message_wait")) )
+    if( !djvu_message_wait && !(djvu_message_wait = (DjvuMessageWait)libDjVu.resolve("ddjvu_message_wait")) ) [[unlikely]]
         return false;
-    if( !djvu_message_peek && !(djvu_message_peek = (DjvuMessagePeek)libDjVu.resolve("ddjvu_message_peek")) )
+    if( !djvu_message_peek && !(djvu_message_peek = (DjvuMessagePeek)libDjVu.resolve("ddjvu_message_peek")) ) [[unlikely]]
         return false;
-    if( !djvu_message_pop && !(djvu_message_pop =(DjvuMessagePop)libDjVu.resolve("ddjvu_message_pop")) )
+    if( !djvu_message_pop && !(djvu_message_pop =(DjvuMessagePop)libDjVu.resolve("ddjvu_message_pop")) ) [[unlikely]]
         return false;
-    if( !djvu_page_create_by_pageno && !(djvu_page_create_by_pageno = (DjvuPageCreateByPageno)libDjVu.resolve("ddjvu_page_create_by_pageno")) )
+    if( !djvu_page_create_by_pageno && !(djvu_page_create_by_pageno = (DjvuPageCreateByPageno)libDjVu.resolve("ddjvu_page_create_by_pageno")) ) [[unlikely]]
         return false;
-    if( !djvu_page_job && !(djvu_page_job = (DjvuPageJob)libDjVu.resolve("ddjvu_page_job")) )
+    if( !djvu_page_job && !(djvu_page_job = (DjvuPageJob)libDjVu.resolve("ddjvu_page_job")) ) [[unlikely]]
         return false;
-    if( !djvu_page_render && !(djvu_page_render = (DjvuPageRender)libDjVu.resolve("ddjvu_page_render")) )
+    if( !djvu_page_render && !(djvu_page_render = (DjvuPageRender)libDjVu.resolve("ddjvu_page_render")) ) [[unlikely]]
         return false;
-    if( !djvu_page_get_width && !(djvu_page_get_width = (DjvuPageGetWidth)libDjVu.resolve("ddjvu_page_get_width")) )
+    if( !djvu_page_get_width && !(djvu_page_get_width = (DjvuPageGetWidth)libDjVu.resolve("ddjvu_page_get_width")) ) [[unlikely]]
         return false;
-    if( !djvu_page_get_height && !(djvu_page_get_height = (DjvuPageGetHeight)libDjVu.resolve("ddjvu_page_get_height")) )
+    if( !djvu_page_get_height && !(djvu_page_get_height = (DjvuPageGetHeight)libDjVu.resolve("ddjvu_page_get_height")) ) [[unlikely]]
         return false;
-    if( !djvu_format_create && !(djvu_format_create = (DjvuFormatCreate)libDjVu.resolve("ddjvu_format_create")) )
+    if( !djvu_format_create && !(djvu_format_create = (DjvuFormatCreate)libDjVu.resolve("ddjvu_format_create")) ) [[unlikely]]
         return false;
-    if( !djvu_format_release && !(djvu_format_release = (DjvuFormatRelease)libDjVu.resolve("ddjvu_format_release")) )
+    if( !djvu_format_release && !(djvu_format_release = (DjvuFormatRelease)libDjVu.resolve("ddjvu_format_release")) ) [[unlikely]]
         return false;
-    if( !djvu_format_set_row_order && !(djvu_format_set_row_order = (DjvuFormatSetRowOrder)libDjVu.resolve("ddjvu_format_set_row_order")) )
+    if( !djvu_format_set_row_order && !(djvu_format_set_row_order = (DjvuFormatSetRowOrder)libDjVu.resolve("ddjvu_format_set_row_order")) ) [[unlikely]]
         return false;
 
     return true;
@@ -85,11 +85,11 @@ void DjVu::waitForDdjvuMessage(ddjvu_message_tag_t tag )
     const ddjvu_message_t *msg;
     while ( (msg = djvu_message_peek(pContext_)) && (msg->m_any.tag != tag) )
     {
-        if(msg->m_any.tag == DDJVU_ERROR){
+        if(msg->m_any.tag == DDJVU_ERROR) [[unlikely]]{
             if (msg->m_error.filename)
-                qDebug() << "ddjvu: %s\nddjvu: '%s:%d'\n" << msg->m_error.message << msg->m_error.filename <<  msg->m_error.lineno;
+                MyDBG << "ddjvu: %s\nddjvu: '%s:%d'\n" << msg->m_error.message << msg->m_error.filename <<  msg->m_error.lineno;
             else
-                qDebug() << "ddjvu: %s\n" << msg->m_error.message;
+                MyDBG << "ddjvu: %s\n" << msg->m_error.message;
             return;
         }
         djvu_message_pop(pContext_);
@@ -99,7 +99,7 @@ void DjVu::waitForDdjvuMessage(ddjvu_message_tag_t tag )
 bool DjVu::openDocument(const QString &sFileName)
 {
     QFileInfo info(sFileName);
-    if ( !info.isReadable() )
+    if ( !info.isReadable() ) [[unlikely]]
     {
         qWarning() << "cannot read file: " << sFileName;
         return false;
@@ -107,7 +107,7 @@ bool DjVu::openDocument(const QString &sFileName)
 
     if( !pContext_ ){
         pContext_ = djvu_context_create("freeLib");
-        if ( !pContext_ )
+        if ( !pContext_ ) [[unlikely]]
         {
             qWarning() << "cannot create context";
             return false;
@@ -117,7 +117,7 @@ bool DjVu::openDocument(const QString &sFileName)
     if(pDocument_)
         djvu_document_release(pDocument_);
     pDocument_ = djvu_document_create_by_filename_utf8(pContext_, sFileName.toUtf8(), 0);
-    if ( !pDocument_ )
+    if ( !pDocument_ ) [[unlikely]]
     {
         qWarning() << "cannot create decoder";
         return false;

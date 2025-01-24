@@ -256,7 +256,7 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
     {
         bool result = query.exec(u"INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)"_s
                                  .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?u"1"_s :u"0"_s, lib.bWoDeleted ?u"1"_s :u"0"_s));
-        if(!result)
+        if(!result) [[unlikely]]
             MyDBG << query.lastError().databaseText();
         idCurrentLib_ = query.lastInsertId().toInt();
         auto settings = GetSettings();
@@ -272,7 +272,7 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
     {
         bool result = query.exec(u"UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6"_s
                                  .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?u"1"_s: u"0"_s, lib.bWoDeleted ?u"1"_s :u"0"_s).arg(idCurrentLib_));
-        if(!result)
+        if(!result) [[unlikely]]
             MyDBG << query.lastError().databaseText();
     }
 
@@ -291,8 +291,8 @@ void LibrariesDlg::DeleteLibrary()
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-    if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_)))
-        qDebug()<<query.lastError().databaseText();
+    if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_))) [[unlikely]]
+        MyDBG << query.lastError().databaseText();
     query.exec(QStringLiteral("VACUUM"));
     g::libs.erase(idCurrentLib_);
     UpdateLibList();
@@ -325,10 +325,10 @@ void LibrariesDlg::EndUpdate()
     QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
     query.prepare(u"SELECT version FROM lib WHERE id=:idLib;"_s);
     query.bindValue(u":idLib"_s, idCurrentLib_);
-    if(!query.exec())
+    if(!query.exec()) [[unlikely]]
         MyDBG << query.lastError().text();
     else{
-        if(query.next())
+        if(query.next()) [[likely]]
             g::libs[idCurrentLib_].sVersion = query.value(0).toString();
     }
 
@@ -374,9 +374,8 @@ void LibrariesDlg::ExistingLibsChanged()
             query.prepare(u"UPDATE Lib SET name=:name WHERE ID=:id;"_s);
             query.bindValue(u":name"_s, sNewName);
             query.bindValue(u":id"_s, idCurrentLib_);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().databaseText();
-
         }
     }
 }
@@ -459,9 +458,9 @@ void LibrariesDlg::addBook()
 
 void LibrariesDlg::onComboboxLibraryChanged(int index)
 {
-    if(index >= 0){
+    if(index >= 0) [[likely]]{
         uint id = ui->ExistingLibs->itemData(index).toInt();
-        if(id>0){
+        if(id>0) [[likely]]{
             idCurrentLib_ = id;
             SelectLibrary();
         }

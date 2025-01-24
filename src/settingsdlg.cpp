@@ -813,7 +813,7 @@ void SettingsDlg::onBtnSaveExportClicked()
 {
     QString file_name = QFileDialog::getSaveFileName(this, tr("Save profile"),
         (ui->ExportName->currentText()), u"freeLib export (*.fle)"_s);
-    if(file_name.isEmpty())
+    if(file_name.isEmpty()) [[unlikely]]
         return;
     auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s, QSettings::IniFormat));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)

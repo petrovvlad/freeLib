@@ -28,7 +28,7 @@ QString AboutDialog::debugInfo()
     QString debugInfo = u"freeLib - "_s % tr("Version %1").arg(QStringLiteral(FREELIB_VERSION)) % u"\n"_s;
 
     QString commitHash = QStringLiteral(GIT_HEAD);;
-    if (!commitHash.isEmpty()) {
+    if (!commitHash.isEmpty()) [[unlikely]]{
         debugInfo += tr("Revision: %1").arg(commitHash.left(7)) + u"\n"_s;
     }
 
