@@ -42,7 +42,10 @@
     <item>
      <widget class="QSplitter" name="splitterH">
       <property name="orientation">
-       <enum>Qt::Horizontal</enum>
+       <enum>Qt::Orientation::Horizontal</enum>
+      </property>
+      <property name="childrenCollapsible">
+       <bool>false</bool>
       </property>
       <widget class="QWidget" name="verticalLayoutWidget">
        <layout class="QVBoxLayout" name="verticalLayout_2">
@@ -59,14 +62,8 @@
          <widget class="QTabWidget" name="tabWidget">
           <property name="minimumSize">
            <size>
-            <width>350</width>
+            <width>325</width>
             <height>0</height>
-           </size>
-          </property>
-          <property name="maximumSize">
-           <size>
-            <width>16777215</width>
-            <height>16777215</height>
            </size>
           </property>
           <property name="currentIndex">
@@ -113,10 +110,10 @@
             <item>
              <widget class="QListWidget" name="AuthorList">
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::NoEditTriggers</set>
+               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
               </property>
               <property name="sortingEnabled">
                <bool>false</bool>
@@ -159,10 +156,10 @@
             <item>
              <widget class="QListWidget" name="SeriaList">
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::NoEditTriggers</set>
+               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
               </property>
               <property name="sortingEnabled">
                <bool>false</bool>
@@ -191,13 +188,13 @@
             <item>
              <widget class="QTreeWidget" name="GenreList">
               <property name="focusPolicy">
-               <enum>Qt::WheelFocus</enum>
+               <enum>Qt::FocusPolicy::WheelFocus</enum>
               </property>
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::NoEditTriggers</set>
+               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
               </property>
               <property name="headerHidden">
                <bool>true</bool>
@@ -255,20 +252,20 @@
                </size>
               </property>
               <property name="horizontalScrollBarPolicy">
-               <enum>Qt::ScrollBarAlwaysOff</enum>
+               <enum>Qt::ScrollBarPolicy::ScrollBarAlwaysOff</enum>
               </property>
               <property name="widgetResizable">
                <bool>true</bool>
               </property>
               <property name="alignment">
-               <set>Qt::AlignLeading|Qt::AlignLeft|Qt::AlignTop</set>
+               <set>Qt::AlignmentFlag::AlignLeading|Qt::AlignmentFlag::AlignLeft|Qt::AlignmentFlag::AlignTop</set>
               </property>
               <widget class="QWidget" name="scrollAreaWidgetContents">
                <property name="geometry">
                 <rect>
                  <x>0</x>
                  <y>0</y>
-                 <width>420</width>
+                 <width>400</width>
                  <height>635</height>
                 </rect>
                </property>
@@ -451,19 +448,12 @@
                 <item>
                  <widget class="QLabel" name="label_15">
                   <property name="text">
-                   <string>Minimal rating</string>
+                   <string>Minimal rating:</string>
                   </property>
                  </widget>
                 </item>
                 <item>
-                 <widget class="StarsComboBox" name="comboMinimalRating">
-                  <property name="focusPolicy">
-                   <enum>Qt::NoFocus</enum>
-                  </property>
-                  <property name="currentIndex">
-                   <number>-1</number>
-                  </property>
-                 </widget>
+                 <widget class="StarsComboBox" name="comboMinimalRating"/>
                 </item>
                 <item>
                  <widget class="QLabel" name="label_13">
@@ -493,7 +483,7 @@
                   <item>
                    <spacer name="horizontalSpacer_5">
                     <property name="orientation">
-                     <enum>Qt::Horizontal</enum>
+                     <enum>Qt::Orientation::Horizontal</enum>
                     </property>
                     <property name="sizeHint" stdset="0">
                      <size>
@@ -538,7 +528,7 @@
                    <string notr="true">0</string>
                   </property>
                   <property name="alignment">
-                   <set>Qt::AlignRight|Qt::AlignTrailing|Qt::AlignVCenter</set>
+                   <set>Qt::AlignmentFlag::AlignRight|Qt::AlignmentFlag::AlignTrailing|Qt::AlignmentFlag::AlignVCenter</set>
                   </property>
                  </widget>
                 </item>
@@ -569,10 +559,10 @@
            <string>List view</string>
           </property>
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Raised</enum>
+           <enum>QFrame::Shadow::Raised</enum>
           </property>
           <layout class="QHBoxLayout" name="horizontalLayout_2" stretch="0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0">
            <property name="spacing">
@@ -599,10 +589,10 @@
               <string notr="true">...</string>
              </property>
              <property name="popupMode">
-              <enum>QToolButton::MenuButtonPopup</enum>
+              <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonIconOnly</enum>
+              <enum>Qt::ToolButtonStyle::ToolButtonIconOnly</enum>
              </property>
             </widget>
            </item>
@@ -648,7 +638,7 @@
               <string notr="true">...</string>
              </property>
              <property name="popupMode">
-              <enum>QToolButton::MenuButtonPopup</enum>
+              <enum>QToolButton::ToolButtonPopupMode::MenuButtonPopup</enum>
              </property>
             </widget>
            </item>
@@ -668,10 +658,10 @@
            <item>
             <spacer name="horizontalSpacer">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Maximum</enum>
+              <enum>QSizePolicy::Policy::Maximum</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -715,7 +705,7 @@
               <bool>false</bool>
              </property>
              <property name="toolButtonStyle">
-              <enum>Qt::ToolButtonIconOnly</enum>
+              <enum>Qt::ToolButtonStyle::ToolButtonIconOnly</enum>
              </property>
             </widget>
            </item>
@@ -754,10 +744,10 @@
            <item>
             <spacer name="horizontalSpacer_8">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Fixed</enum>
+              <enum>QSizePolicy::Policy::Fixed</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -786,20 +776,20 @@
               <number>20</number>
              </property>
              <property name="insertPolicy">
-              <enum>QComboBox::NoInsert</enum>
+              <enum>QComboBox::InsertPolicy::NoInsert</enum>
              </property>
              <property name="sizeAdjustPolicy">
-              <enum>QComboBox::AdjustToContents</enum>
+              <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
              </property>
             </widget>
            </item>
            <item>
             <spacer name="horizontalSpacer_9">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeType">
-              <enum>QSizePolicy::Fixed</enum>
+              <enum>QSizePolicy::Policy::Fixed</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -826,17 +816,17 @@
            <item>
             <widget class="QComboBox" name="TagFilter">
              <property name="insertPolicy">
-              <enum>QComboBox::NoInsert</enum>
+              <enum>QComboBox::InsertPolicy::NoInsert</enum>
              </property>
              <property name="sizeAdjustPolicy">
-              <enum>QComboBox::AdjustToContents</enum>
+              <enum>QComboBox::SizeAdjustPolicy::AdjustToContents</enum>
              </property>
             </widget>
            </item>
            <item>
             <spacer name="horizontalSpacer_3">
              <property name="orientation">
-              <enum>Qt::Horizontal</enum>
+              <enum>Qt::Orientation::Horizontal</enum>
              </property>
              <property name="sizeHint" stdset="0">
               <size>
@@ -873,10 +863,10 @@
            <item>
             <widget class="QFrame" name="abc">
              <property name="frameShape">
-              <enum>QFrame::NoFrame</enum>
+              <enum>QFrame::Shape::NoFrame</enum>
              </property>
              <property name="frameShadow">
-              <enum>QFrame::Raised</enum>
+              <enum>QFrame::Shadow::Raised</enum>
              </property>
             </widget>
            </item>
@@ -886,10 +876,10 @@
         <item>
          <widget class="QFrame" name="frame_2">
           <property name="frameShape">
-           <enum>QFrame::NoFrame</enum>
+           <enum>QFrame::Shape::NoFrame</enum>
           </property>
           <property name="frameShadow">
-           <enum>QFrame::Sunken</enum>
+           <enum>QFrame::Shadow::Sunken</enum>
           </property>
           <layout class="QVBoxLayout" name="verticalLayout_3">
            <property name="leftMargin">
@@ -907,20 +897,20 @@
            <item>
             <widget class="QSplitter" name="splitterV">
              <property name="orientation">
-              <enum>Qt::Vertical</enum>
+              <enum>Qt::Orientation::Vertical</enum>
              </property>
              <widget class="QTreeWidget" name="Books">
               <property name="frameShape">
-               <enum>QFrame::StyledPanel</enum>
+               <enum>QFrame::Shape::StyledPanel</enum>
               </property>
               <property name="editTriggers">
-               <set>QAbstractItemView::NoEditTriggers</set>
+               <set>QAbstractItemView::EditTrigger::NoEditTriggers</set>
               </property>
               <property name="alternatingRowColors">
                <bool>true</bool>
               </property>
               <property name="selectionBehavior">
-               <enum>QAbstractItemView::SelectRows</enum>
+               <enum>QAbstractItemView::SelectionBehavior::SelectRows</enum>
               </property>
               <property name="indentation">
                <number>15</number>
@@ -1086,7 +1076,7 @@
     <string>&amp;Preferences</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::PreferencesRole</enum>
+    <enum>QAction::MenuRole::PreferencesRole</enum>
    </property>
   </action>
   <action name="actionAbout">
@@ -1094,7 +1084,7 @@
     <string>&amp;About</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::AboutRole</enum>
+    <enum>QAction::MenuRole::AboutRole</enum>
    </property>
   </action>
   <action name="actionHelp">
@@ -1121,7 +1111,7 @@
     <string notr="true">Ctrl+Q</string>
    </property>
    <property name="menuRole">
-    <enum>QAction::QuitRole</enum>
+    <enum>QAction::MenuRole::QuitRole</enum>
    </property>
   </action>
   <action name="actionLibraries">
