@@ -8,7 +8,7 @@ StarsDelegate::StarsDelegate(QObject *parent) : QStyledItemDelegate(parent)
     for(int i=0; i<=5; i++){
         iconStars[i] = QIcon(u":/img/icons/stars/%1star.svg"_s.arg(i));
     }
-
+    align_ = Qt::AlignCenter;
 }
 
 void StarsDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option, const QModelIndex &index) const
@@ -16,15 +16,25 @@ void StarsDelegate::paint(QPainter *painter, const QStyleOptionViewItem &option,
     QStyledItemDelegate::paint(painter, option, index);
 
     int nStars = index.data(Qt::UserRole).toInt();
-    if(nStars>=0)
+    if(nStars>=0 && nStars<=5)
     {
-        float width = option.font.pointSize()*8.0f;
+        auto rect = option.rect;
+        if((align_ & Qt::AlignHorizontal_Mask) == Qt::AlignLeft){
+            rect.setLeft(option.font.pointSize());
+        }
+        float width = option.font.pointSizeF()*8.0f;
         QSize size;
         float scale = width / 80.f;
         if(option.rect.width() < width)
             scale *= option.rect.width() / width;
         size = QSize(80.0f * scale, 16.0f * scale);
 
-        option.widget->style()->drawItemPixmap(painter, option.rect, Qt::AlignCenter, iconStars[nStars].pixmap(size));
+        option.widget->style()->drawItemPixmap(painter, rect, align_, iconStars[nStars].pixmap(size));
     }
 }
+
+void StarsDelegate::setAlinment(int align)
+{
+    align_ = align;
+}
+

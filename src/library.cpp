@@ -33,7 +33,7 @@ void loadLibrary(uint idLibrary)
 
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.setForwardOnly(true);
-    if(!query.exec(u"SELECT id FROM lib WHERE id=%1;"_s.arg(idLibrary)) || !query.first())
+    if(!query.exec(u"SELECT id FROM lib WHERE id=%1;"_s.arg(idLibrary)) || !query.first()) [[unlikely]]
         return;
     SLib& lib = g::libs[idLibrary];
     auto future = QtConcurrent::run([idLibrary, &lib]()
@@ -49,7 +49,7 @@ void loadLibrary(uint idLibrary)
 #endif
             lib.authors.clear();
             lib.authors.emplace(0, SAuthor());
-            if (!dbReadAuthors.open())
+            if (!dbReadAuthors.open()) [[unlikely]]
             {
                 MyDBG << dbReadAuthors.lastError().text();
                 return;
@@ -61,7 +61,7 @@ void loadLibrary(uint idLibrary)
             query.prepare(u"SELECT id, name FROM seria WHERE id_lib=:id_lib;"_s);
             //                     0   1
             query.bindValue(u":id_lib"_s, idLibrary);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().text();
             while (query.next()) {
                 uint idSerial = query.value(0).toUInt();
@@ -70,7 +70,7 @@ void loadLibrary(uint idLibrary)
             }
             query.prepare(u"SELECT seria_tag.id_seria, seria_tag.id_tag FROM seria_tag INNER JOIN seria ON seria.id = seria_tag.id_seria WHERE seria.id_lib = :id_lib"_s);
             query.bindValue(u":id_lib"_s,idLibrary);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().text();
             while (query.next()) {
                 uint idSeria = query.value(0).toUInt();
@@ -93,7 +93,7 @@ void loadLibrary(uint idLibrary)
             query.prepare(u"SELECT author_tag.id_author, author_tag.id_tag FROM author_tag INNER JOIN author ON author.id = author_tag.id_author WHERE author.id_lib = :id_lib"_s);
             //                     0                     1
             query.bindValue(u":id_lib"_s, idLibrary);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().text();
             while (query.next()) {
                 uint idAuthor = query.value(0).toUInt();
@@ -126,7 +126,7 @@ void loadLibrary(uint idLibrary)
             dbReadBooks.setDatabaseName(sDbFile);
 #endif //QT_VERSION
             uint nBuff = 0;
-            if (!dbReadBooks.open())
+            if (!dbReadBooks.open()) [[unlikely]]
             {
                 MyDBG << dbReadBooks.lastError().text();
                 return;
@@ -136,7 +136,7 @@ void loadLibrary(uint idLibrary)
             query.prepare(u"SELECT id, name, star, language, file, size, deleted, date, format, id_inlib, archive, first_author_id, keys FROM book WHERE id_lib=:id_lib;"_s);
             //                     0   1     2     3         4     5     6        7     8       9         10       11               12
             query.bindValue(u":id_lib"_s, idLibrary);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().text();
             uint i = 0;
             while (query.next()) {
@@ -145,7 +145,7 @@ void loadLibrary(uint idLibrary)
                 for(int iValue = 0; iValue<nColCount; iValue++){
                     buff[k + iValue] = query.value(iValue);
                 }
-                if(++i == sizeBufffer){
+                if(++i == sizeBufffer) [[unlikely]]{
                     i = 0;
                     anTotalCount += sizeBufffer;
                     anCount[nBuff].store(sizeBufffer);
@@ -171,7 +171,7 @@ void loadLibrary(uint idLibrary)
             nTotalCount++;
             uint k = nBuff * nColCount * sizeBufffer + i * nColCount;
             QString sName = buff[k + 1].toString();
-            if(sName.isEmpty())
+            if(sName.isEmpty()) [[unlikely]]
                 continue;
             uint id = buff[k].toUInt();
             SBook &book = lib.books[id];
@@ -180,7 +180,7 @@ void loadLibrary(uint idLibrary)
             QString sLaguage = buff[k + 3].toString().toLower();
             auto iLang = std::find(lib.vLaguages.cbegin(), lib.vLaguages.cend(), sLaguage);
             int idLanguage = iLang - lib.vLaguages.cbegin();
-            if(idLanguage == lib.vLaguages.size())
+            if(idLanguage == lib.vLaguages.size()) [[unlikely]]
                 lib.vLaguages.push_back(std::move(sLaguage));
             book.idLanguage = static_cast<uchar>(idLanguage);
             book.sFile = buff[k + 4].toString();
@@ -251,7 +251,7 @@ void loadLibrary(uint idLibrary)
             QSqlDatabase dbReadGenre = QSqlDatabase::addDatabase(u"QSQLITE"_s, u"readgenre"_s);
             dbReadGenre.setDatabaseName(sDbFile);
 #endif
-            if (!dbReadGenre.open())
+            if (!dbReadGenre.open()) [[unlikely]]
             {
                 MyDBG << dbReadGenre.lastError().text();
                 return;
@@ -264,8 +264,8 @@ void loadLibrary(uint idLibrary)
             query.prepare(u"SELECT id_book, id_genre FROM book_genre INNER JOIN book ON book.id = book_genre.id_book WHERE book.id_lib = :id_lib"_s);
             //                     0        1
             query.bindValue(u":id_lib"_s, idLibrary);
-            if(!query.exec())
-                qDebug() << query.lastError().text();
+            if(!query.exec()) [[unlikely]]
+                MyDBG << query.lastError().text();
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 ushort idGenre = query.value(1).toUInt();
@@ -276,8 +276,8 @@ void loadLibrary(uint idLibrary)
             query.prepare(u"SELECT book_tag.id_book, book_tag.id_tag FROM book_tag INNER JOIN book ON book.id = book_tag.id_book WHERE book.id_lib = :id_lib"_s);
             //                     0                 1
             query.bindValue(u":id_lib"_s,idLibrary);
-            if(!query.exec())
-                qDebug() << query.lastError().text();
+            if(!query.exec()) [[unlikely]]
+                MyDBG << query.lastError().text();
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
@@ -299,7 +299,7 @@ void loadLibrary(uint idLibrary)
             QSqlDatabase dbReadSequence = QSqlDatabase::addDatabase(u"QSQLITE"_s, u"readsequences"_s);
             dbReadSequence.setDatabaseName(sDbFile);
 #endif
-            if (!dbReadSequence.open())
+            if (!dbReadSequence.open()) [[unlikely]]
             {
                 MyDBG << dbReadSequence.lastError().text();
                 return;
@@ -310,7 +310,7 @@ void loadLibrary(uint idLibrary)
             query.prepare(u"SELECT id_book, id_sequence, num_in_sequence FROM book_sequence INNER JOIN book ON book.id=id_book WHERE book.id_lib = :id_lib;"_s);
             //                     0        1            2
             query.bindValue(u":id_lib"_s, idLibrary);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().text();
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
@@ -330,20 +330,20 @@ void loadLibrary(uint idLibrary)
     //Выполняется дольше чем предыдущий вариант
     //query.prepare(u"SELECT id_book, id_author FROM book_author INNER JOIN book ON book.id=id_book WHERE book.id_lib = :id_lib;"_s);
     query.bindValue(u":id_lib"_s, idLibrary);
-    if(!query.exec())
+    if(!query.exec()) [[unlikely]]
         MyDBG << query.lastError().text();
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idAuthor = query.value(1).toUInt();
-        if(lib.books.contains(idBook) && lib.authors.contains(idAuthor)){
+        if(lib.books.contains(idBook) && lib.authors.contains(idAuthor)) [[likely]]{
             lib.authorBooksLink.insert({idAuthor, idBook});
             lib.books[idBook].vIdAuthors.push_back(idAuthor);
         }
     }
-    for(auto &book :lib.books){
-        if(book.second.vIdAuthors.empty()){
-            book.second.vIdAuthors.push_back(0);
-            lib.authorBooksLink.insert({0, book.first});
+    for(auto &[idBook, book] :lib.books){
+        if(book.vIdAuthors.empty()) [[unlikely]]{
+            book.vIdAuthors.push_back(0);
+            lib.authorBooksLink.insert({0, idBook});
         }
     }
     future.waitForFinished();
@@ -352,7 +352,7 @@ void loadLibrary(uint idLibrary)
 
     if(g::bVerbose){
         timeEnd = QDateTime::currentMSecsSinceEpoch();
-        qDebug()<< "loadLibrary " << timeEnd - timeStart << "msec";
+        qDebug() << "loadLibrary " << timeEnd - timeStart << "msec";
     }
 }
 
@@ -368,7 +368,7 @@ void loadGenres()
     g::genres.clear();
     query.prepare(u"SELECT id, name, id_parent, sort_index, keys FROM genre;"_s);
     //                                   0   1     2          3           4
-    if(!query.exec())
+    if(!query.exec()) [[unlikely]]
         MyDBG << query.lastError().text();
     while (query.next()) {
         ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
@@ -396,7 +396,7 @@ SAuthor::SAuthor()
 SAuthor::SAuthor(const QString &sName)
 {
     QStringList listNames = sName.split(u","_s);
-    if(listNames.count() > 0)
+    if(listNames.count() > 0) [[likely]]
         sLastName = listNames[0].trimmed();
     if(listNames.count() > 1)
         sFirstName = listNames[1].trimmed();
@@ -408,7 +408,7 @@ SAuthor::SAuthor(const QString &sName)
 QString SAuthor::getName() const
 {
     QString sAuthorName = QStringLiteral("%1 %2 %3").arg(sLastName, sFirstName, sMiddleName).trimmed();
-    if(sAuthorName.trimmed().isEmpty())
+    if(sAuthorName.trimmed().isEmpty()) [[unlikely]]
         sAuthorName = QCoreApplication::translate("MainWindow","unknown author");
     return sAuthorName;
 }
@@ -420,7 +420,7 @@ uint SLib::findAuthor(SAuthor &author) const
     auto it = std::ranges::find_if(authors, [&author](const auto &a){
         return author == a.second;
     });
-    if(it != authors.cend())
+    if(it != authors.cend()) [[likely]]
         idAuthor = it->first;
 
 #else
@@ -637,11 +637,11 @@ QString SLib::nameFromInpx(const QString &sInpx)
     QString sName;
     if(!sInpx.isEmpty()){
         QuaZip uz(sInpx);
-        if(!uz.open(QuaZip::mdUnzip))
+        if(!uz.open(QuaZip::mdUnzip)) [[unlikely]]
         {
             MyDBG << "Error open INPX file: " << sInpx;
         } else
-            if(setCurrentZipFileName(&uz, u"COLLECTION.INFO"_s))
+            if(setCurrentZipFileName(&uz, u"COLLECTION.INFO"_s)) [[likely]]
             {
                 QBuffer outbuff;
                 QuaZipFile zip_file(&uz);

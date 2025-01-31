@@ -51,18 +51,26 @@ void ImportThread::addSequence(const QString &str, uint idLib, uint idBook, uint
     }else{
         queryInsertSeria_.bindValue(u":name"_s, name);
         queryInsertSeria_.bindValue(u":id_lib"_s, idLib);
-        if(!queryInsertSeria_.exec())
+        if(!queryInsertSeria_.exec()) [[unlikely]]
             MyDBG << queryInsertSeria_.lastError().text();
         id = queryInsertSeria_.lastInsertId().toUInt();
         mSequences_[name] = id;
+    }
+    auto it = mBookSequences_.find(idBook);
+    bool bFoundBookSequence = false;
+    if(it != mBookSequences_.end()){
+        auto  &v = it->second;
+        if(contains(v, id))
+            bFoundBookSequence = true;
+    }
+    if(!bFoundBookSequence){
+        queryInsertBookSequence_.bindValue(u":idBook"_s, idBook);
+        queryInsertBookSequence_.bindValue(u":idSequence"_s, id);
+        queryInsertBookSequence_.bindValue(u":numInSequence"_s, numInSequence);
+        if(!queryInsertBookSequence_.exec()) [[unlikely]]
+            MyDBG << queryInsertBookSequence_.lastError().text();
         mBookSequences_[idBook].push_back(id);
     }
-
-    queryInsertBookSequence_.bindValue(u":idBook"_s, idBook);
-    queryInsertBookSequence_.bindValue(u":idSequence"_s, id);
-    queryInsertBookSequence_.bindValue(u":numInSequence"_s, numInSequence);
-    if(!queryInsertBookSequence_.exec())
-        MyDBG << queryInsertBookSequence_.lastError().text();
 
     QVariantList lTags;
     if(pTags != nullptr )
@@ -82,7 +90,7 @@ void ImportThread::addSequence(const QString &str, uint idLib, uint idBook, uint
 #endif
         queryInsertSequennceTag_.bindValue(u":idSeria"_s, listIdSequence);
         queryInsertSequennceTag_.bindValue(u":idTag"_s, lTags);
-        if(!queryInsertSequennceTag_.execBatch())
+        if(!queryInsertSequennceTag_.execBatch()) [[unlikely]]
             MyDBG << queryInsertSequennceTag_.lastError().text();
     }
     return;
@@ -116,14 +124,14 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
     {
     }
     if(bFirstAuthor){
-        if(!query_.exec(u"UPDATE book SET first_author_id="_s % QString::number(idAuthor) % u" WHERE id="_s % QString::number(idBook)))
+        if(!query_.exec(u"UPDATE book SET first_author_id="_s % QString::number(idAuthor) % u" WHERE id="_s % QString::number(idBook))) [[unlikely]]
             MyDBG << query_.lastError().text();
     }
 
     queryInsertBookAuthor_.bindValue(u":idBook"_s, idBook);
     queryInsertBookAuthor_.bindValue(u":idAuthor"_s, idAuthor);
     queryInsertBookAuthor_.bindValue(u":idLib"_s, libID);
-    if(!queryInsertBookAuthor_.exec()){
+    if(!queryInsertBookAuthor_.exec())[[unlikely]] {
         MyDBG << queryInsertBookAuthor_.lastError().text();
         return 0;
     }
@@ -138,7 +146,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
 #endif
         queryInsertAuthorTag_.bindValue(u":idAuthor"_s, listAuthors);
         queryInsertAuthorTag_.bindValue(u":idTag"_s, lTags);
-        if(!queryInsertAuthorTag_.execBatch())
+        if(!queryInsertAuthorTag_.execBatch()) [[unlikely]]
             MyDBG << queryInsertAuthorTag_.lastError().text();
     }
     return idAuthor;
@@ -147,7 +155,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
 uint ImportThread::addBook(uchar star, QString &name, int num_in_seria, const QString &file,
              int size, uint idInLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags)
 {
-    if(mIdBookInLib_.contains(idInLib)){
+    if(idInLib!=0 && mIdBookInLib_.contains(idInLib)){
         uint idBook = mIdBookInLib_[idInLib];
         return idBook;
     }
@@ -202,7 +210,7 @@ uint ImportThread::addBook(uchar star, QString &name, int num_in_seria, const QS
 #endif
         queryInsertBookTag_.bindValue(u":idBook"_s, listIdBook);
         queryInsertBookTag_.bindValue(u":idTag"_s, lTags);
-        if(!queryInsertBookTag_.execBatch())
+        if(!queryInsertBookTag_.execBatch()) [[unlikely]]
             MyDBG << queryInsertBookTag_.lastError().text();
     }
     return id;
@@ -218,9 +226,9 @@ void ImportThread::AddGenre(uint idBook, const QString &sGenre, uint idLib)
         queryInsertBookGenre_.bindValue(QStringLiteral(":idBook"), idBook);
         queryInsertBookGenre_.bindValue(QStringLiteral(":idGenre"), idGenre);
         queryInsertBookGenre_.bindValue(QStringLiteral(":idLib"), idLib);
-        if(!queryInsertBookGenre_.exec())
+        if(!queryInsertBookGenre_.exec()) [[unlikely]]
             MyDBG << queryInsertBookGenre_.lastError().text();
-    }else
+    }else [[unlikely]]
         qDebug() << "Неизвестный жанр: " + sGenre;
 }
 
@@ -245,7 +253,7 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
             query.prepare(u"SELECT book.id, book.id_inlib, book_sequence.id_sequence FROM book JOIN book_sequence ON book.id = book_sequence.id_book WHERE book.id_lib=:id_lib;"_s);
             //                     0        1              2
             query.bindValue(u":id_lib"_s,idLib_);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().text();
             else{
                 while (query.next()){
@@ -258,7 +266,7 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
             }
             query.prepare(u"SELECT id, name FROM seria WHERE id_lib=:id_lib;"_s);
             query.bindValue(u":id_lib"_s,idLib_);
-            if(!query.exec())
+            if(!query.exec()) [[unlikely]]
                 MyDBG << query.lastError().text();
             else{
                 while (query.next()){
@@ -481,7 +489,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString file_name, QString arh
                         {
                             SAuthor author;
                             QStringList names = meta.childNodes().at(m).toElement().text().trimmed().split(QStringLiteral(" "));
-                            if(names.count() > 0)
+                            if(names.count() > 0) [[likely]]
                                 author.sFirstName = names.at(0);
                             if(names.count() > 1)
                                 author.sMiddleName = names.at(1);
@@ -608,9 +616,9 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
     QString sZipFileName = sPath + sArchName;
     QuaZip uz(sZipFileName);
     uz.setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-    if (!uz.open(QuaZip::mdUnzip))
+    if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
     {
-        qDebug() << "Error open archive! " << sPath + sArchName;
+        MyDBG << "Error open archive! " << sPath + sArchName;
         return;
     }
 
@@ -618,10 +626,10 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
     const auto list = uz.getFileInfoList();
     for(const QuaZipFileInfo &fiZip: list  )
     {
-        if(stopped_.load(std::memory_order_relaxed))
+        if(stopped_.load(std::memory_order_relaxed)) [[unlikely]]
             break;
 
-        if(fiZip.uncompressedSize == 0)
+        if(fiZip.uncompressedSize == 0) [[unlikely]]
             continue;
         QBuffer buffer;
         if(fiZip.name.right(3).toLower() == u"fb2")
@@ -693,7 +701,7 @@ void ImportThread::process()
     QSqlDatabase dbase = QSqlDatabase::addDatabase(QStringLiteral("QSQLITE"), QStringLiteral("importdb"));
     dbase.setDatabaseName(sDbFile);
 #endif
-    if (!dbase.open())
+    if (!dbase.open()) [[unlikely]]
     {
         MyDBG << dbase.lastError().text();
         return;
@@ -719,7 +727,7 @@ void ImportThread::process()
         QString sKeys = query_.value(1).toString();
         const QStringList listKeys = sKeys.split(QStringLiteral(";"));
         for(const auto &sKey :listKeys){
-            if(!sKey.isEmpty()){
+            if(!sKey.isEmpty()) [[likely]]{
                 mGenreKeys_[sKey] = idGenre;
             }
         }
@@ -786,9 +794,9 @@ void ImportThread::process()
     }
     QuaZip archiveFile;
     QuaZip uz(sInpxFile_);
-    if (!uz.open(QuaZip::mdUnzip))
+    if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
     {
-        MyDBG << ("Error open inpx!");
+        MyDBG << "Error open inpx!";
         emit End();
         return;
     }
@@ -801,7 +809,7 @@ void ImportThread::process()
         outbuff.setData(zip_file.readAll());
         zip_file.close();
         QString sVersion = QString::fromUtf8(outbuff.data()).simplified();
-        if(!query_.exec(u"UPDATE lib SET version='"_s + sVersion + u"' WHERE id="_s + QString::number(idLib_)))
+        if(!query_.exec(u"UPDATE lib SET version='"_s + sVersion + u"' WHERE id="_s + QString::number(idLib_))) [[unlikely]]
             MyDBG << query_.lastError().text();
     }
 
@@ -915,10 +923,8 @@ void ImportThread::process()
     for(uint i=0; i<listInpFiles.count(); i++)
     {
         QCoreApplication::processEvents();
-        if(stopped_.load(std::memory_order_relaxed))
-        {
+        if(stopped_.load(std::memory_order_relaxed)) [[unlikely]]
             break;
-        }
         const QString str = listInpFiles[i];
         if(nUpdateType_ == UT_NEW)
         {
@@ -937,21 +943,21 @@ void ImportThread::process()
         for(const auto &line: lines)
         {
             iLine++;
-            if(line.isEmpty())
+            if(line.isEmpty()) [[unlikely]]
                 continue;
 
             QCoreApplication::processEvents();
-            if(stopped_.load(std::memory_order_relaxed))
+            if(stopped_.load(std::memory_order_relaxed)) [[unlikely]]
                 break;
 
             QStringList substrings = line.split(QChar(4));
-            if(substrings.count() == 0)
+            if(substrings.count() == 0) [[unlikely]]
                 continue;
             QString name;
             if(substrings.count() > field_index[_NAME])
             {
                 name = substrings[field_index[_NAME]].trimmed();
-                if(name.isEmpty())
+                if(name.isEmpty()) [[unlikely]]
                     continue;
             }
             QString sSequence;
@@ -1096,12 +1102,12 @@ void ImportThread::process()
                         if(archiveFile.getZipName() != sArchive){
                             archiveFile.close();
                             archiveFile.setZipName(sArchive);
-                            if (!archiveFile.open(QuaZip::mdUnzip))
+                            if (!archiveFile.open(QuaZip::mdUnzip)) [[unlikely]]
                                 MyDBG << "Error open archive! " << sArchive;
                         }
                         QuaZipFile zip_file(&archiveFile);
                         setCurrentZipFileName(&archiveFile, sFile);
-                        if(!zip_file.open(QIODevice::ReadOnly))
+                        if(!zip_file.open(QIODevice::ReadOnly)) [[unlikely]]
                             MyDBG << "Error open file: " << sFile;
                         buffer.setData(zip_file.read(16*1024));
                         zip_file.close();
@@ -1119,14 +1125,14 @@ void ImportThread::process()
                             author.sLastName = element.elementsByTagName(u"last-name"_s).at(0).toElement().text();
                             author.sMiddleName = element.elementsByTagName(u"middle-name"_s).at(0).toElement().text();
                             sAuthorLow = author.getName().toLower();
-                            if(!sAuthorLow.contains(u"неизвест"_s) && !sAuthorLow.isEmpty()){
+                            if(!sAuthorLow.contains(u"неизвест"_s) && !sAuthorLow.isEmpty()) [[unlikely]] {
                                 bool bFirstAuthor = author_count == 0;
                                 addAuthor(author, idLib_, idBook, bFirstAuthor, bFirstAuthor ?&listAuthorTags :nullptr);
                                 author_count++;
                             }
                         }
                     }else{
-                        if(!bUnkownAuthor){
+                        if(!bUnkownAuthor) [[unlikely]]{
                             SAuthor author(sAuthor);
                             bool bFirstAuthor = author_count == 0;
                             addAuthor(author, idLib_, idBook, bFirstAuthor, bFirstAuthor ?&listAuthorTags :nullptr);
@@ -1162,7 +1168,7 @@ void ImportThread::process()
                 if(nBooksCount == 0)
                     iStart = i;
                 nBooksCount++;
-                if(count == 500)
+                if(count == 500) [[unlikely]]
                 {
                     float fProgress;
                     if(listInpFiles.count()>1)
@@ -1179,7 +1185,7 @@ void ImportThread::process()
             emit progress(nBooksCount, (float)(i - iStart + 1)/(float)(listInpFiles.count() - iStart));
     }
     dbase.commit();
-    if(!stopped_)
+    if(!stopped_) [[likely]]
         emit progress(nBooksCount, 1.0f);
 
     emit End();
