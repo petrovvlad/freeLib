@@ -481,7 +481,7 @@ void ExportThread::process()
 
 void ExportThread::export_lib()
 {
-    QMap<uint, QString> tagsName;
+    std::unordered_map<uint, QString> tagsName;
     {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
         QSqlDatabase dbase = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("exportbdb"));
@@ -537,7 +537,7 @@ void ExportThread::export_lib()
     inpx.open(QFile::WriteOnly);
     if(!inpx.isOpen()) [[unlikely]]
     {
-        MyDBG << "Error create file: " + sInpxFile;
+        MyDBG << u"Error create file: "_s + sInpxFile;
         return;
     }
 
@@ -546,7 +546,7 @@ void ExportThread::export_lib()
         const auto &book = iBook.second;
         QString sBookTags;
         for(auto idTag: book.vIdTags)
-            sBookTags += tagsName[idTag] + ":";
+            sBookTags += tagsName[idTag] + ':';
 
         QString sAuthors;
         for(auto idAuthor : book.vIdAuthors){
@@ -563,23 +563,27 @@ void ExportThread::export_lib()
         if(!book.mSequences.empty()){
             const auto &vIdTags = lib.serials.at(book.mSequences.begin()->first).vIdTags;
             for(auto idTag :vIdTags){
-                sSerialTags += tagsName[idTag] + ":";
+                sSerialTags += tagsName[idTag] + ':';
             }
         }
 
         QString sGenres;
         for(auto idGenre :book.vIdGenres){
-            sGenres += g::genres.at(idGenre).listKeys.constFirst() + ":";
+            sGenres += g::genres.at(idGenre).listKeys.constFirst() + ':';
         }
+        //TODO Добавить мультисерийность при экспорте.
+        bool bSecuence = !book.mSequences.empty();
+        QString sNumInSeria = bSecuence ?QString::number(book.mSequences.begin()->second) :u""_s;
+        QString sSequence = bSecuence ?lib.serials.at(book.mSequences.begin()->first).sName :u""_s;
         QString sLine = (u"%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8"_s.arg(
-                             sAuthors,                                                   //AUTHOR
-                             book.sName,                                               //TITLE
-                             !book.mSequences.empty() ?lib.serials.at(book.mSequences.begin()->first/*second.idSerial*/).sName :u""_s,     //SERIES
-                             QString::number(book.mSequences.begin()->second/*numInSerial*/),                                            //SERNO
-                             sGenres, //GENRE
-                             QString::number(book.idInLib),                                      //LIBID
-                             book.sFile,                                                         //FILE
-                             book.sArchive                                                       //FOLDER
+                             sAuthors,      //AUTHOR
+                             book.sName,    //TITLE
+                             sSequence,     //SERIES
+                             sNumInSeria,   //SERNO
+                             sGenres,       //GENRE
+                             QString::number(book.idInLib),  //LIBID
+                             book.sFile,    //FILE
+                             book.sArchive  //FOLDER
                          ) %
                          u"\4%1\4%2\4%3\4%4\4%5\4%6\4%7"_s.arg
                         (
@@ -588,14 +592,14 @@ void ExportThread::export_lib()
                             lib.vLaguages[book.idLanguage],       //LANG
                             QString::number(book.nStars),         //STARS
                             book.date.toString(u"yyyy-MM-dd"_s),  //DATE
-                            book.bDeleted ?"1" :"",                            //DEL
-                            book.sKeywords                                     //KEYWORDS
+                            book.bDeleted ?"1" :"",               //DEL
+                            book.sKeywords                        //KEYWORDS
                         ) %
                         u"\4%1\4%2\4%3\r\n"_s.arg
                         (
                              sBookTags,     //TAG
                              sAuthorTags,   //TAGAUTHOR
-                             sSerialTags     //TAGSERIES
+                             sSerialTags    //TAGSERIES
                         ));
 
         inpx.write(sLine.toUtf8());
