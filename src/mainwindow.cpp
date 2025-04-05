@@ -2927,7 +2927,12 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             trayMenu->addAction(pHideAction_);
             pShowAction_ = new QAction(QIcon::fromTheme(u"window-maximize"_s), tr("Open freeLib"), trayMenu);
             trayMenu->addAction(pShowAction_);
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             QAction *exitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), trayMenu);
+#else
+            QAction *exitAction = new QAction( QIcon::fromTheme(u"application-exit"_s), tr("Quit"), trayMenu);
+#endif
             connect(pHideAction_, &QAction::triggered, this, &MainWindow::hide);
             connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
             connect(exitAction, &QAction::triggered, this, &QApplication::quit);
@@ -2953,7 +2958,11 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             pTrayMenu_->addAction(pHideAction_);
             pShowAction_ = new QAction(QIcon::fromTheme(u"window-maximize"_s), tr("Open freeLib"), pTrayMenu_);
             pTrayMenu_->addAction(pShowAction_);
-            QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), pTrayMenu_);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
+            QAction *quitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), pTrayMenu_);
+#else
+            QAction *quitAction = new QAction( QIcon::fromTheme(u"application-exit"_s), tr("Quit"), pTrayMenu_);
+#endif
             pTrayMenu_->addAction(quitAction);
             pTrayIcon_ = new QSystemTrayIcon(pTrayMenu_);  //инициализируем объект
             pTrayIcon_->setContextMenu(pTrayMenu_);
