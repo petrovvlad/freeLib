@@ -44,7 +44,7 @@ private:
     QString last_search_symbol;
     QMenu TagMenu;
     QObject* currentListForTag_;
-    QMap<uint, QIcon> iconsTags_;
+    std::unordered_map<uint, QIcon> iconsTags_;
 
     void uncheckBooks(const std::vector<uint> &vBooks);
     QToolButton *FirstButton;

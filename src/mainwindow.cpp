@@ -54,6 +54,8 @@ QString sizeToString(uint size)
 }
 #endif
 
+
+
 void addShortcutToToolTip(QToolButton *btn, const QString &sShortCut)
 {
     if(!sShortCut.isEmpty()){
@@ -324,7 +326,7 @@ MainWindow::MainWindow(QWidget *parent) :
 
 void MainWindow::UpdateTags()
 {
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
         return;
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     auto settings = GetSettings();
@@ -336,28 +338,20 @@ void MainWindow::UpdateTags()
     iconsTags_.clear();
     iconsTags_[0] = themedIcon(u"multitags"_s);
 
-    QMap<uint, QIcon> icons;
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.exec(QStringLiteral("SELECT id, light_theme, dark_theme FROM icon"));
+    std::unordered_map<uint, QIcon> icons;
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    query.exec(u"SELECT id, light_theme FROM icon"_s);
     while(query.next())
     {
-        QPixmap pixIcon;
         uint idIcon = query.value(0).toUInt();
         QByteArray baLightIcon = query.value(1).toByteArray();
-        QByteArray baDarkIcon = query.value(2).toByteArray();
-        if(darkTheme){
-            if(baDarkIcon.isEmpty())
-                pixIcon.loadFromData(baLightIcon);
-            else
-                pixIcon.loadFromData(baDarkIcon);
-        }else
-            pixIcon.loadFromData(baLightIcon);
-        icons[idIcon] = pixIcon;
+        QSvgRenderer render(baLightIcon);
+        icons[idIcon] = renderSvg(render, darkTheme);
     }
 
     const bool wasBlocked = ui->TagFilter->blockSignals(true);
 
-    query.exec(QStringLiteral("SELECT id,name,id_icon FROM tag"));
+    query.exec(u"SELECT id,name,id_icon FROM tag"_s);
     //                                0  1    2
     ui->TagFilter->clear();
     int con = 1;
@@ -469,7 +463,12 @@ QIcon MainWindow::getTagIcon(const std::vector<uint> &vIdTags)
 
 void MainWindow::updateTitle()
 {
-    setWindowTitle(u"freeLib"_s + ((g::idCurrentLib==0 || g::libs[g::idCurrentLib].name.isEmpty() ?u""_s :u" — "_s) + g::libs[g::idCurrentLib].name));
+    QString sLibName;
+    if(g::idCurrentLib != 0)
+        sLibName = g::libs[g::idCurrentLib].name;
+    setWindowTitle(u"freeLib"_s + (sLibName.isEmpty() ?u""_s : (u" — "_s + g::libs[g::idCurrentLib].name)));
+    if(pTrayIcon_)
+        pTrayIcon_->setToolTip(u"freeLib\n"_s + sLibName);
 }
 
 MainWindow::~MainWindow()
@@ -2899,6 +2898,10 @@ void MainWindow::ChangingTrayIcon(int index, int color)
             pTrayMenu_->addAction(quitAction);
             pTrayIcon_ = new QSystemTrayIcon(pTrayMenu_);  //инициализируем объект
             pTrayIcon_->setContextMenu(pTrayMenu_);
+            QString sToolTip = u"freeLib\n"_s;
+            if(g::idCurrentLib != 0)
+                sToolTip += g::libs[g::idCurrentLib].name;
+            pTrayIcon_->setToolTip(sToolTip);
 
             if(isVisible())
                 pShowAction_->setVisible(false);
@@ -2910,7 +2913,7 @@ void MainWindow::ChangingTrayIcon(int index, int color)
             connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
             connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
         }
-        QIcon icon(QStringLiteral(":/img/tray%1.png").arg(color));
+        QIcon icon(u":/img/tray%1.png"_s.arg(color));
         pTrayIcon_->setIcon(icon); //устанавливаем иконку
         pTrayIcon_->show();
     }
