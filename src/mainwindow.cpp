@@ -306,7 +306,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FillLibrariesMenu();
     UpdateExportMenu();
 
-    ChangingTrayIcon(g::options.nIconTray, g::options.nTrayColor);
+    ChangingTrayIcon(g::options.nIconTray, g::options.bTrayColor);
 
 #ifdef Q_OS_OSX
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
@@ -2868,7 +2868,7 @@ void MainWindow::onTabWidgetChanged(int index)
     }
 }
 
-void MainWindow::ChangingTrayIcon(int index, int color)
+void MainWindow::ChangingTrayIcon(int index, bool bColor)
 {
     if(g::bTray)
         index = 2;
@@ -2913,7 +2913,11 @@ void MainWindow::ChangingTrayIcon(int index, int color)
             connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
             connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
         }
-        QIcon icon(u":/img/tray%1.png"_s.arg(color));
+        QIcon icon;
+        if(bColor)
+            icon = QIcon(u":/img/tray0.png"_s);
+        else
+            icon = themedIcon(u"tray"_s);
         pTrayIcon_->setIcon(icon); //устанавливаем иконку
         pTrayIcon_->show();
     }
@@ -3004,7 +3008,7 @@ void MainWindow::changeEvent(QEvent *event)
     {
         if(isMinimized())
         {
-            ChangingTrayIcon(g::options.nIconTray, g::options.nTrayColor);
+            ChangingTrayIcon(g::options.nIconTray, g::options.bTrayColor);
             TrayMenuAction(QSystemTrayIcon::Unknown);
             event->ignore();
         }

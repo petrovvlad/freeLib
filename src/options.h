@@ -137,7 +137,7 @@ struct Options
     bool bUseSytemFonts;
 
     qint8 nIconTray;
-    qint8 nTrayColor;
+    bool bTrayColor;
     bool bShowDeleted;
     bool bUseTag;
     bool bShowSplash;

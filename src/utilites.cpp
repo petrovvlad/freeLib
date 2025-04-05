@@ -433,7 +433,7 @@ bool localeStringCompare(const QString &str1, const QString &str2)
 
 QPixmap renderSvg(QSvgRenderer &render, bool bDark)
 {
-    QPixmap pixmap(32, 32); // Размер иконки
+    QPixmap pixmap(96, 96); // Размер иконки
     pixmap.fill(Qt::transparent); // Заполняем прозрачным цветом
     QPainter painter(&pixmap);
 

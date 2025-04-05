@@ -304,7 +304,7 @@ void Options::setDefault(){
     QString sAppDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     sDatabasePath = sAppDir + u"/freeLib.sqlite"_s;
     nIconTray = 0;
-    nTrayColor = 0;
+    bTrayColor = true;
     bCloseDlgAfterExport = true;
     bUncheckAfterExport = true;
     bExtendedSymbols = false;
@@ -356,7 +356,7 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     QString sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
     sDatabasePath = pSettings->value(QStringLiteral("database_path"), QString(sAppDir + QStringLiteral("/freeLib.sqlite"))).toString();
     nIconTray = pSettings->value(QStringLiteral("tray_icon"), 0).toInt();
-    nTrayColor = pSettings->value(QStringLiteral("tray_color"), 0).toInt();
+    bTrayColor = pSettings->value(QStringLiteral("tray_color"), 0).toBool();
     bCloseDlgAfterExport = pSettings->value(QStringLiteral("CloseExpDlg"), true).toBool();
     bUncheckAfterExport = pSettings->value(QStringLiteral("uncheck_export"), true).toBool();
     bExtendedSymbols = pSettings->value(QStringLiteral("extended_symbols"), false).toBool();
@@ -471,7 +471,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"no_splash"_s, !bShowSplash);
     pSettings->setValue(u"store_position"_s, bStorePosition);
     pSettings->setValue(u"tray_icon"_s, nIconTray);
-    pSettings->setValue(u"tray_color"_s, nTrayColor);
+    pSettings->setValue(u"tray_color"_s, bTrayColor);
     pSettings->setValue(u"CloseExpDlg"_s,bCloseDlgAfterExport);
     pSettings->setValue(u"uncheck_export"_s,bUncheckAfterExport);
     pSettings->setValue(u"extended_symbols"_s, bExtendedSymbols);

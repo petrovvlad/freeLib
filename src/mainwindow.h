@@ -151,7 +151,7 @@ private slots:
     void onUpdateListFont(const QFont &font);
     void onUpdateAnnotationFont(const QFont &font);
 
-    void ChangingTrayIcon(int index, int color);
+    void ChangingTrayIcon(int index, bool bColor);
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void MinimizeWindow();
     void hide();

@@ -106,7 +106,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>3</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pageCommon">
         <property name="sizePolicy">
@@ -187,12 +187,7 @@
              </item>
              <item>
               <property name="text">
-               <string>dark</string>
-              </property>
-             </item>
-             <item>
-              <property name="text">
-               <string>light</string>
+               <string>monochrome</string>
               </property>
              </item>
             </widget>
