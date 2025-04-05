@@ -88,8 +88,12 @@ MainWindow::MainWindow(QWidget *parent) :
     QMainWindow(parent),
     ui(new Ui::MainWindow)
 {
+#ifdef USE_KStatusNotifier
+    statusNotifierItem_ = nullptr;
+#else
     pTrayIcon_ = nullptr;
     pTrayMenu_ = nullptr;
+#endif
     pHideAction_ = nullptr;
     pShowAction_ = nullptr;
     error_quit = false;
@@ -311,7 +315,9 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef Q_OS_OSX
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
+#ifndef USE_KStatusNotifier
     connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
+#endif
 
     addShortcutToToolTip(ui->btnCheck, ui->actionCheck_uncheck);
     addShortcutToToolTip(ui->btnLibrary, ui->actionAddLibrary);
@@ -467,16 +473,23 @@ void MainWindow::updateTitle()
     if(g::idCurrentLib != 0)
         sLibName = g::libs[g::idCurrentLib].name;
     setWindowTitle(u"freeLib"_s + (sLibName.isEmpty() ?u""_s : (u" — "_s + g::libs[g::idCurrentLib].name)));
+#ifdef USE_KStatusNotifier
+    if(statusNotifierItem_)
+        statusNotifierItem_->setToolTipSubTitle(sLibName);
+#else
     if(pTrayIcon_)
         pTrayIcon_->setToolTip(u"freeLib\n"_s + sLibName);
+#endif
 }
 
 MainWindow::~MainWindow()
 {
+#ifndef USE_KStatusNotifier
     if(pTrayIcon_)
         delete pTrayIcon_;
     if(pTrayMenu_)
         delete pTrayMenu_;
+#endif
     if(pHelpDlg != nullptr)
         delete pHelpDlg;
 
@@ -837,12 +850,15 @@ void MainWindow::SaveLibPosition()
     settings->setValue(QStringLiteral("current_book_id"), idCurrentBook_);
 }
 
+
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+#ifndef USE_KStatusNotifier
     if (pTrayIcon_ != nullptr && pTrayIcon_->isVisible()) {
         hide();
         event->ignore();
     }
+#endif
 }
 
 /*
@@ -2874,6 +2890,12 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
         index = 2;
     if(index == 0)
     {
+#ifdef USE_KStatusNotifier
+        if(statusNotifierItem_){
+            statusNotifierItem_->deleteLater();
+            statusNotifierItem_ = nullptr;
+        }
+#else
         if(pTrayIcon_)
         {
             pTrayIcon_->hide();
@@ -2884,9 +2906,33 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
         pTrayMenu_ = nullptr;
         pHideAction_ = nullptr;
         pShowAction_ = nullptr;
+#endif
     }
     else
     {
+#ifdef USE_KStatusNotifier
+        if(!statusNotifierItem_){
+            statusNotifierItem_ = new KStatusNotifierItem(this);
+            statusNotifierItem_->setStatus(KStatusNotifierItem::Active);
+            statusNotifierItem_->setTitle(u"freeLib"_s);
+            statusNotifierItem_->setToolTipTitle(u"freeLib"_s);
+            if(g::idCurrentLib != 0)
+                statusNotifierItem_->setToolTipSubTitle(g::libs[g::idCurrentLib].name);
+            statusNotifierItem_->setStandardActionsEnabled(false);
+
+            QMenu *trayMenu = new QMenu;
+            QAction *exitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), this);
+            connect(exitAction, &QAction::triggered, this, &QApplication::quit);
+            trayMenu->addAction(exitAction);
+            statusNotifierItem_->setContextMenu(trayMenu);        }
+        QIcon icon;
+        if(bColor)
+            icon = QIcon(u":/img/tray0.png"_s);
+        else
+            icon = themedIcon(u"tray"_s);
+        statusNotifierItem_->setIconByPixmap(icon);
+
+#else
         if(!pTrayIcon_)
         {
             pTrayMenu_ = new QMenu;
@@ -2920,8 +2966,11 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             icon = themedIcon(u"tray"_s);
         pTrayIcon_->setIcon(icon); //устанавливаем иконку
         pTrayIcon_->show();
+#endif
     }
 }
+
+#ifndef USE_KStatusNotifier
 
 void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
 {
@@ -3014,6 +3063,4 @@ void MainWindow::changeEvent(QEvent *event)
         }
     }
 }
-
-
-
+#endif

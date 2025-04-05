@@ -7,7 +7,12 @@
 #include <QtWidgets/QTreeWidgetItem>
 #include <QBuffer>
 #include <QMenu>
+#ifdef USE_KStatusNotifier
+#include <KStatusNotifierItem>
+#else
 #include <QSystemTrayIcon>
+#endif
+
 #include <QList>
 
 #include "helpdialog.h"
@@ -70,8 +75,12 @@ private:
     void updateTitle();
 
 
+#ifdef USE_KStatusNotifier
+    KStatusNotifierItem *statusNotifierItem_;
+#else
     QSystemTrayIcon *pTrayIcon_;
     QMenu *pTrayMenu_;
+#endif
     QAction *pHideAction_;
     QAction *pShowAction_;
     QActionGroup *pLibGroup_;
@@ -105,7 +114,9 @@ protected:
     void FillLibrariesMenu();
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
+#ifndef USE_KStatusNotifier
     void changeEvent(QEvent *event) override;
+#endif
     void onSetRating(QTreeWidgetItem* item, uchar nRating);
 
 private slots:
@@ -152,12 +163,15 @@ private slots:
     void onUpdateAnnotationFont(const QFont &font);
 
     void ChangingTrayIcon(int index, bool bColor);
+#ifndef USE_KStatusNotifier
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void MinimizeWindow();
     void hide();
 
 public slots:
     void show();
+#endif
+
 
 signals:
     void window_loaded();
