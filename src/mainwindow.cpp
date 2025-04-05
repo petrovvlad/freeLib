@@ -2894,6 +2894,8 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
         if(statusNotifierItem_){
             statusNotifierItem_->deleteLater();
             statusNotifierItem_ = nullptr;
+            pHideAction_ = nullptr;
+            pShowAction_ = nullptr;
         }
 #else
         if(pTrayIcon_)
@@ -2921,9 +2923,20 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             statusNotifierItem_->setStandardActionsEnabled(false);
 
             QMenu *trayMenu = new QMenu;
-            QAction *exitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), this);
+            pHideAction_ = new QAction(QIcon::fromTheme(u"window-minimize"_s), tr("Minimize"), trayMenu);
+            trayMenu->addAction(pHideAction_);
+            pShowAction_ = new QAction(QIcon::fromTheme(u"window-maximize"_s), tr("Open freeLib"), trayMenu);
+            trayMenu->addAction(pShowAction_);
+            QAction *exitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), trayMenu);
+            connect(pHideAction_, &QAction::triggered, this, &MainWindow::hide);
+            connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
             connect(exitAction, &QAction::triggered, this, &QApplication::quit);
             trayMenu->addAction(exitAction);
+            if(isVisible())
+                pShowAction_->setVisible(false);
+            else
+                pHideAction_->setVisible(false);
+
             statusNotifierItem_->setContextMenu(trayMenu);        }
         QIcon icon;
         if(bColor)
@@ -2936,11 +2949,11 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
         if(!pTrayIcon_)
         {
             pTrayMenu_ = new QMenu;
-            pHideAction_ = new QAction(tr("Minimize"), pTrayMenu_);
+            pHideAction_ = new QAction(QIcon::fromTheme(u"window-minimize"_s), tr("Minimize"), pTrayMenu_);
             pTrayMenu_->addAction(pHideAction_);
-            pShowAction_ = new QAction(tr("Open freeLib"), pTrayMenu_);
+            pShowAction_ = new QAction(QIcon::fromTheme(u"window-maximize"_s), tr("Open freeLib"), pTrayMenu_);
             pTrayMenu_->addAction(pShowAction_);
-            QAction *quitAction = new QAction(tr("Quit"), pTrayMenu_);
+            QAction *quitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), pTrayMenu_);
             pTrayMenu_->addAction(quitAction);
             pTrayIcon_ = new QSystemTrayIcon(pTrayMenu_);  //инициализируем объект
             pTrayIcon_->setContextMenu(pTrayMenu_);
@@ -2970,7 +2983,26 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
     }
 }
 
-#ifndef USE_KStatusNotifier
+#ifdef USE_KStatusNotifier
+void MainWindow::hideEvent(QHideEvent *ev)
+{
+    if(pHideAction_){
+        pHideAction_->setVisible(false);
+        pShowAction_->setVisible(true);
+    }
+    QMainWindow::hideEvent(ev);
+}
+
+void MainWindow::showEvent(QShowEvent *ev)
+{
+    if(pHideAction_){
+        pHideAction_->setVisible(true);
+        pShowAction_->setVisible(false);
+    }
+    QMainWindow::showEvent(ev);
+}
+
+#else
 
 void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
 {
