@@ -431,23 +431,28 @@ bool localeStringCompare(const QString &str1, const QString &str2)
     return collator.compare(str1, str2) < 0;
 }
 
+QPixmap renderSvg(QSvgRenderer &render, bool bDark)
+{
+    QPixmap pixmap(32, 32); // Размер иконки
+    pixmap.fill(Qt::transparent); // Заполняем прозрачным цветом
+    QPainter painter(&pixmap);
+
+    painter.setRenderHint(QPainter::Antialiasing);
+    render.render(&painter);
+    if (bDark){
+        painter.setCompositionMode(QPainter::CompositionMode_SourceIn);
+        painter.fillRect(pixmap.rect(), Qt::white);
+    }
+    return pixmap;
+}
+
 QIcon themedIcon(const QString &sIcon)
 {
     if(QIcon::hasThemeIcon(sIcon))
         return QIcon::fromTheme(sIcon);
 
     QSvgRenderer svgRenderer(u":/img/icons/"_s % sIcon % u".svg"_s);
-    QPixmap pixmap(32, 32); // Размер иконки
-    pixmap.fill(Qt::transparent); // Заполняем прозрачным цветом
-    QPainter painter(&pixmap);
-
     QPalette palette = QApplication::palette();
-    painter.setRenderHint(QPainter::Antialiasing);
-    svgRenderer.render(&painter);
-    if (palette.color(QPalette::Window).lightness() < 128){
-        painter.setCompositionMode(QPainter::/*CompositionMode_SourceAtop*/CompositionMode_SourceIn);
-        painter.fillRect(pixmap.rect(), Qt::white);
-    }
-
+    QPixmap pixmap = renderSvg(svgRenderer, palette.color(QPalette::Window).lightness() < 128);
     return QIcon(pixmap);
 }
