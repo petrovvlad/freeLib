@@ -186,6 +186,8 @@ private:
 namespace g {
 inline Options options;
 inline bool bVerbose;
+inline bool bTray;
+
 
 #ifdef __cpp_lib_execution
 #ifdef USE_TBB

@@ -23,9 +23,6 @@
 #endif
 #include "importthread.h"
 
-namespace g {
-inline bool bTray;
-}
 namespace Ui {
 class MainWindow;
 }

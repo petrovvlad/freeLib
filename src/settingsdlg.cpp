@@ -220,7 +220,11 @@ void SettingsDlg::LoadSettings()
     ui->use_tag->setChecked(options_.bUseTag);
     ui->splash->setChecked(!options_.bShowSplash);
     ui->store_pos->setChecked(options_.bStorePosition);
-    ui->trayIcon->setCurrentIndex(options_.nIconTray);
+    if(g::bTray){
+        ui->trayIcon->setCurrentIndex(2);
+        ui->trayIcon->setEnabled(false);
+    }else
+        ui->trayIcon->setCurrentIndex(options_.nIconTray);
     ui->tray_color->setEnabled(options_.nIconTray > 0);
     ui->tray_color->setCurrentIndex(options_.bTrayColor ?0 :1);
     ui->database_path->setText(options_.sDatabasePath);

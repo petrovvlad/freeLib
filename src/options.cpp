@@ -470,7 +470,8 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"use_tag"_s, bUseTag);
     pSettings->setValue(u"no_splash"_s, !bShowSplash);
     pSettings->setValue(u"store_position"_s, bStorePosition);
-    pSettings->setValue(u"tray_icon"_s, nIconTray);
+    if(!g::bTray)
+        pSettings->setValue(u"tray_icon"_s, nIconTray);
     pSettings->setValue(u"tray_color"_s, bTrayColor);
     pSettings->setValue(u"CloseExpDlg"_s,bCloseDlgAfterExport);
     pSettings->setValue(u"uncheck_export"_s,bUncheckAfterExport);
