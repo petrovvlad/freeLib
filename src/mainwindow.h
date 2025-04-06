@@ -104,7 +104,6 @@ private:
     QThread *pThread_;
 
 protected:
-    // void showEvent(QShowEvent *ev) override;
     void closeEvent(QCloseEvent *event) override;
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);

@@ -2916,6 +2916,8 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
         if(!statusNotifierItem_){
             statusNotifierItem_ = new KStatusNotifierItem(this);
             statusNotifierItem_->setStatus(KStatusNotifierItem::Active);
+            statusNotifierItem_->setCategory(KStatusNotifierItem::ApplicationStatus);
+            statusNotifierItem_->setAssociatedWindow(windowHandle());
             statusNotifierItem_->setTitle(u"freeLib"_s);
             statusNotifierItem_->setToolTipTitle(u"freeLib"_s);
             if(g::idCurrentLib != 0)
@@ -2925,7 +2927,7 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             QMenu *trayMenu = new QMenu;
             pHideAction_ = new QAction(QIcon::fromTheme(u"window-minimize"_s), tr("Minimize"), trayMenu);
             trayMenu->addAction(pHideAction_);
-            pShowAction_ = new QAction(QIcon::fromTheme(u"window-maximize"_s), tr("Open freeLib"), trayMenu);
+            pShowAction_ = new QAction(QIcon::fromTheme(u"window-restore"_s), tr("Open freeLib"), trayMenu);
             trayMenu->addAction(pShowAction_);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
@@ -2956,7 +2958,7 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             pTrayMenu_ = new QMenu;
             pHideAction_ = new QAction(QIcon::fromTheme(u"window-minimize"_s), tr("Minimize"), pTrayMenu_);
             pTrayMenu_->addAction(pHideAction_);
-            pShowAction_ = new QAction(QIcon::fromTheme(u"window-maximize"_s), tr("Open freeLib"), pTrayMenu_);
+            pShowAction_ = new QAction(QIcon::fromTheme(u"window-restore"_s), tr("Open freeLib"), pTrayMenu_);
             pTrayMenu_->addAction(pShowAction_);
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
             QAction *quitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), pTrayMenu_);
