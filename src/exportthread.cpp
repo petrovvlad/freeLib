@@ -409,11 +409,16 @@ void ExportThread::export_books()
                 emit Progress(count * 100 / vBbooks_.size(), count);
                 continue;
             }
+            QString sFormat;
+            if(book.sFormat == u"pdf.zip")
+                sFormat = u"pdf"_s;
+            else
+                sFormat = book.sFormat;
             if(pExportOptions_->bOriginalFileName)
             {
                 QString arh = book.sArchive;
                 arh = arh.left(arh.length()-4);
-                sFileName = arh.isEmpty() ?u""_s :u"%1/%2.%3"_s.arg(arh, book.sFile, book.sFormat);
+                sFileName = arh.isEmpty() ?u""_s :u"%1/%2.%3"_s.arg(arh, book.sFile, sFormat);
             }
             else
             {
@@ -434,7 +439,7 @@ void ExportThread::export_books()
                         sFileName += u"/"_s + sPartName.trimmed();
                 }
 
-                sFileName += u"."_s + book.sFormat;
+                sFileName += u"."_s + sFormat;
                 if(pExportOptions_->bTransliteration)
                     sFileName = Transliteration(sFileName);
             }

@@ -1006,6 +1006,12 @@ void ImportThread::process()
             if(substrings.count() > field_index[_FORMAT])
             {
                 format = substrings[field_index[_FORMAT]].trimmed();
+                if(format.toLower() == u"zip"){
+                    if(file.endsWith(u".pdf", Qt::CaseInsensitive)){
+                        format = u"pdf.zip"_s;
+                        file = file.left(file.length()-4);
+                    }
+                }
             }
 
             QDate date;

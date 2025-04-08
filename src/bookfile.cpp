@@ -158,6 +158,9 @@ QImage BookFile::cover()
     else if(sFormat == u"djvu" || sFormat == u"djv")
         img = coverDjvu();
 #endif
+    else if(sFormat == u"pdf.zip"){
+            img = coverZip();
+    }
 
     if(!img.isNull()){
         img.save(sImg);
@@ -169,7 +172,6 @@ QImage BookFile::cover()
 
 QImage BookFile::coverFb2()
 {
-    QImage img;
     SBook &book = pLib_->books[idBook_];
     QDomDocument doc;
 
@@ -183,6 +185,12 @@ QImage BookFile::coverFb2()
             doc.setContent(data_);
     }
 
+    return coverFb2(doc);
+}
+
+QImage BookFile::coverFb2(const QDomDocument &doc)
+{
+    QImage img;
     if(doc.isDocument()){
         QDomElement title_info = doc.elementsByTagName(u"title-info"_s).at(0).toElement();
         auto elmImg =  doc.elementsByTagName(u"title-info"_s).at(0).toElement().elementsByTagName(u"coverpage"_s).at(0).toElement().elementsByTagName(u"image"_s).at(0).attributes();
@@ -208,6 +216,7 @@ QImage BookFile::coverFb2()
 
     }
     return img;
+
 }
 
 QImage BookFile::coverAnnotationEpub()
@@ -255,7 +264,7 @@ QImage BookFile::coverAnnotationEpub()
                     QString path = roots.childNodes().at(j).attributes().namedItem(u"full-path"_s).toAttr().value();
                     QFileInfo fi(path);
                     rel_path = fi.path();
-                    if(rel_path == ".")
+                    if(rel_path == u".")
                         rel_path = u""_s;
                     else
                         rel_path = rel_path + u"/"_s;
@@ -357,6 +366,34 @@ QImage BookFile::coverDjvu()
     }
     return img;
 }
+
+QImage BookFile::coverZip()
+{
+    QImage img;
+    SBook &book = pLib_->books[idBook_];
+    QBuffer buffer;
+    QuaZip zip;
+    if(data_.size() != 0){
+        buffer.setData(data_);
+        zip.setIoDevice(&buffer);
+    }
+    zip.open(QuaZip::mdUnzip);
+    auto listFi = zip.getFileInfoList64();
+    for(const auto &fi :std::as_const(listFi)){
+        if(fi.name.endsWith(u".fbd")){
+            zip.setCurrentFile(fi.name);
+            QuaZipFile zipFile(&zip);
+            zipFile.open(QIODevice::ReadOnly);
+            QByteArray baInfo = zipFile.readAll();
+            zipFile.close();
+            QDomDocument doc;
+            doc.setContent(baInfo);
+            return coverFb2(doc);
+        }
+    }
+
+    return img;
+}
 #endif
 
 void paintText(QPainter* painter, QRect rect, int flags, const QString &sText)
@@ -423,6 +460,9 @@ QString BookFile::annotation()
             annotationFb2();
         else if(sFormat == u"epub")
             coverAnnotationEpub();
+        else if(sFormat == u"pdf.zip")
+            annotationZip();
+
     }
     return sAnnotation_;
 }
@@ -442,9 +482,39 @@ void BookFile::annotationFb2()
         if(data_.size() != 0)
             doc.setContent(data_);
     }
+    annotationFb2(doc);
+}
+
+void BookFile::annotationFb2(const QDomDocument &doc)
+{
     if(doc.isDocument()){
         QDomElement titleInfo = doc.elementsByTagName(u"title-info"_s).at(0).toElement();
         sAnnotation_ = titleInfo.elementsByTagName(u"annotation"_s).at(0).toElement().text();
+    }
+}
+
+void BookFile::annotationZip()
+{
+    SBook &book = pLib_->books[idBook_];
+    QBuffer buffer;
+    QuaZip zip;
+    if(data_.size() != 0){
+        buffer.setData(data_);
+        zip.setIoDevice(&buffer);
+    }
+    zip.open(QuaZip::mdUnzip);
+    auto listFi = zip.getFileInfoList64();
+    for(const auto &fi :std::as_const(listFi)){
+        if(fi.name.endsWith(u".fbd")){
+            zip.setCurrentFile(fi.name);
+            QuaZipFile zipFile(&zip);
+            zipFile.open(QIODevice::ReadOnly);
+            QByteArray baInfo = zipFile.readAll();
+            zipFile.close();
+            QDomDocument doc;
+            doc.setContent(baInfo);
+            annotationFb2(doc);
+        }
     }
 }
 
@@ -455,8 +525,13 @@ QDateTime BookFile::birthTime() const
 
 QString BookFile::fileName() const
 {
+    QString sFormat;
     const SBook &book = pLib_->books[idBook_];
-    QString sFileName = book.sFile % u"."_s % book.sFormat;
+    if(book.sFormat == u"pdf.zip")
+        sFormat = u"pdf"_s;
+    else
+        sFormat = book.sFormat;
+    QString sFileName = book.sFile % u"."_s % sFormat;
     return sFileName;
 }
 
@@ -500,6 +575,28 @@ QByteArray BookFile::data()
     const SBook &book = pLib_->books[idBook_];
     if(book.sArchive.isEmpty())
         data_ = file_.readAll();
+    else{
+        if(book.sFormat == u"pdf.zip"){
+            QBuffer buffer;
+            QuaZip zip;
+            if(data_.size() != 0){
+                buffer.setData(data_);
+                zip.setIoDevice(&buffer);
+            }
+            zip.open(QuaZip::mdUnzip);
+            auto listFi = zip.getFileInfoList64();
+            for(const auto &fi :std::as_const(listFi)){
+                if(fi.name.endsWith(u".pdf")){
+                    zip.setCurrentFile(fi.name);
+                    QuaZipFile zipFile(&zip);
+                    zipFile.open(QIODevice::ReadOnly);
+                    QByteArray ba = zipFile.readAll();
+                    zipFile.close();
+                    return ba;
+                }
+            }
+        }
+    }
     return data_;
 }
 

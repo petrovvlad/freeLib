@@ -325,11 +325,6 @@ MainWindow::MainWindow(QWidget *parent) :
     addShortcutToToolTip(ui->btnExpandAll);
 }
 
-// void MainWindow::showEvent(QShowEvent *ev)
-// {
-//     QMainWindow::showEvent(ev);
-// }
-
 void MainWindow::UpdateTags()
 {
     if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
@@ -1488,7 +1483,7 @@ void MainWindow::selectBook()
             replace(QLatin1String("#file_size#"), size>0 ?sizeToString(size) : QLatin1String("")).
 #endif
             replace(u"#file_data#"_s, file.birthTime().toString(u"dd.MM.yyyy hh:mm:ss"_s)).
-            replace(u"#file_name#"_s, file.fileName()).
+            replace(u"#file_name#"_s, /*file.fileName()*/book.sFile % u"."_s % book.sFormat).
             replace(u"#infobcolor"_s, colorBInfo.name());
     ui->Review->setHtml(content);
 }
@@ -3012,7 +3007,6 @@ void MainWindow::showEvent(QShowEvent *ev)
     }
     QMainWindow::showEvent(ev);
 }
-
 #else
 
 void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
