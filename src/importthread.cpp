@@ -1005,12 +1005,21 @@ void ImportThread::process()
             QString format;
             if(substrings.count() > field_index[_FORMAT])
             {
-                format = substrings[field_index[_FORMAT]].trimmed();
-                if(format.toLower() == u"zip"){
+                format = substrings[field_index[_FORMAT]].trimmed().toLower();
+                if(format == u"zip"){
                     if(file.endsWith(u".pdf", Qt::CaseInsensitive)){
                         format = u"pdf.zip"_s;
-                        file = file.left(file.length()-4);
+                        file.chop(4);
+                        if(name.endsWith(u"(pdf)"))
+                            name.chop(5);
+                    } else
+                    if(file.endsWith(u".djvu", Qt::CaseInsensitive)){
+                        format = u"djvu.zip"_s;
+                        file.chop(5);
+                        if(name.endsWith(u"(djvu)"))
+                            name.chop(6);
                     }
+
                 }
             }
 

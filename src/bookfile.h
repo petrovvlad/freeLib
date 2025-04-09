@@ -3,6 +3,8 @@
 
 #include "library.h"
 
+#include <QDomDocument>
+
 class BookFile
 {
 public:
@@ -18,6 +20,8 @@ public:
     QString filePath() const;
     qint64 fileSize() const;
     QByteArray data();
+    QByteArray dataZip(const QString &sSubFormat);
+
 
 private:
     QImage coverFb2();

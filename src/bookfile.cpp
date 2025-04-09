@@ -158,9 +158,8 @@ QImage BookFile::cover()
     else if(sFormat == u"djvu" || sFormat == u"djv")
         img = coverDjvu();
 #endif
-    else if(sFormat == u"pdf.zip"){
+    else if(sFormat == u"pdf.zip" || sFormat == u"djvu.zip" || sFormat == u"zip" )
             img = coverZip();
-    }
 
     if(!img.isNull()){
         img.save(sImg);
@@ -366,6 +365,7 @@ QImage BookFile::coverDjvu()
     }
     return img;
 }
+#endif
 
 QImage BookFile::coverZip()
 {
@@ -391,10 +391,32 @@ QImage BookFile::coverZip()
             return coverFb2(doc);
         }
     }
+#ifdef USE_DEJVULIBRE
+    for(const auto &fi :std::as_const(listFi)){
+        if(fi.name.endsWith(u".djvu")){
+            zip.setCurrentFile(fi.name);
+            QuaZipFile zipFile(&zip);
+            zipFile.open(QIODevice::ReadOnly);
+            QByteArray data = zipFile.readAll();
+            zipFile.close();
+            QString sDjVuFile = QDir::tempPath() % u"/freeLib/"_s % QString::number(idBook_) % u".djvu"_s;
+            QFile fileDjVu;
+            fileDjVu.setFileName(sDjVuFile);
+            if(!fileDjVu.open(QIODevice::ReadWrite))
+                break;
+            fileDjVu.write(data);
+            fileDjVu.close();
+            static DjVu djvu;
+            if(djvu.loadLibrary() && djvu.openDocument(sDjVuFile))
+                img = djvu.getCover();
+            if(!fileDjVu.fileName().isEmpty())
+                fileDjVu.remove();
+        }
+    }
+#endif
 
     return img;
 }
-#endif
 
 void paintText(QPainter* painter, QRect rect, int flags, const QString &sText)
 {
@@ -460,7 +482,7 @@ QString BookFile::annotation()
             annotationFb2();
         else if(sFormat == u"epub")
             coverAnnotationEpub();
-        else if(sFormat == u"pdf.zip")
+        else if(sFormat == u"pdf.zip" || sFormat == u"djvu.zip" || sFormat == u"zip")
             annotationZip();
 
     }
@@ -529,6 +551,8 @@ QString BookFile::fileName() const
     const SBook &book = pLib_->books[idBook_];
     if(book.sFormat == u"pdf.zip")
         sFormat = u"pdf"_s;
+    else if(book.sFormat == u"djvu.zip")
+        sFormat = u"djvu"_s;
     else
         sFormat = book.sFormat;
     QString sFileName = book.sFile % u"."_s % sFormat;
@@ -576,28 +600,37 @@ QByteArray BookFile::data()
     if(book.sArchive.isEmpty())
         data_ = file_.readAll();
     else{
-        if(book.sFormat == u"pdf.zip"){
-            QBuffer buffer;
-            QuaZip zip;
-            if(data_.size() != 0){
-                buffer.setData(data_);
-                zip.setIoDevice(&buffer);
-            }
-            zip.open(QuaZip::mdUnzip);
-            auto listFi = zip.getFileInfoList64();
-            for(const auto &fi :std::as_const(listFi)){
-                if(fi.name.endsWith(u".pdf")){
-                    zip.setCurrentFile(fi.name);
-                    QuaZipFile zipFile(&zip);
-                    zipFile.open(QIODevice::ReadOnly);
-                    QByteArray ba = zipFile.readAll();
-                    zipFile.close();
-                    return ba;
-                }
-            }
-        }
+        if(book.sFormat == u"pdf.zip")
+            return dataZip(u".pdf"_s);
+        else if(book.sFormat == u"djvu.zip")
+            return dataZip(u".djvu"_s);
     }
     return data_;
+}
+
+QByteArray BookFile::dataZip(const QString &sSubFormat)
+{
+    QBuffer buffer;
+    QuaZip zip;
+    QByteArray ba;
+    if(data_.size() != 0){
+        buffer.setData(data_);
+        zip.setIoDevice(&buffer);
+    }
+    zip.open(QuaZip::mdUnzip);
+    auto listFi = zip.getFileInfoList64();
+    for(const auto &fi :std::as_const(listFi)){
+        if(fi.name.endsWith(sSubFormat)){
+            zip.setCurrentFile(fi.name);
+            QuaZipFile zipFile(&zip);
+            zipFile.open(QIODevice::ReadOnly);
+            ba = zipFile.readAll();
+            zipFile.close();
+            break;
+        }
+    }
+    return ba;
+
 }
 
 void BookFile::cleanCoversCache()
