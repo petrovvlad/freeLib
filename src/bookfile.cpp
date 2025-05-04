@@ -642,7 +642,7 @@ QByteArray BookFile::openZipInZip(const QString &sArchive, const QString &sFileN
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             sZipChain << sArchive.sliced(posPrev, posNext + 4 - posPrev);
 #else
-            QStringRef sZip = book.sArchive.leftRef(posNext + 4);
+            QStringRef sZip = sArchive.leftRef(posNext + 4);
             sZipChain << sZip.right(sZip.length() - posPrev).toString();
 #endif
 
