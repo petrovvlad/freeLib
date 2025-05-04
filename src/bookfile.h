@@ -24,12 +24,15 @@ public:
 
 
 private:
+    QByteArray openZipInZip(const QString &sArchive, const QString &sFileName);
     QImage coverFb2();
     QImage coverFb2(const QDomDocument &doc);
     void annotationFb2();
     void annotationFb2(const QDomDocument &doc);
     void annotationZip();
     QImage coverAnnotationEpub();
+    QImage coverAnnotationEpub(QuaZip &zipEpub);
+
 #ifdef USE_DEJVULIBRE
     QImage coverDjvu();
 #endif
