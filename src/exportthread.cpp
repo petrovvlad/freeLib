@@ -410,8 +410,8 @@ void ExportThread::export_books()
                 continue;
             }
             QString sFormat;
-            if(book.sFormat == u"pdf.zip")
-                sFormat = u"pdf"_s;
+            if(book.sFormat.endsWith(u".zip") && book.sFormat.size()>4)
+                sFormat = book.sFormat.left(book.sFormat.size()-4);
             else
                 sFormat = book.sFormat;
             if(pExportOptions_->bOriginalFileName)
