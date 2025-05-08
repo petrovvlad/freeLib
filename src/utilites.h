@@ -71,6 +71,7 @@ void setLocale(const QString &sLocale);
 bool setCurrentZipFileName(QuaZip *zip, const QString &name);
 bool kindlegenInstalled();
 QIcon themedIcon(const QString &sIcon);
+QPixmap renderSvg(QSvgRenderer &render, bool bDark);
 
 template <typename T, typename SequenceType, typename KeepFunctor>
 std::vector<T> blockingFiltered(const std::unordered_map<T, SequenceType> &sequence, KeepFunctor &&keep)

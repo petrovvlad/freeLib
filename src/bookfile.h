@@ -3,6 +3,8 @@
 
 #include "library.h"
 
+#include <QDomDocument>
+
 class BookFile
 {
 public:
@@ -18,14 +20,23 @@ public:
     QString filePath() const;
     qint64 fileSize() const;
     QByteArray data();
+    QByteArray dataZip(const QString &sSubFormat);
+
 
 private:
+    QByteArray openZipInZip(const QString &sArchive, const QString &sFileName);
     QImage coverFb2();
+    QImage coverFb2(const QDomDocument &doc);
     void annotationFb2();
+    void annotationFb2(const QDomDocument &doc);
+    void annotationZip();
     QImage coverAnnotationEpub();
+    QImage coverAnnotationEpub(QuaZip &zipEpub);
+
 #ifdef USE_DEJVULIBRE
     QImage coverDjvu();
 #endif
+    QImage coverZip();
     QImage createCover();
     void cleanCoversCache();
 

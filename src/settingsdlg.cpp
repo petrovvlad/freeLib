@@ -220,9 +220,13 @@ void SettingsDlg::LoadSettings()
     ui->use_tag->setChecked(options_.bUseTag);
     ui->splash->setChecked(!options_.bShowSplash);
     ui->store_pos->setChecked(options_.bStorePosition);
-    ui->trayIcon->setCurrentIndex(options_.nIconTray);
+    if(g::bTray){
+        ui->trayIcon->setCurrentIndex(2);
+        ui->trayIcon->setEnabled(false);
+    }else
+        ui->trayIcon->setCurrentIndex(options_.nIconTray);
     ui->tray_color->setEnabled(options_.nIconTray > 0);
-    ui->tray_color->setCurrentIndex(options_.nTrayColor);
+    ui->tray_color->setCurrentIndex(options_.bTrayColor ?0 :1);
     ui->database_path->setText(options_.sDatabasePath);
 
 #ifdef Q_OS_MAC
@@ -369,8 +373,8 @@ void SettingsDlg::reject()
         emit ChangeAlphabet(g::options.sAlphabetName);
     }
 
-    if(options_.nIconTray != g::options.nIconTray || options_.nTrayColor != g::options.nTrayColor){
-        emit ChangingTrayIcon(g::options.nIconTray, g::options.nTrayColor);
+    if(options_.nIconTray != g::options.nIconTray || options_.bTrayColor != g::options.bTrayColor){
+        emit ChangingTrayIcon(g::options.nIconTray, g::options.bTrayColor);
     }
     if(options_.bUseSytemFonts != g::options.bUseSytemFonts){
         QFont font(QGuiApplication::font());
@@ -473,7 +477,7 @@ void SettingsDlg::btnOK()
     g::options.bShowSplash = !ui->splash->isChecked();
     g::options.bStorePosition = ui->store_pos->isChecked();
     g::options.nIconTray = ui->trayIcon->currentIndex();
-    g::options.nTrayColor = ui->tray_color->currentIndex();
+    g::options.bTrayColor = ui->tray_color->currentIndex() == 0;
     g::options.bCloseDlgAfterExport = ui->CloseExpDlg->isChecked();
     g::options.bUncheckAfterExport = ui->uncheck_export->isChecked();
     g::options.bExtendedSymbols = ui->extended_symbols->isChecked();
@@ -784,14 +788,14 @@ void SettingsDlg::onProxyTypeCurrentIndexChanged(int index)
 void SettingsDlg::onTrayIconCurrentIndexChanged(int index)
 {
     options_.nIconTray = index;
-    emit ChangingTrayIcon(options_.nIconTray, options_.nTrayColor);
+    emit ChangingTrayIcon(options_.nIconTray, options_.bTrayColor);
     ui->tray_color->setEnabled(options_.nIconTray > 0);
 }
 
 void SettingsDlg::onTrayColorCurrentIndexChanged(int index)
 {
-    options_.nTrayColor = index;
-    emit ChangingTrayIcon(options_.nIconTray, options_.nTrayColor);
+    options_.bTrayColor = index == 0;
+    emit ChangingTrayIcon(options_.nIconTray, options_.bTrayColor);
 }
 
 #ifdef USE_HTTSERVER

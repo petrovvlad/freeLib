@@ -137,7 +137,7 @@ struct Options
     bool bUseSytemFonts;
 
     qint8 nIconTray;
-    qint8 nTrayColor;
+    bool bTrayColor;
     bool bShowDeleted;
     bool bUseTag;
     bool bShowSplash;
@@ -186,6 +186,8 @@ private:
 namespace g {
 inline Options options;
 inline bool bVerbose;
+inline bool bTray;
+
 
 #ifdef __cpp_lib_execution
 #ifdef USE_TBB

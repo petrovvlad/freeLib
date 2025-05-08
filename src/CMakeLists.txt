@@ -18,6 +18,12 @@ if(KF${FREELIB_QT_MAJOR_VERSION}KIO_FOUND)
     add_compile_definitions(USE_KIO=1)
 endif()
 
+find_package(KF${FREELIB_QT_MAJOR_VERSION}StatusNotifierItem QUIET)
+if(KF${FREELIB_QT_MAJOR_VERSION}StatusNotifierItem_FOUND)
+  message(STATUS "Found KStatusNotifier")
+  add_compile_definitions(USE_KStatusNotifier=1)
+endif()
+
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
     find_package(QT NAMES Qt6 REQUIRED)
     find_package(Qt6 COMPONENTS ${QT_COMPONENTS} REQUIRED)
@@ -177,6 +183,10 @@ endif()
 
 if(KF${FREELIB_QT_MAJOR_VERSION}KIO_FOUND)
     target_link_libraries(freelib PRIVATE KF${FREELIB_QT_MAJOR_VERSION}::KIOCore)
+endif()
+
+if(KF${FREELIB_QT_MAJOR_VERSION}StatusNotifierItem_FOUND)
+  target_link_libraries(freelib PRIVATE KF${FREELIB_QT_MAJOR_VERSION}::StatusNotifierItem)
 endif()
 
 if(Qt${QT_VERSION_MAJOR}Keychain_FOUND)

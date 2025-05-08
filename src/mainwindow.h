@@ -7,7 +7,12 @@
 #include <QtWidgets/QTreeWidgetItem>
 #include <QBuffer>
 #include <QMenu>
+#ifdef USE_KStatusNotifier
+#include <KStatusNotifierItem>
+#else
 #include <QSystemTrayIcon>
+#endif
+
 #include <QList>
 
 #include "helpdialog.h"
@@ -18,9 +23,6 @@
 #endif
 #include "importthread.h"
 
-namespace g {
-inline bool bTray;
-}
 namespace Ui {
 class MainWindow;
 }
@@ -44,7 +46,7 @@ private:
     QString last_search_symbol;
     QMenu TagMenu;
     QObject* currentListForTag_;
-    QMap<uint, QIcon> iconsTags_;
+    std::unordered_map<uint, QIcon> iconsTags_;
 
     void uncheckBooks(const std::vector<uint> &vBooks);
     QToolButton *FirstButton;
@@ -70,8 +72,12 @@ private:
     void updateTitle();
 
 
+#ifdef USE_KStatusNotifier
+    KStatusNotifierItem *statusNotifierItem_;
+#else
     QSystemTrayIcon *pTrayIcon_;
     QMenu *pTrayMenu_;
+#endif
     QAction *pHideAction_;
     QAction *pShowAction_;
     QActionGroup *pLibGroup_;
@@ -95,7 +101,6 @@ private:
     QThread *pThread_;
 
 protected:
-    // void showEvent(QShowEvent *ev) override;
     void closeEvent(QCloseEvent *event) override;
     void FillBookList(QSqlQuery &query);
     void CheckParent(QTreeWidgetItem* parent);
@@ -105,7 +110,9 @@ protected:
     void FillLibrariesMenu();
     void SendMail(const ExportOptions &exportOptions);
     void SendToDevice(const ExportOptions &exportOptions);
+#ifndef USE_KStatusNotifier
     void changeEvent(QEvent *event) override;
+#endif
     void onSetRating(QTreeWidgetItem* item, uchar nRating);
 
 private slots:
@@ -151,13 +158,19 @@ private slots:
     void onUpdateListFont(const QFont &font);
     void onUpdateAnnotationFont(const QFont &font);
 
-    void ChangingTrayIcon(int index, int color);
+    void ChangingTrayIcon(int index, bool bColor);
+#ifdef USE_KStatusNotifier
+    void hideEvent(QHideEvent *ev) override;
+    void showEvent(QShowEvent *ev) override;
+#else
     void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
     void MinimizeWindow();
     void hide();
-
 public slots:
     void show();
+#endif
+
+
 
 signals:
     void window_loaded();

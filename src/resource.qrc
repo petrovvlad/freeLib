@@ -24,6 +24,7 @@
         <file>img/icons/expand-all.svg</file>
         <file>img/icons/document-send.svg</file>
         <file>img/icons/multitags.svg</file>
+        <file>img/icons/tray.svg</file>
 
         <file alias="language/abc_ru.txt">ABC/abc_ru.txt</file>
         <file alias="language/abc_uk.txt">ABC/abc_uk.txt</file>

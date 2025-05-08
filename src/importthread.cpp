@@ -623,8 +623,8 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
     }
 
     QuaZipFile fileInZip(&uz);
-    const auto list = uz.getFileInfoList();
-    for(const QuaZipFileInfo &fiZip: list  )
+    const auto list = uz.getFileInfoList64();
+    for(const auto &fiZip: list  )
     {
         if(stopped_.load(std::memory_order_relaxed)) [[unlikely]]
             break;
@@ -632,7 +632,7 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
         if(fiZip.uncompressedSize == 0) [[unlikely]]
             continue;
         QBuffer buffer;
-        if(fiZip.name.right(3).toLower() == u"fb2")
+        if(fiZip.name.endsWith(u".fb2", Qt::CaseInsensitive))
         {
             setCurrentZipFileName(&uz, fiZip.name);
             fileInZip.open(QIODevice::ReadOnly);
@@ -641,7 +641,7 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
             readFB2(buffer.data(), fiZip.name, sZipFileName, fiZip.uncompressedSize);
             nBooksCount++;
         }
-        else if(fiZip.name.right(4).toLower() == u"epub")
+        else if(fiZip.name.endsWith(u".epub", Qt::CaseInsensitive))
         {
             setCurrentZipFileName(&uz, fiZip.name);
             fileInZip.open(QIODevice::ReadOnly);
@@ -650,7 +650,7 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
             readEPUB(buffer.data(), fiZip.name, sZipFileName, fiZip.uncompressedSize);
             nBooksCount++;
         }
-        else if(fiZip.name.right(4).toLower() == u".zip")
+        else if(fiZip.name.endsWith(u".zip", Qt::CaseInsensitive))
         {
             setCurrentZipFileName(&uz, fiZip.name);
             fileInZip.open(QIODevice::ReadOnly);
@@ -671,15 +671,14 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
 
             fileZiped.remove();
         }
-        else if(fiZip.name.right(3).toLower() != u"fbd")
+        else if(fiZip.name.endsWith(u".fbd", Qt::CaseInsensitive))
         {
             QFileInfo fi(fiZip.name);
             if(!fi.completeBaseName().isEmpty() && fi.completeBaseName().at(0) != '.')
             {
-                QString fbd = fi.path() + u"/"_s + fi.completeBaseName() + u".fbd"_s;
+                QString fbd = fi.completeBaseName() + u".fbd"_s;
                 if(setCurrentZipFileName(&uz, fbd))
                 {
-                    setCurrentZipFileName(&uz, fiZip.name);
                     fileInZip.open(QIODevice::ReadOnly);
                     buffer.setData(fileInZip.readAll());
                     readFB2(buffer.data(), fiZip.name, sZipFileName, fiZip.uncompressedSize);
@@ -1005,7 +1004,28 @@ void ImportThread::process()
             QString format;
             if(substrings.count() > field_index[_FORMAT])
             {
-                format = substrings[field_index[_FORMAT]].trimmed();
+                format = substrings[field_index[_FORMAT]].trimmed().toLower();
+                if(format == u"zip"){
+                    if(file.endsWith(u".pdf", Qt::CaseInsensitive)){
+                        format = u"pdf.zip"_s;
+                        file.chop(4);
+                        if(name.endsWith(u"(pdf)"))
+                            name.chop(5);
+                    } else
+                    if(file.endsWith(u".djvu", Qt::CaseInsensitive)){
+                        format = u"djvu.zip"_s;
+                        file.chop(5);
+                        if(name.endsWith(u"(djvu)"))
+                            name.chop(6);
+                    } else
+                    if(file.endsWith(u".epub", Qt::CaseInsensitive)){
+                        format = u"epub.zip"_s;
+                        file.chop(5);
+                        if(name.endsWith(u"(epub)"))
+                            name.chop(6);
+                    }
+
+                }
             }
 
             QDate date;
