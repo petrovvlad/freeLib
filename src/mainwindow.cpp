@@ -203,6 +203,19 @@ MainWindow::MainWindow(QWidget *parent) :
         idCurrentGenre_ = settings->value(u"current_genre_id"_s, 0).toUInt();
         nCurrentTab = settings->value(u"current_tab"_s, 0).toInt();
         sFilter = settings->value(u"filter_set"_s).toString();
+
+        QString sTitle = settings->value(u"search.title"_s).toString();
+        ui->s_name->setText(sTitle);
+        QString sAuthor = settings->value(u"search.author"_s).toString();
+        ui->s_author->setText(sAuthor);
+        QString sSequence = settings->value(u"search.sequence"_s).toString();
+        ui->s_seria->setText(sSequence);
+        QString sFile = settings->value(u"search.file"_s).toString();
+        ui->s_FileName->setText(sFile);
+        int nMaxCount = settings->value(u"search.max.books"_s, 1000).toInt();
+        ui->maxBooks->setValue(nMaxCount);
+        uint nMinimalRating = settings->value(u"search.min.rating"_s).toUInt();
+        ui->comboMinimalRating->setCurrentIndex(nMinimalRating);
     }
     else
     {
@@ -1245,8 +1258,25 @@ void MainWindow::onStartSearch()
         if(nCount == nMaxCount) [[unlikely]]
             break;
     }
-    ui->find_books->setText(QString::number(nCount));
+    QLocale locale;
+    ui->find_books->setText(locale.toString(nCount));
     FillListBooks(vFoundBooks_ ,{} , 0);
+    if(g::options.bStorePosition){
+        auto settings = GetSettings();
+        settings->setValue(u"search.title"_s, sName);
+        settings->setValue(u"search.author"_s, sAuthor);
+        settings->setValue(u"search.sequence"_s, sSeria);
+        settings->setValue(u"search.id.genre"_s, idGenre);
+
+        QString sLanguage = idLanguage>=0 ?lib.vLaguages[idLanguage] :u""_s;
+        settings->setValue(u"search.language"_s, sLanguage);
+        settings->setValue(u"search.min.rating"_s, nMinimalRating);
+
+        settings->setValue(u"search.file"_s, sFile);
+        // settings->setValue(u"search.date.from"_s, dateFrom);
+        // settings->setValue(u"search.date.to"_s, dateTo);
+        settings->setValue(u"search.max.books"_s, nMaxCount);
+    }
 
     QApplication::restoreOverrideCursor();
 }
@@ -1261,6 +1291,17 @@ void MainWindow::onClearSearch()
     ui->find_books->clear();
     ui->comboMinimalRating->setCurrentIndex(0);
     vFoundBooks_.clear();
+    if(g::options.bStorePosition){
+        auto settings = GetSettings();
+        settings->remove(u"search.title"_s);
+        settings->remove(u"search.author"_s);
+        settings->remove(u"search.sequence"_s);
+        settings->remove(u"search.id.genre"_s);
+        settings->remove(u"search.language"_s);
+        settings->remove(u"search.min.rating"_s);
+        settings->remove(u"search.file"_s);
+        settings->remove(u"search.max.books"_s);
+    }
 }
 
 void MainWindow::SelectLibrary()
@@ -1595,7 +1636,9 @@ void MainWindow::fillLanguages()
     QString sCurrentLanguage = settings->value(u"BookLanguage"_s, u"*"_s).toString();
     QLocale locale;
     auto sLocale = locale.name().left(2);
-
+    QString sSearchLanguage;
+    if(g::options.bStorePosition)
+        sSearchLanguage = settings->value(u"search.language"_s).toString();
     auto vLaguages = currentLib.vLaguages;
     std::ranges::sort(vLaguages, [&sLocale](auto i1, auto i2)
     {
@@ -1629,6 +1672,7 @@ void MainWindow::fillLanguages()
     });
 
     int iCurrentLang = 0;
+    int iSearchLang = 0;
     for(int iLang = 0; iLang<vLaguages.size(); iLang++){
         QString sAbbrLanguage = vLaguages[iLang];
         if(!sAbbrLanguage.isEmpty() && sAbbrLanguage != u"un"){
@@ -1648,6 +1692,9 @@ void MainWindow::fillLanguages()
                     iCurrentLang = iLang + 1;
                     idCurrentLanguage_ = id;
                 }
+
+                if(sAbbrLanguage == sSearchLanguage)
+                    iSearchLang = iLang + 1;
             }
         }
     }
@@ -1659,6 +1706,7 @@ void MainWindow::fillLanguages()
         ui->findLanguage->insertSeparator(iSeparator);
     }
     ui->language->setCurrentIndex(iCurrentLang);
+    ui->findLanguage->setCurrentIndex(iSearchLang);
 
 #ifdef USE_HTTSERVER
     if(pOpds_)
@@ -2293,7 +2341,7 @@ void MainWindow::FillGenres()
     const bool wasBlocked = ui->GenreList->blockSignals(true);
     ui->GenreList->clear();
     ui->s_genre->clear();
-    ui->s_genre->addItem(QStringLiteral("*"), 0);
+    ui->s_genre->addItem(u"*"_s, 0);
     QFont fontBold(ui->AuthorList->font());
     fontBold.setBold(true);
 
@@ -2308,6 +2356,11 @@ void MainWindow::FillGenres()
         }
     }
 
+    uint idSearchGenre = 0;
+    if(g::options.bStorePosition){
+        auto settings = GetSettings();
+        idSearchGenre = settings->value(u"search.id.genre"_s).toUInt();
+    }
     std::unordered_map<ushort, QTreeWidgetItem*> mTopGenresItem;
     for(const auto &iGenre :mCounts){
         auto idGenre = iGenre.first;
@@ -2330,7 +2383,7 @@ void MainWindow::FillGenres()
         const QString &sName = g::genres[idGenre].sName;
         item->setText(0, u"%1 (%2)"_s.arg(sName).arg(mCounts[idGenre]));
         item->setData(0, Qt::UserRole, idGenre);
-        ui->s_genre->addItem(QStringLiteral("   ") + sName, idGenre);
+        ui->s_genre->addItem(u"   "_s + sName, idGenre);
         if(idGenre == idCurrentGenre_)
         {
             item->setSelected(true);
@@ -2340,6 +2393,13 @@ void MainWindow::FillGenres()
 
     ui->s_genre->model()->sort(0);
     ui->GenreList->model()->sort(0);
+
+    for(int i=0; i<ui->s_genre->count(); i++){
+        if(ui->s_genre->itemData(i) == idSearchGenre){
+            ui->s_genre->setCurrentIndex(i);
+            break;
+        }
+    }
 
     ui->GenreList->blockSignals(wasBlocked);
     if(g::bVerbose){
@@ -2947,7 +3007,7 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             icon = themedIcon(u"tray"_s);
         statusNotifierItem_->setIconByPixmap(icon);
 
-#else
+#else //USE_KStatusNotifier
         if(!pTrayIcon_)
         {
             pTrayMenu_ = new QMenu;
@@ -2985,7 +3045,7 @@ void MainWindow::ChangingTrayIcon(int index, bool bColor)
             icon = themedIcon(u"tray"_s);
         pTrayIcon_->setIcon(icon); //устанавливаем иконку
         pTrayIcon_->show();
-#endif
+#endif //USE_KStatusNotifier
     }
 }
 
@@ -3035,7 +3095,7 @@ void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
         if(this->isActiveWindow() && this->isVisible())
         {
             this->setWindowState(this->windowState()|Qt::WindowMinimized);
-            if(options.nIconTray!=0)
+            if(g::options.nIconTray!=0)
                 this->hide();
         }
         else
