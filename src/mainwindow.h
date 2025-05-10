@@ -68,7 +68,7 @@ private:
     void setTagSequence(uint idTag, uint idSequence, bool bSet);
     void updateIcons();
     void updateItemIcon(QTreeWidgetItem *item);
-    QIcon getTagIcon(const std::vector<uint> &vIdTags);
+    QIcon getTagIcon(const std::unordered_set<uint> &vIdTags);
     void updateTitle();
 
 

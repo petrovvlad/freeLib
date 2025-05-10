@@ -48,8 +48,8 @@ private:
     std::unordered_map<QString, uint> mSequences_;
     std::unordered_set<SAuthor> stTagetAuthors_;
     std::unordered_map<SAuthor, uint> hashAuthors_;
-    std::unordered_map<uint, std::vector<uint>> mBooksTags_;
-    std::unordered_map<QString, std::vector<uint>> mSequenceTags_;
+    std::unordered_map<uint, std::unordered_set<uint>> mBooksTags_;
+    std::unordered_map<QString, std::unordered_set<uint>> mSequenceTags_;
 
     QStringList listFiles_;
     QSqlQuery query_;

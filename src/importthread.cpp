@@ -115,8 +115,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
         auto it = stTagetAuthors_.find(author);
         if(it != stTagetAuthors_.end())
         {
-            const auto &vTags = it->vIdTags;
-            std::ranges::copy(vTags, std::back_inserter(lTags));
+            std::ranges::copy(it->idTags, std::back_inserter(lTags));
         }
         hashAuthors_[author] = idAuthor;       
     }
@@ -309,18 +308,18 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
     }
     if(nUpdateType_ == UT_FULL){
         for(auto &[idAuthor, author] :lib.authors){
-            if(!author.vIdTags.empty())
+            if(!author.idTags.empty())
                 stTagetAuthors_.insert(std::move(author));
         }
 
         for(const auto &[idBook, book] :lib.books){
-            if(!book.vIdTags.empty() && book.idInLib!=0)
-                mBooksTags_[book.idInLib] = std::move(book.vIdTags);
+            if(!book.idTags.empty() && book.idInLib!=0)
+                mBooksTags_[book.idInLib] = std::move(book.idTags);
         }
 
         for(const auto &[idSequence, sequence] :lib.serials){
-            if(!sequence.vIdTags.empty())
-                mSequenceTags_[sequence.sName] = std::move(sequence.vIdTags);
+            if(!sequence.idTags.empty())
+                mSequenceTags_[sequence.sName] = std::move(sequence.idTags);
         }
     }
 }
@@ -1015,16 +1014,15 @@ void ImportThread::process()
                     if(file.endsWith(u".djvu", Qt::CaseInsensitive)){
                         format = u"djvu.zip"_s;
                         file.chop(5);
-                        if(name.endsWith(u"(djvu)"))
+                        if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
                             name.chop(6);
                     } else
                     if(file.endsWith(u".epub", Qt::CaseInsensitive)){
                         format = u"epub.zip"_s;
                         file.chop(5);
-                        if(name.endsWith(u"(epub)"))
+                        if(name.endsWith(u"(epub)") || name.endsWith(u"[epub]"))
                             name.chop(6);
                     }
-
                 }
             }
 

@@ -383,7 +383,11 @@ void ExportThread::export_books()
         }
     }
 
+#ifndef Q_OS_WIN
     auto nMaxFileName = pathconf(sExportDir_.toUtf8().data(), _PC_NAME_MAX);
+#else
+    auto nMaxFileName = PATH_MAX;
+#endif
     if(nMaxFileName<0)
         nMaxFileName = 255;
     uint count = 0;
@@ -550,7 +554,7 @@ void ExportThread::export_lib()
     for(const auto &iBook :lib.books){
         const auto &book = iBook.second;
         QString sBookTags;
-        for(auto idTag: book.vIdTags)
+        for(auto idTag: book.idTags)
             sBookTags += tagsName[idTag] + ':';
 
         QString sAuthors;
@@ -561,13 +565,13 @@ void ExportThread::export_lib()
 
         QString sAuthorTags;
         auto &firstAuthor = lib.authors.at(book.vIdAuthors.front());
-        for(auto idTag :firstAuthor.vIdTags)
+        for(auto idTag :firstAuthor.idTags)
             sAuthorTags += tagsName[idTag] + u':';
 
         QString sSerialTags;
         if(!book.mSequences.empty()){
-            const auto &vIdTags = lib.serials.at(book.mSequences.begin()->first).vIdTags;
-            for(auto idTag :vIdTags){
+            const auto &idTags = lib.serials.at(book.mSequences.begin()->first).idTags;
+            for(auto idTag :idTags){
                 sSerialTags += tagsName[idTag] + ':';
             }
         }
