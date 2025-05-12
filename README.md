@@ -38,9 +38,10 @@ yay -S freelib-git
 Для конвертации книг в AZW3, MOBI необходимо установить **kindlegen**.
 #### Ubuntu
 Установить необходимые компоненты: 
+
 в Ubuntu 25.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qt
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev
 ```
 в Ubuntu ≥23.04 и <25.04
 ```

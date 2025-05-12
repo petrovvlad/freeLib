@@ -169,6 +169,8 @@ uint ImportThread::addBook(uchar star, QString &name, int num_in_seria, const QS
         sRepairLanguge = u"id"_s;
     else if(sRepairLanguge == u"кг")
         sRepairLanguge = u"ru"_s;
+    else if(sRepairLanguge == u"ge")
+        sRepairLanguge = u"de"_s;
     name.replace(u"..."_s, u"…"_s);
 
     queryInsertBook_.bindValue(u":name"_s, name);
