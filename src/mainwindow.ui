@@ -464,6 +464,9 @@
                 </item>
                 <item>
                  <widget class="QSpinBox" name="maxBooks">
+                  <property name="showGroupSeparator" stdset="0">
+                   <bool>true</bool>
+                  </property>
                   <property name="minimum">
                    <number>0</number>
                   </property>

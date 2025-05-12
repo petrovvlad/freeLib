@@ -76,7 +76,7 @@ void loadLibrary(uint idLibrary)
                 uint idSeria = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
                 if(lib.serials.contains(idSeria))
-                    lib.serials[idSeria].vIdTags.push_back(idTag);
+                    lib.serials[idSeria].idTags.insert(idTag);
             }
 
             query.prepare(u"SELECT author.id, name1, name2, name3 FROM author WHERE id_lib=:id_lib;"_s);
@@ -99,7 +99,7 @@ void loadLibrary(uint idLibrary)
                 uint idAuthor = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
                 if(lib.authors.contains(idAuthor))
-                    lib.authors[idAuthor].vIdTags.push_back(idTag);
+                    lib.authors[idAuthor].idTags.insert(idTag);
             }
         }
         QSqlDatabase::removeDatabase(u"readauthors"_s);
@@ -282,7 +282,7 @@ void loadLibrary(uint idLibrary)
                 uint idBook = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
                 if(lib.books.contains(idBook))
-                    lib.books[idBook].vIdTags.push_back( idTag );
+                    lib.books[idBook].idTags.insert( idTag );
             }
         }
         QSqlDatabase::removeDatabase(u"readgenre"_s);
@@ -606,30 +606,18 @@ QString SLib::fillParams(const QString &str, uint idBook, const QFileInfo &book_
 
 void SLib::deleteTag(uint idTag)
 {
-    for(auto &book :books){
-        auto &vIdTags = book.second.vIdTags;
-        auto it = std::find(vIdTags.cbegin(), vIdTags.cend(), idTag);
-        if(it!=vIdTags.end())
-            vIdTags.erase(it);
-    }
-    for(auto &iSerial :serials){
-        auto &vIdTags = iSerial.second.vIdTags;
-        auto it = std::find(vIdTags.begin(), vIdTags.end(), idTag);
-        if(it != vIdTags.end())
-            vIdTags.erase(it);
-    }
-    for(auto &iAuthor :authors){
-        auto &vIdTags = iAuthor.second.vIdTags;
-        auto it = std::find(vIdTags.cbegin(), vIdTags.cend(), idTag);
-        if(it != vIdTags.end())
-            vIdTags.erase(it);
-    }
+    for(auto &book :books)
+        book.second.idTags.erase(idTag);
+    for(auto &iSerial :serials)
+        iSerial.second.idTags.erase(idTag);
+    for(auto &iAuthor :authors)
+        iAuthor.second.idTags.erase(idTag);
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-    query.exec(QStringLiteral("DELETE FROM book_tag WHERE id_tag=%1").arg(idTag));
-    query.exec(QStringLiteral("DELETE FROM seria_tag WHERE id_tag=%1").arg(idTag));
-    query.exec(QStringLiteral("DELETE FROM author_tag WHERE id_tag=%1").arg(idTag));
-    query.exec(QStringLiteral("DELETE FROM tag WHERE id=%1").arg(idTag));
+    query.exec(u"PRAGMA foreign_keys = ON"_s);
+    query.exec(u"DELETE FROM book_tag WHERE id_tag=%1"_s.arg(idTag));
+    query.exec(u"DELETE FROM seria_tag WHERE id_tag=%1"_s.arg(idTag));
+    query.exec(u"DELETE FROM author_tag WHERE id_tag=%1"_s.arg(idTag));
+    query.exec(u"DELETE FROM tag WHERE id=%1"_s.arg(idTag));
 }
 
 QString SLib::nameFromInpx(const QString &sInpx)

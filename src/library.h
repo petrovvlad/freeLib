@@ -14,7 +14,7 @@ public:
     SAuthor();
     SAuthor(const QString &sName);
     QString getName() const;
-    std::vector<uint> vIdTags;
+    std::unordered_set<uint> idTags;
     QString sFirstName;
     QString sLastName;
     QString sMiddleName;
@@ -54,7 +54,7 @@ struct SBook
     QString sKeywords;
     std::vector<ushort> vIdGenres;
     std::vector<uint> vIdAuthors;
-    std::vector<uint> vIdTags;
+    std::unordered_set<uint> idTags;
     std::unordered_map<uint, uint> mSequences;
     uint idInLib;
     uint idFirstAuthor;
@@ -67,7 +67,7 @@ struct SBook
 struct SSerial
 {
     QString sName;
-    std::vector<uint> vIdTags;
+    std::unordered_set<uint> idTags;
 };
 
 struct SGenre
