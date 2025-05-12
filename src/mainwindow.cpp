@@ -1527,27 +1527,34 @@ void MainWindow::fillLanguages()
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     SLib &currentLib = g::libs[g::idCurrentLib];
     static std::unordered_map<QString, QString> mLanguges = {{u"ab"_s, u"Аԥсшәа"_s},
+                                                             {u"ad"_s, u"Адыгэбзэ"_s},
                                                              {u"am"_s, u"አማርኛ"_s},
                                                              {u"ar"_s, u"العربية"_s},
                                                              {u"az"_s, u"Azərbaycanca"_s},
                                                              {u"ba"_s, u"Башҡортса"_s},
                                                              {u"be"_s, u"Беларуская"_s},
                                                              {u"bg"_s, u"Български"_s},
+                                                             {u"bm"_s, u"ߓߡߊߣߊ߲ߞߊ߲"_s},
                                                              {u"bn"_s, u"বাংলা"_s},
                                                              {u"bo"_s, u"བོད་སྐད"_s},
                                                              {u"br"_s, u"Brezhoneg"_s},
+                                                             {u"bs"_s, u"Bosanski"_s},
                                                              {u"ca"_s, u"Catala"_s},
+                                                             {u"ce"_s, u"Нохчийн"_s},
                                                              {u"co"_s, u"Corsu"_s},
+                                                             {u"cr"_s, u"Qırımtatar"_s},
                                                              {u"cs"_s, u"Čeština"_s},
                                                              {u"cu"_s, u"Словѣньскъ"_s},
                                                              {u"cv"_s, u"Чӑвашла"_s},
                                                              {u"da"_s, u"Dansk"_s},
                                                              {u"de"_s, u"Deutsch"_s},
+                                                             {u"dv"_s, u"Dhivehi bas"_s},
                                                              {u"el"_s, u"Ελληνικά"_s},
                                                              {u"en"_s, u"English"_s},
                                                              {u"eo"_s, u"Esperanto"_s},
                                                              {u"es"_s, u"Español"_s},
                                                              {u"et"_s, u"Eesti"_s},
+                                                             {u"ev"_s, u"Эвэды"_s},
                                                              {u"fa"_s, u"فارسی"_s},
                                                              {u"fi"_s, u"Suomi"_s},
                                                              {u"fr"_s, u"Français"_s},
@@ -1559,21 +1566,25 @@ void MainWindow::fillLanguages()
                                                              {u"hu"_s, u"Magyar"_s},
                                                              {u"hy"_s, u"Հայերեն"_s},
                                                              {u"ia"_s, u"Interlingua"_s},
-                                                             {u"ie"_s, u"Interlingue"_s},
                                                              {u"id"_s, u"Bahasa Indonesia"_s},
+                                                             {u"ie"_s, u"Interlingue"_s},
                                                              {u"is"_s, u"Íslenska"_s},
                                                              {u"it"_s, u"Italiano"_s},
                                                              {u"ja"_s, u"日本語"_s},
                                                              {u"ka"_s, u"ქართული"_s},
+                                                             {u"kb"_s, u"Къарачай-малкъар"_s},
                                                              {u"kk"_s, u"Қазақша"_s},
                                                              {u"kl"_s, u"Kalaallisut"_s},
                                                              {u"km"_s, u"ភាសាខ្មែរ"_s},
                                                              {u"kn"_s, u"ಕನ್ನಡ"_s},
                                                              {u"ko"_s, u"한국어"_s},
+                                                              //{u"kr"_s, u"Къарачай-Малкъар тил"_s},
                                                              {u"ks"_s, u"کٲشُر"_s},
                                                              {u"ku"_s, u"کوردی"_s},
+                                                             {u"kv"_s, u"Коми"_s},
                                                              {u"ky"_s, u"Кыргызский"_s},
                                                              {u"la"_s, u"Latina"_s},
+                                                             {u"le"_s, u"Лезги"_s},
                                                              {u"lt"_s, u"Lietuvių"_s},
                                                              {u"lv"_s, u"Latviešu"_s},
                                                              {u"mk"_s, u"Македонски"_s},
@@ -1583,35 +1594,38 @@ void MainWindow::fillLanguages()
                                                              {u"my"_s, u"ဗမာစာ"_s},
                                                              {u"ne"_s, u"नेपाली"_s},
                                                              {u"nl"_s, u"Nederlands"_s},
-                                                             {u"no"_s, u"Norsk bokmål"_s},
+                                                             {u"no"_s, u"Norsk"_s},
                                                              {u"oc"_s, u"Occitan"_s},
                                                              {u"os"_s, u"Ирон"_s},
                                                              {u"pl"_s, u"Polski"_s},
                                                              {u"ps"_s, u"پښتو"_s},
                                                              {u"pt"_s, u"Português"_s},
                                                              {u"ro"_s, u"Română"_s},
+                                                             {u"ru"_s, u"Русский"_s},
                                                              {u"rw"_s, u"Kinyarwanda"_s},
                                                              {u"sa"_s, u"संस्कृत"_s},
                                                              {u"sd"_s, u"सिन्धी"_s},
                                                              {u"sk"_s, u"Slovenčina"_s},
+                                                             {u"sl"_s, u"Slovenski"_s},
                                                              {u"sp"_s, u"Español"_s},
-                                                             {u"sq"_s, u"Gjuha shqipe"_s},
+                                                             {u"sq"_s, u"Shqip"_s},
                                                              {u"sr"_s, u"Српски"_s},
                                                              {u"sv"_s, u"Svenska"_s},
+                                                             {u"sw"_s, u"Kiswahili"_s},
                                                              {u"ta"_s, u"தமிழ்"_s},
                                                              {u"te"_s, u"తెలుగు"_s},
                                                              {u"tg"_s, u"Тоҷикӣ"_s},
+                                                             {u"th"_s, u"ภาษาไทย"_s},
+                                                             {u"tk"_s, u"Türkmençe"_s},
                                                              {u"tr"_s, u"Türkçe"_s},
                                                              {u"tt"_s, u"Татарча"_s},
                                                              {u"ug"_s, u"ئۇيغۇرچە"_s},
+                                                             {u"uk"_s, u"Українська"_s},
                                                              {u"ur"_s, u"اردو"_s},
                                                              {u"uz"_s, u"Oʻzbekcha"_s},
                                                              {u"vi"_s, u"Tiếng Việt"_s},
-                                                             {u"zh"_s, u"中文"_s},
-                                                             {u"ru"_s, u"Русский"_s},
-                                                             {u"uk"_s, u"Українська"_s},
-                                                             // {u"UN"_s, u"Undetermined"_s},
-                                                             {u"yi"_s, u"ייִדיש"_s}};
+                                                             {u"yi"_s, u"ייִדיש"_s},
+                                                             {u"zh"_s, u"中文"_s}};
 
     ui->language->blockSignals(true);
     ui->findLanguage->blockSignals(true);
@@ -1925,14 +1939,15 @@ void MainWindow::HelpDlg()
 
 void MainWindow::ContextMenu(QPoint point)
 {
-    if(QObject::sender() == ui->Books && !ui->Books->itemAt(point))
+    auto sender = QObject::sender();
+    if(sender == ui->Books && !ui->Books->itemAt(point))
         return;
-    if(QObject::sender() == ui->AuthorList && !ui->AuthorList->itemAt(point))
+    if(sender == ui->AuthorList && !ui->AuthorList->itemAt(point))
         return;
-    if(QObject::sender() == ui->SeriaList && !ui->SeriaList->itemAt(point))
+    if(sender == ui->SeriaList && !ui->SeriaList->itemAt(point))
         return;
     QMenu menu;
-    currentListForTag_ = QObject::sender();
+    currentListForTag_ = sender;
     QList<QTreeWidgetItem*> listItems;
     if(QObject::sender() == ui->Books)
     {
@@ -1972,7 +1987,7 @@ void MainWindow::ContextMenu(QPoint point)
         menu.addSeparator();
     if(g::options.bUseTag){
         SLib &lib = g::libs[g::idCurrentLib];
-        if(QObject::sender() == ui->Books){
+        if(sender == ui->Books){
             std::unordered_map<uint, uint> countTags;
             std::unordered_set<uint> idTags;
             for(const auto item : std::as_const(listItems)){
@@ -1994,33 +2009,26 @@ void MainWindow::ContextMenu(QPoint point)
             const auto actions = TagMenu.actions();
             for(const auto action :actions){
                 uint idTag = action->data().toUInt();
-                if(!countTags.contains(idTag))
-                    action->setChecked(false);
-                else
-                    action->setChecked(true);
+                action->setChecked( countTags.contains(idTag) );
             }
-
         }
-
-        if(QObject::sender() == ui->AuthorList){
+        else
+        if(sender == ui->AuthorList){
             const auto actions = TagMenu.actions();
             for(const auto action :actions){
                 uint idTag = action->data().toUInt();
                 uint idAuthor = ui->AuthorList->itemAt(point)->data(Qt::UserRole).toUInt();
                 action->setChecked( lib.authors[idAuthor].idTags.contains(idTag) );
-
             }
-
         }
-
-        if(QObject::sender() == ui->SeriaList){
+        else
+        if(sender == ui->SeriaList){
             const auto actions = TagMenu.actions();
             for(const auto action :actions){
                 uint idTag = action->data().toUInt();
                 uint idSerial = ui->SeriaList->itemAt(point)->data(Qt::UserRole).toUInt();
                 action->setChecked( lib.serials[idSerial].idTags.contains(idTag) );
             }
-
         }
 
         menu.addActions(TagMenu.actions());
