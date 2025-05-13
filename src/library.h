@@ -6,6 +6,7 @@
 #include <QBuffer>
 #include <QVariant>
 #include <chrono>
+#include <unordered_set>
 
 #include "utilites.h"
 class SAuthor

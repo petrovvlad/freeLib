@@ -1,6 +1,7 @@
 #ifndef UTILITES_H
 #define UTILITES_H
 
+#include <QSvgRenderer>
 #include <QString>
 #include <QSqlDatabase>
 #include <QSettings>
