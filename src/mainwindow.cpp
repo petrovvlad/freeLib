@@ -137,14 +137,14 @@ MainWindow::MainWindow(QWidget *parent) :
     pCover = new CoverLabel(this);
     ui->horizontalLayout_3->addWidget(pCover);
 
-    if(settings->contains(QStringLiteral("MainWnd/geometry")))
-        restoreGeometry(settings->value(QStringLiteral("MainWnd/geometry")).toByteArray());
-    if(settings->contains(QStringLiteral("MainWnd/windowState")))
-        restoreState(settings->value(QStringLiteral("MainWnd/windowState")).toByteArray());
-    if(settings->contains(QStringLiteral("MainWnd/VSplitterSizes")))
-        ui->splitterV->restoreState(settings->value(QStringLiteral("MainWnd/VSplitterSizes")).toByteArray());
-    if(settings->contains(QStringLiteral("MainWnd/HSplitterSizes")))
-        ui->splitterH->restoreState(settings->value(QStringLiteral("MainWnd/HSplitterSizes")).toByteArray());
+    if(settings->contains(u"MainWnd/geometry"_s))
+        restoreGeometry(settings->value(u"MainWnd/geometry"_s).toByteArray());
+    if(settings->contains(u"MainWnd/windowState"_s))
+        restoreState(settings->value(u"MainWnd/windowState"_s).toByteArray());
+    if(settings->contains(u"MainWnd/VSplitterSizes"_s))
+        ui->splitterV->restoreState(settings->value(u"MainWnd/VSplitterSizes"_s).toByteArray());
+    if(settings->contains(u"MainWnd/HSplitterSizes"_s))
+        ui->splitterH->restoreState(settings->value(u"MainWnd/HSplitterSizes"_s).toByteArray());
 
     settings->beginGroup(u"Columns"_s);
     QVariant varHeaders = settings->value(u"headersTree"_s);
@@ -499,22 +499,6 @@ MainWindow::~MainWindow()
 
     if(g::options.bStorePosition)
         SaveLibPosition();
-    auto settings = GetSettings();
-    settings->beginGroup(QStringLiteral("Columns"));
-    if(bTreeView_){
-        settings->setValue(QStringLiteral("headersTree"), ui->Books->header()->saveState());
-        settings->setValue(QStringLiteral("headersList"), aHeadersList_);
-    }else{
-        settings->setValue(QStringLiteral("headersTree"), aHeadersTree_);
-        settings->setValue(QStringLiteral("headersList"), ui->Books->header()->saveState());
-    }
-    settings->endGroup();
-
-    settings->setValue(QStringLiteral("MainWnd/geometry"), saveGeometry());
-    settings->setValue(QStringLiteral("MainWnd/windowState"), saveState());
-    settings->setValue(QStringLiteral("MainWnd/VSplitterSizes"), ui->splitterV->saveState());
-    settings->setValue(QStringLiteral("MainWnd/HSplitterSizes"), ui->splitterH->saveState());
-
     delete ui;
 }
 
@@ -851,6 +835,21 @@ void MainWindow::SaveLibPosition()
 
 void MainWindow::closeEvent(QCloseEvent *event)
 {
+    auto settings = GetSettings();
+    settings->setValue(u"MainWnd/geometry"_s, saveGeometry());
+    settings->setValue(u"MainWnd/windowState"_s, saveState());
+    settings->setValue(u"MainWnd/VSplitterSizes"_s, ui->splitterV->saveState());
+    settings->setValue(u"MainWnd/HSplitterSizes"_s, ui->splitterH->saveState());
+    settings->beginGroup(u"Columns"_s);
+    if(bTreeView_){
+        settings->setValue(u"headersTree"_s, ui->Books->header()->saveState());
+        settings->setValue(u"headersList"_s, aHeadersList_);
+    }else{
+        settings->setValue(u"headersTree"_s, aHeadersTree_);
+        settings->setValue(u"headersList"_s, ui->Books->header()->saveState());
+    }
+    settings->endGroup();
+
 #ifndef USE_KStatusNotifier
     if (pTrayIcon_ != nullptr && pTrayIcon_->isVisible()) {
         hide();
