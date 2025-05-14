@@ -94,8 +94,8 @@ MainWindow::MainWindow(QWidget *parent) :
     statusNotifierItem_ = nullptr;
 #else
     pTrayIcon_ = nullptr;
-    pTrayMenu_ = nullptr;
 #endif
+    pTrayMenu_ = nullptr;
     pHideAction_ = nullptr;
     pShowAction_ = nullptr;
     error_quit = false;
@@ -325,8 +325,7 @@ MainWindow::MainWindow(QWidget *parent) :
     FillLibrariesMenu();
     UpdateExportMenu();
 
-    ChangingTrayIcon(g::options.nIconTray, g::options.bTrayColor);
-
+    changingTrayIcon(g::options.nIconTray, g::options.bTrayColor);
 #ifdef Q_OS_OSX
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
@@ -866,7 +865,7 @@ void MainWindow::Settings()
     SettingsDlg *pDlg = new SettingsDlg(this);
     connect(pDlg, &SettingsDlg::ChangingLanguage, this, [this](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
-    connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::ChangingTrayIcon);
+    connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::changingTrayIcon);
     connect(pDlg, &SettingsDlg::ChangeListFont, this, &MainWindow::onUpdateListFont);
     connect(pDlg, &SettingsDlg::ChangeAnnotationFont, this, &MainWindow::onUpdateAnnotationFont);
 
@@ -2936,139 +2935,142 @@ void MainWindow::onTabWidgetChanged(int index)
     }
 }
 
-void MainWindow::ChangingTrayIcon(int index, bool bColor)
+void MainWindow::changingTrayIcon(int index, bool bColor)
 {
-    if(g::bTray)
-        index = 2;
-    if(index == 0)
+    if (!g::bTray && index == 0)
     {
 #ifdef USE_KStatusNotifier
-        if(statusNotifierItem_){
+        if(statusNotifierItem_) {
             statusNotifierItem_->deleteLater();
             statusNotifierItem_ = nullptr;
+            pTrayMenu_ = nullptr;
             pHideAction_ = nullptr;
             pShowAction_ = nullptr;
         }
-#else
-        if(pTrayIcon_)
-        {
+#else //USE_KStatusNotifier
+        if(pTrayIcon_) {
             pTrayIcon_->hide();
             pTrayIcon_->deleteLater();
-            pTrayMenu_->deleteLater();
+            pTrayIcon_ = nullptr;
         }
-        pTrayIcon_ = nullptr;
-        pTrayMenu_ = nullptr;
-        pHideAction_ = nullptr;
-        pShowAction_ = nullptr;
-#endif
+
+        if(pTrayMenu_) {
+            pTrayMenu_->deleteLater();
+            pTrayMenu_ = nullptr;
+            pHideAction_ = nullptr;
+            pShowAction_ = nullptr;
+        }
+
+#endif //USE_KStatusNotifier
     }
     else
     {
-#ifdef USE_KStatusNotifier
-        if(!statusNotifierItem_){
-            statusNotifierItem_ = new KStatusNotifierItem(this);
-            statusNotifierItem_->setStatus(KStatusNotifierItem::Active);
-            statusNotifierItem_->setCategory(KStatusNotifierItem::ApplicationStatus);
-            statusNotifierItem_->setAssociatedWindow(windowHandle());
-            statusNotifierItem_->setTitle(u"freeLib"_s);
-            statusNotifierItem_->setToolTipTitle(u"freeLib"_s);
-            if(g::idCurrentLib != 0)
-                statusNotifierItem_->setToolTipSubTitle(g::libs[g::idCurrentLib].name);
-            statusNotifierItem_->setStandardActionsEnabled(false);
-
-            QMenu *trayMenu = new QMenu;
-            pHideAction_ = new QAction(QIcon::fromTheme(u"window-minimize"_s), tr("Minimize"), trayMenu);
-            trayMenu->addAction(pHideAction_);
-            pShowAction_ = new QAction(QIcon::fromTheme(u"window-restore"_s), tr("Open freeLib"), trayMenu);
-            trayMenu->addAction(pShowAction_);
+        // создание меню и действий
+        if(!pTrayMenu_) {
+            pTrayMenu_ = new QMenu(this);
+            pHideAction_ = new QAction(QIcon::fromTheme(u"window-minimize"_s), tr("Minimize"), pTrayMenu_);
+            pTrayMenu_->addAction(pHideAction_);
+            pShowAction_ = new QAction(QIcon::fromTheme(u"window-restore"_s), tr("Open freeLib"), pTrayMenu_);
+            pTrayMenu_->addAction(pShowAction_);
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-            QAction *exitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), trayMenu);
+            QAction *exitAction = new QAction(QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), pTrayMenu_);
 #else
-            QAction *exitAction = new QAction( QIcon::fromTheme(u"application-exit"_s), tr("Quit"), trayMenu);
+            QAction *exitAction = new QAction(QIcon::fromTheme(u"application-exit"_s), tr("Quit"), pTrayMenu_);
 #endif
+            pTrayMenu_->addAction(exitAction);
+
             connect(pHideAction_, &QAction::triggered, this, &MainWindow::hide);
             connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
-            connect(exitAction, &QAction::triggered, this, &QApplication::quit);
-            trayMenu->addAction(exitAction);
+            connect(exitAction, &QAction::triggered, qApp, &QApplication::quit);
+
+            // Установка видимости действий
             if(isVisible())
                 pShowAction_->setVisible(false);
             else
                 pHideAction_->setVisible(false);
+        }
 
-            statusNotifierItem_->setContextMenu(trayMenu);        }
+        // установка иконки
         QIcon icon;
         if(bColor)
             icon = QIcon(u":/img/tray0.png"_s);
         else
             icon = themedIcon(u"tray"_s);
-        statusNotifierItem_->setIconByPixmap(icon);
 
-#else //USE_KStatusNotifier
-        if(!pTrayIcon_)
-        {
-            pTrayMenu_ = new QMenu;
-            pHideAction_ = new QAction(QIcon::fromTheme(u"window-minimize"_s), tr("Minimize"), pTrayMenu_);
-            pTrayMenu_->addAction(pHideAction_);
-            pShowAction_ = new QAction(QIcon::fromTheme(u"window-restore"_s), tr("Open freeLib"), pTrayMenu_);
-            pTrayMenu_->addAction(pShowAction_);
-#if QT_VERSION >= QT_VERSION_CHECK(6, 7, 0)
-            QAction *quitAction = new QAction( QIcon::fromTheme(QIcon::ThemeIcon::ApplicationExit), tr("Quit"), pTrayMenu_);
-#else
-            QAction *quitAction = new QAction( QIcon::fromTheme(u"application-exit"_s), tr("Quit"), pTrayMenu_);
-#endif
-            pTrayMenu_->addAction(quitAction);
-            pTrayIcon_ = new QSystemTrayIcon(pTrayMenu_);  //инициализируем объект
-            pTrayIcon_->setContextMenu(pTrayMenu_);
+#ifdef USE_KStatusNotifier
+        if(!statusNotifierItem_) {
+            statusNotifierItem_ = new KStatusNotifierItem(this);
+            statusNotifierItem_->setStatus(KStatusNotifierItem::Active);
+            statusNotifierItem_->setCategory(KStatusNotifierItem::ApplicationStatus);
+            statusNotifierItem_->setTitle(u"freeLib"_s);
+            statusNotifierItem_->setToolTipTitle(u"freeLib"_s);
+            if (g::idCurrentLib != 0)
+                statusNotifierItem_->setToolTipSubTitle(g::libs[g::idCurrentLib].name);
+            statusNotifierItem_->setStandardActionsEnabled(false);
+
+            // Подключение обработчика активации иконки трея для переключения видимости окна при запуске в свёрнутом виде
+            if (!statusNotifierItem_->associatedWindow()) {
+                connect(statusNotifierItem_, &KStatusNotifierItem::activateRequested, this, &MainWindow::handleTrayActivation);
+            }
+
+            statusNotifierItem_->setContextMenu(pTrayMenu_);
+            statusNotifierItem_->setIconByPixmap(icon);
+        }
+#else // USE_KStatusNotifier
+        if(!pTrayIcon_) {
+            pTrayIcon_ = new QSystemTrayIcon(this);
             QString sToolTip = u"freeLib\n"_s;
             if(g::idCurrentLib != 0)
                 sToolTip += g::libs[g::idCurrentLib].name;
             pTrayIcon_->setToolTip(sToolTip);
 
-            if(isVisible())
-                pShowAction_->setVisible(false);
-            else
-                pHideAction_->setVisible(false);
+            pTrayIcon_->setContextMenu(pTrayMenu_);
+            pTrayIcon_->setIcon(icon);
+            pTrayIcon_->show();
 
-            connect(pTrayIcon_, &QSystemTrayIcon::activated, this, &MainWindow::TrayMenuAction);
-            connect(pHideAction_, &QAction::triggered, this, &MainWindow::hide);
-            connect(pShowAction_, &QAction::triggered, this, &MainWindow::show);
-            connect(quitAction, &QAction::triggered, qApp, &QApplication::quit);
+            connect(pTrayIcon_, &QSystemTrayIcon::activated, this, &MainWindow::handleTrayActivation);
         }
-        QIcon icon;
-        if(bColor)
-            icon = QIcon(u":/img/tray0.png"_s);
-        else
-            icon = themedIcon(u"tray"_s);
-        pTrayIcon_->setIcon(icon); //устанавливаем иконку
-        pTrayIcon_->show();
-#endif //USE_KStatusNotifier
+#endif
     }
 }
 
 #ifdef USE_KStatusNotifier
 void MainWindow::hideEvent(QHideEvent *ev)
 {
-    if(pHideAction_){
+    if(pHideAction_)
         pHideAction_->setVisible(false);
+    if(pShowAction_)
         pShowAction_->setVisible(true);
-    }
+
     QMainWindow::hideEvent(ev);
 }
 
 void MainWindow::showEvent(QShowEvent *ev)
 {
-    if(pHideAction_){
+    if(pHideAction_)
         pHideAction_->setVisible(true);
+    if(pShowAction_)
         pShowAction_->setVisible(false);
-    }
+
     QMainWindow::showEvent(ev);
+}
+
+void MainWindow::handleTrayActivation(bool active, const QPoint &pos)
+{
+    Q_UNUSED(pos);
+    if (active) {
+        if (isVisible())
+            hide();
+        else
+            show();
+    }
 }
 #else
 
-void MainWindow::TrayMenuAction(QSystemTrayIcon::ActivationReason reson)
+void MainWindow::handleTrayActivation(QSystemTrayIcon::ActivationReason reason)
 {
-    if(reson != QSystemTrayIcon::Trigger && reson != QSystemTrayIcon::Unknown)
+    if(reason != QSystemTrayIcon::Trigger && reason != QSystemTrayIcon::Unknown)
         return;
 #ifdef Q_OS_WIN
     if(this->isVisible())
@@ -3129,19 +3131,19 @@ void MainWindow::MinimizeWindow()
 
 void MainWindow::hide()
 {
-    if(pHideAction_){
+    if(pHideAction_)
         pHideAction_->setVisible(false);
+    if(pShowAction_)
         pShowAction_->setVisible(true);
-    }
     QMainWindow::hide();
 }
 
 void MainWindow::show()
 {
-    if(pHideAction_){
+    if(pHideAction_)
         pHideAction_->setVisible(true);
+    if(pShowAction_)
         pShowAction_->setVisible(false);
-    }
     QMainWindow::show();
 }
 
@@ -3150,11 +3152,8 @@ void MainWindow::changeEvent(QEvent *event)
     if(event->type() == QEvent::WindowStateChange)
     {
         if(isMinimized())
-        {
-            ChangingTrayIcon(g::options.nIconTray, g::options.bTrayColor);
-            TrayMenuAction(QSystemTrayIcon::Unknown);
-            event->ignore();
-        }
+            hide();
     }
+    QMainWindow::changeEvent(event);
 }
 #endif

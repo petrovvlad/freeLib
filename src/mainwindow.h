@@ -76,8 +76,8 @@ private:
     KStatusNotifierItem *statusNotifierItem_;
 #else
     QSystemTrayIcon *pTrayIcon_;
-    QMenu *pTrayMenu_;
 #endif
+    QMenu *pTrayMenu_;
     QAction *pHideAction_;
     QAction *pShowAction_;
     QActionGroup *pLibGroup_;
@@ -158,12 +158,13 @@ private slots:
     void onUpdateListFont(const QFont &font);
     void onUpdateAnnotationFont(const QFont &font);
 
-    void ChangingTrayIcon(int index, bool bColor);
+    void changingTrayIcon(int index, bool bColor);
 #ifdef USE_KStatusNotifier
     void hideEvent(QHideEvent *ev) override;
     void showEvent(QShowEvent *ev) override;
+    void handleTrayActivation(bool active, const QPoint &pos);
 #else
-    void TrayMenuAction(QSystemTrayIcon::ActivationReason reson);
+    void handleTrayActivation(QSystemTrayIcon::ActivationReason reason);
     void MinimizeWindow();
     void hide();
 public slots:
