@@ -2292,9 +2292,8 @@ void MainWindow::FillSerials()
         }
     }
 
-    std::vector<uint> vIdSequence;
-    vIdSequence.reserve(mCounts.size());
-    std::ranges::copy(mCounts | std::views::keys, std::back_inserter(vIdSequence));
+    std::vector<uint> vIdSequence(mCounts.size());
+    std::ranges::copy(mCounts | std::views::keys, vIdSequence.begin());
 #ifdef __cpp_lib_execution
     std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2)
 #else
@@ -3015,8 +3014,8 @@ void MainWindow::changingTrayIcon(int index, bool bColor)
             }
 
             statusNotifierItem_->setContextMenu(pTrayMenu_);
-            statusNotifierItem_->setIconByPixmap(icon);
         }
+        statusNotifierItem_->setIconByPixmap(icon);
 #else // USE_KStatusNotifier
         if(!pTrayIcon_) {
             pTrayIcon_ = new QSystemTrayIcon(this);
@@ -3026,11 +3025,11 @@ void MainWindow::changingTrayIcon(int index, bool bColor)
             pTrayIcon_->setToolTip(sToolTip);
 
             pTrayIcon_->setContextMenu(pTrayMenu_);
-            pTrayIcon_->setIcon(icon);
             pTrayIcon_->show();
 
             connect(pTrayIcon_, &QSystemTrayIcon::activated, this, &MainWindow::handleTrayActivation);
         }
+        pTrayIcon_->setIcon(icon);
 #endif
     }
 }
