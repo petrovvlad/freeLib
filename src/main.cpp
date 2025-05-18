@@ -419,14 +419,9 @@ int main(int argc, char *argv[])
         g::options.setExportDefault();
 
     std::unique_ptr<QSplashScreen> splash;
-    if(
-#ifdef USE_HTTSERVER
-        !g::bUseGui &&
-#endif
-        g::options.bShowSplash
-        )
+    if(g::bUseGui && g::options.bShowSplash)
     {
-        QPixmap pixmap(u":/splash%1.png"_s.arg(static_cast<QApplication*>(a.get())->devicePixelRatio()>=2? QStringLiteral("@2x") :QStringLiteral("")));
+        QPixmap pixmap(u":/splash%1.png"_s.arg(static_cast<QApplication*>(a.get())->devicePixelRatio()>=2? u"@2x"_s :u""_s));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
@@ -438,7 +433,7 @@ int main(int argc, char *argv[])
         splash->show();
     }
 
-    if(!openDB(QStringLiteral("libdb")))
+    if(!openDB(u"libdb"_s))
         return 1;
 
     QDir::setCurrent(HomeDir);
@@ -484,7 +479,7 @@ int main(int argc, char *argv[])
             delete pMainWindow;
             return 1;
         }
-        if(g::options.bShowSplash)
+        if(g::options.bShowSplash && splash && pMainWindow)
             splash->finish(pMainWindow);
     }
 
