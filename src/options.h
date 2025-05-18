@@ -187,6 +187,7 @@ namespace g {
 inline Options options;
 inline bool bVerbose;
 inline bool bTray;
+inline bool bUseGui;
 
 
 #ifdef __cpp_lib_execution

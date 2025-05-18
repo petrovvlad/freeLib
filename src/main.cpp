@@ -137,6 +137,7 @@ int main(int argc, char *argv[])
 
 #ifdef USE_HTTSERVER
         if (cmdparam == u"--set"){
+            g::bUseGui = false;
             auto settings = GetSettings();
             QString sUser = parseOption(argc-(i), &argv[i], "-u");
             if(!sUser.isEmpty()){
@@ -161,10 +162,11 @@ int main(int argc, char *argv[])
 #endif
 
         // Edit libraries
-        if (cmdparam.contains(QStringLiteral("--lib"))){
+        if (cmdparam.contains(u"--lib"_s)){
             a = std::unique_ptr<QCoreApplication>(new QCoreApplication(argc, argv));
             a->setApplicationName(u"freeLib"_s);
 
+            g::bUseGui = false;
             auto settings = GetSettings();
             g::options.Load(settings);
 
@@ -234,7 +236,7 @@ int main(int argc, char *argv[])
 
             // Set library path
             if(cmdparam == u"--lib-sp"){
-                QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+                QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
                 QString sId = parseOption(argc-(i), &argv[i], "-id");
                 nId = sId.toUInt();
                 if(g::libs.contains(nId)){
@@ -248,8 +250,7 @@ int main(int argc, char *argv[])
 
                         std::cout <<  "Updating paths for library: " << sId.toStdString() + "\n";
                         if ( QFile::exists(libPath)){
-                            bool result = query.exec(QStringLiteral("UPDATE lib SET path = '%1' WHERE id='%2'")
-                                                         .arg(libPath, sId));
+                            bool result = query.exec(u"UPDATE lib SET path = '%1' WHERE id='%2'"_s.arg(libPath, sId));
                             if(!result)
                                 std::cout << query.lastError().databaseText().toStdString() << "\n";
                             else{
@@ -259,19 +260,18 @@ int main(int argc, char *argv[])
                         else {
                             std::cout << "The lib path " + libPath.toStdString() + " does not exist\n";
                         }
-
+                    }else
+                    if(!inpxPath.isEmpty() && !sId.isEmpty()) {
                         if ( QFile::exists(inpxPath)){
-                            bool result = query.exec(QStringLiteral("UPDATE lib SET inpx = '%1' WHERE id='%2'")
-                                                         .arg(libPath, sId));
+                            bool result = query.exec(u"UPDATE lib SET inpx = '%1' WHERE id='%2'"_s.arg(inpxPath, sId));
                             if(!result)
                                 std::cout << query.lastError().databaseText().toStdString() << "\n";
                             else{
                                 std::cout << inpxPath.toStdString() + " - Ok! \n";
                             }
                         }
-                        else {
+                        else
                             std::cout << "The inpx path " + inpxPath.toStdString() + " does not exist\n";
-                        }
                     }
                     else{
                         cmdhelp();
@@ -383,13 +383,17 @@ int main(int argc, char *argv[])
 #endif
 #ifdef USE_HTTSERVER
     if(bServer){
+#ifndef Q_OS_WINDOWS
         setenv("QT_QPA_PLATFORM", "offscreen", 1);
+#endif //Q_OS_WINDOWS
         a = std::unique_ptr<QCoreApplication>(new QGuiApplication(argc, argv));
+        g::bUseGui = false;
     }else
-#endif
+#endif //USE_HTTSERVER
     {
         a = std::unique_ptr<QCoreApplication>(new QApplication(argc, argv));
-        static_cast<QApplication*>(a.get())->setStyleSheet(QStringLiteral("QComboBox { combobox-popup: 0; }"));
+        static_cast<QApplication*>(a.get())->setStyleSheet(u"QComboBox { combobox-popup: 0; }"_s);
+        g::bUseGui = true;
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
         a->setAttribute(Qt::AA_UseHighDpiPixmaps);
 #endif
@@ -417,19 +421,19 @@ int main(int argc, char *argv[])
     std::unique_ptr<QSplashScreen> splash;
     if(
 #ifdef USE_HTTSERVER
-        !bServer &&
+        !g::bUseGui &&
 #endif
         g::options.bShowSplash
         )
     {
-        QPixmap pixmap(QStringLiteral(":/splash%1.png").arg(static_cast<QApplication*>(a.get())->devicePixelRatio()>=2? QStringLiteral("@2x") :QStringLiteral("")));
+        QPixmap pixmap(u":/splash%1.png"_s.arg(static_cast<QApplication*>(a.get())->devicePixelRatio()>=2? QStringLiteral("@2x") :QStringLiteral("")));
         QPainter painter(&pixmap);
         painter.setFont(QFont(painter.font().family(), VERSION_FONT, QFont::Bold));
         painter.setPen(Qt::white);
         painter.drawText(QRect(30, 140, 360, 111), Qt::AlignLeft|Qt::AlignVCenter, QStringLiteral(FREELIB_VERSION));
         splash = std::unique_ptr<QSplashScreen>(new QSplashScreen(pixmap));
 #ifdef Q_OS_LINUX
-        splash->setWindowIcon(QIcon(QStringLiteral(":/library_128x128.png")));
+        splash->setWindowIcon(QIcon(u":/library_128x128.png"_s));
 #endif
         splash->show();
     }
