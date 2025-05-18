@@ -414,24 +414,26 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     }
     pSettings->endArray();
 
-    count = pSettings->beginReadArray(QStringLiteral("tools"));
+    count = pSettings->beginReadArray(u"tools"_s);
     for(int i=0; i<count; i++)
     {
         pSettings->setArrayIndex(i);
-        QString sName = pSettings->value(QStringLiteral("name")).toString();
-        QString sPath = pSettings->value(QStringLiteral("path")).toString();
-        QString sArgs = pSettings->value(QStringLiteral("args")).toString();
+        QString sName = pSettings->value(u"name"_s).toString();
+        QString sPath = pSettings->value(u"path"_s).toString();
+        QString sArgs = pSettings->value(u"args"_s).toString();
         tools[sName].sPath = sPath;
         tools[sName].sArgs = sArgs;
     }
     pSettings->endArray();
 
-    bUseSytemFonts = pSettings->value(u"useSystemFonts"_s, true).toBool();
-    QFont fontApp = QGuiApplication::font();
-    sListFontFamaly = pSettings->value(u"fontList"_s, fontApp.family()).toString();
-    nListFontSize = pSettings->value(u"fontListSize"_s, fontApp.pointSize()).toUInt();
-    sAnnotationFontFamaly = pSettings->value(u"fontAnnotation"_s, fontApp.family()).toString();
-    nAnnotationFontSize = pSettings->value(u"fontAnnotationSize"_s, fontApp.pointSize()).toUInt();
+    if(g::bUseGui){
+        bUseSytemFonts = pSettings->value(u"useSystemFonts"_s, true).toBool();
+        QFont fontApp = QGuiApplication::font();
+        sListFontFamaly = pSettings->value(u"fontList"_s, fontApp.family()).toString();
+        nListFontSize = pSettings->value(u"fontListSize"_s, fontApp.pointSize()).toUInt();
+        sAnnotationFontFamaly = pSettings->value(u"fontAnnotation"_s, fontApp.family()).toString();
+        nAnnotationFontSize = pSettings->value(u"fontAnnotationSize"_s, fontApp.pointSize()).toUInt();
+    }
 
     count = pSettings->beginReadArray(u"export"_s);
     vExportOptions.resize(count);
