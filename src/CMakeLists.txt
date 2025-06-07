@@ -15,13 +15,13 @@ message(STATUS "FREELIB_QT_MAJOR_VERSION: ${FREELIB_QT_MAJOR_VERSION}")
 find_package(KF${FREELIB_QT_MAJOR_VERSION}KIO QUIET)
 if(KF${FREELIB_QT_MAJOR_VERSION}KIO_FOUND)
     message(STATUS "Found KIO")
-    add_compile_definitions(USE_KIO=1)
+    add_compile_definitions(USE_KIO)
 endif()
 
 find_package(KF${FREELIB_QT_MAJOR_VERSION}StatusNotifierItem QUIET)
 if(KF${FREELIB_QT_MAJOR_VERSION}StatusNotifierItem_FOUND)
   message(STATUS "Found KStatusNotifier")
-  add_compile_definitions(USE_KStatusNotifier=1)
+  add_compile_definitions(USE_KStatusNotifier)
 endif()
 
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
@@ -62,6 +62,7 @@ set(PROJECT_SOURCES
         starsdelegate.cpp   starsdelegate.h
         starscombobox.cpp   starscombobox.h
         utilites.cpp        utilites.h
+        epubreader.cpp      epubreader.h
         passwordlineedit.cpp            passwordlineedit.h
         genresortfilterproxymodel.cpp   genresortfilterproxymodel.h
         fb2mobi/hyphenations.cpp            fb2mobi/hyphenations.h
@@ -94,14 +95,14 @@ if((FREELIB_QT_MAJOR_VERSION EQUAL 6) AND (QT_VERSION_MINOR GREATER_EQUAL 4))
         ${PROJECT_SOURCES}
         opds_server.cpp     opds_server.h
     )
-    add_compile_definitions(USE_HTTSERVER=1)
+    add_compile_definitions(USE_HTTSERVER)
    endif()
 endif()
 
 find_package(Qt${QT_VERSION_MAJOR}Keychain QUIET)
 if(Qt${QT_VERSION_MAJOR}Keychain_FOUND)
     message(STATUS "Found QtKeychain")
-    add_compile_definitions(USE_QTKEYCHAIN=1)
+    add_compile_definitions(USE_QTKEYCHAIN)
 endif()
 
 find_package(QuaZip-Qt${QT_VERSION_MAJOR} QUIET)
@@ -117,13 +118,13 @@ if(DJVULIBRE_FOUND)
         ${PROJECT_SOURCES}
         djvu.cpp            djvu.h
     )
-    add_compile_definitions(USE_DEJVULIBRE=1)
+    add_compile_definitions(USE_DEJVULIBRE)
 endif()
 
 find_package(TBB QUIET)
 if(TBB_FOUND)
     message(STATUS "Found TBB")
-    add_compile_definitions(USE_TBB=1)
+    add_compile_definitions(USE_TBB)
 endif()
 
 #configure_file(translations.qrc ${CMAKE_CURRENT_BINARY_DIR} COPYONLY)
@@ -134,16 +135,22 @@ if(UNIX AND NOT APPLE)
 endif(UNIX AND NOT APPLE)
 
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
+  if(WIN32)
+    qt_add_executable(freelib
+      WIN32
+      MANUAL_FINALIZATION
+      ${PROJECT_SOURCES})
+  else()
     qt6_add_resources(PROJECT_SOURCES resource.qrc)
     qt_add_executable(freelib
-        MANUAL_FINALIZATION
-        ${PROJECT_SOURCES}
+      MANUAL_FINALIZATION
+      ${PROJECT_SOURCES}
     )
+  endif(WIN32)
 else()
     qt5_add_resources(PROJECT_SOURCES resource.qrc)
     add_executable(freelib
         ${PROJECT_SOURCES}
-        #${CMAKE_CURRENT_BINARY_DIR}/translations.qrc
     )
 endif()
 
@@ -174,7 +181,7 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Svg
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Xml
-    Qt${QT_VERSION_MAJOR}::Concurrent    
+    Qt${QT_VERSION_MAJOR}::Concurrent
     QuaZip::QuaZip)
 
 if(Qt6HttpServer_FOUND)
