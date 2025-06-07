@@ -17,16 +17,17 @@
 #ifdef USE_DEJVULIBRE
 #include "djvu.h"
 #endif
+#include "epubreader.h"
 
 BookFile::BookFile(uint idLib, uint idBook)
-    :bOpen_(false)
+    :bOpen_(false), bCoverNotFound_(false)
 {
     pLib_ = &g::libs[idLib];
     idBook_ = idBook;
 }
 
 BookFile::BookFile(SLib *pLib, uint idBook)
-    :bOpen_(false)
+    :bOpen_(false), bCoverNotFound_(false)
 {
     pLib_ = pLib;
     idBook_ = idBook;
@@ -96,11 +97,13 @@ void BookFile::open()
 QImage BookFile::cover()
 {
     QString sImg = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) % u"/covers/"_s % QString::number(idBook_) % u".jpg"_s;
-    SBook &book = pLib_->books[idBook_];
     QImage img;
+    if(bCoverNotFound_)
+        return createCover();
     if(QFile::exists(sImg))
         return QImage(sImg);
 
+    SBook &book = pLib_->books[idBook_];
     if(!bOpen_)
         open();
     QString sFormat = book.sFormat;
@@ -118,7 +121,7 @@ QImage BookFile::cover()
     else if(sFormat.endsWith(u"zip"))
             img = coverZip();
 
-    if(!img.isNull()){
+    if(!img.isNull() && img.width() < img.height()*2){
         img.save(sImg);
         cleanCoversCache();
     }else
@@ -177,124 +180,27 @@ QImage BookFile::coverFb2(const QDomDocument &doc)
 QImage BookFile::coverAnnotationEpub()
 {
     SBook &book = pLib_->books[idBook_];
-    QBuffer buffer;
-    QuaZip zip;
+    QImage cover;
+    QString annotation;
+
     if(book.sArchive.isEmpty()){
         if(file_.isOpen()){
             file_.reset();
-            zip.setIoDevice(&file_);
+            QByteArray data = file_.readAll();
+            EpubReader reader(data);
+            reader.readAnnotationAndCover(annotation, cover);
         }
     }else{
-        if(data_.size() != 0){
-            buffer.setData(data_);
-            zip.setIoDevice(&buffer);
+        if(!data_.isEmpty()){
+            EpubReader reader(data_);
+            reader.readAnnotationAndCover(annotation, cover);
         }
     }
-    return coverAnnotationEpub(zip);
-}
 
-QImage BookFile::coverAnnotationEpub(QuaZip &zipEpub)
-{
-    QImage img;
-    zipEpub.open(QuaZip::mdUnzip);
-    if(!setCurrentZipFileName(&zipEpub, u"META-INF/container.xml"_s)) [[unlikely]] {
-        MyDBG << "Error open file: " << u"META-INF/container.xml"_s;
-        return img;
-    }
-    QuaZipFile zipFile(&zipEpub);
-    zipFile.open(QIODevice::ReadOnly);
-    QByteArray baInfo = zipFile.readAll();
-    zipFile.close();
-    QDomDocument doc;
-    doc.setContent(baInfo);
-
-    QDomNode root = doc.documentElement();
-    bool need_loop = true;
-    QString rel_path;
-    for(int i=0; i<root.childNodes().count() && need_loop; i++)
-    {
-        if(root.childNodes().at(i).nodeName().toLower() == u"rootfiles")
-        {
-            QDomNode roots = root.childNodes().at(i);
-            for(int j=0; j<roots.childNodes().count() && need_loop; j++)
-            {
-                if(roots.childNodes().at(j).nodeName().toLower() == u"rootfile")
-                {
-                    QString path = roots.childNodes().at(j).attributes().namedItem(u"full-path"_s).toAttr().value();
-                    QFileInfo fi(path);
-                    rel_path = fi.path();
-                    if(rel_path == u".")
-                        rel_path = u""_s;
-                    else
-                        rel_path = rel_path + u"/"_s;
-                    setCurrentZipFileName(&zipEpub, path);
-                    zipFile.open(QIODevice::ReadOnly);
-                    QByteArray baOpf = zipFile.readAll();
-                    zipFile.close();
-
-                    QDomDocument opf;
-                    QString sCoverImg;
-                    opf.setContent(baOpf);
-                    QDomNode meta = opf.documentElement().namedItem(u"metadata"_s);
-                    for(int m=0; m<meta.childNodes().count(); m++)
-                    {
-                        if(meta.childNodes().at(m).nodeName().right(11) == u"description")
-                        {
-                            sAnnotation_ = meta.childNodes().at(m).toElement().text();
-                        }
-                        else if(meta.childNodes().at(m).nodeName().right(4) == u"meta")
-                        {
-                            auto itemMetadataAtributes = meta.childNodes().at(m).attributes();
-                            if(itemMetadataAtributes.namedItem(u"name"_s).toAttr().value() == u"cover")
-                            {
-                                QString cover = itemMetadataAtributes.namedItem(u"content"_s).toAttr().value();
-                                QDomNode manifest = opf.documentElement().namedItem(u"manifest"_s);
-                                for(int man=0; man<manifest.childNodes().count(); man++)
-                                {
-                                    auto itemManifestAtributes = manifest.childNodes().at(man).attributes();
-                                    if(itemManifestAtributes.namedItem(u"id"_s).toAttr().value() == cover)
-                                    {
-                                        sCoverImg = rel_path +itemManifestAtributes.namedItem(u"href"_s).toAttr().value();
-                                        break;
-                                    }
-                                }
-                            }
-                        }
-                    }
-                    if(sCoverImg.isEmpty()){
-                        QDomNode manifest = opf.documentElement().namedItem(u"manifest"_s);
-                        for(int m=0; m<manifest.childNodes().count(); m++)
-                        {
-                            auto itemAtribites = manifest.childNodes().at(m).attributes();
-                            if(itemAtribites.namedItem(u"id"_s).toAttr().value().startsWith(u"cover"_s) && itemAtribites.namedItem(u"media-type"_s).toAttr().value().startsWith(u"image/"_s))
-                            {
-                                sCoverImg = rel_path +itemAtribites.namedItem(u"href"_s).toAttr().value();
-                                break;
-                            }
-
-                        }
-                    }
-                    if(!sCoverImg.isEmpty()){
-                        sCoverImg = sCoverImg.replace(u"%40"_s, u"@"_s);
-                        setCurrentZipFileName(&zipEpub, sCoverImg);
-                        if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-                            MyDBG << "Error open file: " << sCoverImg;
-                        else{
-                            QByteArray ba = zipFile.readAll();
-                            zipFile.close();
-                            img = QImage::fromData(ba);
-                        }
-                    }
-                    need_loop = false;
-                }
-            }
-        }
-    }
-    zipEpub.close();
-    if(sAnnotation_.isEmpty()) [[unlikely]]
-        sAnnotation_  = u" "_s;
-
-    return img;
+    sAnnotation_ = annotation.isEmpty() ? u" "_s : annotation;
+    if(cover.isNull())
+        bCoverNotFound_ = true;
+    return cover;
 }
 
 #ifdef USE_DEJVULIBRE
@@ -317,9 +223,8 @@ QImage BookFile::coverDjvu()
             fileDjVu.close();
         }
 
-        if(djvu.openDocument(sDjVuFile)){
+        if(djvu.openDocument(sDjVuFile))
             img = djvu.getCover();
-        }
         if(!fileDjVu.fileName().isEmpty())
             fileDjVu.remove();
     }
@@ -341,6 +246,7 @@ QImage BookFile::coverZip()
         doc.setContent(ba);
         return coverFb2(doc);
     }
+
     QBuffer buffer;
     QuaZip zip;
     if(data_.size() != 0){
@@ -383,18 +289,24 @@ QImage BookFile::coverZip()
                 fileDjVu.remove();
         } else
 #endif
-        if(fi.name.endsWith(u".epub")){
-            zip.setCurrentFile(fi.name);
-            QuaZipFile zipFile(&zip);
-            zipFile.open(QIODevice::ReadOnly);
-            QByteArray data = zipFile.readAll();
-            QBuffer buffer;
-            buffer.setData(data);
-            QuaZip zipEpub(&buffer);
-            return coverAnnotationEpub(zipEpub);
-        }
+            if(fi.name.endsWith(u".epub")){
+                zip.setCurrentFile(fi.name);
+                QuaZipFile zipFile(&zip);
+                zipFile.open(QIODevice::ReadOnly);
+                QByteArray data = zipFile.readAll();
+                zipFile.close();
+                EpubReader reader(data);
+                reader.readAnnotationAndCover(sAnnotation_, img);
+                if(sAnnotation_.isEmpty()) [[unlikely]]{
+                    sAnnotation_ = u" "_s;
+                }
+                if(img.isNull())
+                    bCoverNotFound_ = true;
+                return img;
+            }
     }
 
+    zip.close();
     return img;
 }
 
@@ -465,6 +377,73 @@ QString BookFile::annotation()
         else if(sFormat.endsWith(u"zip"))
             annotationZip();
 
+        sAnnotation_ = sAnnotation_.trimmed();
+        QDomDocument htmlDoc;
+        if(htmlDoc.setContent(u"<html>"_s % sAnnotation_ % u"</html>"_s)){
+            // Функция для обработки элементов
+            auto processElement = [](QDomElement &element, QDomDocument &doc, auto &self) -> void{
+                // Удаляем style
+                element.removeAttribute(u"style"_s);
+
+                // Обрабатываем <font face="...">
+                if(element.tagName().toLower() == u"font"_s && element.hasAttribute(u"face"_s)){
+                    QDomNodeList children = element.childNodes();
+                    QDomNode parent = element.parentNode();
+                    for (int i = children.count() - 1; i >= 0; --i) {
+                        QDomNode child = children.at(i).cloneNode(true);
+                        parent.insertBefore(child, element);
+                    }
+                    parent.removeChild(element);
+                }else{
+                    // Проверяем текстовые узлы на \n
+                    QDomNodeList children = element.childNodes();
+                    for (int i = children.count() - 1; i >= 0; --i) {
+                        QDomNode child = children.at(i);
+                        if (child.isText() && child.nodeValue().contains(u"\n")) {
+                            QStringList lines = child.nodeValue().split(u"\n"_s, Qt::SkipEmptyParts);
+                            QDomNode parent = child.parentNode();
+                            parent.removeChild(child);
+                            for (const QString &line : std::as_const(lines)) {
+                                QString trimmedLine = line.trimmed();
+                                if (!trimmedLine.isEmpty()) {
+                                    QDomElement p = doc.createElement(u"p"_s);
+                                    p.appendChild(doc.createTextNode(trimmedLine));
+                                    parent.insertBefore(p, child.nextSibling());
+                                }
+                            }
+                        } else if (child.isElement()) {
+                            QDomElement childEl = child.toElement();
+                            self(childEl, doc, self);
+                        }
+                    }
+                }
+            };
+
+            // Обрабатываем все элементы
+            QDomElement root = htmlDoc.documentElement();
+            processElement(root, htmlDoc, processElement);
+
+            // Извлекаем содержимое без <html>
+            QString result = htmlDoc.toString(-1).trimmed();
+            result.remove(0, result.indexOf(u'>') + 1);
+            result.chop(7); // Удаляем </html>
+            sAnnotation_ = result.trimmed();
+        }else{
+            // Fallback: используем QTextDocument
+            QTextDocument textDoc;
+            textDoc.setHtml(sAnnotation_);
+            QString plainText = textDoc.toPlainText().trimmed();
+            QStringList lines = plainText.split(u'\n', Qt::SkipEmptyParts);
+            QStringList paragraphs;
+            for (const QString &line : std::as_const(lines)) {
+                QString trimmedLine = line.trimmed();
+                if (!trimmedLine.isEmpty()) {
+                    paragraphs.append(u"<p>"_s % trimmedLine.toHtmlEscaped() % u"</p>"_s);
+                }
+            }
+            sAnnotation_ = paragraphs.join(u""_s);        }
+        if(sAnnotation_.isEmpty())
+            sAnnotation_ = u" "_s;
     }
     return sAnnotation_;
 }
@@ -525,10 +504,9 @@ void BookFile::annotationZip()
             QuaZipFile zipFile(&zip);
             zipFile.open(QIODevice::ReadOnly);
             QByteArray data = zipFile.readAll();
-            QBuffer buffer;
-            buffer.setData(data);
-            QuaZip zipEpub(&buffer);
-            coverAnnotationEpub(zipEpub);
+            zipFile.close();
+            EpubReader reader(data);
+            sAnnotation_ = reader.readAnnotation();
             return;
         }
     }

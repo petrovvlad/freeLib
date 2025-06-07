@@ -48,6 +48,7 @@ private:
     QByteArray data_;
     QString sAnnotation_;
     bool bOpen_;
+    bool bCoverNotFound_;
 };
 
 #endif // BOOKFILE_H
