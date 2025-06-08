@@ -227,13 +227,27 @@ void ImportThread::AddGenre(uint idBook, const QString &sGenre, uint idLib)
     sCorrectGenre.replace(' ', '_');
     if(mGenreKeys_.contains(sCorrectGenre)){
         idGenre = mGenreKeys_[sCorrectGenre];
-        queryInsertBookGenre_.bindValue(QStringLiteral(":idBook"), idBook);
-        queryInsertBookGenre_.bindValue(QStringLiteral(":idGenre"), idGenre);
-        queryInsertBookGenre_.bindValue(QStringLiteral(":idLib"), idLib);
+        queryInsertBookGenre_.bindValue(u":idBook"_s, idBook);
+        queryInsertBookGenre_.bindValue(u":idGenre"_s, idGenre);
+        queryInsertBookGenre_.bindValue(u":idLib"_s, idLib);
         if(!queryInsertBookGenre_.exec()) [[unlikely]]
             MyDBG << queryInsertBookGenre_.lastError().text();
     }else [[unlikely]]
-        qDebug() << "Неизвестный жанр: " + sGenre;
+        qDebug() << u"Неизвестный жанр: "_s + sGenre;
+}
+
+void ImportThread::cleanUnsortedGenre()
+{
+    QString sql = u"DELETE FROM book_genre "
+                  u"WHERE book_genre.id_genre = 1112 "
+                  u"AND EXISTS ( "
+                  u"  SELECT 1 "
+                  u"  FROM book_genre bg "
+                  u"  WHERE bg.id_book = book_genre.id_book "
+                  u"  AND bg.id_genre != 1112 "
+                  u");"_s;
+    if (!query_.exec(sql))
+        MyDBG << "Error cleaning genre 1112: " << query_.lastError().text();
 }
 
 void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
@@ -1147,7 +1161,7 @@ void ImportThread::process()
         if(count > 0)
             emit progress(nBooksCount, (float)(i - iStart + 1)/(float)(listInpFiles.count() - iStart));
     }
-    //TODO убрать жанр «прочие/неотсортированное» для книг у которых есть другой жанр
+    cleanUnsortedGenre();
     dbase.commit();
     if(!stopped_) [[likely]]
         emit progress(nBooksCount, 1.0f);
