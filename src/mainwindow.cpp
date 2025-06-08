@@ -1,4 +1,3 @@
-#define QT_USE_QSTRINGBUILDER
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -337,6 +336,9 @@ MainWindow::MainWindow(QWidget *parent) :
     addShortcutToToolTip(ui->btnLibrary, ui->actionAddLibrary);
     addShortcutToToolTip(ui->btnCollapseAll);
     addShortcutToToolTip(ui->btnExpandAll);
+    addShortcutToToolTip(ui->btnOption, ui->actionPreference);
+    addShortcutToToolTip(ui->btnListView);
+    addShortcutToToolTip(ui->btnTreeView);
 }
 
 void MainWindow::UpdateTags()
