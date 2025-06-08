@@ -1752,6 +1752,7 @@ void MainWindow::ManageLibrary()
         fillLanguages();
         FillAuthors();
         FillSerials();
+        FillGenres();
         switch(ui->tabWidget->currentIndex()){
         case TabAuthors:
             onSerachAuthorsChanded(ui->searchAuthor->text());
@@ -1761,10 +1762,12 @@ void MainWindow::ManageLibrary()
             onSerachSeriesChanded(ui->searchSeries->text());
             SelectSeria();
             break;
+        case TabGenres:
+            SelectGenre();
+            break;
         case TabSearch:
             ui->Books->clear();
         }
-        FillGenres();
         future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
