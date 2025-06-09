@@ -257,7 +257,7 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
         bool result = query.exec(u"INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)"_s
                                  .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?u"1"_s :u"0"_s, lib.bWoDeleted ?u"1"_s :u"0"_s));
         if(!result) [[unlikely]]
-            MyDBG << query.lastError().databaseText();
+            LogWarning << query.lastError().databaseText();
         idCurrentLib_ = query.lastInsertId().toInt();
         auto settings = GetSettings();
         settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
@@ -273,7 +273,7 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
         bool result = query.exec(u"UPDATE Lib SET name='%1',path='%2',inpx='%3' ,firstAuthor=%4, woDeleted=%5 WHERE ID=%6"_s
                                  .arg(lib.name, lib.path, lib.sInpx, lib.bFirstAuthor ?u"1"_s: u"0"_s, lib.bWoDeleted ?u"1"_s :u"0"_s).arg(idCurrentLib_));
         if(!result) [[unlikely]]
-            MyDBG << query.lastError().databaseText();
+            LogWarning << query.lastError().databaseText();
     }
 
     UpdateLibList();
@@ -292,7 +292,7 @@ void LibrariesDlg::DeleteLibrary()
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
     query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
     if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_))) [[unlikely]]
-        MyDBG << query.lastError().databaseText();
+        LogWarning << query.lastError().databaseText();
     query.exec(QStringLiteral("VACUUM"));
     g::libs.erase(idCurrentLib_);
     UpdateLibList();
@@ -326,7 +326,7 @@ void LibrariesDlg::EndUpdate()
     query.prepare(u"SELECT version FROM lib WHERE id=:idLib;"_s);
     query.bindValue(u":idLib"_s, idCurrentLib_);
     if(!query.exec()) [[unlikely]]
-        MyDBG << query.lastError().text();
+        LogWarning << query.lastError().text();
     else{
         if(query.next()) [[likely]]
             g::libs[idCurrentLib_].sVersion = query.value(0).toString();
@@ -375,7 +375,7 @@ void LibrariesDlg::ExistingLibsChanged()
             query.bindValue(u":name"_s, sNewName);
             query.bindValue(u":id"_s, idCurrentLib_);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().databaseText();
+                LogWarning << query.lastError().databaseText();
         }
     }
 }

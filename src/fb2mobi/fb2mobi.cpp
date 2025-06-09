@@ -1566,7 +1566,7 @@ QString fb2mobi::convert(uint idBook)
     QFile f(sTmpDir_ + u"/book.fb2"_s);
     if(!f.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qDebug() << "Error open fb2 file: "<<f.fileName();
+        LogWarning << "Error open fb2 file:" << f.fileName();
         return u""_s;
     }
     join_seria = false;
@@ -1731,7 +1731,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
 
     QFile css(sFileCss);
     if(!css.open(QFile::Append)){
-        MyDBG << css.errorString();
+        LogWarning << css.errorString();
     }
     int count = pExportOptions_->vFontExportOptions.size();
     QStringList fonts;
@@ -1847,7 +1847,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         QFile f(sTmpDir_ + u"/book%1.fb2"_s.arg(i));
         if(!f.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            qDebug()<<"Error open fb2 file: "<<f.fileName();
+            LogWarning << "Error open fb2 file:" << f.fileName();
             return u""_s;
         }
         current_book = i + 1;

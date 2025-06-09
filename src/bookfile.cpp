@@ -48,7 +48,7 @@ void BookFile::open()
         file_.setFileName(sFile);
         if(!file_.open(QFile::ReadOnly))
         {
-            MyDBG << "Error open file! " << sFile;
+            LogWarning << "Error open file!" << sFile;
             return;
         }
         bOpen_ = true;
@@ -73,14 +73,14 @@ void BookFile::open()
             uz.setZipName(sArchive);
             if( !uz.open(QuaZip::mdUnzip) ) [[unlikely]]
             {
-                MyDBG << "Error open archive! " << sArchive;
+                LogWarning << "Error open archive!" << sArchive;
                 return;
             }
             setCurrentZipFileName(&uz, sFile);
             zipFile.setZip(&uz);
             if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
             {
-                MyDBG << "Error open file: " << sFile;
+                LogWarning << "Error open file:" << sFile;
             }else {
                 data_ = zipFile.readAll();
                 QuaZipFileInfo64 fiZip;
@@ -641,14 +641,14 @@ QByteArray BookFile::openZipInZip(const QString &sArchive, const QString &sFileN
 
         if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
         {
-            MyDBG << "Error open archive! " << sArchive;
+            LogWarning << "Error open archive:" << sArchive;
             return data;
         }
         zipFile.setZip(&uz);
         setCurrentZipFileName(&uz, sZipChain[i]);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
         {
-            MyDBG << "Error open file: " << sZipChain[i];
+            LogWarning << "Error open file:" << sZipChain[i];
         }
         vData.emplace_back(zipFile.readAll());
         zipFile.close();

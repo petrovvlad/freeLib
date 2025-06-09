@@ -52,7 +52,7 @@ void ImportThread::addSequence(const QString &str, uint idLib, uint idBook, uint
         queryInsertSeria_.bindValue(u":name"_s, name);
         queryInsertSeria_.bindValue(u":id_lib"_s, idLib);
         if(!queryInsertSeria_.exec()) [[unlikely]]
-            MyDBG << queryInsertSeria_.lastError().text();
+            LogWarning << queryInsertSeria_.lastError().text();
         id = queryInsertSeria_.lastInsertId().toUInt();
         mSequences_[name] = id;
     }
@@ -68,7 +68,7 @@ void ImportThread::addSequence(const QString &str, uint idLib, uint idBook, uint
         queryInsertBookSequence_.bindValue(u":idSequence"_s, id);
         queryInsertBookSequence_.bindValue(u":numInSequence"_s, numInSequence);
         if(!queryInsertBookSequence_.exec()) [[unlikely]]
-            MyDBG << queryInsertBookSequence_.lastError().text();
+            LogWarning << queryInsertBookSequence_.lastError().text();
         mBookSequences_[idBook].push_back(id);
     }
 
@@ -92,7 +92,7 @@ void ImportThread::addSequence(const QString &str, uint idLib, uint idBook, uint
         queryInsertSequennceTag_.bindValue(u":idSeria"_s, listIdSequence);
         queryInsertSequennceTag_.bindValue(u":idTag"_s, lTags);
         if(!queryInsertSequennceTag_.execBatch()) [[unlikely]]
-            MyDBG << queryInsertSequennceTag_.lastError().text();
+            LogWarning << queryInsertSequennceTag_.lastError().text();
     }
     return;
 }
@@ -111,7 +111,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
         queryInsertAuthor_.bindValue(u":name3"_s, author.sMiddleName);
         queryInsertAuthor_.bindValue(u":id_lib"_s, libID);
         if(!queryInsertAuthor_.exec())
-            MyDBG << queryInsertAuthor_.lastError().text();
+            LogWarning << queryInsertAuthor_.lastError().text();
         idAuthor = queryInsertAuthor_.lastInsertId().toLongLong();
         if(auto it = stTagetAuthors_.find(author); it != stTagetAuthors_.end())
         {
@@ -126,14 +126,14 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
     }
     if(bFirstAuthor){
         if(!query_.exec(u"UPDATE book SET first_author_id="_s % QString::number(idAuthor) % u" WHERE id="_s % QString::number(idBook))) [[unlikely]]
-            MyDBG << query_.lastError().text();
+            LogWarning << query_.lastError().text();
     }
 
     queryInsertBookAuthor_.bindValue(u":idBook"_s, idBook);
     queryInsertBookAuthor_.bindValue(u":idAuthor"_s, idAuthor);
     queryInsertBookAuthor_.bindValue(u":idLib"_s, libID);
     if(!queryInsertBookAuthor_.exec())[[unlikely]] {
-        MyDBG << queryInsertBookAuthor_.lastError().text();
+        LogWarning << queryInsertBookAuthor_.lastError().text();
         return 0;
     }
 
@@ -148,7 +148,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
         queryInsertAuthorTag_.bindValue(u":idAuthor"_s, listAuthors);
         queryInsertAuthorTag_.bindValue(u":idTag"_s, lTags);
         if(!queryInsertAuthorTag_.execBatch()) [[unlikely]]
-            MyDBG << queryInsertAuthorTag_.lastError().text();
+            LogWarning << queryInsertAuthorTag_.lastError().text();
     }
     return idAuthor;
 }
@@ -188,7 +188,7 @@ uint ImportThread::addBook(uchar star, QString &name, int num_in_seria, const QS
     queryInsertBook_.bindValue(u":format"_s, format);
     queryInsertBook_.bindValue(u":archive"_s, archive);
     if(!queryInsertBook_.exec()){
-        MyDBG << queryInsertBook_.lastError().text();
+        LogWarning << queryInsertBook_.lastError().text();
         return 0;
     }
 
@@ -215,7 +215,7 @@ uint ImportThread::addBook(uchar star, QString &name, int num_in_seria, const QS
         queryInsertBookTag_.bindValue(u":idBook"_s, listIdBook);
         queryInsertBookTag_.bindValue(u":idTag"_s, lTags);
         if(!queryInsertBookTag_.execBatch()) [[unlikely]]
-            MyDBG << queryInsertBookTag_.lastError().text();
+            LogWarning << queryInsertBookTag_.lastError().text();
     }
     return id;
 }
@@ -231,7 +231,7 @@ void ImportThread::AddGenre(uint idBook, const QString &sGenre, uint idLib)
         queryInsertBookGenre_.bindValue(u":idGenre"_s, idGenre);
         queryInsertBookGenre_.bindValue(u":idLib"_s, idLib);
         if(!queryInsertBookGenre_.exec()) [[unlikely]]
-            MyDBG << queryInsertBookGenre_.lastError().text();
+            LogWarning << queryInsertBookGenre_.lastError().text();
     }else [[unlikely]]
         qDebug() << u"Неизвестный жанр: "_s + sGenre;
 }
@@ -247,7 +247,7 @@ void ImportThread::cleanUnsortedGenre()
                   u"  AND bg.id_genre != 1112 "
                   u");"_s;
     if (!query_.exec(sql))
-        MyDBG << "Error cleaning genre 1112: " << query_.lastError().text();
+        LogWarning << "Error cleaning genre 1112: " << query_.lastError().text();
 }
 
 void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
@@ -272,7 +272,7 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
             //                     0        1              2
             query.bindValue(u":id_lib"_s,idLib_);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             else{
                 while (query.next()){
                     uint idBook = query.value(0).toUInt();
@@ -285,7 +285,7 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
             query.prepare(u"SELECT id, name FROM seria WHERE id_lib=:id_lib;"_s);
             query.bindValue(u":id_lib"_s,idLib_);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             else{
                 while (query.next()){
                     uint id = query.value(0).toUInt();
@@ -455,7 +455,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString sFileName, QString sAr
     EpubReader reader(ba);
     EpubReader::BookMetadata metadata;
     if (!reader.readMetadata(metadata)) {
-        MyDBG << "Failed to read metadata for" << sFileName;
+        LogWarning << "Failed to read metadata for:" << sFileName;
         return;
     }
 
@@ -463,7 +463,7 @@ void ImportThread::readEPUB(const QByteArray &ba, QString sFileName, QString sAr
                           0, false, u"epub"_s, QDate::currentDate(),
                           metadata.language, u""_s, idLib_, sArhName);
     if(idBook == 0) {
-        MyDBG << "Failed to add book: " << metadata.title;
+        LogWarning << "Failed to add book:" << metadata.title;
         return;
     }
 
@@ -566,7 +566,7 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
     uz.setFileNameCodec(QTextCodec::codecForName("IBM 866"));
     if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
     {
-        MyDBG << "Error open archive! " << sPath + sArchName;
+        LogWarning << "Error open archive:" << sZipFileName;
         return;
     }
 
@@ -587,7 +587,7 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
         {
             setCurrentZipFileName(&uz, fiZip.name);
             if(!fileInZip.open(QIODevice::ReadOnly)) {
-                MyDBG << "Error open " << fiZip.name << " in " << sArchName;
+                LogWarning << "Error open:" << fiZip.name << "in" << sArchName;
                 continue;
             }
             if(isFB2)
@@ -606,7 +606,7 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
         {
             setCurrentZipFileName(&uz, fiZip.name);
             if(!fileInZip.open(QIODevice::ReadOnly)) {
-                MyDBG << "Error open " << fiZip.name << " in " << sArchName;
+                LogWarning << "Error open " << fiZip.name << " in " << sArchName;
                 continue;
             }
             fileData = fileInZip.readAll();
@@ -635,7 +635,7 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
                 if(setCurrentZipFileName(&uz, fbd))
                 {
                     if(!fileInZip.open(QIODevice::ReadOnly)) {
-                        MyDBG << "Error open " << fiZip.name << " in " << sArchName;
+                        LogWarning << "Error open:" << fiZip.name << "in" << sArchName;
                         continue;
                     }
                     fileData = fileInZip.readAll();
@@ -660,7 +660,7 @@ void ImportThread::process()
 #endif
     if (!dbase.open()) [[unlikely]]
     {
-        MyDBG << dbase.lastError().text();
+        LogWarning << dbase.lastError().text();
         return;
     }
 
@@ -669,7 +669,7 @@ void ImportThread::process()
     std::unordered_map<QString, uint> mTags;
     mTags.clear();
     query_.exec(u"PRAGMA cache_size = 2000"_s);
-    query_.exec(QStringLiteral("SELECT id,name FROM tag"));
+    query_.exec(u"SELECT id,name FROM tag"_s);
     while(query_.next())
     {
         uint idTag = query_.value(0).toUInt();
@@ -753,7 +753,7 @@ void ImportThread::process()
     QuaZip uz(sInpxFile_);
     if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
     {
-        MyDBG << "Error open inpx!";
+        LogWarning << "Error open inpx!";
         emit End();
         return;
     }
@@ -767,7 +767,7 @@ void ImportThread::process()
         zip_file.close();
         QString sVersion = QString::fromUtf8(outbuff.data()).simplified();
         if(!query_.exec(u"UPDATE lib SET version='"_s % sVersion % u"' WHERE id="_s % QString::number(idLib_))) [[unlikely]]
-            MyDBG << query_.lastError().text();
+            LogWarning << query_.lastError().text();
     }
 
 #define _NAME           0
@@ -1080,12 +1080,12 @@ void ImportThread::process()
                             archiveFile.close();
                             archiveFile.setZipName(sArchive);
                             if (!archiveFile.open(QuaZip::mdUnzip)) [[unlikely]]
-                                MyDBG << "Error open archive! " << sArchive;
+                                LogWarning << "Error open archive:" << sArchive;
                         }
                         QuaZipFile zip_file(&archiveFile);
                         setCurrentZipFileName(&archiveFile, sFile);
                         if(!zip_file.open(QIODevice::ReadOnly)) [[unlikely]]
-                            MyDBG << "Error open file: " << sFile;
+                            LogWarning << "Error open file:" << sFile;
                         buffer.setData(zip_file.read(16*1024));
                         zip_file.close();
 

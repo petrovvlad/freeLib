@@ -5,7 +5,6 @@
 #include <QStringBuilder>
 #include <QSqlQuery>
 #include <QSqlError>
-#include <QDebug>
 #include <QApplication>
 #include <QStandardPaths>
 #include <QDir>
@@ -51,7 +50,7 @@ void loadLibrary(uint idLibrary)
             lib.authors.emplace(0, SAuthor());
             if (!dbReadAuthors.open()) [[unlikely]]
             {
-                MyDBG << dbReadAuthors.lastError().text();
+                LogWarning << dbReadAuthors.lastError().text();
                 return;
             }
             QSqlQuery query(dbReadAuthors);
@@ -62,7 +61,7 @@ void loadLibrary(uint idLibrary)
             //                     0   1
             query.bindValue(u":id_lib"_s, idLibrary);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             while (query.next()) {
                 uint idSerial = query.value(0).toUInt();
                 QString sName = query.value(1).toString();
@@ -71,7 +70,7 @@ void loadLibrary(uint idLibrary)
             query.prepare(u"SELECT seria_tag.id_seria, seria_tag.id_tag FROM seria_tag INNER JOIN seria ON seria.id = seria_tag.id_seria WHERE seria.id_lib = :id_lib"_s);
             query.bindValue(u":id_lib"_s,idLibrary);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             while (query.next()) {
                 uint idSeria = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
@@ -94,7 +93,7 @@ void loadLibrary(uint idLibrary)
             //                     0                     1
             query.bindValue(u":id_lib"_s, idLibrary);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             while (query.next()) {
                 uint idAuthor = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
@@ -128,7 +127,7 @@ void loadLibrary(uint idLibrary)
             uint nBuff = 0;
             if (!dbReadBooks.open()) [[unlikely]]
             {
-                MyDBG << dbReadBooks.lastError().text();
+                LogWarning << dbReadBooks.lastError().text();
                 return;
             }
             QSqlQuery query(dbReadBooks);
@@ -137,7 +136,7 @@ void loadLibrary(uint idLibrary)
             //                     0   1     2     3         4     5     6        7     8       9         10       11               12
             query.bindValue(u":id_lib"_s, idLibrary);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             uint i = 0;
             while (query.next()) {
                 anCount[nBuff].wait(sizeBufffer);
@@ -206,7 +205,7 @@ void loadLibrary(uint idLibrary)
     //                     0   1     2     3         4     5     6        7     8       9         10       11               12
     query.bindValue(u":id_lib"_s,idLibrary);
     if(!query.exec())
-        qDebug() << query.lastError().text();
+        LogWarning << query.lastError().text();
     while (query.next()) {
         QString sName = query.value(1).toString();
         if(sName.isEmpty())
@@ -253,7 +252,7 @@ void loadLibrary(uint idLibrary)
 #endif
             if (!dbReadGenre.open()) [[unlikely]]
             {
-                MyDBG << dbReadGenre.lastError().text();
+                LogWarning << dbReadGenre.lastError().text();
                 return;
             }
             QSqlQuery query(dbReadGenre);
@@ -265,7 +264,7 @@ void loadLibrary(uint idLibrary)
             //                     0        1
             query.bindValue(u":id_lib"_s, idLibrary);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 ushort idGenre = query.value(1).toUInt();
@@ -277,7 +276,7 @@ void loadLibrary(uint idLibrary)
             //                     0                 1
             query.bindValue(u":id_lib"_s,idLibrary);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
@@ -301,7 +300,7 @@ void loadLibrary(uint idLibrary)
 #endif
             if (!dbReadSequence.open()) [[unlikely]]
             {
-                MyDBG << dbReadSequence.lastError().text();
+                LogWarning << dbReadSequence.lastError().text();
                 return;
             }
             QSqlQuery query(dbReadSequence);
@@ -311,7 +310,7 @@ void loadLibrary(uint idLibrary)
             //                     0        1            2
             query.bindValue(u":id_lib"_s, idLibrary);
             if(!query.exec()) [[unlikely]]
-                MyDBG << query.lastError().text();
+                LogWarning << query.lastError().text();
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 uint idSequence = query.value(1).toUInt();
@@ -331,7 +330,7 @@ void loadLibrary(uint idLibrary)
     //query.prepare(u"SELECT id_book, id_author FROM book_author INNER JOIN book ON book.id=id_book WHERE book.id_lib = :id_lib;"_s);
     query.bindValue(u":id_lib"_s, idLibrary);
     if(!query.exec()) [[unlikely]]
-        MyDBG << query.lastError().text();
+        LogWarning << query.lastError().text();
     while (query.next()) {
         uint idBook = query.value(0).toUInt();
         uint idAuthor = query.value(1).toUInt();
@@ -369,7 +368,7 @@ void loadGenres()
     query.prepare(u"SELECT id, name, id_parent, sort_index, keys FROM genre;"_s);
     //                                   0   1     2          3           4
     if(!query.exec()) [[unlikely]]
-        MyDBG << query.lastError().text();
+        LogWarning << query.lastError().text();
     while (query.next()) {
         ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
         SGenre &genre = g::genres[idGenre];
@@ -582,7 +581,7 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
             if(bNestedBlock)
                 return u""_s;
             else
-                result.replace("%n" + QString::number(len), u""_s);
+                result.replace(u"%n"_s + QString::number(len), u""_s);
         }else{
             QString sNumInSeria = QString::number(book.mSequences.begin()->second);
             QString zerro;
@@ -627,7 +626,7 @@ QString SLib::nameFromInpx(const QString &sInpx)
         QuaZip uz(sInpx);
         if(!uz.open(QuaZip::mdUnzip)) [[unlikely]]
         {
-            MyDBG << "Error open INPX file: " << sInpx;
+            LogWarning << "Error open INPX file: " << sInpx;
         } else
             if(setCurrentZipFileName(&uz, u"COLLECTION.INFO"_s)) [[likely]]
             {
@@ -635,14 +634,12 @@ QString SLib::nameFromInpx(const QString &sInpx)
                 QuaZipFile zip_file(&uz);
                 zip_file.open(QIODevice::ReadOnly);
                 outbuff.setData(zip_file.readAll());
-                uint nMarkerSize;
+                uint nMarkerSize = 0;
                 auto data = outbuff.data();
                 if(outbuff.size()>4){
                     quint32 marker = *((uint*)(data.data())) & 0x00ffffff;
                     if((marker & 0x00ffffff) == 0x00bfbbef) //UTF8
                         nMarkerSize = 3;
-                    else
-                        nMarkerSize = 0;
                 }
                 zip_file.close();
                 sName = QString::fromUtf8(data.mid(nMarkerSize, data.indexOf('\n', nMarkerSize)-nMarkerSize));

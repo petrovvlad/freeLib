@@ -18,7 +18,7 @@ bool EpubReader::initializeZip() const
     zip_.setIoDevice(device_);
     if (!zip_.open(QuaZip::mdUnzip)) [[unlikely]]
     {
-        MyDBG << "Failed to open EPUB as ZIP:";
+        LogWarning << "Failed to open EPUB as ZIP";
         return false;
     }
     return true;
@@ -28,20 +28,20 @@ bool EpubReader::readContainer(QDomDocument &doc) const
 {
     if (!setCurrentZipFileName(&zip_, u"META-INF/container.xml"_s)) [[unlikely]]
     {
-        MyDBG << "No container.xml";
+        LogWarning << "No container.xml";
         return false;
     }
 
     QuaZipFile zipFile(&zip_);
     if (!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
     {
-        MyDBG << "Failed to open META-INF/container.xml";
+        LogWarning << "Failed to open META-INF/container.xml";
         return false;
     }
 
     if (!doc.setContent(zipFile.readAll())) [[unlikely]]
     {
-        MyDBG << "Failed to parse container.xml" ;
+        LogWarning << "Failed to parse container.xml" ;
         return false;
     }
     return true;
@@ -52,7 +52,7 @@ bool EpubReader::findOpfPath(const QDomDocument &container, QString &opfPath) co
     QDomNode root = container.documentElement();
     if (root.isNull()) [[unlikely]]
     {
-        MyDBG << "Invalid container.xml";
+        LogWarning << "Invalid container.xml";
         return false;
     }
 
@@ -79,20 +79,20 @@ bool EpubReader::findOpfPath(const QDomDocument &container, QString &opfPath) co
 bool EpubReader::readOpf(const QString &opfPath, QDomDocument &opf) const {
     if(!setCurrentZipFileName(&zip_, opfPath)) [[unlikely]]
     {
-        MyDBG << "Failed to set OPF file " << opfPath;
+        LogWarning << "Failed to set OPF file:" << opfPath;
         return false;
     }
 
     QuaZipFile zipFile(&zip_);
     if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
     {
-        MyDBG << "Failed to open OPF file " << opfPath;
+        LogWarning << "Failed to open OPF file:" << opfPath;
         return false;
     }
 
     if(!opf.setContent(zipFile.readAll())) [[unlikely]]
     {
-        MyDBG << "Failed to parse OPF file " << opfPath;
+        LogWarning << "Failed to parse OPF file:" << opfPath;
         return false;
     }
     return true;
@@ -134,7 +134,7 @@ bool EpubReader::parseMetadata(const QDomDocument &opf, BookMetadata &metadata) 
     QDomNode meta = opf.documentElement().namedItem(u"metadata"_s);
     if(meta.isNull()) [[unlikely]]
     {
-        MyDBG << "No metadata in OPF";
+        LogWarning << "No metadata in OPF";
         return false;
     }
 
@@ -195,21 +195,21 @@ QString EpubReader::extractImageFromHtml(const QString &htmlPath, const QString 
     QString cleanHtmlPath = normalizePath(htmlPath, relPath);
     if(!setCurrentZipFileName(&zip_, cleanHtmlPath)) [[unlikely]]
     {
-        MyDBG << "Failed to set HTML file" << cleanHtmlPath;
+        LogWarning << "Failed to set HTML file:" << cleanHtmlPath;
         return QString();
     }
 
     QuaZipFile zipFile(&zip_);
     if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
     {
-        MyDBG << "Failed to open HTML file" << cleanHtmlPath;
+        LogWarning << "Failed to open HTML file:" << cleanHtmlPath;
         return QString();
     }
 
     QDomDocument xmlDoc;
     if(!xmlDoc.setContent(zipFile.readAll())) [[unlikely]]
     {
-        MyDBG << "Failed to parse HTML file" << cleanHtmlPath;
+        LogWarning << "Failed to parse HTML file:" << cleanHtmlPath;
         return QString();
     }
 
@@ -239,7 +239,7 @@ QString EpubReader::extractImageFromHtml(const QString &htmlPath, const QString 
             return normalizePath(src, basePath);
     }
 
-    MyDBG << "No <img> or <image> found in " << cleanHtmlPath;
+    LogWarning << "No <img> or <image> found in:" << cleanHtmlPath;
     return QString();
 }
 
@@ -428,21 +428,21 @@ QImage EpubReader::parseCover(const QDomDocument &opf, const QString &relPath) c
     coverPath.replace(u"%20"_s, u" "_s);
     if(!setCurrentZipFileName(&zip_, coverPath)) [[unlikely]]
     {
-        MyDBG << "Failed to set cover file" << coverPath;
+        LogWarning << "Failed to set cover file:" << coverPath;
         return QImage();
     }
 
     QuaZipFile zipFile(&zip_);
     if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
     {
-        MyDBG << "Failed to open cover file" << coverPath;
+        LogWarning << "Failed to open cover file:" << coverPath;
         return QImage();
     }
 
     QImage cover = QImage::fromData(zipFile.readAll());
     if(cover.isNull()) [[unlikely]]
     {
-        MyDBG << "Failed to load cover image from" << coverPath;
+        LogWarning << "Failed to load cover image from:" << coverPath;
         return QImage();
     }
     return cover;
