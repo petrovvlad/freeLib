@@ -1,6 +1,14 @@
 #include "epubreader.h"
 
+#include <QDir>
 #include <QFileInfo>
+#include <QRegularExpression>
+#ifdef QUAZIP_STATIC
+#include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazipfile.h>
+#endif
+
 
 EpubReader::EpubReader(QByteArray data)
     : data_(std::move(data)), buffer_(&data_), device_(&buffer_)
@@ -11,6 +19,40 @@ EpubReader::EpubReader(QIODevice *device)
     : device_(device)
 {
     Q_ASSERT(device_ != nullptr);
+}
+
+bool EpubReader::openOpf()
+{
+    if(!initializeZip()) [[unlikely]]
+        return false;
+
+    QDomDocument container;
+    if(!readContainer(container)) [[unlikely]]
+        return false;
+
+    if(!findOpfPath(container, opfPath_)) [[unlikely]]
+        return false;
+
+    if(!setCurrentZipFileName(&zip_, opfPath_)) [[unlikely]]
+    {
+        LogWarning << "Failed to set OPF file:" << opfPath_;
+        return false;
+    }
+
+    QuaZipFile zipFile(&zip_);
+    if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
+    {
+        LogWarning << "Failed to open OPF file:" << opfPath_;
+        return false;
+    }
+
+    if(!opf_.setContent(zipFile.readAll())) [[unlikely]]
+    {
+        LogWarning << "Failed to parse OPF file:" << opfPath_;
+        return false;
+    }
+
+    return true;
 }
 
 bool EpubReader::initializeZip() const
@@ -76,28 +118,6 @@ bool EpubReader::findOpfPath(const QDomDocument &container, QString &opfPath) co
     return false;
 }
 
-bool EpubReader::readOpf(const QString &opfPath, QDomDocument &opf) const {
-    if(!setCurrentZipFileName(&zip_, opfPath)) [[unlikely]]
-    {
-        LogWarning << "Failed to set OPF file:" << opfPath;
-        return false;
-    }
-
-    QuaZipFile zipFile(&zip_);
-    if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-    {
-        LogWarning << "Failed to open OPF file:" << opfPath;
-        return false;
-    }
-
-    if(!opf.setContent(zipFile.readAll())) [[unlikely]]
-    {
-        LogWarning << "Failed to parse OPF file:" << opfPath;
-        return false;
-    }
-    return true;
-}
-
 QDomNode EpubReader::findElementWithOptionalNamespace(const QDomNode &parent, const QString &name) const
 {
     // URI для стандартных пространств имен EPUB
@@ -128,10 +148,10 @@ QDomNode EpubReader::findElementWithOptionalNamespace(const QDomNode &parent, co
     return QDomNode();
 }
 
-bool EpubReader::parseMetadata(const QDomDocument &opf, BookMetadata &metadata) const
+bool EpubReader::parseMetadata(BookMetadata &metadata) const
 {
     metadata = BookMetadata();
-    QDomNode meta = opf.documentElement().namedItem(u"metadata"_s);
+    QDomNode meta = opf_.documentElement().namedItem(u"metadata"_s);
     if(meta.isNull()) [[unlikely]]
     {
         LogWarning << "No metadata in OPF";
@@ -239,13 +259,19 @@ QString EpubReader::extractImageFromHtml(const QString &htmlPath, const QString 
             return normalizePath(src, basePath);
     }
 
-    LogWarning << "No <img> or <image> found in:" << cleanHtmlPath;
     return QString();
 }
 
-QImage EpubReader::parseCover(const QDomDocument &opf, const QString &relPath) const
+QImage EpubReader::parseCover() const
 {
-    QDomElement root = opf.documentElement();
+    QFileInfo fi(opfPath_);
+    QString relPath = fi.path();
+    if(relPath == u'.')
+        relPath = u""_s;
+    else
+        relPath += u"/"_s;
+
+    QDomElement root = opf_.documentElement();
     QDomNode meta = findElementWithOptionalNamespace(root, u"metadata"_s);
     QDomNode manifest = findElementWithOptionalNamespace(root, u"manifest"_s);
     QDomNode guide = findElementWithOptionalNamespace(root, u"guide"_s);
@@ -448,9 +474,9 @@ QImage EpubReader::parseCover(const QDomDocument &opf, const QString &relPath) c
     return cover;
 }
 
-QString EpubReader::parseAnnotation(const QDomDocument &opf) const
+QString EpubReader::parseAnnotation() const
 {
-    QDomNode meta = opf.documentElement().namedItem(u"metadata"_s);
+    QDomNode meta = opf_.documentElement().namedItem(u"metadata"_s);
     if (meta.isNull())
         return u""_s;
 
@@ -466,67 +492,24 @@ QString EpubReader::parseAnnotation(const QDomDocument &opf) const
     return u""_s; // Аннотация отсутствует
 }
 
-bool EpubReader::readMetadata(BookMetadata &metadata) const
+bool EpubReader::readMetadata(BookMetadata &metadata)
 {
-    if(!initializeZip())
-        return false;
-
-    QDomDocument container;
-    if(!readContainer(container))
-        return false;
-
-    QString opfPath;
-    if(!findOpfPath(container, opfPath))
-        return false;
-
-    QDomDocument opf;
-    if(!readOpf(opfPath, opf))
-        return false;
-
-    return parseMetadata(opf, metadata);
+    if(opf_.isNull())
+        openOpf();
+    return parseMetadata(metadata);
 }
 
-QImage EpubReader::readCover() const
+QImage EpubReader::readCover()
 {
-    QString annotation; // Игнорируется
-    QImage cover;
-    readAnnotationAndCover(annotation, cover);
-    return cover;
+    if(opf_.isNull())
+        openOpf();
+    return parseCover();
 }
 
-QString EpubReader::readAnnotation() const
+QString EpubReader::readAnnotation()
 {
-    QString annotation;
-    QImage cover; // Игнорируется
-    readAnnotationAndCover(annotation, cover);
-    return annotation;
+    if(opf_.isNull())
+        openOpf();
+    return parseAnnotation();
 }
 
-bool EpubReader::readAnnotationAndCover(QString &annotation, QImage &cover) const
-{
-    if(!initializeZip())
-        return false;
-
-    QDomDocument container;
-    if(!readContainer(container))
-        return false;
-
-    QString opfPath;
-    if(!findOpfPath(container, opfPath))
-        return false;
-
-    QDomDocument opf;
-    if(!readOpf(opfPath, opf))
-        return false;
-
-    QFileInfo fi(opfPath);
-    QString relPath = fi.path();
-    if(relPath == u'.')
-        relPath = u""_s;
-    else
-        relPath += u"/"_s;
-
-    annotation = parseAnnotation(opf);
-    cover = parseCover(opf, relPath);
-    return true;
-}
