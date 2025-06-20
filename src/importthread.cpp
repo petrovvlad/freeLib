@@ -112,7 +112,7 @@ uint ImportThread::addAuthor(const SAuthor &author, uint libID, uint idBook, boo
         queryInsertAuthor_.bindValue(u":id_lib"_s, libID);
         if(!queryInsertAuthor_.exec())
             LogWarning << queryInsertAuthor_.lastError().text();
-        idAuthor = queryInsertAuthor_.lastInsertId().toLongLong();
+        idAuthor = queryInsertAuthor_.lastInsertId().toUInt();
         if(auto it = stTagetAuthors_.find(author); it != stTagetAuthors_.end())
         {
             const auto& tags = it->idTags;
@@ -254,14 +254,12 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
 {
     sInpxFile_ = RelativeToAbsolutePath(lib.sInpx);
     if(!QFileInfo::exists(sInpxFile_) || !QFileInfo(sInpxFile_).isFile())
-    {
         sInpxFile_ = lib.sInpx;
-    }
     sPath_ = RelativeToAbsolutePath(lib.path);
     sName_ = lib.name;
     nUpdateType_ = nUpdateType;
     idLib_ = id;
-    stopped_.store(false, std::memory_order_relaxed);
+    stopped_ = false;
     bFirstAuthorOnly_ = lib.bFirstAuthor;
     bWoDeleted_ = lib.bWoDeleted;
     if(nUpdateType_ == UT_NEW){
@@ -308,7 +306,7 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
             QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
             query.setForwardOnly(true);
             query.prepare(u"SELECT id, name1, name2, name3 FROM author WHERE id_lib=:idLib;"_s);
-            //                                   0   1      2      3
+            //                     0   1      2      3
             query.bindValue(u":idLib"_s, idLib_);
             query.exec();
             while (query.next()) {
@@ -326,19 +324,90 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
         }
     }
     if(nUpdateType_ == UT_FULL){
-        for(auto &[idAuthor, author] :lib.authors){
-            if(!author.idTags.empty())
-                stTagetAuthors_.insert(std::move(author));
+        if(lib.authors.empty()){
+            std::unordered_map<int, SAuthor> tempAuthors;
+            QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+            query.setForwardOnly(true);
+            query.prepare(u"SELECT DISTINCT a.id, a.name1, a.name2, a.name3, a.id_lib "
+                          u"FROM author a "
+                          u"JOIN author_tag at ON a.id = at.id_author "
+                          u"WHERE a.id_lib = :idLib"_s);
+            query.bindValue(u":idLib"_s, idLib_);
+            if (!query.exec()) [[unlikely]]
+                LogWarning << query.lastError().text();
+            else{
+                while (query.next()) {
+                    int id = query.value(0).toInt();
+                    SAuthor author;
+                    author.sFirstName = query.value(2).toString().trimmed();;
+                    author.sLastName = query.value(1).toString().trimmed();;
+                    author.sMiddleName = query.value(3).toString().trimmed();;
+                    tempAuthors[id] = author;
+                }
+            }
+            query.prepare(u"SELECT at.id_author, at.id_tag FROM author_tag at JOIN author a ON a.id = at.id_author WHERE a.id_lib = :idLib"_s);
+            query.bindValue(u":idLib"_s, idLib_);
+
+            if (!query.exec()) [[unlikely]]
+                LogWarning << query.lastError().text();
+            else{
+                while (query.next()) {
+                    uint idAuthor = query.value(0).toUInt();
+                    uint idTag = query.value(1).toUInt();
+                    if (tempAuthors.contains(idAuthor))
+                        tempAuthors[idAuthor].idTags.insert(idTag);
+                }
+            }
+            for (const auto& pair : tempAuthors)
+                stTagetAuthors_.insert(pair.second);
+        }else{
+            for(auto &[idAuthor, author] :lib.authors){
+                if(!author.idTags.empty())
+                    stTagetAuthors_.insert(std::move(author));
+            }
         }
 
-        for(const auto &[idBook, book] :lib.books){
-            if(!book.idTags.empty() && book.idInLib!=0)
-                mBooksTags_[book.idInLib] = std::move(book.idTags);
+        if(lib.books.empty()){
+            std::unordered_map<int, SAuthor> tempAuthors;
+            QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+            query.setForwardOnly(true);
+            query.prepare(u"SELECT b.id_inlib, bt.id_tag FROM book_tag bt JOIN book b ON b.id = bt.id_book WHERE b.id_lib = :idLib"_s);
+            query.bindValue(u":idLib"_s, idLib_);
+            if (!query.exec()) [[unlikely]]
+                LogWarning << query.lastError().text();
+            else{
+                while (query.next()) {
+                    uint idBook = query.value(0).toUInt();
+                    uint idTag = query.value(1).toUInt();
+                    mBooksTags_[idBook].insert(idTag);
+                }
+            }
+        }else{
+            for(const auto &[idBook, book] :lib.books){
+                if(!book.idTags.empty() && book.idInLib!=0)
+                    mBooksTags_[book.idInLib] = std::move(book.idTags);
+            }
         }
 
-        for(const auto &[idSequence, sequence] :lib.serials){
-            if(!sequence.idTags.empty())
-                mSequenceTags_[sequence.sName] = std::move(sequence.idTags);
+        if(lib.serials.empty()){
+            QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+            query.prepare(u"SELECT s.name, st.id_tag FROM seria s JOIN seria_tag st ON s.id = st.id_seria WHERE s.id_lib = :idLib"_s);
+            query.setForwardOnly(true);
+            query.bindValue(u":idLib"_s, idLib_);
+            if (!query.exec()) [[unlikely]]
+                LogWarning << query.lastError().text();
+            else{
+                while (query.next()) {
+                    QString sName = query.value(0).toString();
+                    uint idTag = query.value(1).toUInt();
+                    mSequenceTags_[sName].insert(idTag);
+                }
+            }
+        }else{
+            for(const auto &[idSequence, sequence] :lib.serials){
+                if(!sequence.idTags.empty())
+                    mSequenceTags_[sequence.sName] = std::move(sequence.idTags);
+            }
         }
     }
 }
@@ -395,9 +464,9 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     {
         SAuthor author;
         auto element = authors.at(i).toElement();
-        author.sFirstName = element.elementsByTagName(QStringLiteral("first-name")).at(0).toElement().text().trimmed();
-        author.sLastName = element.elementsByTagName(QStringLiteral("last-name")).at(0).toElement().text().trimmed();
-        author.sMiddleName = element.elementsByTagName(QStringLiteral("middle-name")).at(0).toElement().text().trimmed();
+        author.sFirstName = element.elementsByTagName(u"first-name"_s).at(0).toElement().text().trimmed();
+        author.sLastName = element.elementsByTagName(u"last-name"_s).at(0).toElement().text().trimmed();
+        author.sMiddleName = element.elementsByTagName(u"middle-name"_s).at(0).toElement().text().trimmed();
         vAuthors.push_back(author);
     }
     QStringList listGenres;
