@@ -118,7 +118,7 @@ bool kioMkDir(const QUrl &dir)
         dirCreateJob->start();
         dirCreateJob->exec();
         if(dirCreateJob->error()){
-            qDebug() << dirCreateJob->errorString();
+            LogWarning << dirCreateJob->errorString();
             return false;
         }
         return true;
@@ -205,7 +205,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
        QFile book_file(FileName);
        if(!book_file.open(QFile::ReadOnly)) [[unlikely]]
        {
-           MyDBG  << "Error open file name " << FileName;
+           LogWarning  << "Error open file name:" << FileName;
            return false;
        }
        outbuff.setData(book_file.readAll());
@@ -222,7 +222,7 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
        smtp.sendMail(msg);
        if(!smtp.waitForMailSent()) [[unlikely]]
        {
-           MyDBG << "Error send e-mail.";
+           LogWarning << "Error send e-mail.";
            return false;
        }
 
@@ -248,14 +248,14 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            urlDst.setQuery(u""_s);
            validateFileName(urlDst);
            if(!kioMkDir(urlDst.adjusted(QUrl::RemoveFilename))) [[unlikely]]{
-               MyDBG << "Could not make dir: " << urlDst;
+               LogWarning << "Could not make dir:" << urlDst;
                return false;
            }
            KIO::FileCopyJob *jobCopy = KIO::file_move(urlSrc, urlDst, -1, KIO::Overwrite | KIO::HideProgressInfo );
            jobCopy->start();
            jobCopy->exec();
            if (jobCopy->error()) [[unlikely]]{
-               MyDBG << jobCopy->errorString();
+               LogWarning << jobCopy->errorString();
                return false;
            }
 
@@ -325,7 +325,7 @@ void ExportThread::export_books()
             QuaZip uz(LibPath % QStringLiteral("/") % archive);
             if(!uz.open(QuaZip::mdUnzip)) [[unlikely]]
             {
-                MyDBG << "Error open archive! " << archive;
+                LogWarning << "Error open archive:" << archive;
                 continue;
             }
             if(uz.getEntriesCount() > 1)
@@ -504,11 +504,11 @@ void ExportThread::export_lib()
 
         if (!dbase.open()) [[unlikely]]
         {
-            MyDBG << dbase.lastError().text();
+            LogWarning << dbase.lastError().text();
             return;
         }
         QSqlQuery query(dbase);
-        query.exec(QStringLiteral("SELECT id,name FROM tag"));
+        query.exec(u"SELECT id,name FROM tag"_s);
         while(query.next())
         {
             uint id = query.value(0).toUInt();
@@ -546,7 +546,7 @@ void ExportThread::export_lib()
     inpx.open(QFile::WriteOnly);
     if(!inpx.isOpen()) [[unlikely]]
     {
-        MyDBG << u"Error create file: "_s + sInpxFile;
+        LogWarning << u"Error create file:"_s + sInpxFile;
         return;
     }
 

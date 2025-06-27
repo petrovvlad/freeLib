@@ -682,6 +682,9 @@
              <property name="icon">
               <iconset theme="view-list-details"/>
              </property>
+             <property name="shortcut">
+              <string>Ctrl+1</string>
+             </property>
              <property name="checkable">
               <bool>true</bool>
              </property>
@@ -697,6 +700,9 @@
              </property>
              <property name="icon">
               <iconset theme="view-list-tree"/>
+             </property>
+             <property name="shortcut">
+              <string>Ctrl+2</string>
              </property>
              <property name="checkable">
               <bool>true</bool>
@@ -1074,6 +1080,9 @@
    </property>
    <property name="text">
     <string>&amp;Preferences</string>
+   </property>
+   <property name="shortcut">
+    <string>Ctrl+Shift+,</string>
    </property>
    <property name="menuRole">
     <enum>QAction::MenuRole::PreferencesRole</enum>

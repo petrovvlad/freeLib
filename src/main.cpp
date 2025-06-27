@@ -21,14 +21,14 @@
 
 void UpdateLibs()
 {
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
         g::idCurrentLib = 0;
     else{
         auto settings = GetSettings();
-        g::idCurrentLib = settings->value(QStringLiteral("LibID"), 0).toInt();
-        QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-        query.exec(QStringLiteral("SELECT id,name,path,inpx,version,firstauthor,woDeleted FROM lib ORDER BY name"));
-        //                                0  1    2    3    4       5           6
+        g::idCurrentLib = settings->value(u"LibID"_s, 0).toInt();
+        QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+        query.exec(u"SELECT id,name,path,inpx,version,firstauthor,woDeleted FROM lib ORDER BY name"_s);
+        //                  0  1    2    3    4       5           6
         g::libs.clear();
         while(query.next())
         {
@@ -43,10 +43,8 @@ void UpdateLibs()
         if(g::libs.empty())
             g::idCurrentLib = 0;
         else{
-            if(g::idCurrentLib == 0)
+            if(g::idCurrentLib == 0 || !g::libs.contains(g::idCurrentLib))
                 g::idCurrentLib = g::libs.cbegin()->first;
-            if(!g::libs.contains(g::idCurrentLib))
-                g::idCurrentLib = 0;
         }
     }
 }
@@ -372,6 +370,8 @@ int main(int argc, char *argv[])
             return 0;
         }
     }
+    Q_INIT_RESOURCE(resource);
+    qputenv("QT_LOGGING_RULES", "qt.text.font.db=false");
 
 #ifdef Q_OS_MACX
     if ( QSysInfo::MacintoshVersion > QSysInfo::MV_10_8 )
@@ -487,6 +487,6 @@ int main(int argc, char *argv[])
     if(pMainWindow)
         delete pMainWindow;
 
-    QDir(QDir::tempPath() + QStringLiteral("/freeLib/")).removeRecursively();
+    QDir(QDir::tempPath() + u"/freeLib/"_s).removeRecursively();
     return result;
 }

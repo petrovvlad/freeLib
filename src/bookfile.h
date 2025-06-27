@@ -3,7 +3,8 @@
 
 #include "library.h"
 
-#include <QDomDocument>
+#include "epubreader.h"
+
 
 class BookFile
 {
@@ -30,8 +31,8 @@ private:
     void annotationFb2();
     void annotationFb2(const QDomDocument &doc);
     void annotationZip();
-    QImage coverAnnotationEpub();
-    QImage coverAnnotationEpub(QuaZip &zipEpub);
+    QImage coverEpub();
+    void annotationEpub();
 
 #ifdef USE_DEJVULIBRE
     QImage coverDjvu();
@@ -39,14 +40,15 @@ private:
     QImage coverZip();
     QImage createCover();
     void cleanCoversCache();
+    void initializeEpub();
 
     SLib *pLib_;
     uint idBook_;
     QFile file_;
     QDateTime timeBirth_;
-    //QBuffer bufferFile_;
     QByteArray data_;
     QString sAnnotation_;
+    std::unique_ptr<EpubReader> pEpub_;
     bool bOpen_;
 };
 

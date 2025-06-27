@@ -13,7 +13,7 @@
 #include <quazip/quazip.h>
 #endif
 
-#define MyDBG (qDebug()<<__FILE__<<__LINE__<<__PRETTY_FUNCTION__)
+#define LogWarning (qWarning()<<__FILE__<<__LINE__<<__PRETTY_FUNCTION__)
 
 #if (QT_VERSION < QT_VERSION_CHECK(6, 4, 0))
 // https://doc.qt.io/qt-6/qstring.html#operator-22-22_s

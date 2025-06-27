@@ -87,9 +87,9 @@ void DjVu::waitForDdjvuMessage(ddjvu_message_tag_t tag )
     {
         if(msg->m_any.tag == DDJVU_ERROR) [[unlikely]]{
             if (msg->m_error.filename)
-                MyDBG << "ddjvu: %s\nddjvu: '%s:%d'\n" << msg->m_error.message << msg->m_error.filename <<  msg->m_error.lineno;
+                LogWarning << "ddjvu:" << msg->m_error.message << "ddjvu:" << "'" << msg->m_error.filename << ":" << msg->m_error.lineno;
             else
-                MyDBG << "ddjvu: %s\n" << msg->m_error.message;
+                LogWarning << "ddjvu:" << msg->m_error.message;
             return;
         }
         djvu_message_pop(pContext_);

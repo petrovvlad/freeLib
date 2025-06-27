@@ -541,7 +541,7 @@ void Options::readPasswords()
     case QKeychain::EntryNotFound:
         break;
     default:
-        qDebug() << "Error read password " <<  job.errorString();
+        LogWarning << "Error read password " <<  job.errorString();
     }
 #endif //USE_HTTSERVER
     int countExport = vExportOptions.size();
@@ -584,7 +584,7 @@ void Options::savePasswords()
     job.start();
     loop.exec();
     if (job.error()) [[unlikely]]
-        MyDBG << "Error save password " << job.errorString();
+        LogWarning << "Error save password" << job.errorString();
 #endif //USE_HTTSERVER
     int countExport = vExportOptions.size();
     for(int iExport=0; iExport<countExport; iExport++){

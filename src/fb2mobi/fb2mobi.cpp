@@ -1566,7 +1566,7 @@ QString fb2mobi::convert(uint idBook)
     QFile f(sTmpDir_ + u"/book.fb2"_s);
     if(!f.open(QIODevice::ReadOnly | QIODevice::Text))
     {
-        qDebug() << "Error open fb2 file: "<<f.fileName();
+        LogWarning << "Error open fb2 file:" << f.fileName();
         return u""_s;
     }
     join_seria = false;
@@ -1711,26 +1711,27 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         QFile::setPermissions(sFileCss, QFileDevice::WriteOwner | QFileDevice::ReadOwner);
     }
 
+    QString sAppDir = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation);
     dir.mkpath(sTmpDir_ + u"/OEBPS/pic"_s);
     if(pExportOptions_->nVignette > 0)
     {
-        dir.setPath(u":/xsl/img"_s);
-        QFileInfoList list = dir.entryInfoList({u"*.png"_s});
-        for(const QFileInfo &i: std::as_const(list))
-        {
-            QString sFileVignette = sTmpDir_ % u"/OEBPS/pic/"_s % i.fileName();
-            QFile::copy(i.absoluteFilePath(), sFileVignette);
+        const static QStringList imgs{u"te.png"_s, u"h0tb.png"_s, u"h0ta.png"_s, u"h1tb.png"_s, u"h1ta.png"_s};
+        QString sSrcPrefix = sAppDir + u"/xsl/img/"_s;
+        const QString sDestPrefix = sTmpDir_ + u"/OEBPS/pic/"_s;
+        for(const auto &img :std::as_const(imgs)){
+            QString sImagePath = sSrcPrefix + img;
+            if( !QFile::exists(sImagePath) )
+                sImagePath = u":/xsl/img/"_s + img;
+            QString sDestImagePath = sDestPrefix + img;
+            QFile::copy(sImagePath, sDestImagePath);
         }
     }
 
-    QString HomeDir;
-    if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
-        HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
-    QString sFontsPath = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
+    QString sFontsPath = sAppDir + u"/fonts/"_s;
 
     QFile css(sFileCss);
     if(!css.open(QFile::Append)){
-        MyDBG << css.errorString();
+        LogWarning << css.errorString();
     }
     int count = pExportOptions_->vFontExportOptions.size();
     QStringList fonts;
@@ -1758,9 +1759,9 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
                     }
                     else
                     {
-                        if(QFile::exists(sFontsPath % u"/"_s % sFileFont))
+                        if(QFile::exists(sFontsPath + sFileFont))
                         {
-                            QFile::copy(sFontsPath % u"/"_s % sFileFont, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
+                            QFile::copy(sFontsPath + sFileFont, sTmpDir_ + u"/OEBPS/fonts/font%1.ttf"_s.arg(index));
                         }
                         else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % sFileFont))
                         {
@@ -1846,7 +1847,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         QFile f(sTmpDir_ + u"/book%1.fb2"_s.arg(i));
         if(!f.open(QIODevice::ReadOnly | QIODevice::Text))
         {
-            qDebug()<<"Error open fb2 file: "<<f.fileName();
+            LogWarning << "Error open fb2 file:" << f.fileName();
             return u""_s;
         }
         current_book = i + 1;
@@ -1952,7 +1953,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
             "<image width=\""_s % sWidth % u"\" height=\""_s % sHeight % u"\" xlink:href=\""_s % sFileCover_ % u"\" xmlns:xlink=\"http://www.w3.org/1999/xlink\"/>\n"
             "</svg>\n"
             "</body>\n"
-            "</html>\n"_s.arg(width).arg(height);
+            "</html>\n"_s;
         QFile fileCoverHtml(sTmpDir_ + u"/OEBPS/cover.xhtml"_s);
         if(fileCoverHtml.open(QIODevice::WriteOnly)){
             fileCoverHtml.write(sCoverHtml.toUtf8());

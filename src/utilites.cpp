@@ -71,7 +71,7 @@ bool openDB(const QString &sName)
     dbase.setDatabaseName(sFileDB);
     if (!dbase.open()) [[unlikely]]
     {
-        MyDBG << "Error connect! " << sFileDB;
+        LogWarning << "Error connect:" << sFileDB;
         return false;
     }
     QSqlQuery query(dbase);
@@ -86,7 +86,7 @@ bool openDB(const QString &sName)
         creatDB(sFileDB);
         if (!dbase.open()) [[unlikely]]
         {
-            MyDBG << "Error connect! " << sFileDB;
+            LogWarning << "Error connect" << sFileDB;
             return false;
         }
     }

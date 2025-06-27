@@ -5,7 +5,6 @@
 #include <QComboBox>
 #include <QMessageBox>
 #include <QSqlError>
-#include <QDebug>
 #include <QSqlQuery>
 
 #include "library.h"
@@ -107,7 +106,7 @@ void TagDialog::btnOk()
         QVariant idIcon = qobject_cast<QComboBox*>(ui->tableWidget->cellWidget(i, 1))->currentData();
         query.bindValue(QStringLiteral(":id_icon"), idIcon);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
     }
 }
 

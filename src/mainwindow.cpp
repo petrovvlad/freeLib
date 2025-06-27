@@ -1,4 +1,3 @@
-#define QT_USE_QSTRINGBUILDER
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
@@ -337,6 +336,9 @@ MainWindow::MainWindow(QWidget *parent) :
     addShortcutToToolTip(ui->btnLibrary, ui->actionAddLibrary);
     addShortcutToToolTip(ui->btnCollapseAll);
     addShortcutToToolTip(ui->btnExpandAll);
+    addShortcutToToolTip(ui->btnOption, ui->actionPreference);
+    addShortcutToToolTip(ui->btnListView);
+    addShortcutToToolTip(ui->btnTreeView);
 }
 
 void MainWindow::UpdateTags()
@@ -671,7 +673,7 @@ void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
         query.bindValue(u":idAuthor"_s, idAuthor);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
 
         query.prepare(u"INSERT INTO author_tag (id_author,id_tag) "
                        "SELECT id, :idTag FROM author WHERE name1=:name1 AND name2=:name2 AND name3=:name3 AND id_lib!=:idLib"_s);
@@ -681,7 +683,7 @@ void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
         query.bindValue(u":name2"_s, author.sFirstName);
         query.bindValue(u":name3"_s, author.sMiddleName);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
         for(auto &lib :g::libs){
             if(lib.first != g::idCurrentLib && lib.second.bLoaded){
                 auto it = std::ranges::find_if(lib.second.authors, [&author](auto &&iAuthor)
@@ -700,7 +702,7 @@ void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
         query.bindValue(u":idAuthor"_s, idAuthor);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
 
         query.prepare(u"DELETE FROM author_tag WHERE (id_tag=:idTag) AND id_author IN ("
                       "SELECT id FROM author WHERE name1=:name1 AND name2=:name2 AND name3=:name3 AND id_lib!=:idLib);"_s);
@@ -710,7 +712,7 @@ void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
         query.bindValue(u":name2"_s, author.sFirstName);
         query.bindValue(u":name3"_s, author.sMiddleName);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
     }
 }
 
@@ -725,7 +727,7 @@ void MainWindow::setTagBook(uint idTag, uint idBook, bool bSet)
         query.bindValue(u":idBook"_s, idBook);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
 
         query.prepare(u"INSERT INTO book_tag (id_book,id_tag) "
                       "SELECT id, :idTag FROM book WHERE id_inlib=:idInLib AND archive=:archive AND id_lib!=:idLib"_s);
@@ -734,7 +736,7 @@ void MainWindow::setTagBook(uint idTag, uint idBook, bool bSet)
         query.bindValue(u":idInLib"_s, book.idInLib);
         query.bindValue(u":archive"_s, book.sArchive);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
     }else{
         idTags.erase(idTag);
         query.exec(u"PRAGMA foreign_keys = ON"_s);
@@ -742,7 +744,7 @@ void MainWindow::setTagBook(uint idTag, uint idBook, bool bSet)
         query.bindValue(u":idBook"_s, idBook);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
 
         query.prepare(u"DELETE FROM book_tag WHERE (id_tag=:idTag) AND id_book IN ("
                       "SELECT id FROM book WHERE id_inlib=:idInLib AND archive=:archive AND id_lib!=:idLib);"_s);
@@ -751,7 +753,7 @@ void MainWindow::setTagBook(uint idTag, uint idBook, bool bSet)
         query.bindValue(u":idInLib"_s, book.idInLib);
         query.bindValue(u":archive"_s, book.sArchive);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
     }
 }
 
@@ -766,7 +768,7 @@ void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
         query.bindValue(u":idSequence"_s, idSequence);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
 
         query.prepare(u"INSERT INTO seria_tag (id_seria,id_tag) "
                       "SELECT id, :idTag FROM seria WHERE name=:name AND id_lib!=:idLib"_s);
@@ -774,7 +776,7 @@ void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
         query.bindValue(u":idLib"_s, g::idCurrentLib);
         query.bindValue(u":name"_s, sequence.sName);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
     }else{
         idTags.erase(idTag);
         query.exec(u"PRAGMA foreign_keys = ON"_s);
@@ -782,7 +784,7 @@ void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
         query.bindValue(u":idSequence"_s, idSequence);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
 
         query.prepare(u"DELETE FROM seria_tag WHERE (id_tag=:idTag) AND id_seria IN ("
                       "SELECT id FROM seria WHERE name=:name AND id_lib!=:idLib);"_s);
@@ -790,7 +792,7 @@ void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
         query.bindValue(u":idLib"_s, g::idCurrentLib);
         query.bindValue(u":name"_s, sequence.sName);
         if(!query.exec()) [[unlikely]]
-            MyDBG << query.lastError().text();
+            LogWarning << query.lastError().text();
     }
 }
 
@@ -1752,6 +1754,7 @@ void MainWindow::ManageLibrary()
         fillLanguages();
         FillAuthors();
         FillSerials();
+        FillGenres();
         switch(ui->tabWidget->currentIndex()){
         case TabAuthors:
             onSerachAuthorsChanded(ui->searchAuthor->text());
@@ -1761,10 +1764,12 @@ void MainWindow::ManageLibrary()
             onSerachSeriesChanded(ui->searchSeries->text());
             SelectSeria();
             break;
+        case TabGenres:
+            SelectGenre();
+            break;
         case TabSearch:
             ui->Books->clear();
         }
-        FillGenres();
         future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
@@ -2884,7 +2889,7 @@ void MainWindow::onSetRating(QTreeWidgetItem *item, uchar nRating)
     query.bindValue(QStringLiteral(":nRating"), nRating);
     query.bindValue(QStringLiteral(":idBook"), idBook);
     if(!query.exec())
-        MyDBG << query.lastError().text();
+        LogWarning << query.lastError().text();
     else{
         item->setData(5, Qt::UserRole, nRating);
         g::libs[g::idCurrentLib].books[idBook].nStars = nRating;

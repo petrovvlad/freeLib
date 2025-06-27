@@ -32,7 +32,7 @@ protected:
     void importBooksFromZip(const QString &sPath, const QString &sArchName, uint &nBooksCount);
 
     void readFB2(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
-    void readEPUB(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
+    void readEPUB(const QByteArray &ba, QString sFileName, QString sArhName,qint32 fileSize=0);
     void readFB2_test(const QByteArray& ba, QString file_name, QString arh_name);
 private:
     QString sInpxFile_;
@@ -70,6 +70,7 @@ private:
                  int size, uint idInLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
 
     void AddGenre(uint idBook, const QString &sGenre, uint idLib);
+    void cleanUnsortedGenre();
 
 };
 

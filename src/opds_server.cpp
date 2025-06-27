@@ -3160,12 +3160,12 @@ void opds_server::server_run()
         {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
             if (!tcpServer_.listen(QHostAddress::Any, nPort_) || !httpServer_.bind(&tcpServer_))
-                qDebug() << "Unable to start the server.";
+                LogWarning << "Unable to start the server.";
             else
                 status_ = Status::run;
 #else
             if (!tcpServer_.listen(QHostAddress::Any, nPort_))
-                qDebug() << "Unable to start the server.";
+                LogWarning << "Unable to start the server.";
             else{
                 httpServer_.bind(&tcpServer_);
                 status_ = Status::run;
