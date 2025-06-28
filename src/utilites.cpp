@@ -224,6 +224,14 @@ bool openDB(const QString &sName)
         query.exec(u"COMMIT;"_s);
         query.exec(u"VACUUM"_s);
     }
+    if(nMinorVersion < 7) [[unlikely]]{
+        query.exec(u"BEGIN TRANSACTION;"_s);
+        query.exec(u"UPDATE book_genre SET id_genre = 105 WHERE id_genre = 131;"_s);
+        query.exec(u"UPDATE genre SET keys = 'sf_history;fantasy_alt_hist;' WHERE id = 105;"_s);
+        query.exec(u"DELETE FROM genre WHERE id = 131;"_s);
+        query.exec(u"INSERT OR REPLACE INTO params (id, name, value) VALUES ((SELECT id FROM params WHERE name = 'version_minor'), 'version_minor', 7)"_s);
+        query.exec(u"COMMIT;"_s);
+    }
     query.exec(u"PRAGMA foreign_keys = 1;"_s);
 
     return true;
@@ -234,15 +242,15 @@ void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
     QSqlQuery query(dbase);
     if(delete_only)
     {
-        query.exec(QStringLiteral("update book set deleted=1 where id_lib=") + QString::number(id_lib));
+        query.exec(u"update book set deleted=1 where id_lib="_s + QString::number(id_lib));
     }
     else
     {
-        query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-        query.exec(QStringLiteral("delete from book where id_lib=") + QString::number(id_lib));
-        query.exec(QStringLiteral("delete from author where id_lib=") + QString::number(id_lib));
-        query.exec(QStringLiteral("delete from seria where id_lib=") + QString::number(id_lib));
-        query.exec(QStringLiteral("VACUUM"));
+        query.exec(u"PRAGMA foreign_keys = ON"_s);
+        query.exec(u"delete from book where id_lib="_s + QString::number(id_lib));
+        query.exec(u"delete from author where id_lib="_s + QString::number(id_lib));
+        query.exec(u"delete from seria where id_lib="_s + QString::number(id_lib));
+        query.exec(u"VACUUM"_s);
     }
 }
 
