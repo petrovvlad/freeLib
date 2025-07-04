@@ -2,11 +2,15 @@
 #include "opds_server.h"
 
 #include <algorithm>
+#include <ranges>
 #include <unordered_set>
+#include <QJsonArray>
+#include <QJsonObject>
 #include <QSettings>
 #include <QNetworkProxy>
 #include <QStringBuilder>
 #include <QDir>
+#include <QtConcurrent/QtConcurrentMap>
 #include <QRegularExpression>
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
 #include <QHttpHeaders>
@@ -308,9 +312,9 @@ opds_server::opds_server(QObject *parent) :
                 "<Description>Search on freeLib</Description>"
                 "<InputEncoding>UTF-8</InputEncoding>"
                 "<OutputEncoding>UTF-8</OutputEncoding>"
-                "<Url type=\"application/atom+xml\" xmlns:atom=\"http://www.w3.org/2005/Atom\" template=\""_s + sTemplate + u"\"/>"_s
-               u"<Url type=\"application/atom+xml;profile=opds-catalog;kind=acquisition\" template=\""_s + sTemplate + u"\"/>"_s
-               "</OpenSearchDescription>";
+                "<Url type=\"application/atom+xml\" xmlns:atom=\"http://www.w3.org/2005/Atom\" template=\""_s % sTemplate % u"\"/>"_s
+               u"<Url type=\"application/atom+xml;profile=opds-catalog;kind=acquisition\" template=\""_s % sTemplate % u"\"/>"_s
+               u"</OpenSearchDescription>"_s;
         return result;
     });
 
@@ -500,7 +504,7 @@ std::vector<uint> opds_server::book_list(const SLib &lib, uint idAuthor, uint id
             const auto &sequence1 = lib.books.at(id1).mSequences;
             const auto &sequence2 = lib.books.at(id2).mSequences;
             uint nNumInSequence1 = sequence1.empty() ?0 : sequence1.begin()->second;
-            uint nNumInSequence2 = sequence1.empty() ?0 : sequence2.begin()->second;
+            uint nNumInSequence2 = sequence2.empty() ?0 : sequence2.begin()->second;
             return nNumInSequence1 < nNumInSequence2;
         });
     }
@@ -522,7 +526,9 @@ std::vector<uint> opds_server::listGenreBooks(const SLib &lib, ushort idGenre)
             }
         }
     }
-    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName); });
+    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
+        return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName);
+    });
 
     return vBooks;
 }
@@ -594,7 +600,7 @@ auto opds_server::searchSequence(const SLib &lib, const QString &sSequence)
                 for(const auto &iSequance :book.mSequences){
                     const auto &secuence = lib.serials.at(iSequance.first);
                     QString sName  = simplifySearchString(secuence.sName);
-                    if(sName.contains(sSearchSimplefied)) [[unlikely]]{
+                    if(sName.contains(sSearchSimplefied)){
                         std::lock_guard<std::mutex> guard(m);
                         mSequence[iSequance.first]++;
                     }
@@ -2549,6 +2555,22 @@ QHttpServerResponse opds_server::bookOPDS(uint idLib, uint idBook, const QString
     return convert(idLib, idBook, sFormat, true);
 }
 
+std::unordered_map<ushort, uint> opds_server::countBooksByGenre(const SLib &lib, ushort idParentGenre)
+{
+    std::unordered_map<ushort, uint> mCounts;
+    for(const auto &iBook :lib.books){
+        if(!iBook.second.bDeleted) [[likely]]{
+            for(auto iGenre: iBook.second.vIdGenres){
+                if(g::genres.at(iGenre).idParrentGenre == idParentGenre){
+                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[iBook.second.idLanguage])
+                        ++mCounts[iGenre];
+                }
+            }
+        }
+    }
+    return mCounts;
+}
+
 QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, const QHttpServerRequest &request)
 {
     QUrl url;
@@ -2566,51 +2588,36 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
     Q_ASSERT(!pLib->serials.contains(0));
     std::vector<ushort> vIdGenres;
     std::unordered_map<ushort, uint> mCounts;
+
     if(idParentGenre != 0)
     {
         if(g::genres[idParentGenre].idParrentGenre > 0){
             std::vector<uint> vBooks = listGenreBooks(*pLib, idParentGenre);
             return generatePageHTML(vBooks, *pLib, tr("Books by genre") % u": " % g::genres[idParentGenre].sName, sLibUrl, url, true);
         }
-        for(const auto &iGenre :g::genres){
-            if(iGenre.second.idParrentGenre == idParentGenre)
-                vIdGenres.push_back(iGenre.first);
-        }
-        for(const auto &iBook :pLib->books){
-            if(!iBook.second.bDeleted) [[likely]]{
-                for(auto iGenre: iBook.second.vIdGenres){
-                    if(g::genres[iGenre].idParrentGenre == idParentGenre){
-                        if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
-                            ++mCounts[iGenre];
-                    }
-                }
-            }
-        }
+
+        mCounts = countBooksByGenre(*pLib, idParentGenre);
+        vIdGenres.reserve(mCounts.size());
+        std::ranges::copy(mCounts | std::views::keys, std::back_inserter(vIdGenres));
     }
     else
     {
-        for(const auto &iGenre :g::genres){
-            if(iGenre.second.idParrentGenre == 0)
-                vIdGenres.push_back(iGenre.first);
-        }
+        auto filtered = g::genres | std::views::filter([](const auto& iGenre) {return iGenre.second.idParrentGenre == 0;}) | std::views::keys;
+        vIdGenres.assign(filtered.begin(), filtered.end());
     }
-    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
+    std::ranges::sort(vIdGenres, [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QDomElement feed;
     feed = docHeaderHTML(sSessionQuery, pLib->name, sLibUrl);
 
     for(auto idGenre: vIdGenres)
     {
         uint nCount = mCounts[idGenre];
-        if(nCount == 0 && idParentGenre != 0)
-            continue;
-        QDomElement div = doc_.createElement(u"DIV"_s);
+        QDomElement div = doc_.createElement(u"div"_s);
         feed.appendChild(div);
         div.setAttribute(u"class"_s, u"item"_s);
         addHRefNode(div, g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery, u"block"_s);
         if(idParentGenre != 0)
-        {
-            QDomElement el = AddTextNode(u"div"_s, QString::number(nCount) + u" "_s + tr("books"), div);
-        }
+            AddTextNode(u"div"_s, QString::number(nCount) % u" "_s % tr("books"), div);
     }
 
     return responseHTML();
@@ -2641,50 +2648,30 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
             QHttpServerResponse result(sPage);
             return result;
         }
-        for(const auto &iGenre :g::genres){
-            if(iGenre.second.idParrentGenre == idParentGenre)
-                vIdGenres.push_back(iGenre.first);
-        }
-        for(const auto &iBook :pLib->books){
-            if(!iBook.second.bDeleted) [[likely]]{
-                for(auto iGenre: iBook.second.vIdGenres){
-                    if(g::genres[iGenre].idParrentGenre == idParentGenre){
-                        if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
-                            ++mCounts[iGenre];
-                    }
-                }
-            }
-        }
+
+        mCounts = countBooksByGenre(*pLib, idParentGenre);
+        vIdGenres.reserve(mCounts.size());
+        std::ranges::copy(mCounts | std::views::keys, std::back_inserter(vIdGenres));
     }
     else
     {
-        for(const auto &iGenre :g::genres){
-            if(iGenre.second.idParrentGenre == 0)
-                vIdGenres.push_back(iGenre.first);
-        }
+        auto filtered = g::genres | std::views::filter([](const auto& iGenre) {return iGenre.second.idParrentGenre == 0;}) | std::views::keys;
+        vIdGenres.assign(filtered.begin(), filtered.end());
     }
 
-    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
+    std::ranges::sort(vIdGenres, [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QDomElement feed;
     feed = docHeaderOPDS(tr("Books by genre"), u"tag:root:genre"_s, sLibUrl, sSession);
 
     for(auto idGenre: vIdGenres)
     {
-        uint nCount = mCounts[idGenre];
-        if(nCount == 0 && idParentGenre != 0)
-            continue;
         QString sContent;
         if(idParentGenre != 0)
-        {
             sContent = QString::number(mCounts[idGenre]) % u" "_s % tr("books");
-        }
         else
-        {
             sContent =  tr("Books of genre") % u" "_s % g::genres[idGenre].sName;
-        }
         addEntry(feed, u"tag:root:genre:"_s + g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery,
                  g::genres[idGenre].sName, sContent);
-
     }
 
     QHttpServerResponse result(doc_.toString());
@@ -2714,38 +2701,23 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
             QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books by genre") % u": " % g::genres[idParentGenre].sName, sLibUrl, url);
             return result;
         }
-        for(const auto &iGenre :g::genres){
-            if(iGenre.second.idParrentGenre == idParentGenre)
-                vIdGenres.push_back(iGenre.first);
-        }
-        for(const auto &iBook :pLib->books){
-            if(!iBook.second.bDeleted) [[likely]]{
-                for(auto idGenre: iBook.second.vIdGenres){
-                    if(g::genres[idGenre].idParrentGenre == idParentGenre){
-                        if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
-                            ++mCounts[idGenre];
-                    }
-                }
-            }
-        }
+        mCounts = countBooksByGenre(*pLib, idParentGenre);
+        vIdGenres.reserve(mCounts.size());
+        std::ranges::copy(mCounts | std::views::keys, std::back_inserter(vIdGenres));
     }
     else
     {
-        for(const auto &iGenre :g::genres){
-            if(iGenre.second.idParrentGenre == 0)
-                vIdGenres.push_back(iGenre.first);
-        }
+        auto filtered = g::genres | std::views::filter([](const auto& iGenre) {return iGenre.second.idParrentGenre == 0;}) | std::views::keys;
+        vIdGenres.assign(filtered.begin(), filtered.end());
     }
 
-    std::sort(vIdGenres.begin(), vIdGenres.end(), [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
+    std::ranges::sort(vIdGenres, [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QJsonObject root = docHeaderOPDS2(tr("Books by genre"), sLibUrl, sSession);
 
     QJsonArray navigation;
     for(auto idGenre: vIdGenres)
     {
         uint nCount = idParentGenre != 0 ?mCounts[idGenre] :0;
-        if(nCount == 0 && idParentGenre != 0)
-            continue;
         addNavigation(navigation, g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery, nCount);
     }
     root[u"navigation"] = navigation;

@@ -39,6 +39,7 @@ private:
 
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, bool sequenceless);
     std::vector<uint> listGenreBooks(const SLib& lib, ushort idGenre);
+    std::unordered_map<ushort, uint> countBooksByGenre(const SLib &lib, ushort idParentGenre);
     std::vector<uint> searchTitle(const SLib &lib, const QString &sTitle);
     std::vector<uint> searchBooks(const SLib& lib, const QString &sAuthor, const QString &sTitle);
     static std::vector<uint> searchAuthors(const SLib &lib, const QString &sAuthor);

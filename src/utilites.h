@@ -1,6 +1,7 @@
 #ifndef UTILITES_H
 #define UTILITES_H
 
+#include <ranges>
 #include <QSvgRenderer>
 #include <QString>
 #include <QSqlDatabase>
@@ -79,14 +80,27 @@ std::vector<T> blockingFiltered(const std::unordered_map<T, SequenceType> &seque
 {
     std::vector<T> v;
     v.reserve(sequence.size());
-    for(const auto &it :sequence)
-        v.push_back(it.first);
+    std::ranges::copy(sequence | std::views::keys,  std::back_inserter(v));
 
     return QtConcurrent::blockingFiltered(v, [&](T id) {
         const auto &a = sequence.at(id);
         return keep(a);
     });
 }
+
+template <typename T, typename SequenceType, typename MapFunctor>
+void blockingMap(const std::unordered_map<T, SequenceType> &sequence, MapFunctor &&map)
+{
+    std::vector<T> v;
+    v.reserve(sequence.size());
+    std::ranges::copy(sequence | std::views::keys,  std::back_inserter(v));
+
+    QtConcurrent::blockingMap(v, [&](T id) {
+        const auto &a = sequence.at(id);
+        map(a);
+    });
+}
+
 
 
 #endif // UTILITES_H
