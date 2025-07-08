@@ -25,7 +25,6 @@
         <file>img/icons/document-send.svg</file>
         <file>img/icons/multitags.svg</file>
         <file>img/icons/tray.svg</file>
-
         <file alias="language/abc_ru.txt">ABC/abc_ru.txt</file>
         <file alias="language/abc_uk.txt">ABC/abc_uk.txt</file>
         <file>xsl/hyphenations/de.txt</file>
@@ -51,13 +50,13 @@
         <file>xsl/opds/splash_opera.png</file>
         <file>xsl/opds/styles.css</file>
         <file>xsl/opds/download.svg</file>
-
         <file>img/icons/stars/0star.svg</file>
         <file>img/icons/stars/1star.svg</file>
         <file>img/icons/stars/2star.svg</file>
         <file>img/icons/stars/3star.svg</file>
         <file>img/icons/stars/4star.svg</file>
         <file>img/icons/stars/5star.svg</file>
+        <file>genre.tsv</file>
     </qresource>
     <qresource prefix="/icons">
         <file>img/icons/freelib.png</file>

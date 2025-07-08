@@ -357,35 +357,30 @@ void loadLibrary(uint idLibrary)
 
 void loadGenres()
 {
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+    QString sFile = QStandardPaths::writableLocation(QStandardPaths::AppDataLocation) + u"/genre.tsv"_s;
+    if(!QFile::exists(sFile))
+        sFile = u":/genre.tsv"_s;
+    QFile file(sFile);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        LogWarning << "Cannot open file:" << sFile;
         return;
-    qint64 timeStart;
-    if(g::bVerbose)
-        timeStart = QDateTime::currentMSecsSinceEpoch();
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-
-    g::genres.clear();
-    query.prepare(u"SELECT id, name, id_parent, sort_index, keys FROM genre;"_s);
-    //                                   0   1     2          3           4
-    if(!query.exec()) [[unlikely]]
-        LogWarning << query.lastError().text();
-    while (query.next()) {
-        ushort idGenre = static_cast<ushort>(query.value(0).toUInt());
-        SGenre &genre = g::genres[idGenre];
-        genre.sName = query.value(1).toString();
-        genre.idParrentGenre = static_cast<ushort>(query.value(2).toUInt());
-        QString sKeys = query.value(4).toString();
-#if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-        genre.listKeys = sKeys.split(';', Qt::SkipEmptyParts);
-#else
-        genre.listKeys = sKeys.split(';');
-#endif
-        genre.nSort = static_cast<ushort>(query.value(3).toUInt());
     }
-    if(g::bVerbose){
-        qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
-        qDebug()<< "loadGenre " << timeEnd - timeStart << "msec";
+    QTextStream in(&file);
+    in.readLine(); // Пропускаем заголовок
+    g::genres.reserve(320);
+    while (!in.atEnd()) {
+        QString line = in.readLine();
+        QStringList fields = line.split(u"\t"_s, Qt::SkipEmptyParts);
+        if (fields.size() >= 3) {
+            ushort id = fields[1].toUShort();
+            SGenre &genre = g::genres[id];
+            genre.idParrentGenre = fields[0].toUShort();
+            genre.sName = fields[2];
+            if(genre.idParrentGenre !=0)
+                genre.listKeys = fields[3].split(u',', Qt::SkipEmptyParts);
+        }
     }
+    file.close();
 }
 
 SAuthor::SAuthor()
