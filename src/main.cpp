@@ -1,4 +1,3 @@
-#define QT_USE_QSTRINGBUILDER
 #include <iostream>
 #include <QApplication>
 #include <QNetworkProxy>
@@ -145,7 +144,7 @@ int main(int argc, char *argv[])
             if(!sPassword.isEmpty()){
                 QByteArray baSalt = Options::generateSalt();
                 QByteArray baHash =  Options::passwordToHash(sPassword, baSalt);
-                settings->setValue(u"httpPassword"_s, QString(baSalt.toBase64()) + u":"_s + QString(baHash.toBase64()));
+                settings->setValue(u"httpPassword"_s, QString(QString(baSalt.toBase64()) % u":"_s % QString(baHash.toBase64())));
                 settings->setValue(u"HTTP_need_pasword"_s, true);
             }
             QString sPort = parseOption(argc-(i), &argv[i], "-port");
@@ -192,11 +191,11 @@ int main(int argc, char *argv[])
 
                     if (QFile::exists(sDbpath)) {
                         g::options.sDatabasePath = sDbpath;
-                        settings->setValue(QStringLiteral("database_path"), g::options.sDatabasePath);
+                        settings->setValue(u"database_path"_s, g::options.sDatabasePath);
                         std::cout <<  g::options.sDatabasePath.toStdString() + " - Ok! \n";
                     }
                     else{
-                        std::cout << "The path " + sDbpath.toStdString() + " does not exist! \n";
+                        std::cout << "The path " << sDbpath.toStdString() << " does not exist! \n";
                     }
                 }
                 else{
@@ -256,7 +255,7 @@ int main(int argc, char *argv[])
                             }
                         }
                         else {
-                            std::cout << "The lib path " + libPath.toStdString() + " does not exist\n";
+                            std::cout << "The lib path " << libPath.toStdString() << " does not exist\n";
                         }
                     }else
                     if(!inpxPath.isEmpty() && !sId.isEmpty()) {
@@ -347,6 +346,7 @@ int main(int argc, char *argv[])
                     auto imp_tr = new ImportThread();
                     SLib &lib = g::libs[nId];
 
+                    loadGenres();
                     imp_tr->init(nId, lib, UT_NEW);
                     imp_tr->moveToThread(thread);
                     QObject::connect(thread, &QThread::started, imp_tr, &ImportThread::process);
