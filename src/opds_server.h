@@ -11,10 +11,6 @@
 #include "library.h"
 #include "options.h"
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
-using namespace Qt::Literals::StringLiterals;
-#endif
-
 class opds_server : public QObject
 {
     Q_OBJECT
@@ -31,10 +27,10 @@ private:
     void addHRefNode(QDomNode &node, const QString &sText, const QString &sHRef, const QString &sClass);
     void addDownloadItem(QDomNode &node, const QString &sText, const QString &sHRef);
     static void addNavigation(QJsonArray &navigation, const QString &sTitle, const QString &sHRef, uint nCount=0);
-    static void addLink(QJsonArray &links, const QString sType, const QString &sHRef, const QString &sRel);
-    void addLink(QDomNode &node, const QString sType, const QString &sHRef, const QString &sRel, const QString &sTitle);
-    void addLink(QDomNode &node, const QString sType, const QString &sHRef, const QString &sRel);
-    void addLink(QDomNode &node, const QString sType, const QString &sHRef);
+    static void addLink(QJsonArray &links, const QString &sType, const QString &sHRef, const QString &sRel);
+    void addLink(QDomNode &node, const QString &sType, const QString &sHRef, const QString &sRel, const QString &sTitle);
+    void addLink(QDomNode &node, const QString &sType, const QString &sHRef, const QString &sRel);
+    void addLink(QDomNode &node, const QString &sType, const QString &sHRef);
     void addEntry(QDomElement &feed, const QString &sId, const QString &sHRef, const QString &sTitle, const QString &sContent);
 
     std::vector<uint> book_list(const SLib& lib, uint idAuthor, uint idSeria, bool sequenceless);

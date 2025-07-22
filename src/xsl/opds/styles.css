@@ -163,6 +163,8 @@ a.download {
 img.download {
   height: 1em;
 }
+.annotation p {
+  margin: 0;
 hr {
   color: light-dark(black, white);
   background-color: light-dark(black, white);

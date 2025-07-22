@@ -341,8 +341,26 @@ void opds_server::addTextNode(QDomNode &node, const QString &sName, const QStrin
     el.setAttribute(u"class"_s, sClass);
     if(!sText.isEmpty()) [[likely]]
     {
-        QDomText txt = doc_.createTextNode(sText);
-        el.appendChild(txt);
+        if (sText.contains(u"<p>")) {
+            QDomDocument fragmentDoc;
+            QString wrappedText = u"<root>"_s % sText % u"</root>"_s;
+            if (fragmentDoc.setContent(wrappedText)) {
+                QDomElement root = fragmentDoc.documentElement();
+                QDomNode child = root.firstChild();
+                while (!child.isNull()) {
+                    QDomNode importedNode = doc_.importNode(child, true);
+                    el.appendChild(importedNode);
+                    child = child.nextSibling();
+                }
+            } else {
+                // Если парсинг не удался, добавляем текст как текстовый узел
+                QDomText txt = doc_.createTextNode(sText);
+                el.appendChild(txt);
+            }
+        }else {
+            QDomText txt = doc_.createTextNode(sText);
+            el.appendChild(txt);
+        }
     }
 }
 
@@ -385,7 +403,7 @@ void opds_server::addNavigation(QJsonArray &navigation, const QString &sTitle, c
     navigation.push_back(std::move(entry));
 }
 
-void opds_server::addLink(QJsonArray &links, const QString sType, const QString &sHRef, const QString &sRel)
+void opds_server::addLink(QJsonArray &links, const QString &sType, const QString &sHRef, const QString &sRel)
 {
     QJsonObject link;
     link[u"rel"] = sRel;
@@ -394,7 +412,7 @@ void opds_server::addLink(QJsonArray &links, const QString sType, const QString 
     links.push_back(std::move(link));
 }
 
-void opds_server::addLink(QDomNode &node, const QString sType, const QString &sHRef,const QString &sRel , const QString &sTitle)
+void opds_server::addLink(QDomNode &node, const QString &sType, const QString &sHRef, const QString &sRel , const QString &sTitle)
 {
     QDomElement link = doc_.createElement(u"link"_s);
     node.appendChild(link);
@@ -405,7 +423,7 @@ void opds_server::addLink(QDomNode &node, const QString sType, const QString &sH
     node.appendChild(link);
 }
 
-void opds_server::addLink(QDomNode &node, const QString sType, const QString &sHRef, const QString &sRel)
+void opds_server::addLink(QDomNode &node, const QString &sType, const QString &sHRef, const QString &sRel)
 {
     QDomElement link = doc_.createElement(u"link"_s);
     node.appendChild(link);
@@ -415,7 +433,7 @@ void opds_server::addLink(QDomNode &node, const QString sType, const QString &sH
     node.appendChild(link);
 }
 
-void opds_server::addLink(QDomNode &node, const QString sType, const QString &sHRef)
+void opds_server::addLink(QDomNode &node, const QString &sType, const QString &sHRef)
 {
     QDomElement link = doc_.createElement(u"link"_s);
     node.appendChild(link);
