@@ -108,12 +108,15 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 #else
     connect(ui->useSystemFonts, &QCheckBox::checkStateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
 #endif
+    connect(ui->sidebarFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onSidebarFontChanged);
     connect(ui->listFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onListFontChanged);
     connect(ui->annotationFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onAnnotationFontChanged);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    connect(ui->sidebarFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onSidebarSizeFontChanged);
     connect(ui->listFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onAnnotationSizeFontChanged);
 #else
+    connect(ui->sidebarFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onSidebarSizeFontChanged);
     connect(ui->listFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onAnnotationSizeFontChanged);
 #endif
@@ -323,9 +326,12 @@ void SettingsDlg::LoadSettings()
 #endif
 
     ui->useSystemFonts->setChecked(options_.bUseSytemFonts);
-    QFont font = QFont(options_.sListFontFamaly);
+    QFont font = QFont(options_.sSidebarFontFamaly);
+    ui->sidebarFontComboBox->setCurrentFont(font);
+    ui->sidebarFontSpinBox->setValue(options_.nSidebarFontSize);
+    font = QFont(options_.sBooksListFontFamaly);
     ui->listFontComboBox->setCurrentFont(font);
-    ui->listFontSpinBox->setValue(options_.nListFontSize);
+    ui->listFontSpinBox->setValue(options_.nBooksListFontSize);
     font = QFont(options_.sAnnotationFontFamaly);
     ui->annotationFontComboBox->setCurrentFont(font);
     ui->annotationFontSpinBox->setValue(options_.nAnnotationFontSize);
@@ -378,12 +384,21 @@ void SettingsDlg::reject()
     }
     if(options_.bUseSytemFonts != g::options.bUseSytemFonts){
         QFont font(QGuiApplication::font());
-        font.setFamily(g::options.sListFontFamaly);
-        font.setPointSize(g::options.nListFontSize);
+        font.setFamily(g::options.sSidebarFontFamaly);
+        font.setPointSize(g::options.nSidebarFontSize);
+        emit ChangeSidebarFont(font);
+        font.setFamily(g::options.sBooksListFontFamaly);
+        font.setPointSize(g::options.nBooksListFontSize);
         emit ChangeListFont(font);
         font.setFamily(g::options.sAnnotationFontFamaly);
         font.setPointSize(g::options.nAnnotationFontSize);
         emit ChangeAnnotationFont(font);
+    }
+    if(options_.sSidebarFontFamaly != g::options.sSidebarFontFamaly || options_.nSidebarFontSize != g::options.nSidebarFontSize)  {
+        QFont font(QGuiApplication::font());
+        font.setFamily(g::options.sSidebarFontFamaly);
+        font.setPointSize(g::options.nSidebarFontSize);
+        emit ChangeSidebarFont(font);
     }
     if(options_.sAnnotationFontFamaly != g::options.sAnnotationFontFamaly || options_.nAnnotationFontSize != g::options.nAnnotationFontSize)  {
         QFont font(QGuiApplication::font());
@@ -391,10 +406,10 @@ void SettingsDlg::reject()
         font.setPointSize(g::options.nAnnotationFontSize);
         emit ChangeAnnotationFont(font);
     }
-    if(options_.sListFontFamaly != g::options.sListFontFamaly || options_.nListFontSize != g::options.nListFontSize)  {
+    if(options_.sBooksListFontFamaly != g::options.sBooksListFontFamaly || options_.nBooksListFontSize != g::options.nBooksListFontSize)  {
         QFont font(QGuiApplication::font());
-        font.setFamily(g::options.sListFontFamaly);
-        font.setPointSize(g::options.nListFontSize);
+        font.setFamily(g::options.sBooksListFontFamaly);
+        font.setPointSize(g::options.nBooksListFontSize);
         emit ChangeListFont(font);
     }
     QDialog::reject();
@@ -520,8 +535,10 @@ void SettingsDlg::btnOK()
     }
 
     g::options.bUseSytemFonts = options_.bUseSytemFonts;
-    g::options.sListFontFamaly = options_.sListFontFamaly;
-    g::options.nListFontSize = options_.nListFontSize;
+    g::options.sSidebarFontFamaly = options_.sSidebarFontFamaly;
+    g::options.nSidebarFontSize = options_.nSidebarFontSize;
+    g::options.sBooksListFontFamaly = options_.sBooksListFontFamaly;
+    g::options.nBooksListFontSize = options_.nBooksListFontSize;
     g::options.sAnnotationFontFamaly = options_.sAnnotationFontFamaly;
     g::options.nAnnotationFontSize = options_.nAnnotationFontSize;
 
@@ -703,6 +720,9 @@ void SettingsDlg::onDefaultExportChanged(Qt::CheckState state)
 void SettingsDlg::onUseSystemFontsChanged(int state)
 {
     bool bUnchecked = (state == Qt::Unchecked);
+    ui->labelSideBar->setEnabled(bUnchecked);
+    ui->sidebarFontComboBox->setEnabled(bUnchecked);
+    ui->sidebarFontSpinBox->setEnabled(bUnchecked);
     ui->labelListFont->setEnabled(bUnchecked);
     ui->listFontComboBox->setEnabled(bUnchecked);
     ui->listFontSpinBox->setEnabled(bUnchecked);
@@ -711,6 +731,11 @@ void SettingsDlg::onUseSystemFontsChanged(int state)
     ui->annotationFontSpinBox->setEnabled(bUnchecked);
 
     QFont newFont = QGuiApplication::font();
+    if(bUnchecked){
+        newFont.setFamily(ui->sidebarFontComboBox->currentFont().family());
+        newFont.setPointSize(ui->sidebarFontSpinBox->value());
+    }
+    emit ChangeSidebarFont(newFont);
     if(bUnchecked){
         newFont.setFamily(ui->listFontComboBox->currentFont().family());
         newFont.setPointSize(ui->listFontSpinBox->value());
@@ -724,12 +749,30 @@ void SettingsDlg::onUseSystemFontsChanged(int state)
     emit ChangeAnnotationFont(newFont);
 }
 
+void SettingsDlg::onSidebarFontChanged(const QFont &font)
+{
+    QFont newFont = QGuiApplication::font();
+    newFont.setFamily(font.family());
+    newFont.setPointSize(ui->sidebarFontSpinBox->value());
+    options_.sSidebarFontFamaly = font.family();
+    emit ChangeSidebarFont(newFont);
+}
+
+void SettingsDlg::onSidebarSizeFontChanged(int i)
+{
+    QFont newFont = QGuiApplication::font();
+    newFont.setFamily(ui->sidebarFontComboBox->currentFont().family());
+    newFont.setPointSize(i);
+    options_.nSidebarFontSize = i;
+    emit ChangeSidebarFont(newFont);
+}
+
 void SettingsDlg::onListFontChanged(const QFont &font)
 {
     QFont newFont = QGuiApplication::font();
     newFont.setFamily(font.family());
     newFont.setPointSize(ui->listFontSpinBox->value());
-    options_.sListFontFamaly = font.family();
+    options_.sBooksListFontFamaly = font.family();
     emit ChangeListFont(newFont);
 }
 
@@ -738,7 +781,7 @@ void SettingsDlg::onListSizeFontChanged(int i)
     QFont newFont = QGuiApplication::font();
     newFont.setFamily(ui->listFontComboBox->currentFont().family());
     newFont.setPointSize(i);
-    options_.nListFontSize = i;
+    options_.nBooksListFontSize = i;
     emit ChangeListFont(newFont);
 }
 

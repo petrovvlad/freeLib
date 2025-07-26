@@ -55,8 +55,6 @@ QString sizeToString(uint size)
 }
 #endif
 
-
-
 void addShortcutToToolTip(QToolButton *btn, const QString &sShortCut)
 {
     if(!sShortCut.isEmpty()){
@@ -113,8 +111,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     if(!g::options.bUseSytemFonts){
         QFont font(QGuiApplication::font());
-        font.setFamily(g::options.sListFontFamaly);
-        font.setPointSize(g::options.nListFontSize);
+        font.setFamily(g::options.sSidebarFontFamaly);
+        font.setPointSize(g::options.nSidebarFontSize);
+        onUpdateSidebarFont(font);
+        font.setFamily(g::options.sBooksListFontFamaly);
+        font.setPointSize(g::options.nBooksListFontSize);
         onUpdateListFont(font);
         font.setFamily(g::options.sAnnotationFontFamaly);
         font.setPointSize(g::options.nAnnotationFontSize);
@@ -877,6 +878,7 @@ void MainWindow::Settings()
     connect(pDlg, &SettingsDlg::ChangingLanguage, this, [this](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::changingTrayIcon);
+    connect(pDlg, &SettingsDlg::ChangeSidebarFont, this, &MainWindow::onUpdateSidebarFont);
     connect(pDlg, &SettingsDlg::ChangeListFont, this, &MainWindow::onUpdateListFont);
     connect(pDlg, &SettingsDlg::ChangeAnnotationFont, this, &MainWindow::onUpdateAnnotationFont);
 
@@ -2859,13 +2861,33 @@ void MainWindow::onExpandAll()
     settings->setValue(u"collapseAll"_s, false);
 }
 
-void MainWindow::onUpdateListFont(const QFont &font)
+void MainWindow::onUpdateSidebarFont(const QFont &font)
 {
     ui->AuthorList->setFont(font);
     ui->searchAuthor->setFont(font);
     ui->SeriaList->setFont(font);
     ui->searchSeries->setFont(font);
     ui->GenreList->setFont(font);
+    ui->s_name->setFont(font);
+    ui->s_author->setFont(font);
+    ui->s_genre->setFont(font);
+    ui->s_seria->setFont(font);
+    ui->date_from->setFont(font);
+    ui->date_to->setFont(font);
+    ui->findLanguage->setFont(font);
+    ui->comboMinimalRating->setFont(font);
+    ui->maxBooks->setFont(font);
+
+    QFont boldFont(font);
+    boldFont.setBold(true);
+
+    auto count = ui->GenreList->topLevelItemCount();
+    for(int i = 0; i < count; ++i)
+        ui->GenreList->topLevelItem(i)->setFont(0, boldFont);
+}
+
+void MainWindow::onUpdateListFont(const QFont &font)
+{
     ui->Books->setFont(font);
 
     QFont boldFont(font);
@@ -2882,10 +2904,6 @@ void MainWindow::onUpdateListFont(const QFont &font)
                 item->setFont(0, boldFont);
         }
     }
-
-    count = ui->GenreList->topLevelItemCount();
-    for(int i = 0; i < count; ++i)
-        ui->GenreList->topLevelItem(i)->setFont(0, boldFont);
 }
 
 void MainWindow::onUpdateAnnotationFont(const QFont &font)

@@ -155,6 +155,7 @@ private slots:
     void onListView();
     void onCollapseAll();
     void onExpandAll();
+    void onUpdateSidebarFont(const QFont &font);
     void onUpdateListFont(const QFont &font);
     void onUpdateAnnotationFont(const QFont &font);
 

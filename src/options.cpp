@@ -97,19 +97,19 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
     pSettings->setValue(QStringLiteral("ExportName"), sName);
     if(bSavePasswords)
     {
-        pSettings->setValue(QStringLiteral("Default"), bDefault);
-        pSettings->setValue(QStringLiteral("Email"), sEmail);
-        pSettings->setValue(QStringLiteral("from_email"), sEmailFrom);
-        pSettings->setValue(QStringLiteral("mail_subject"), sEmailSubject);
-        pSettings->setValue(QStringLiteral("EmailServer"), sEmailServer);
-        pSettings->setValue(QStringLiteral("EmailPort"), nEmailServerPort);
-        pSettings->setValue(QStringLiteral("EmailUser"), sEmailUser);
-        pSettings->setValue(QStringLiteral("PostprocessingCopy"), bPostprocessingCopy);
-        pSettings->setValue(QStringLiteral("DevicePath"), sDevicePath);
-        pSettings->setValue(QStringLiteral("PauseMail"), nEmailPause);
-        pSettings->setValue(QStringLiteral("ConnectionType"), nEmailConnectionType);
-        pSettings->setValue(QStringLiteral("sendTo"), sSendTo);
-        pSettings->setValue(QStringLiteral("current_tool"), sCurrentTool);
+        pSettings->setValue(u"Default"_s, bDefault);
+        pSettings->setValue(u"Email"_s, sEmail);
+        pSettings->setValue(u"from_email"_s, sEmailFrom);
+        pSettings->setValue(u"mail_subject"_s, sEmailSubject);
+        pSettings->setValue(u"EmailServer"_s, sEmailServer);
+        pSettings->setValue(u"EmailPort"_s, nEmailServerPort);
+        pSettings->setValue(u"EmailUser"_s, sEmailUser);
+        pSettings->setValue(u"PostprocessingCopy"_s, bPostprocessingCopy);
+        pSettings->setValue(u"DevicePath"_s, sDevicePath);
+        pSettings->setValue(u"PauseMail"_s, nEmailPause);
+        pSettings->setValue(u"ConnectionType"_s, nEmailConnectionType);
+        pSettings->setValue(u"sendTo"_s, sSendTo);
+        pSettings->setValue(u"current_tool"_s, sCurrentTool);
     }
     pSettings->setValue(u"askPath"_s, bAskPath);
     pSettings->setValue(u"originalFileName"_s, bOriginalFileName);
@@ -328,10 +328,14 @@ void Options::setDefault(){
     tools.emplace(u"zip"_s, ToolsOptions{u"zip"_s, u"-9 -mj %f.zip %f"_s});
     bUseSytemFonts = true;
     QFont fontApp = QGuiApplication::font();
-    sListFontFamaly = fontApp.family();
-    nListFontSize = fontApp.pointSize();
-    sAnnotationFontFamaly = fontApp.family();
-    nAnnotationFontSize = fontApp.pointSize();
+    QString sFontFamaly = fontApp.family();
+    auto nSize = fontApp.pointSize();
+    sSidebarFontFamaly = sFontFamaly;
+    nSidebarFontSize = nSize;
+    sBooksListFontFamaly = sFontFamaly;
+    nBooksListFontSize = nSize;
+    sAnnotationFontFamaly = sFontFamaly;
+    nAnnotationFontSize = nSize;
 }
 
 void Options::setExportDefault()
@@ -427,12 +431,38 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     pSettings->endArray();
 
     if(g::bUseGui){
-        bUseSytemFonts = pSettings->value(u"useSystemFonts"_s, true).toBool();
         QFont fontApp = QGuiApplication::font();
-        sListFontFamaly = pSettings->value(u"fontList"_s, fontApp.family()).toString();
-        nListFontSize = pSettings->value(u"fontListSize"_s, fontApp.pointSize()).toUInt();
-        sAnnotationFontFamaly = pSettings->value(u"fontAnnotation"_s, fontApp.family()).toString();
-        nAnnotationFontSize = pSettings->value(u"fontAnnotationSize"_s, fontApp.pointSize()).toUInt();
+        if(pSettings->contains(u"useSystemFonts"_s)){ //временный блок
+            bUseSytemFonts = pSettings->value(u"useSystemFonts"_s, true).toBool();
+            sBooksListFontFamaly = pSettings->value(u"fontList"_s, fontApp.family()).toString();
+            nBooksListFontSize = pSettings->value(u"fontListSize"_s, fontApp.pointSize()).toUInt();
+            sAnnotationFontFamaly = pSettings->value(u"fontAnnotation"_s, fontApp.family()).toString();
+            nAnnotationFontSize = pSettings->value(u"fontAnnotationSize"_s, fontApp.pointSize()).toUInt();
+            sSidebarFontFamaly = sBooksListFontFamaly;
+            nSidebarFontSize = nBooksListFontSize;
+
+            pSettings->setValue(u"ui.font.usesystem"_s, bUseSytemFonts);
+            pSettings->setValue(u"ui.font.sidebar"_s, sSidebarFontFamaly);
+            pSettings->setValue(u"ui.font.size.sidebar"_s, nSidebarFontSize);
+            pSettings->setValue(u"ui.font.bookslist"_s, sBooksListFontFamaly);
+            pSettings->setValue(u"ui.font.sisze.booklist"_s, nBooksListFontSize);
+            pSettings->setValue(u"ui.font.annotation"_s, sBooksListFontFamaly);
+            pSettings->setValue(u"ui.font.size.annotation"_s, nBooksListFontSize);
+
+            pSettings->remove(u"useSystemFonts"_s);
+            pSettings->remove(u"fontList"_s);
+            pSettings->remove(u"fontListSize"_s);
+            pSettings->remove(u"fontAnnotation"_s);
+            pSettings->remove(u"fontAnnotationSize"_s);
+        }else{
+            bUseSytemFonts = pSettings->value(u"ui.font.usesystem"_s, true).toBool();
+            sSidebarFontFamaly = pSettings->value(u"ui.font.sidebar"_s, fontApp.family()).toString();
+            nSidebarFontSize = pSettings->value(u"ui.font.size.sidebar"_s, fontApp.pointSize()).toUInt();
+            sBooksListFontFamaly = pSettings->value(u"ui.font.bookslist"_s, fontApp.family()).toString();
+            nBooksListFontSize = pSettings->value(u"ui.font.size.booklist"_s, fontApp.pointSize()).toUInt();
+            sAnnotationFontFamaly = pSettings->value(u"ui.font.annotation"_s, fontApp.family()).toString();
+            nAnnotationFontSize = pSettings->value(u"ui.font.size.annotation"_s, fontApp.pointSize()).toUInt();
+        }
     }
 
     count = pSettings->beginReadArray(u"export"_s);
@@ -516,11 +546,13 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     }
     pSettings->endArray();
 
-    pSettings->setValue(u"useSystemFonts"_s, bUseSytemFonts);
-    pSettings->setValue(u"fontList"_s, sListFontFamaly);
-    pSettings->setValue(u"fontListSize"_s, nListFontSize);
-    pSettings->setValue(u"fontAnnotation"_s, sAnnotationFontFamaly);
-    pSettings->setValue(u"fontAnnotationSize"_s, nAnnotationFontSize);
+    pSettings->setValue(u"ui.font.usesystem"_s, bUseSytemFonts);
+    pSettings->setValue(u"ui.font.sidebar"_s, sSidebarFontFamaly);
+    pSettings->setValue(u"ui.font.size.sidebar"_s, nSidebarFontSize);
+    pSettings->setValue(u"ui.fonts.bookslist"_s, sBooksListFontFamaly);
+    pSettings->setValue(u"ui.font.size.booklist"_s, nBooksListFontSize);
+    pSettings->setValue(u"ui.font.annotation"_s, sAnnotationFontFamaly);
+    pSettings->setValue(u"ui.font.size.annotation"_s, nAnnotationFontSize);
 }
 
 void Options::readPasswords()
