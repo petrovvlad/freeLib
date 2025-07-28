@@ -387,7 +387,7 @@ QString BookFile::annotation()
                                 if (!trimmedLine.isEmpty()) {
                                     QDomElement p = doc.createElement(u"p"_s);
                                     p.appendChild(doc.createTextNode(trimmedLine));
-                                    parent.insertBefore(p, child.nextSibling());
+                                    parent.insertAfter(p, child.nextSibling());
                                 }
                             }
                         } else if (child.isElement()) {

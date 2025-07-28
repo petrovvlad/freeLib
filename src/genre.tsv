@@ -1,0 +1,344 @@
+id_parent	id	name	keys
+0	1	Фантастика
+1	100	Научная фантастика	sf,sf_writing
+1	101	Фэнтези	sf_fantasy,foreign_fantasy
+1	102	Боевая фантастика	sf_action
+1	103	Ужасы	sf_horror
+1	104	Юмористическая фантастика	sf_humor
+1	105	Альтернативная история	sf_history,fantasy_alt_hist
+1	106	Социальная фантастика	sf_social
+1	107	Космическая фантастика	sf_space
+1	108	Любовная фантастика	love_sf,love_fantasy
+1	109	Детская фантастика	child_sf
+1	110	Героическая фантастика	sf_heroic
+1	111	Детективная фантастика	sf_detective
+1	112	Эпическая фантастика	sf_epic
+1	113	Городское фэнтези	sf_fantasy_city,city_fantasy
+1	114	Постапокалипсис	sf_postapocalyptic
+1	115	Мистика	sf_mystic
+1	116	Киберпанк	sf_cyberpunk
+1	117	Попаданцы	popadanec,popadancy
+1	118	Фантастика: прочее	sf_etc,sf_all
+1	119	Космоопера	sf_space_opera
+1	120	Сказочная фантастика	fairy_fantasy
+1	121	Ненаучная фантастика	nsf
+1	122	Ироническое фэнтези	sf_fantasy_irony
+1	123	Готический роман	gothic_novel
+1	124	Ироническая фантастика	sf_irony
+1	125	Историческое фэнтези	historical_fantasy
+1	126	Стимпанк	sf_stimpank
+1	127	Технофэнтези	sf_technofantasy
+1	128	Юмористическое фэнтези	humor_fantasy
+1	129	Хроноопера	hronoopera
+1	130	ЛитРПГ	sf_litrpg
+1	131	Альтернативная история	fantasy_alt_hist
+1	132	Славянское фэнтези	russian_fantasy
+
+0	2	Проза
+2	200	Современная проза	prose_contemporary
+2	201	Классическая проза	prose_classic
+2	202	Русская классическая проза	prose_rus_classic
+2	203	Советская классическая проза	prose_su_classics
+2	204	Историческая проза	prose_history
+2	205	О войне	prose_military
+2	206	Рассказ	short_story
+2	207	Проза	prose,prose_all
+2	208	Контркультура	prose_counter
+2	209	Эпистолярная проза	epistolary_fiction
+2	210	Роман	roman
+2	211	Эссе, очерк, этюд, набросок	essay
+2	212	Повесть	great_story
+2	213	Антисоветская литература	dissident
+2	214	Магический реализм	prose_magic
+2	215	Афоризмы	aphorisms
+2	216	Новелла	story
+2	217	Семейный роман/Семейная сага	sagas
+2	218	Сентиментальная проза	prose_sentimental
+2	219	Эпопея	prose_epic
+2	220	Феерия	extravaganza
+2	221	Классическая проза ХX века	literature_20
+2	222	Классическая проза ХIX века	literature_19
+2	223	Классическая проза XVII-XVIII веков	literature_18
+2	224	Экспериментальная, неформатная проза	prose_neformatny
+2	225	Классическая русская поэзия	poetry_rus_classical
+2	226	Зарубежная классическая проза	foreign_prose
+2	227	Фантасмагория, абсурдистская проза 	prose_abs
+
+0	3	Наука, Образование
+3	300	История	sci_history
+3	301	Психология	sci_psychology
+3	302	Философия	sci_philosophy
+3	303	Технические науки	sci_tech,tech_all
+3	304	Политика	sci_politics
+3	305	Научная литература: прочее	science,sci_all
+3	306	Культурология	sci_culture
+3	307	Литературоведение	sci_philology
+3	308	Языкознание	sci_linguistic
+3	309	Медицина	sci_medicine
+3	310	Юриспруденция	sci_juris
+3	311	Учебники	sci_textbook
+3	312	Религиоведение	sci_religion
+3	313	Биология	sci_biology
+3	314	Военная история	military_history
+3	315	Математика	sci_math
+3	316	Физика	sci_phys
+3	317	Деловая литература	sci_business
+3	318	Педагогика	sci_pedagogy
+3	319	Астрономия и Космос	sci_cosmos
+3	320	Экономика	sci_economy
+3	321	Шпаргалки	sci_crib
+3	322	Альтернативная медицина	sci_medicine_alternative
+3	323	Геология и география	sci_geo
+3	324	Химия	sci_chem
+3	325	Обществознание	sci_social_studies
+3	326	Государство и право	sci_state
+3	327	Зоология	sci_zoo
+3	328	Ботаника	sci_botany
+3	329	Экология	sci_ecology
+3	330	Иностранные языки	foreign_language
+3	331	Биохимия	sci_biochem
+3	332	Детская психология	psy_childs
+3	333	Ветеринария	sci_veterinary
+3	334	Физическая химия	sci_physchem
+3	335	Секс и семейная психология	psy_sex_and_family
+3	336	Психотерапия и консультирование	psy_theraphy
+3	337	Биофизика	sci_biophys
+3	338	Органическая химия	sci_orgchem
+3	339	Аналитическая химия	sci_anachem
+3	340	Рефераты	sci_abstract
+3	341	Учебники и пособия ВУЗов	tbg_higher
+3	342	Учебники и пособия для среднего и специального образования	tbg_secondary
+3	343	Школьные учебники и пособия, рефераты, шпаргалки	tbg_school
+3	344	Востоковедение	sci_oriental
+
+0	4	Детективы и Триллеры
+4	400	Детективы: прочее	detective,det_all
+4	401	Триллер	thriller,thriller_mystery
+4	402	Классический детектив	det_classic
+4	403	Боевик	det_action
+4	404	Полицейский детектив	det_police
+4	405	Детские остросюжетные	child_det
+4	406	Любовные детективы	love_detective
+4	407	Криминальный детектив	det_crime
+4	408	Исторический детектив	det_history
+4	409	Иронический детектив	det_irony
+4	410	Шпионский детектив	det_espionage,шпионский_детектив
+4	411	Крутой детектив	det_hard
+4	412	Дамский детективный роман	det_cozy
+4	414	Политический детектив	det_political
+4	415	Маньяки	det_maniac
+4	416	Юридический триллер	thriller_legal
+4	417	Медицинский триллер	thriller_medical
+4	418	Техно триллер	thriller_techno
+4	419	Советский детектив	det_su
+4	420	Психологический триллер	thriller_psychology
+
+0	5	Документальная литература
+5	500	Биографии и Мемуары	nonf_biography,биографии_и_мемуары
+5	501	Публицистика	nonf_publicism
+5	502	Путешествия и география	adv_geo
+5	503	Научпоп	sci_popular
+5	504	Документальная литература	nonfiction,nonf_all
+5	505	Природа и животные	adv_animal
+5	506	Критика	nonf_criticism
+5	507	Военная документалистика	nonf_military
+5	508	География, путевые заметки	travel_notes
+
+0	6	Любовные романы
+6	600	Короткие любовные романы	love_short
+6	601	Современные любовные романы	love_contemporary
+6	602	Исторические любовные романы	love_history
+6	604	О любви	love,love_all
+6	607	Эротика	love_erotica
+6	608	Порно	love_hard
+
+0	7	Детское
+7	700	Детская литература: прочее	children,child_all
+7	701	Сказка	child_tale
+7	702	Детская проза	child_prose
+7	705	Образовательная литература	child_education
+7	706	Детские стихи	child_verse
+7	707	Детские приключения	child_adv
+7	708	Книга-игра	prose_game
+7	709	Подростковая литература	ya
+7	710	Детский фольклор	child_folklore
+7	711	Русские сказки	child_tale_rus
+7	712	Классическая детская литература	child_classical
+7	713	Зарубежная литература для детей	foreign_children
+
+0	8	Домоводство
+8	800	Эротика, Секс	home_sex
+8	801	Кулинария	home_cooking
+8	802	Здоровье	home_health
+8	803	Хобби и ремесла	home_crafts
+8	804	Спорт	home_sport
+8	805	Домашние животные	home_pets
+8	806	Домоводство	home,home_all
+8	807	Сделай сам	home_diy
+8	808	Сад и огород	home_garden
+8	809	Развлечения	home_entertain
+8	810	Коллекционирование	home_collecting
+8	811	Семейные отношения	family
+
+0	9	Религия и духовность
+9	900	Эзотерика	religion_esoterics
+9	901	Религия	religion_rel
+9	902	Христианство	religion_christianity
+9	903	Православие	religion_orthodoxy
+9	904	Самосовершенствование	religion_self
+9	905	Буддизм	religion_budda
+9	906	Иудаизм	religion_judaism
+9	907	Астрология	astrology
+9	908	Протестантизм	religion_protestantism
+9	909	Индуизм	religion_hinduism
+9	910	Католицизм	religion_catholicism
+9	911	Язычество	religion_paganism
+9	912	Ислам	religion_islam
+9	913	Хиромантия	palmistry
+9	914	Религиозная литература: прочее	religion,religion_all
+
+0	10	Приключения
+10	1000	Приключения: прочее	adventure,adv_all
+10	1001	Исторические приключения	adv_history
+10	1005	Морские приключения	adv_maritime
+10	1006	Вестерн	adv_western
+10	1007	Приключения про индейцев	adv_indian
+10	1009	Авантюрный роман	adv_story
+10	1010	Приключения в современном мире	adv_modern
+10	1011	Рыцарский роман	tale_chivalry
+10	1012	Приключения для детей и подростков	child_adv
+10	1013	Природа и животные	adv_animal
+10	1014	Путешествия и география	adv_geo
+
+0	11	Прочее
+11	1100	Газеты и журналы	periodic
+11	1101	Недописанное	unfinished
+11	1102	Фанфик	fanfiction
+11	1104	Кино	cine
+11	1105	Партитуры	notes
+11	1108	Сетевая литература	network_literature
+11	1109	Альтернативные науки и научные теории	sci_theories
+11	1110	Диафильмы	diafilm
+11	1111	Комиксы	comics
+11	1112	Неотсортированное	other,other_all
+
+0	12	Юмор
+12	1201	Юмористическая проза	humor_prose
+12	1202	Юмор: прочее	humor,humor_all
+12	1203	Комедия	comedy
+12	1204	Анекдоты	humor_anecdote
+12	1205	Юмористические стихи	humor_verse
+12	1206	Сатира	humor_satire
+
+0	13	Поэзия
+13	1300	Поэзия: прочее	poetry,poetry_all
+13	1303	Лирика	lyrics
+13	1304	в стихах	in_verse
+13	1305	Эпическая поэзия	epic_poetry
+13	1306	Басни	fable
+13	1307	Песенная поэзия	song_poetry
+13	1308	Палиндромы	palindromes
+13	1309	Экспериментальная поэзия	experimental_poetry
+13	1310	Верлибры	vers_libre
+13	1311	Визуальная поэзия	visual_poetry
+13	1312	Поэзия Востока	poetry_east
+13	1313	Современная поэзия	poetry_modern
+13	1314	Современная русская поэзия	poetry_rus_modern
+13	1315	Современная зарубежная поэзия	poetry_for_modern
+13	1316	Поэма, эпическая поэзия	poem
+13	1318	Классическая поэзия	poetry_classical
+13	1319	Классическая зарубежная поэзия	poetry_for_classical
+
+0	14	Справочная литература
+14	1400	Энциклопедии	ref_encyc
+14	1401	Справочники	ref_ref
+14	1402	Руководства	ref_guide
+14	1403	Искусство и Дизайн	design
+14	1404	Справочная литература	reference,ref_all
+14	1405	Словари	ref_dict
+14	1406	Путеводители	geo_guides
+
+0	15	Техника
+15	1501	Радиоэлектроника	sci_radio
+15	1502	Транспорт и авиация	sci_transport
+15	1503	Строительство и сопромат	sci_build
+15	1504	Автомобили и ПДД	auto_regulations
+15	1505	Архитектура	architecture_book
+15	1506	Металлургия	sci_metal
+15	1507	История техники	equ_history
+15	1508	Автодело	auto_business
+
+0	16	Военное дело
+16	1602	Военная техника и вооружение	military_weapon
+16	1604	Боевые искусства	military_arts
+16	1605	Cпецслужбы	military_special
+16	1606	Военное дело: прочее	military,military_all
+
+0	17	Компьютеры и Интернет
+17	1700	Околокомпьютерная литература	computers,comp_all
+17	1701	Программирование	comp_programming
+17	1702	ОС и Сети	comp_osnet
+17	1703	Программы	comp_soft
+17	1704	Аппаратное обеспечение	comp_hard
+17	1705	Интернет	comp_www
+17	1706	Базы данных	comp_db
+17	1707	Цифровая обработка сигналов	comp_dsp
+17	1708	Учебные пособия, самоучители	tbg_computers
+
+0	18	Драматургия
+18	1800	Драматургия: прочее	dramaturgy,dramaturgy_all
+18	1802	Драма	drama
+18	1803	Трагедия	tragedy
+18	1804	Киносценарии	screenplays
+18	1805	Сценарии	scenarios
+18	1806	Водевиль	vaudeville
+18	1807	Мистерия	mystery
+18	1808	Античная драма	drama_antique
+
+0	19	Старинное
+19	1900	Мифы. Легенды. Эпос	antique_myths
+19	1901	Античная литература	antique_ant
+19	1902	Древневосточная литература	antique_east
+19	1903	Древнеевропейская литература	antique_european
+19	1904	Старинная литература: прочее	antique,antique_all
+19	1905	Древнерусская литература	antique_russian
+19	1906	Средневековая классическая проза	foreign_antique
+19	1907	Античная драма	drama_antique
+
+0	20	Деловая литература
+20	2000	О бизнесе популярно	popular_business
+20	2001	Маркетинг, PR, реклама	marketing
+20	2002	Управление, подбор персонала	management
+20	2003	Экономика	economics,economics_all
+20	2004	Ценные бумаги, инвестиции	stock
+20	2005	Бухучет и аудит	accounting
+20	2006	Личные финансы	personal_finance
+20	2007	Поиск работы, карьера	job_hunting
+20	2008	Малый бизнес	small_business
+20	2009	Корпоративная культура	org_behavior
+20	2010	Банковское дело	banking
+20	2011	Делопроизводство	paper_work
+20	2012	Отраслевые издания	industries
+20	2013	Недвижимость	real_estate
+20	2014	Внешняя торговля	global_economy
+20	2015	Торговля	trade
+20	2016	Деловая литература	economics_ref
+
+0	21	Фольклор
+21	2100	Народные сказки	folk_tale
+21	2102	Фольклор: прочее	folklore,folklore_all
+21	2104	Былины	epic
+21	2105	Пословицы, поговорки	proverbs
+21	2106	Народные песни	folk_songs
+21	2107	Частушки, прибаутки, потешки	limerick
+21	2108	Загадки	riddles
+21	2109	Современная сказка	modern_tale
+
+0	22	Культура и искусство
+22	2200	Искусствоведение	art_criticism
+22	2201	Живопись, альбомы, иллюстрированные каталоги	painting
+22	2202	Мировая художественная культура	art_world_culture
+22	2203	Изобразительное искусство, фотография	visual_arts
+22	2204	Театр	theatre
+22	2205	Музыка	music
+22	2206	Культура и искусство: прочее	culture_all

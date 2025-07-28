@@ -46,7 +46,6 @@
 #include <QList>
 #include <QLocale>
 #include <QMainWindow>
-#include <QMap>
 #include <QMenu>
 #include <QMessageBox>
 #include <QMetaEnum>
@@ -95,6 +94,7 @@
 #include <algorithm>
 #include <chrono>
 #include <iostream>
+#include <ranges>
 #include <typeinfo>
 #include <unistd.h>
 #include <unordered_set>

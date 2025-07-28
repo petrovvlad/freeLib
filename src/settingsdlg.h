@@ -150,6 +150,8 @@ private slots:
     void onDefaultExportChanged(Qt::CheckState state);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     void onUseSystemFontsChanged(int state);
+    void onSidebarFontChanged(const QFont &font);
+    void onSidebarSizeFontChanged(int i);
     void onListFontChanged(const QFont &font);
     void onListSizeFontChanged(int i);
     void onAnnotationFontChanged(const QFont &font);
@@ -163,6 +165,7 @@ signals:
     void ChangingConversionFrameTab(int index);
     void NeedUpdateTools();
     void ChangingTrayIcon(int index, int color);
+    void ChangeSidebarFont(const QFont &font);
     void ChangeListFont(const QFont &font);
     void ChangeAnnotationFont(const QFont &font);
 };

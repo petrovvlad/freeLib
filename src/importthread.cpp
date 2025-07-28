@@ -746,17 +746,9 @@ void ImportThread::process()
         mTags[sTagName] = idTag;
     }
 
-    query_.exec(QStringLiteral("SELECT id, keys FROM genre where NOT keys='';"));
-    while(query_.next())
-    {
-        ushort idGenre = query_.value(0).toUInt();
-        QString sKeys = query_.value(1).toString();
-        const QStringList listKeys = sKeys.split(QStringLiteral(";"));
-        for(const auto &sKey :listKeys){
-            if(!sKey.isEmpty()) [[likely]]{
-                mGenreKeys_[sKey] = idGenre;
-            }
-        }
+    for(auto &[idGenre, genre] :g::genres){
+        for(auto &sKey : genre.listKeys)
+            mGenreKeys_[sKey] = idGenre;
     }
 
     queryInsertBook_ = QSqlQuery(dbase);

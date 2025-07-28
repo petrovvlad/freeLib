@@ -130,9 +130,11 @@ struct Options
 
     qint64 nCacheSize;
 
-    QString sListFontFamaly;
+    QString sSidebarFontFamaly;
+    QString sBooksListFontFamaly;
     QString sAnnotationFontFamaly;
-    quint8 nListFontSize;
+    quint8 nSidebarFontSize;
+    quint8 nBooksListFontSize;
     quint8 nAnnotationFontSize;
     bool bUseSytemFonts;
 

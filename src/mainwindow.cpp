@@ -55,8 +55,6 @@ QString sizeToString(uint size)
 }
 #endif
 
-
-
 void addShortcutToToolTip(QToolButton *btn, const QString &sShortCut)
 {
     if(!sShortCut.isEmpty()){
@@ -77,7 +75,6 @@ void addShortcutToToolTip(QToolButton *btn, const QString &sShortCut)
 void addShortcutToToolTip(QToolButton *btn, QAction *action)
 {
     addShortcutToToolTip(btn, action->shortcut().toString(QKeySequence::NativeText));
-
 }
 
 void addShortcutToToolTip(QToolButton *btn)
@@ -114,8 +111,11 @@ MainWindow::MainWindow(QWidget *parent) :
 
     if(!g::options.bUseSytemFonts){
         QFont font(QGuiApplication::font());
-        font.setFamily(g::options.sListFontFamaly);
-        font.setPointSize(g::options.nListFontSize);
+        font.setFamily(g::options.sSidebarFontFamaly);
+        font.setPointSize(g::options.nSidebarFontSize);
+        onUpdateSidebarFont(font);
+        font.setFamily(g::options.sBooksListFontFamaly);
+        font.setPointSize(g::options.nBooksListFontSize);
         onUpdateListFont(font);
         font.setFamily(g::options.sAnnotationFontFamaly);
         font.setPointSize(g::options.nAnnotationFontSize);
@@ -369,7 +369,7 @@ void MainWindow::UpdateTags()
     const bool wasBlocked = ui->TagFilter->blockSignals(true);
 
     query.exec(u"SELECT id,name,id_icon FROM tag"_s);
-    //                                0  1    2
+    //                  0  1    2
     ui->TagFilter->clear();
     int con = 1;
     ui->TagFilter->addItem(u"*"_s, 0);
@@ -684,15 +684,14 @@ void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
         query.bindValue(u":name3"_s, author.sMiddleName);
         if(!query.exec()) [[unlikely]]
             LogWarning << query.lastError().text();
-        for(auto &lib :g::libs){
-            if(lib.first != g::idCurrentLib && lib.second.bLoaded){
-                auto it = std::ranges::find_if(lib.second.authors, [&author](auto &&iAuthor)
+        for(auto& [id, lib] :g::libs){
+            if(id != g::idCurrentLib && lib.bLoaded){
+                auto it = std::ranges::find_if(lib.authors, [&author](auto &&iAuthor)
                 {
                     return  iAuthor.second.getName() == author.getName();
                 });
-                if(it != lib.second.authors.end()){
+                if(it != lib.authors.end())
                     it->second.idTags.insert(idTag);
-                }
             }
         }
     }else{
@@ -713,6 +712,17 @@ void MainWindow::setTagAuthor(uint idTag, uint idAuthor, bool bSet)
         query.bindValue(u":name3"_s, author.sMiddleName);
         if(!query.exec()) [[unlikely]]
             LogWarning << query.lastError().text();
+
+        for(auto& [id, lib] :g::libs){
+            if(id != g::idCurrentLib && lib.bLoaded){
+                auto it = std::ranges::find_if(lib.authors, [&author](auto &&iAuthor)
+                {
+                    return  iAuthor.second.getName() == author.getName();
+                });
+                if(it != lib.authors.end())
+                    it->second.idTags.erase(idTag);
+            }
+        }
     }
 }
 
@@ -868,6 +878,7 @@ void MainWindow::Settings()
     connect(pDlg, &SettingsDlg::ChangingLanguage, this, [this](){this->ChangingLanguage();});
     connect(pDlg, &SettingsDlg::ChangeAlphabet, this, &MainWindow::onChangeAlpabet);
     connect(pDlg, &SettingsDlg::ChangingTrayIcon, this, &MainWindow::changingTrayIcon);
+    connect(pDlg, &SettingsDlg::ChangeSidebarFont, this, &MainWindow::onUpdateSidebarFont);
     connect(pDlg, &SettingsDlg::ChangeListFont, this, &MainWindow::onUpdateListFont);
     connect(pDlg, &SettingsDlg::ChangeAnnotationFont, this, &MainWindow::onUpdateAnnotationFont);
 
@@ -1319,9 +1330,10 @@ void MainWindow::SelectLibrary()
         }
 
         auto settings = GetSettings();
-        settings->setValue(QStringLiteral("LibID"), g::idCurrentLib);
+        settings->setValue(u"LibID"_s, g::idCurrentLib);
 
-        loadLibrary(g::idCurrentLib);
+        if(!g::libs[g::idCurrentLib].bLoaded)
+            loadLibrary(g::idCurrentLib);
         fillLanguages();
         FillAuthors();
         FillSerials();
@@ -2347,16 +2359,19 @@ void MainWindow::FillGenres()
     QFont fontBold(ui->AuthorList->font());
     fontBold.setBold(true);
 
-    std::unordered_map<ushort, uint> mCounts;
-    SLib& lib = g::libs[g::idCurrentLib];
+    std::unordered_map<ushort, std::atomic_uint_fast32_t> mCounts;
+    const SLib& lib = g::libs[g::idCurrentLib];
 
-    for(const auto &book :lib.books){
-        if(IsBookInList(book.second))
+    for(auto &genre :g::genres)
+        mCounts[genre.first]/* = 0*/;
+    blockingMap(lib.books, [&](const auto &book)
+    {
+        if(IsBookInList(book))
         {
-            for(auto iGenre: book.second.vIdGenres)
-                    mCounts[iGenre]++;
+            for(auto iGenre: book.vIdGenres)
+                mCounts[iGenre]++;
         }
-    }
+    });
 
     uint idSearchGenre = 0;
     if(g::options.bStorePosition){
@@ -2364,8 +2379,10 @@ void MainWindow::FillGenres()
         idSearchGenre = settings->value(u"search.id.genre"_s).toUInt();
     }
     std::unordered_map<ushort, QTreeWidgetItem*> mTopGenresItem;
-    for(const auto &iGenre :mCounts){
-        auto idGenre = iGenre.first;
+    for(const auto &[idGenre, count] :mCounts){
+        uint nCount = atomic_load(&count);
+        if(nCount==0)
+            continue;
         auto idParrentGenre = g::genres[idGenre].idParrentGenre;
         QTreeWidgetItem *pTopItem;
 
@@ -2383,7 +2400,7 @@ void MainWindow::FillGenres()
 
         QTreeWidgetItem *item = new QTreeWidgetItem(pTopItem);
         const QString &sName = g::genres[idGenre].sName;
-        item->setText(0, u"%1 (%2)"_s.arg(sName).arg(mCounts[idGenre]));
+        item->setText(0, u"%1 (%2)"_s.arg(sName).arg(nCount));
         item->setData(0, Qt::UserRole, idGenre);
         ui->s_genre->addItem(u"   "_s + sName, idGenre);
         if(idGenre == idCurrentGenre_)
@@ -2637,11 +2654,11 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
 bool MainWindow::IsBookInList(const SBook &book)
 {
 
-    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
     if(idCurrentLanguage_ != -1 && idCurrentLanguage_ != book.idLanguage)
         return false;
     if(!g::options.bShowDeleted && book.bDeleted)
         return false;
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
     if(g::options.bUseTag && idTagFilter != 0){
         if(book.idTags.contains(idTagFilter))
             return true;
@@ -2844,13 +2861,33 @@ void MainWindow::onExpandAll()
     settings->setValue(u"collapseAll"_s, false);
 }
 
-void MainWindow::onUpdateListFont(const QFont &font)
+void MainWindow::onUpdateSidebarFont(const QFont &font)
 {
     ui->AuthorList->setFont(font);
     ui->searchAuthor->setFont(font);
     ui->SeriaList->setFont(font);
     ui->searchSeries->setFont(font);
     ui->GenreList->setFont(font);
+    ui->s_name->setFont(font);
+    ui->s_author->setFont(font);
+    ui->s_genre->setFont(font);
+    ui->s_seria->setFont(font);
+    ui->date_from->setFont(font);
+    ui->date_to->setFont(font);
+    ui->findLanguage->setFont(font);
+    ui->comboMinimalRating->setFont(font);
+    ui->maxBooks->setFont(font);
+
+    QFont boldFont(font);
+    boldFont.setBold(true);
+
+    auto count = ui->GenreList->topLevelItemCount();
+    for(int i = 0; i < count; ++i)
+        ui->GenreList->topLevelItem(i)->setFont(0, boldFont);
+}
+
+void MainWindow::onUpdateListFont(const QFont &font)
+{
     ui->Books->setFont(font);
 
     QFont boldFont(font);
@@ -2867,10 +2904,6 @@ void MainWindow::onUpdateListFont(const QFont &font)
                 item->setFont(0, boldFont);
         }
     }
-
-    count = ui->GenreList->topLevelItemCount();
-    for(int i = 0; i < count; ++i)
-        ui->GenreList->topLevelItem(i)->setFont(0, boldFont);
 }
 
 void MainWindow::onUpdateAnnotationFont(const QFont &font)

@@ -29,7 +29,7 @@ bool GenreSortFilterProxyModel::lessThan(const QModelIndex &left, const QModelIn
 
     if(genreLeft.idParrentGenre > 0 && genreRight.idParrentGenre > 0){
         if(genreLeft.idParrentGenre == genreRight.idParrentGenre)
-            return genreLeft.nSort < genreRight.nSort;
+            return idLeft < idRight;
         return genreLeft.idParrentGenre < genreRight.idParrentGenre;
     }
 
