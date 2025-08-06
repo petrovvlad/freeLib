@@ -16,6 +16,13 @@
 #ifdef USE_DEJVULIBRE
 #include "djvu.h"
 #endif
+#ifdef USE_POPPLER
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+#include <poppler/qt5/poppler-qt5.h>
+#else //QT_VERSION
+#include <poppler/qt6/poppler-qt6.h>
+#endif//QT_VERSION
+#endif //USE_POPPLER
 
 BookFile::BookFile(uint idLib, uint idBook)
     :bOpen_(false)
@@ -110,7 +117,11 @@ QImage BookFile::cover()
 #ifdef USE_DEJVULIBRE
     else if(sFormat == u"djvu" || sFormat == u"djv")
         img = coverDjvu();
-#endif
+#endif //USE_DEJVULIBRE
+#ifdef USE_POPPLER
+    else if(sFormat == u"pdf")
+        img = coverPdf();
+#endif //USE_POPPLER
     else if(sFormat.endsWith(u"zip"))
             img = coverZip();
 
@@ -186,6 +197,40 @@ void BookFile::annotationEpub()
     if(pEpub_ != nullptr)
         sAnnotation_ = pEpub_->readAnnotation();
 }
+
+#ifdef USE_POPPLER
+QImage BookFile::coverPdf()
+{
+    QImage img;
+    SBook &book = pLib_->books[idBook_];
+    std::unique_ptr<Poppler::Document> doc;
+    if(book.sArchive.isEmpty()){
+        if(file_.isOpen()){
+            file_.reset();
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            doc = std::unique_ptr<Poppler::Document>(Poppler::Document::load(&file_));
+#else
+            doc = Poppler::Document::load(&file_);
+#endif
+        }
+    }else{
+        if(data_.size() != 0){
+#if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+            doc = std::unique_ptr<Poppler::Document>(Poppler::Document::loadFromData(data_));
+#else
+            doc = Poppler::Document::loadFromData(data_);
+#endif
+        }
+    }
+    if(doc){
+        std::unique_ptr<Poppler::Page> page(doc->page(0));
+        if(page)
+            img = page->renderToImage();
+    }
+
+    return img;
+}
+#endif //USE_POPPLER
 
 #ifdef USE_DEJVULIBRE
 QImage BookFile::coverDjvu()

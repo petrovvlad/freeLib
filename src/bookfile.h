@@ -5,7 +5,6 @@
 
 #include "epubreader.h"
 
-
 class BookFile
 {
 public:
@@ -33,6 +32,9 @@ private:
     void annotationZip();
     QImage coverEpub();
     void annotationEpub();
+#ifdef USE_POPPLER
+    QImage coverPdf();
+#endif //USE_POPPLER
 
 #ifdef USE_DEJVULIBRE
     QImage coverDjvu();

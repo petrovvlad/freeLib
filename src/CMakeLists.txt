@@ -38,6 +38,13 @@ find_package(TBB QUIET)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
 find_package(DjVuLibre QUIET)
 
+find_package(PkgConfig)
+pkg_check_modules(POPPLER QUIET IMPORTED_TARGET poppler poppler-cpp poppler-qt${FREELIB_QT_MAJOR_VERSION})
+if(POPPLER_FOUND)
+    message(STATUS "Found Poppler")
+    add_compile_definitions(USE_POPPLER)
+endif()
+
 set(PROJECT_SOURCES
         main.cpp
         mainwindow.cpp      mainwindow.h    mainwindow.ui
@@ -87,26 +94,24 @@ set(PROJECT_SOURCES
 
 add_subdirectory(Help)
 
-if((FREELIB_QT_MAJOR_VERSION EQUAL 6) AND (QT_VERSION_MINOR GREATER_EQUAL 4))
-  find_package(Qt6 COMPONENTS HttpServer QUIET)
-  if(Qt6HttpServer_FOUND)
+find_package(Qt${FREELIB_QT_MAJOR_VERSION} COMPONENTS HttpServer QUIET)
+if(Qt${FREELIB_QT_MAJOR_VERSION}HttpServer_FOUND)
     message(STATUS "Found HttpServer")
     set(PROJECT_SOURCES
         ${PROJECT_SOURCES}
         opds_server.cpp     opds_server.h
     )
-    add_compile_definitions(USE_HTTSERVER)
-   endif()
+add_compile_definitions(USE_HTTSERVER)
 endif()
 
-find_package(Qt${QT_VERSION_MAJOR}Keychain QUIET)
-if(Qt${QT_VERSION_MAJOR}Keychain_FOUND)
+find_package(Qt${FREELIB_QT_MAJOR_VERSION}Keychain QUIET)
+if(Qt${FREELIB_QT_MAJOR_VERSION}Keychain_FOUND)
     message(STATUS "Found QtKeychain")
     add_compile_definitions(USE_QTKEYCHAIN)
 endif()
 
-find_package(QuaZip-Qt${QT_VERSION_MAJOR} QUIET)
-if(NOT QuaZip-Qt${QT_VERSION_MAJOR}_FOUND)
+find_package(QuaZip-Qt${FREELIB_QT_MAJOR_VERSION} QUIET)
+if(NOT QuaZip-Qt${FREELIB_QT_MAJOR_VERSION}_FOUND)
     set(QUAZIP_INSTALL OFF)
     set(BUILD_SHARED_LIBS OFF)
     add_subdirectory(quazip)
@@ -184,8 +189,12 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Concurrent
     QuaZip::QuaZip)
 
-if(Qt6HttpServer_FOUND)
+if(Qt${FREELIB_QT_MAJOR_VERSION}HttpServer_FOUND)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
+endif()
+
+if(POPPLER_FOUND)
+    target_link_libraries(freelib PRIVATE PkgConfig::POPPLER)
 endif()
 
 if(KF${FREELIB_QT_MAJOR_VERSION}KIO_FOUND)
