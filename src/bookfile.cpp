@@ -198,6 +198,57 @@ void BookFile::annotationEpub()
         sAnnotation_ = pEpub_->readAnnotation();
 }
 
+bool isUniformColor(const QImage& img) {
+    if (img.isNull() || img.width() == 0 || img.height() == 0)
+        return true;
+
+    const uint32_t* data = reinterpret_cast<const uint32_t*>(img.constBits());
+    uint32_t firstPixel = data[0];
+    size_t pixelCount = img.width() * img.height();
+    size_t differentPixels = 0;
+    size_t i = 0;
+#ifdef __AVX512F__
+    // Векторная обработка с AVX-512 (16 пикселей за раз)
+    {
+        __m512i firstPixelVec = _mm512_set1_epi32(firstPixel);
+        for (; i <= pixelCount - 16; i += 16) {
+            __m512i pixels = _mm512_loadu_si512(data + i);
+            __mmask16 mask = _mm512_cmpneq_epi32_mask(pixels, firstPixelVec);
+            differentPixels += _mm_popcnt_u32(mask);
+        }
+    }
+#endif
+#ifdef __AVX2__
+    // Векторная обработка с AVX2 (8 пикселей за раз)
+    {
+        __m256i firstPixelVec = _mm256_set1_epi32(firstPixel);
+        for (; i <= pixelCount - 8; i += 8) {
+            __m256i pixels = _mm256_loadu_si256(reinterpret_cast<const __m256i*>(data + i));
+            __m256i cmp = _mm256_cmpeq_epi32(pixels, firstPixelVec);
+            uint32_t mask = _mm256_movemask_epi8(cmp);
+            differentPixels += _mm_popcnt_u32(~mask) / 4;
+        }
+    }
+
+#ifdef __clang__ //отключение векторизации и развёртывания следующего цикла
+#pragma clang loop vectorize(disable)
+#pragma clang loop unroll(disable)
+#elif defined(__GNUC__)
+#pragma GCC novector
+#pragma GCC unroll 0
+#endif
+
+#endif //__AVX2__
+    // Обработка оставшихся пикселей (скалярный код)
+    for (; i < pixelCount; ++i) {
+        if (data[i] != firstPixel) {
+             ++differentPixels;
+        }
+    }
+    float ratio = static_cast<float>(differentPixels) / static_cast<float>(pixelCount);
+    return ratio < 0.01f;
+}
+
 #ifdef USE_POPPLER
 QImage BookFile::coverPdf()
 {
@@ -224,8 +275,11 @@ QImage BookFile::coverPdf()
     }
     if(doc){
         std::unique_ptr<Poppler::Page> page(doc->page(0));
-        if(page)
+        if(page){
             img = page->renderToImage();
+            if(isUniformColor(img))
+                img = QImage();
+        }
     }
 
     return img;
@@ -293,7 +347,9 @@ QImage BookFile::coverZip()
             zipFile.close();
             QDomDocument doc;
             doc.setContent(ba);
-            return coverFb2(doc);
+            img = coverFb2(doc);
+            if(!img.isNull())
+                return img;
         }
     }
     for(const auto &fi :std::as_const(listFi)){
@@ -318,6 +374,24 @@ QImage BookFile::coverZip()
                 fileDjVu.remove();
         } else
 #endif
+#ifdef USE_POPPLER
+        if(fi.name.endsWith(u".pdf")){
+            zip.setCurrentFile(fi.name);
+            QuaZipFile zipFile(&zip);
+            zipFile.open(QIODevice::ReadOnly);
+            QByteArray ba = zipFile.readAll();
+            zipFile.close();
+            std::unique_ptr<Poppler::Document> doc(Poppler::Document::loadFromData(ba));
+            if(doc){
+                std::unique_ptr<Poppler::Page> page(doc->page(0));
+                if(page){
+                    img = page->renderToImage();
+                    if(!isUniformColor(img))
+                        return img;
+                }
+            }
+        }
+#endif //USE_POPPLER
             if(fi.name.endsWith(u".epub")){
                 zip.setCurrentFile(fi.name);
                 QuaZipFile zipFile(&zip);
