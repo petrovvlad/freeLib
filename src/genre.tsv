@@ -1,4 +1,4 @@
-id_parent	id	name	keys
+#id_parent	id	name	keys
 0	1	Фантастика
 1	100	Научная фантастика	sf,sf_writing,sf_su
 1	101	Фэнтези	sf_fantasy,foreign_fantasy,everyday_fantasy,asian_fantasy,dark_fantasy
