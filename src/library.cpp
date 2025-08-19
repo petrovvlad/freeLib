@@ -268,7 +268,7 @@ void loadLibrary(uint idLibrary)
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 ushort idGenre = query.value(1).toUInt();
-                if(idGenre == 0) idGenre = 1112; // Прочие/Неотсортированное
+                if(!g::genres.contains(idGenre)) idGenre = 1112;
                 if(lib.books.contains(idBook))
                     lib.books.at(idBook).vIdGenres.push_back(idGenre);
             }
@@ -366,10 +366,11 @@ void loadGenres()
         return;
     }
     QTextStream in(&file);
-    in.readLine(); // Пропускаем заголовок
     g::genres.reserve(320);
     while (!in.atEnd()) {
-        QString line = in.readLine();
+        QString line = in.readLine().trimmed();
+        if(line.startsWith(u'#'))
+            continue;
         QStringList fields = line.split(u"\t"_s, Qt::SkipEmptyParts);
         if (fields.size() >= 3) {
             ushort id = fields[1].toUShort();

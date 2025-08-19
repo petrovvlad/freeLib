@@ -1,25 +1,24 @@
-id_parent	id	name	keys
+#id_parent	id	name	keys
 0	1	Фантастика
-1	100	Научная фантастика	sf,sf_writing
-1	101	Фэнтези	sf_fantasy,foreign_fantasy
+1	100	Научная фантастика	sf,sf_writing,sf_su
+1	101	Фэнтези	sf_fantasy,foreign_fantasy,everyday_fantasy,asian_fantasy,dark_fantasy
 1	102	Боевая фантастика	sf_action
 1	103	Ужасы	sf_horror
 1	104	Юмористическая фантастика	sf_humor
 1	105	Альтернативная история	sf_history,fantasy_alt_hist
 1	106	Социальная фантастика	sf_social
-1	107	Космическая фантастика	sf_space
+1	107	Космическая фантастика	sf_space,sf_space_opera
 1	108	Любовная фантастика	love_sf,love_fantasy
-1	109	Детская фантастика	child_sf
+1	109	Детская фантастика	child_sf,child_sf_space,child_sf_hronoopera,child_sf_horror,child_sf_fantasy
 1	110	Героическая фантастика	sf_heroic
-1	111	Детективная фантастика	sf_detective
+1	111	Детективная фантастика	sf_detective,fantasy_det
 1	112	Эпическая фантастика	sf_epic
 1	113	Городское фэнтези	sf_fantasy_city,city_fantasy
 1	114	Постапокалипсис	sf_postapocalyptic
 1	115	Мистика	sf_mystic
 1	116	Киберпанк	sf_cyberpunk
 1	117	Попаданцы	popadanec,popadancy
-1	118	Фантастика: прочее	sf_etc,sf_all
-1	119	Космоопера	sf_space_opera
+1	118	Фантастика: прочее	sf_etc,sf_all,adventure_fantasy,dorama,boyar_anime,magic_school,sf_realrpg,foreign_sf,sf_industrial_magic,utopia,dystopian
 1	120	Сказочная фантастика	fairy_fantasy
 1	121	Ненаучная фантастика	nsf
 1	122	Ироническое фэнтези	sf_fantasy_irony
@@ -32,7 +31,7 @@ id_parent	id	name	keys
 1	129	Хроноопера	hronoopera
 1	130	ЛитРПГ	sf_litrpg
 1	131	Альтернативная история	fantasy_alt_hist
-1	132	Славянское фэнтези	russian_fantasy
+1	132	Славянское фэнтези	russian_fantasy,slavic_fantasy
 
 0	2	Проза
 2	200	Современная проза	prose_contemporary
@@ -66,7 +65,7 @@ id_parent	id	name	keys
 
 0	3	Наука, Образование
 3	300	История	sci_history
-3	301	Психология	sci_psychology
+3	301	Психология	sci_psychology,sci_psychology_popular
 3	302	Философия	sci_philosophy
 3	303	Технические науки	sci_tech,tech_all
 3	304	Политика	sci_politics
@@ -112,7 +111,7 @@ id_parent	id	name	keys
 3	344	Востоковедение	sci_oriental
 
 0	4	Детективы и Триллеры
-4	400	Детективы: прочее	detective,det_all
+4	400	Детективы: прочее	detective,det_all,det_artifact,det_other
 4	401	Триллер	thriller,thriller_mystery
 4	402	Классический детектив	det_classic
 4	403	Боевик	det_action
@@ -124,7 +123,7 @@ id_parent	id	name	keys
 4	409	Иронический детектив	det_irony
 4	410	Шпионский детектив	det_espionage,шпионский_детектив
 4	411	Крутой детектив	det_hard
-4	412	Дамский детективный роман	det_cozy
+4	412	Дамский детективный роман	det_cozy,det_lady
 4	414	Политический детектив	det_political
 4	415	Маньяки	det_maniac
 4	416	Юридический триллер	thriller_legal
@@ -134,14 +133,14 @@ id_parent	id	name	keys
 4	420	Психологический триллер	thriller_psychology
 
 0	5	Документальная литература
-5	500	Биографии и Мемуары	nonf_biography,биографии_и_мемуары
+5	500	Биографии и Мемуары	nonf_biography,биографии_и_мемуары,nonf_biography_writers,nonf_biography_celebrities,nonf_biography_historical,about_musicians
 5	501	Публицистика	nonf_publicism
 5	502	Путешествия и география	adv_geo
 5	503	Научпоп	sci_popular
 5	504	Документальная литература	nonfiction,nonf_all
 5	505	Природа и животные	adv_animal
 5	506	Критика	nonf_criticism
-5	507	Военная документалистика	nonf_military
+5	507	Военная документалистика	nonf_military,nonf_biography_military_figures
 5	508	География, путевые заметки	travel_notes
 
 0	6	Любовные романы
@@ -153,18 +152,19 @@ id_parent	id	name	keys
 6	608	Порно	love_hard
 
 0	7	Детское
-7	700	Детская литература: прочее	children,child_all
+7	700	Детская литература: прочее	children,child_all,child_dramaturgy,child_det_children_detectives,child_prose_history
 7	701	Сказка	child_tale
-7	702	Детская проза	child_prose
+7	702	Детская проза	child_prose,child_prose_humor,child_prose_romantic
 7	705	Образовательная литература	child_education
 7	706	Детские стихи	child_verse
-7	707	Детские приключения	child_adv
+7	707	Детские приключения	child_adv,child_adv_animal
 7	708	Книга-игра	prose_game
 7	709	Подростковая литература	ya
 7	710	Детский фольклор	child_folklore
-7	711	Русские сказки	child_tale_rus
+7	711	Русские сказки	child_tale_rus,child_tale_russian_writers
 7	712	Классическая детская литература	child_classical
-7	713	Зарубежная литература для детей	foreign_children
+7	713	Зарубежная детская литература	foreign_children,child_tale_foreign_writers
+7	714	Детские детективы	child_det_other,child_det_children_detectives,child_det_animal_detectives
 
 0	8	Домоводство
 8	800	Эротика, Секс	home_sex
@@ -221,6 +221,8 @@ id_parent	id	name	keys
 11	1110	Диафильмы	diafilm
 11	1111	Комиксы	comics
 11	1112	Неотсортированное	other,other_all
+11	1113	Машинный перевод	computer_translation
+11	1114	Любительский перевод	fan_translation
 
 0	12	Юмор
 12	1201	Юмористическая проза	humor_prose
