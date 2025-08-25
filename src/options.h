@@ -46,7 +46,8 @@ enum ExportFormat {
     azw3 = 0x08,
     mobi = 0x10,
     mobi7 = 0x20,
-    pdf = 0x40
+    pdf = 0x40,
+    djvu = 0x80
 };
 
 Q_DECLARE_METATYPE(ExportFormat)
@@ -147,6 +148,7 @@ struct Options
     bool bCloseDlgAfterExport;
     bool bUncheckAfterExport;
     bool bExtendedSymbols;
+    bool bGuiAsyncInfo;
 
 #ifdef USE_HTTSERVER
     const static ushort nDefaultHttpPort = 8080;
