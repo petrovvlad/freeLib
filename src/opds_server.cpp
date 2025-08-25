@@ -1425,6 +1425,7 @@ QByteArray opds_server::cover(uint idLib, uint idBook)
     QByteArray baResult;
     if(g::libs.contains(idLib) && g::libs.at(idLib).books.contains(idBook)){
         BookFile file(idLib, idBook);
+        file.open();
         QImage img = file.cover();
         QBuffer buffer(&baResult);
         buffer.open(QIODevice::WriteOnly);
