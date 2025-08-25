@@ -22,6 +22,7 @@
 #include "opds_server.h"
 #endif
 #include "importthread.h"
+#include "bookfile.h"
 
 namespace Ui {
 class MainWindow;
@@ -58,6 +59,7 @@ private:
     void FillListBooks();
     void FillListBooks(const std::vector<uint> &vBooks, const std::vector<uint> &vCheckedBooks, uint idCurrentAuthor);
     void FillAlphabet(const QString &sAlphabetName);
+    void fillReview(const BookFile& bookFile);
     bool IsBookInList(const SBook &book);
     void checkLetter(const QChar cLetter);
     std::vector<uint> getCheckedBooks(bool bCheckedOnly = false);
@@ -70,7 +72,7 @@ private:
     void updateItemIcon(QTreeWidgetItem *item);
     QIcon getTagIcon(const std::unordered_set<uint> &vIdTags);
     void updateTitle();
-
+    uint idSelectedBook();
 
 #ifdef USE_KStatusNotifier
     KStatusNotifierItem *statusNotifierItem_;
@@ -128,11 +130,11 @@ private slots:
     void onSerachSeriesChanded(const QString& str);
     void btnSearch();
     void SelectAuthor();
-    void selectBook();
+    void onSelectBook();
     void SelectGenre();
     void SelectSeria();
     void onItemChanged(QTreeWidgetItem*,int);
-    void BookDblClick();
+    void onDblClickBook();
     void About();
 //    void LanguageChange();
     void onStartSearch();

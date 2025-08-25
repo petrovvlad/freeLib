@@ -913,7 +913,8 @@ void opds_server::loadAnnotations(const std::vector<uint> &vBooks, SLib &lib, ui
 
         QtConcurrent::blockingMap(vBooksNeedAnnotations, [&](auto idBook){
             SBook& book = lib.books.at(idBook);
-            BookFile file(&lib, idBook);
+            BookFile file(lib, idBook);
+            file.open();
             book.sAnnotation = file.annotation();
         });
     }
@@ -1174,7 +1175,7 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
         if(g::options.bOpdsShowAnotation)
         {
             if(book.sAnnotation.isEmpty()){
-                BookFile file(&lib, idBook);
+                BookFile file(lib, idBook);
                 book.sAnnotation = file.annotation();
             }
             el = AddTextNode(u"content"_s, book.sAnnotation, entry);
@@ -1236,7 +1237,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
         if(g::options.bOpdsShowAnotation)
         {
             if(book.sAnnotation.isEmpty()){
-                BookFile file(&lib, idBook);
+                BookFile file(lib, idBook);
                 book.sAnnotation = file.annotation();
             }
             metadata[u"description"] = book.sAnnotation;
@@ -3044,7 +3045,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     if(pLib == nullptr || !pLib->books.contains(idBook))
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
     QByteArray baBook;
-    BookFile bookFile(pLib, idBook);
+    BookFile bookFile(*pLib, idBook);
     auto &book = pLib->books[idBook];
     baBook = bookFile.data();
 

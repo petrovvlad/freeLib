@@ -13,12 +13,14 @@
 EpubReader::EpubReader(QByteArray data)
     : data_(std::move(data)), buffer_(&data_), device_(&buffer_)
 {
+    openOpf();
 }
 
 EpubReader::EpubReader(QIODevice *device)
     : device_(device)
 {
     Q_ASSERT(device_ != nullptr);
+    openOpf();
 }
 
 bool EpubReader::openOpf()
