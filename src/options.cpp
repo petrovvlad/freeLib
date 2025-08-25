@@ -513,6 +513,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"CloseExpDlg"_s,bCloseDlgAfterExport);
     pSettings->setValue(u"uncheck_export"_s,bUncheckAfterExport);
     pSettings->setValue(u"extended_symbols"_s, bExtendedSymbols);
+    pSettings->setValue(u"ui.info.async"_s, bGuiAsyncInfo);
 #ifdef USE_HTTSERVER
     pSettings->setValue(u"OPDS_enable"_s, bOpdsEnable);
     pSettings->setValue(u"HTTP_need_pasword"_s, bOpdsNeedPassword);

@@ -138,6 +138,13 @@
           </widget>
          </item>
          <item>
+          <widget class="QCheckBox" name="async_info">
+           <property name="text">
+            <string>Download covers in background</string>
+           </property>
+          </widget>
+         </item>
+         <item>
           <widget class="QCheckBox" name="splash">
            <property name="text">
             <string>Don't show splash screen</string>
@@ -1133,7 +1140,7 @@
            <item row="1" column="2">
             <widget class="QSpinBox" name="listFontSpinBox">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
@@ -1199,12 +1206,18 @@
                <verstretch>0</verstretch>
               </sizepolicy>
              </property>
+             <property name="writingSystem">
+              <enum>QFontDatabase::WritingSystem::Cyrillic</enum>
+             </property>
+             <property name="fontFilters">
+              <set>QFontComboBox::FontFilter::ScalableFonts</set>
+             </property>
             </widget>
            </item>
            <item row="0" column="2">
             <widget class="QSpinBox" name="sidebarFontSpinBox">
              <property name="sizePolicy">
-              <sizepolicy hsizetype="Minimum" vsizetype="Minimum">
+              <sizepolicy hsizetype="Minimum" vsizetype="Fixed">
                <horstretch>0</horstretch>
                <verstretch>0</verstretch>
               </sizepolicy>
