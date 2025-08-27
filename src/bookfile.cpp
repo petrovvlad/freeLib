@@ -628,13 +628,27 @@ QDateTime BookFile::birthTime() const
 
 QString BookFile::fileName() const
 {
+    QString sFileName = sFile_ % u"."_s % fileFormat();
+    return sFileName;
+}
+
+QString BookFile::fileFormat() const
+{
     QString sFormat;
     if(sFormat_.endsWith(u".zip") && sFormat_.size()>4)
         sFormat = sFormat_.left(sFormat_.size()-4);
+    else if(sFormat_ == u"zip"){
+        if(sBookName_.endsWith(u"(pdf)"))
+            sFormat = u"pdf"_s;
+        else if(sBookName_.endsWith(u"(djvu)") || sBookName_.endsWith(u"(djv)"))
+            sFormat = u"djvu"_s;
+        else if(sBookName_.endsWith(u"(epub)"))
+            sFormat = u"epub"_s;
+
+    }
     else
         sFormat = sFormat_;
-    QString sFileName = sFile_ % u"."_s % sFormat;
-    return sFileName;
+    return sFormat;
 }
 
 QString BookFile::filePath() const
@@ -673,11 +687,11 @@ QByteArray BookFile::data()
     if(sArchive_.isEmpty())
         data_ = file_.readAll();
     else{
-        if(sFormat_ == u"pdf.zip")
+        if(sFormat_ == u"pdf.zip" || (sFormat_ == u"zip" && sBookName_.endsWith(u"(pdf)")))
             return dataZip(u".pdf"_s);
-        else if(sFormat_ == u"djvu.zip")
+        else if(sFormat_ == u"djvu.zip" || (sFormat_ == u"zip" && (sBookName_.endsWith(u"(djvu)") || sBookName_.endsWith(u"(djv)"))))
             return dataZip(u".djvu"_s);
-        else if(sFormat_ == u"epub.zip")
+        else if(sFormat_ == u"epub.zip" || (sFormat_ == u"zip" && sBookName_.endsWith(u"(epub)")))
             return dataZip(u".epub"_s);
     }
     return data_;
@@ -691,17 +705,17 @@ QByteArray BookFile::dataZip(const QString &sSubFormat)
     if(data_.size() != 0){
         buffer.setData(data_);
         zip.setIoDevice(&buffer);
-    }
-    zip.open(QuaZip::mdUnzip);
-    auto listFi = zip.getFileInfoList64();
-    for(const auto &fi :std::as_const(listFi)){
-        if(fi.name.endsWith(sSubFormat)){
-            zip.setCurrentFile(fi.name);
-            QuaZipFile zipFile(&zip);
-            zipFile.open(QIODevice::ReadOnly);
-            ba = zipFile.readAll();
-            zipFile.close();
-            break;
+        zip.open(QuaZip::mdUnzip);
+        auto listFi = zip.getFileInfoList64();
+        for(const auto &fi :std::as_const(listFi)){
+            if(fi.name.endsWith(sSubFormat)){
+                zip.setCurrentFile(fi.name);
+                QuaZipFile zipFile(&zip);
+                zipFile.open(QIODevice::ReadOnly);
+                ba = zipFile.readAll();
+                zipFile.close();
+                break;
+            }
         }
     }
     return ba;

@@ -344,8 +344,8 @@ void ExportThread::export_books()
             }
             else
             {
-                QDir().mkpath(QFileInfo(dir.absolutePath() % QStringLiteral("/") % archive).absolutePath());
-                QFile().copy(LibPath + QStringLiteral("/") % archive, dir.absolutePath() % QStringLiteral("/") % archive);
+                QDir().mkpath(QFileInfo(dir.absolutePath() % u"/"_s % archive).absolutePath());
+                QFile().copy(LibPath % u"/"_s % archive, dir.absolutePath() % u"/"_s % archive);
             }
             vSuccessfulExportBooks.push_back(idBook);
         }
@@ -417,7 +417,7 @@ void ExportThread::export_books()
             if(book.sFormat.endsWith(u".zip") && book.sFormat.size()>4)
                 sFormat = book.sFormat.left(book.sFormat.size()-4);
             else
-                sFormat = book.sFormat;
+                sFormat = fileBook.fileFormat();
             if(pExportOptions_->bOriginalFileName)
             {
                 QString arh = book.sArchive;

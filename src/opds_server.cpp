@@ -1018,7 +1018,7 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
             if(convertFormats & azw3)
                 addDownloadItem(entry, u"azw3"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery);
         }
-        else if(book.sFormat == u"epub" || book.sFormat == u"epub.zip")
+        else if(book.sFormat == u"epub" || book.sFormat == u"epub.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(epub)")))
         {
             addDownloadItem(entry, u"epub"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s);
             if(convertFormats & mobi)
@@ -1026,9 +1026,9 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
         }
         else if(book.sFormat == u"mobi"_s)
             addDownloadItem(entry, u"mobi"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery);
-        else if(book.sFormat == u"pdf" || book.sFormat == u"pdf.zip")
+        else if(book.sFormat == u"pdf" || book.sFormat == u"pdf.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(pdf)")))
             addDownloadItem(entry, u"pdf"_s, sLibUrl % u"/book/"_s % sIdBook % u"/pdf"_s % sSessionQuery);
-        else if(book.sFormat == u"djvu" || book.sFormat == u"djvu.zip")
+        else if(book.sFormat == u"djvu" || book.sFormat == u"djvu.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(djvu)")))
             addDownloadItem(entry, u"djvu"_s, sLibUrl % u"/book/"_s % sIdBook % u"/djvu"_s % sSessionQuery);
         else
             addDownloadItem(entry, book.sFormat, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery);
@@ -1146,7 +1146,7 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
             if(convertFormats & azw3)
                 addLink(entry, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         }
-        else if(book.sFormat == u"epub" || book.sFormat == u"epub.zip")
+        else if(book.sFormat == u"epub" || book.sFormat == u"epub.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(epub)")))
         {
             addLink(entry, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(convertFormats & mobi)
@@ -1155,9 +1155,9 @@ QString opds_server::generatePageOPDS(const std::vector<uint> &vBooks, SLib &lib
                 addLink(entry, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         }else if(book.sFormat == u"mobi")
             addLink(entry, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        else if(book.sFormat == u"pdf" || book.sFormat == u"pdf.zip")
+        else if(book.sFormat == u"pdf" || book.sFormat == u"pdf.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(pdf)")))
             addLink(entry, u"application/pdf"_s, sLibUrl % u"/book/"_s % sIdBook % u"/pdf"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        else if(book.sFormat == u"djvu" || book.sFormat == u"djvu.zip")
+        else if(book.sFormat == u"djvu" || book.sFormat == u"djvu.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(djvu)")))
             addLink(entry, u"mage/vnd-djvu"_s, sLibUrl % u"/book/"_s % sIdBook % u"/djvu"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         else
             addLink(entry, mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"alternate"_s, tr("Download"));
@@ -1286,7 +1286,8 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
             if(convertFormats & azw3)
                 addLink(links, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         }
-        else if(book.sFormat == u"epub" || book.sFormat == u"epub.zip"){
+        else if(book.sFormat == u"epub" || book.sFormat == u"epub.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(epub)")))
+        {
             addLink(links, u"application/epub+zip"_s, sLibUrl % u"/book/"_s % sIdBook % u"/epub"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
             if(convertFormats & mobi)
                 addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/mobi"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
@@ -1294,9 +1295,9 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
                 addLink(links, u"application/x-mobi8-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/azw3"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         }else if(book.sFormat == u"mobi")
             addLink(links, u"application/x-mobipocket-ebook"_s, sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        else if(book.sFormat == u"pdf" || book.sFormat == u"pdf.zip")
+        else if(book.sFormat == u"pdf" || book.sFormat == u"pdf.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(pdf)")))
             addLink(links, u"application/pdf"_s, sLibUrl % u"/book/"_s % sIdBook % u"/pdf"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
-        else if(book.sFormat == u"djvu" || book.sFormat == u"djvu.zip")
+        else if(book.sFormat == u"djvu" || book.sFormat == u"djvu.zip" || (book.sFormat == u"zip" && book.sName.endsWith(u"(djvu)")))
             addLink(links, u"image/vnd-djvu"_s, sLibUrl % u"/book/"_s % sIdBook % u"/djvu"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
         else
             addLink(links,  mime(book.sFormat), sLibUrl % u"/book/"_s % sIdBook % u"/download"_s % sSessionQuery, u"http://opds-spec.org/acquisition/open-access"_s);
@@ -3098,7 +3099,7 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
         if(format == epub || format == mobi || format == azw3)
         {
             QString sBookFormat = book.sFormat;
-            if(sBookFormat == u"epub.zip")
+            if(sBookFormat == u"epub.zip" || (sBookFormat == u"zip" && book.sName.endsWith(u"(epub)")))
                 sBookFormat = u"epub"_s;
             if(sBookFormat != sFormat){
                 QFile file;
@@ -3113,12 +3114,6 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
                 file.setFileName(sOutFile);
                 file.open(QFile::ReadOnly);
                 baBook = file.readAll();
-            }
-            if(format == epub){
-                baContentType = "application/epub+zip"_ba;
-            }
-            else{
-                baContentType = "application/x-mobipocket-ebook"_ba;
             }
         }
         switch (format) {

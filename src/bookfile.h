@@ -18,6 +18,7 @@ public:
     QString annotation();
     QDateTime birthTime() const;
     QString fileName() const;
+    QString fileFormat() const;
     QString filePath() const;
     qint64 fileSize() const;
     QByteArray data();
