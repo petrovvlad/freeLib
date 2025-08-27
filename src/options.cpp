@@ -555,7 +555,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"ui.font.usesystem"_s, bUseSytemFonts);
     pSettings->setValue(u"ui.font.sidebar"_s, sSidebarFontFamaly);
     pSettings->setValue(u"ui.font.size.sidebar"_s, nSidebarFontSize);
-    pSettings->setValue(u"ui.fonts.bookslist"_s, sBooksListFontFamaly);
+    pSettings->setValue(u"ui.font.bookslist"_s, sBooksListFontFamaly);
     pSettings->setValue(u"ui.font.size.booklist"_s, nBooksListFontSize);
     pSettings->setValue(u"ui.font.annotation"_s, sAnnotationFontFamaly);
     pSettings->setValue(u"ui.font.size.annotation"_s, nAnnotationFontSize);
