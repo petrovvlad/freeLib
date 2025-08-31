@@ -145,13 +145,13 @@ private slots:
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);
-    void MoveToAuthor(uint id, const QString &FirstLetter);
-    void MoveToGenre(uint id);
-    void MoveToSeria(uint id, const QString &FirstLetter);
+    void moveToAuthor(uint id);
+    void moveToGenre(uint id);
+    void moveToSeria(uint id);
     void onTagFilterChanged(int index);
     void onSetTag();
     void ChangingLanguage();
-    void ReviewLink(const QUrl &url);
+    void onReviewLinkClicked(const QUrl &url);
     void SelectLibrary();
     void onTabWidgetChanged(int index);
     void onLanguageFilterChanged(int index);

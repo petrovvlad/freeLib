@@ -284,7 +284,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->actionAbout, &QAction::triggered, this, &MainWindow::About);
     connect(ui->Books, &QTreeWidget::itemChanged, this, &MainWindow::onItemChanged);
     connect(ui->language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &MainWindow::onLanguageFilterChanged);
-    connect(ui->Review, &QTextBrowser::anchorClicked, this, &MainWindow::ReviewLink );
+    connect(ui->Review, &QTextBrowser::anchorClicked, this, &MainWindow::onReviewLinkClicked );
 
     FillAlphabet(g::options.sAlphabetName);
     ExportBookListBtn(false);
@@ -514,20 +514,20 @@ void MainWindow::EditBooks()
 /*
     обработчик клика мышкой на ссылках в описании Книги
 */
-void MainWindow::ReviewLink(const QUrl &url)
+void MainWindow::onReviewLinkClicked(const QUrl &url)
 {
     QString sPath = url.path();
     if(sPath.startsWith(u"author_"))
     {
-        MoveToAuthor(sPath.right(sPath.length()-8).toLongLong(), sPath.mid(7,1).toUpper());
+        moveToAuthor(sPath.right(sPath.length()-7).toLongLong());
     }
     else if(sPath.startsWith(u"genre_"))
     {
-        MoveToGenre(sPath.right(sPath.length()-7).toLongLong());
+        moveToGenre(sPath.right(sPath.length()-6).toLongLong());
     }
-    else if(sPath.startsWith(u"seria_"))
+    else if(sPath.startsWith(u"sequence_"))
     {
-        MoveToSeria(sPath.right(sPath.length()-7).toLongLong(), sPath.mid(6,1).toUpper());
+        moveToSeria(sPath.right(sPath.length()-9).toLongLong());
     }
 }
 
@@ -1588,7 +1588,7 @@ void MainWindow::fillReview(const BookFile &bookFile)
         for(auto [idSequence, numInSequence] :book.mSequences){
             if(!bFirst)
                 sSequence += u"; "_s;
-            sSequence += u"<a href=seria_%3%1>%2</a>"_s.arg(QString::number(idSequence),lib.serials[idSequence].sName, lib.serials[idSequence].sName.at(0).toUpper());
+            sSequence += u"<a href=sequence_%1>%2</a>"_s.arg(QString::number(idSequence),lib.serials[idSequence].sName);
             bFirst = false;
         }
     }
@@ -1597,15 +1597,15 @@ void MainWindow::fillReview(const BookFile &bookFile)
     for(auto idAuthor: book.vIdAuthors)
     {
         QString sAuthor = lib.authors[idAuthor].getName();
-        sAuthors += (sAuthors.isEmpty() ?u""_s :u"; "_s) + u"<a href='author_%3%1'>%2</a>"_s
+        sAuthors += (sAuthors.isEmpty() ?u""_s :u"; "_s) + u"<a href='author_%1'>%2</a>"_s
                                                                  .arg(QString::number(idAuthor), sAuthor.replace(',', ' '), sAuthor.at(0));
     }
     QString sGenres;
     for(auto idGenre: book.vIdGenres)
     {
         QString sGenre = g::genres[idGenre].sName;
-        sGenres += (sGenres.isEmpty() ?u""_s :u"; "_s) + u"<a href='genre_%3%1'>%2</a>"_s
-                                                               .arg(QString::number(idGenre), sGenre, sGenre.at(0));
+        sGenres += (sGenres.isEmpty() ?u""_s :u"; "_s) + u"<a href='genre_%1'>%2</a>"_s
+                                                               .arg(QString::number(idGenre), sGenre);
     }
     QFile file_html(u":/preview.html"_s);
     file_html.open(QIODevice::ReadOnly);
@@ -2221,9 +2221,11 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     menu.exec(QCursor::pos());
 }
 
-void MainWindow::MoveToSeria(uint id, const QString &FirstLetter)
+void MainWindow::moveToSeria(uint id)
 {
-    ui->searchSeries->setText(FirstLetter);
+    SLib& lib = g::libs[g::idCurrentLib];
+    QString sFirstLetter = lib.serials[id].sName.at(0).toUpper();
+    ui->searchSeries->setText(sFirstLetter);
     ui->tabWidget->setCurrentIndex(TabSeries);
     ui->SeriaList->clearSelection();
     for (int i=0; i<ui->SeriaList->count(); i++)
@@ -2238,7 +2240,7 @@ void MainWindow::MoveToSeria(uint id, const QString &FirstLetter)
     }
 }
 
-void MainWindow::MoveToGenre(uint id)
+void MainWindow::moveToGenre(uint id)
 {
     ui->tabWidget->setCurrentIndex(TabGenres);
     ui->GenreList->clearSelection();
@@ -2257,9 +2259,11 @@ void MainWindow::MoveToGenre(uint id)
     }
 }
 
-void MainWindow::MoveToAuthor(uint id, const QString &FirstLetter)
+void MainWindow::moveToAuthor(uint id)
 {
-    ui->searchAuthor->setText(FirstLetter);
+    SLib& lib = g::libs[g::idCurrentLib];
+    QString sFirstLetter = lib.authors[id].getName().at(0);
+    ui->searchAuthor->setText(sFirstLetter);
     ui->tabWidget->setCurrentIndex(TabAuthors);
     ui->AuthorList->clearSelection();
     for (int i=0; i<ui->AuthorList->count(); i++)
