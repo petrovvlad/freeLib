@@ -73,6 +73,9 @@ private:
     QIcon getTagIcon(const std::unordered_set<uint> &vIdTags);
     void updateTitle();
     uint idSelectedBook();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+    void loadBookDetailsAsync(uint idBook);
+#endif
 
 #ifdef USE_KStatusNotifier
     KStatusNotifierItem *statusNotifierItem_;

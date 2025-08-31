@@ -275,7 +275,6 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->Books, &QTreeWidget::itemDoubleClicked, this, &MainWindow::onDblClickBook);
     connect(ui->GenreList, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectGenre);
     connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectSeria);
-    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabWidgetChanged);
     connect(ui->do_search, &QAbstractButton::clicked, this, &MainWindow::onStartSearch);
     connect(ui->buttonClear, &QAbstractButton::clicked, this, &MainWindow::onClearSearch);
     connect(ui->s_author, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
@@ -305,7 +304,11 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->searchSeries->setFocus();
         SelectSeria();
         break;
+    case TabGenres:
+        SelectGenre();
+        break;
     }
+    connect(ui->tabWidget, &QTabWidget::currentChanged, this, &MainWindow::onTabWidgetChanged);
 
     ui->date_to->setDate(QDate::currentDate());
 
@@ -1467,64 +1470,100 @@ void MainWindow::onSelectBook()
     }
     ExportBookListBtn(true);
     idCurrentBook_ = idBook;
-    SLib& lib = g::libs[g::idCurrentLib];
-    SBook &book = lib.books[idBook];
-    std::shared_ptr<BookFile> bookFile;
     if(!g::options.bGuiAsyncInfo){
-        bookFile = std::make_shared<BookFile>(g::idCurrentLib, idBook);
-        bookFile->open();
+        SLib& lib = g::libs[g::idCurrentLib];
+        SBook &book = lib.books[idBook];
+        BookFile bookFile(g::idCurrentLib, idBook);
+        bookFile.open();
         if(book.sAnnotation.isEmpty())
-            book.sAnnotation = bookFile->annotation();
-    }
-#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
-    else{
-        if(g::activeBooks.contains(idBook))
-            bookFile = g::activeBooks.at(idBook);
-        else{
-            bookFile = std::make_shared<BookFile>(g::idCurrentLib, idBook);
-            if(book.sAnnotation.isEmpty() || !bookFile->isCoverCashed())
-                bookFile->openAsync();
-            ui->btnOpenBook->setEnabled(true);
-            if(book.sAnnotation.isEmpty()){
-                bookFile->annotationAsync().then(this, [this, idBook](QFuture<QString> future){
-                    if(idBook == idSelectedBook()){
-                        SLib& lib = g::libs[g::idCurrentLib];
-                        if(lib.books.contains(idBook)){
-                            SBook &book = lib.books[idBook];
-                            book.sAnnotation = future.takeResult();
-                            Q_ASSERT(g::activeBooks.contains(idBook));
-                            auto &bookFile = g::activeBooks.at(idBook);
-                            fillReview(*bookFile);
-                        }
-                    }
-                });
-            }
-        }
-        pCover->setImage(QImage());
-    }
-#endif
-    fillReview(*bookFile);
-
-    if(!g::options.bGuiAsyncInfo){
-        QImage cover = bookFile->cover();
+            book.sAnnotation = bookFile.annotation();
+        fillReview(bookFile);
+        QImage cover = bookFile.cover();
         pCover->setImage(cover);
     }
 #if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
     else{
-        bookFile->coverAsync().then(this, [this, idBook](QFuture<QImage> future){
-            if(idBook == idSelectedBook()){
-                QImage cover = future.takeResult();
-                pCover->setImage(cover);
+        loadBookDetailsAsync(idBook);
+        uint idAbove = 0;
+        uint idBelow = 0;
+        auto currentItem = ui->Books->currentItem();
+        if(currentItem){
+            auto itemBelow = ui->Books->itemBelow(currentItem);
+            if(itemBelow && itemBelow->type() == ITEM_TYPE_BOOK){
+                idBelow = itemBelow->data(0, Qt::UserRole).toUInt();
+                loadBookDetailsAsync(idBelow);
             }
+            auto itemAbove = ui->Books->itemAbove(currentItem);
+            if(itemAbove && itemAbove->type() == ITEM_TYPE_BOOK){
+                idAbove = itemAbove->data(0, Qt::UserRole).toUInt();
+                loadBookDetailsAsync(idAbove);
+            }
+        }
+        std::erase_if(g::activeBooks, [idBook, idAbove, idBelow](const auto& pair) {
+            return (pair.first != idBook) && (pair.first != idAbove) && (pair.first != idBelow) && (!pair.second->isBusy());
         });
-
-        g::activeBooks[idBook] = std::move(bookFile);
-        std::erase_if(g::activeBooks, [idBook](const auto& pair) {
-            return pair.first != idBook && !pair.second->isBusy();
-        });
+        qDebug() << g::activeBooks.size();
     }
 #endif
 }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+void MainWindow::loadBookDetailsAsync(uint idBook)
+{
+    SLib& lib = g::libs[g::idCurrentLib];
+    SBook &book = lib.books[idBook];
+    std::shared_ptr<BookFile> bookFile;
+    if(g::activeBooks.contains(idBook))
+        bookFile = g::activeBooks.at(idBook);
+    else{
+        bookFile = std::make_shared<BookFile>(g::idCurrentLib, idBook);
+        g::activeBooks[idBook] = bookFile;
+    }
+    bool bCached = bookFile->isCoverCached();
+    if((book.sAnnotation.isEmpty() || !bCached) && !bookFile->isBusy())
+    {
+        bookFile->openAsync();
+        if(book.sAnnotation.isEmpty()){
+            bookFile->annotationAsync().then(this, [this, idBook](QFuture<QString> future){
+                SLib& lib = g::libs[g::idCurrentLib];
+                if(lib.books.contains(idBook)){
+                    SBook &book = lib.books[idBook];
+                    book.sAnnotation = future.takeResult();
+                    if(idBook == idSelectedBook()){
+                        Q_ASSERT(g::activeBooks.contains(idBook));
+                        auto &bookFile = g::activeBooks.at(idBook);
+                        fillReview(*bookFile);
+                    }
+                }
+            });
+        }
+        if(bCached){
+            if(idBook == idCurrentBook_)
+                pCover->setImage(bookFile->cover());
+        }else{
+            if(idBook == idCurrentBook_)
+                pCover->setImage(QImage());
+
+            bookFile->coverAsync().then(this, [this, idBook](QFuture<QImage> future){
+                if(idBook == idSelectedBook()){
+                    QImage cover = future.takeResult();
+                    pCover->setImage(cover);
+                }
+            });
+        }
+    }else{
+        if(idBook == idCurrentBook_){
+            if(bCached)
+                pCover->setImage(bookFile->cover());
+            else
+                pCover->setImage(QImage());
+        }
+
+    }
+    if(idBook == idCurrentBook_)
+        fillReview(*bookFile);
+}
+#endif //QT_VERSION>=6.1
 
 uint MainWindow::idSelectedBook()
 {
@@ -1534,7 +1573,7 @@ uint MainWindow::idSelectedBook()
     QTreeWidgetItem* item = selectedItems.first();
     if(item->type() != ITEM_TYPE_BOOK)
         return 0;
-    return item->data(0, Qt::UserRole).toUInt();;
+    return item->data(0, Qt::UserRole).toUInt();
 }
 
 void MainWindow::fillReview(const BookFile &bookFile)
@@ -1583,7 +1622,7 @@ void MainWindow::fillReview(const BookFile &bookFile)
         replace(u"#sequence#"_s, sSequence).
         replace(u"#file_path#"_s, bookFile.filePath()).
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
-        replace(u"#file_size#"_s, size>0 ?locale.formattedDataSize(bookFile.fileSize(), 1, QLocale::DataSizeTraditionalFormat) : u""_s).
+        replace(u"#file_size#"_s, size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : u""_s).
 #else
         replace(QLatin1String("#file_size#"), size>0 ?sizeToString(size) : QLatin1String("")).
 #endif
@@ -2355,15 +2394,16 @@ void MainWindow::FillSerials()
 
     std::unordered_map<uint, uint> mCounts;
     const SLib& lib = g::libs[g::idCurrentLib];
-    auto &squences = lib.serials;
+    auto &sequences = lib.serials;
+
 
     for(const auto &iBook :lib.books){
         auto &book = iBook.second;
         if(!book.mSequences.empty() && IsBookInList(book)){
             for(const auto &iSequence: book.mSequences){
                 uint idSequence = iSequence.first;
-                if((sSearch == u"*" || (sSearch == u"#" && !squences.at(idSequence).sName.left(1).contains(re)) ||
-                     squences.at(idSequence).sName.startsWith(sSearch, Qt::CaseInsensitive)))
+                if((sSearch == u"*" || (sSearch == u"#" && !sequences.at(idSequence).sName.left(1).contains(re)) ||
+                     sequences.at(idSequence).sName.startsWith(sSearch, Qt::CaseInsensitive)))
                 {
                     mCounts[idSequence]++;
                 }
@@ -2374,22 +2414,22 @@ void MainWindow::FillSerials()
     std::vector<uint> vIdSequence(mCounts.size());
     std::ranges::copy(mCounts | std::views::keys, vIdSequence.begin());
 #ifdef __cpp_lib_execution
-    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2)
+    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&sequences](uint id1, uint id2)
 #else
-    std::sort(vIdSequence.begin(), vIdSequence.end(), [&squences](uint id1, uint id2)
+    std::sort(vIdSequence.begin(), vIdSequence.end(), [&sequences](uint id1, uint id2)
 #endif
     {
-        return localeStringCompare(squences.at(id1).sName, squences.at(id2).sName);
+        return localeStringCompare(sequences.at(id1).sName, sequences.at(id2).sName);
     });
 
     QListWidgetItem *selectedItem = nullptr;
 
     for(auto idSequnce :vIdSequence)
     {
-        QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(squences.at(idSequnce).sName).arg(mCounts.at(idSequnce)));
+        QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(sequences.at(idSequnce).sName).arg(mCounts.at(idSequnce)));
         item->setData(Qt::UserRole, idSequnce);
         if(g::options.bUseTag)
-            item->setIcon(getTagIcon(squences.at(idSequnce).idTags));
+            item->setIcon(getTagIcon(sequences.at(idSequnce).idTags));
         ui->SeriaList->addItem(item);
         if(idSequnce == idCurrentSerial_)
         {

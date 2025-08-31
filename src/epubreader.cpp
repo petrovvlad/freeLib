@@ -497,21 +497,21 @@ QString EpubReader::parseAnnotation() const
 bool EpubReader::readMetadata(BookMetadata &metadata)
 {
     if(opf_.isNull())
-        openOpf();
+        return false;
     return parseMetadata(metadata);
 }
 
 QImage EpubReader::readCover()
 {
     if(opf_.isNull())
-        openOpf();
+        return QImage();
     return parseCover();
 }
 
 QString EpubReader::readAnnotation()
 {
     if(opf_.isNull())
-        openOpf();
+        return u""_s;
     return parseAnnotation();
 }
 

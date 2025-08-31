@@ -27,7 +27,7 @@ public:
     QFuture<QString> annotationAsync();
     QFuture<QImage> coverAsync();
     bool isBusy();
-    bool isCoverCashed();
+    bool isCoverCached();
 
 private:
     QByteArray openZipInZip(const QString &sArchive, const QString &sFileName);
