@@ -407,17 +407,8 @@ bool setCurrentZipFileName(QuaZip *zip, const QString &name)
 
 bool kindlegenInstalled()
 {
-    //Проверка наличия kindlegen в /usr/bin
-    QFileInfo fi(u"/usr/bin/kindlegen"_s);
-    if(fi.isExecutable())
-        return true;
-
-    // Проверка установленного kindlegen через which
-    QProcess process;
-    process.start(u"which"_s, {u"kindlegen"_s});
-    process.waitForFinished();
-    // Проверяем, что команда завершилась успешно и вывод не пустой
-    return process.exitCode() == 0 && !process.readAllStandardOutput().isEmpty();
+    QString kindlegenPath = QStandardPaths::findExecutable(u"kindlegen"_s);
+    return !kindlegenPath.isEmpty();
 }
 
 bool localeStringCompare(const QString &str1, const QString &str2)
