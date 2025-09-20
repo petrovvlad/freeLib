@@ -685,9 +685,12 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
                 sZipDir = sPath % sArchName % u".dir/"_s;
             else
                 sZipDir = QDir::tempPath() % u"/freeLib/zip/"_s % sArchName % u".dir/"_s;
-            QDir dirZip(sZipDir);
-            dirZip.mkpath(sZipDir);
-            QFile fileZiped(sZipDir + fiZip.name);
+            QString sTmpFile = sZipDir + fiZip.name;
+            QString sTmpFilePath = QFileInfo(sTmpFile).absolutePath();
+            QDir dir(sTmpFilePath);
+            if (!dir.exists())
+                dir.mkpath(sTmpFilePath);
+            QFile fileZiped(sTmpFile);
             fileZiped.open(QIODevice::WriteOnly);
             fileZiped.write(fileData);
             fileZiped.close();
@@ -713,7 +716,6 @@ void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArch
                 }
             }
         }
-
     }
 }
 
@@ -989,7 +991,7 @@ void ImportThread::process()
             QString file;
             if(substrings.count() > field_index[_FILE])
             {
-                file = substrings[field_index[_FILE]].trimmed();
+                file = substrings[field_index[_FILE]];
             }
             int size = 0;
             if(substrings.count() > field_index[_SIZE])
@@ -1193,14 +1195,8 @@ void ImportThread::process()
                     }
 #endif
 
-                    bool first = true;
                     for(const QString &genre: listGenres)
-                    {
-                        if(!first && genre.trimmed().isEmpty())
-                            continue;
                         AddGenre(idBook, genre.trimmed(), idLib_);
-                        first = false;
-                    }
                 }
                 count++;
                 if(nBooksCount == 0)
