@@ -40,7 +40,7 @@ BookFile::BookFile(const SLib &lib, uint idBook)
     sFormat_ = book.sFormat;
     sArchive_ = book.sArchive;
     sBookName_ = book.sName;
-    sAuthorName_ =lib.authors.at(book.idFirstAuthor).getName();
+    sAuthorName_ = lib.authors.at(book.idFirstAuthor).getName();
     if(!book.mSequences.empty()){
         const auto &sequence = book.mSequences.begin();
         sSequence_ = lib.serials.at(sequence->first).sName % (sequence->second>0 ?u"\n"_s % QString::number(sequence->second) :u""_s);
@@ -49,7 +49,6 @@ BookFile::BookFile(const SLib &lib, uint idBook)
 
 BookFile::~BookFile()
 {
-    qDebug() << "delete: " << idBook_;
 }
 
 void BookFile::open()
@@ -82,6 +81,7 @@ void BookFile::open()
             QByteArray ba = openZipInZip(sArchive, sFbdFile);
             if(!ba.isEmpty())
                 doc_.setContent(ba);
+            bOpen_ = !data_.isEmpty();
         }else{
             QuaZip zip;
             zip.setZipName(sArchive);
@@ -95,7 +95,7 @@ void BookFile::open()
             if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
             {
                 LogWarning << "Error open file:" << sFile;
-            }else {
+            }else{
                 data_ = zipFile.readAll();
                 QuaZipFileInfo64 fiZip;
                 if(zip.getCurrentFileInfo(&fiZip))
@@ -107,18 +107,21 @@ void BookFile::open()
             zip.close();
         }
     }
-    if(sFormat_ == u"fb2"){
-        if(data_.size() != 0)
-            doc_.setContent(data_);
-        else if(file_.isOpen()){
-            file_.reset();
-            doc_.setContent(&file_);
+    if(sFormat_ == u"fb2")
+    {
+        if(!doc_.isDocument()){
+            if(data_.size() != 0)
+                doc_.setContent(data_);
+            else if(file_.isOpen())
+            {
+                file_.reset();
+                doc_.setContent(&file_);
+            }
         }
-
-    }
-    else if(sFormat_ == u"epub")
-        initializeEpub();
-    else if(sFormat_.endsWith(u"zip")){
+    }else if(sFormat_ == u"epub")
+        openEpub();
+    else if(sFormat_.endsWith(u"zip"))
+    {
         if(data_.size() != 0){
             QBuffer buffer;
             QuaZip zip;
@@ -127,16 +130,15 @@ void BookFile::open()
             zip.open(QuaZip::mdUnzip);
             auto listFi = zip.getFileInfoList64();
             for(const auto &fi :std::as_const(listFi)){
-                if(fi.name.endsWith(u".fbd")){
+                if(fi.name.endsWith(u".fbd") && !doc_.isDocument()){
                     zip.setCurrentFile(fi.name);
                     QuaZipFile zipFile(&zip);
                     zipFile.open(QIODevice::ReadOnly);
                     QByteArray ba = zipFile.readAll();
                     zipFile.close();
                     doc_.setContent(ba);
-                    break;
-                }
-                if(fi.name.endsWith(u".epub") && pEpub_==nullptr){
+                }else
+                if(fi.name.endsWith(u".epub") && pEpub_ == nullptr){
                     zip.setCurrentFile(fi.name);
                     QuaZipFile zipFile(&zip);
                     zipFile.open(QIODevice::ReadOnly);
@@ -159,6 +161,8 @@ void BookFile::openAsync()
 
 QImage BookFile::cover()
 {
+    if(!cover_.isNull())
+        return cover_;
     QString sImg = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) % u"/covers/"_s % QString::number(idBook_) % u".jpg"_s;
     QImage img;
     if(QFile::exists(sImg))
@@ -166,10 +170,10 @@ QImage BookFile::cover()
 
     if(!bOpen_)
         return createCover();
-    if(doc_.isDocument()){
+    if(doc_.isDocument())
         img = coverFb2();
-    }else if(img.isNull()){
-        if(pEpub_ != nullptr || sFormat_ == u"epub")
+    if(img.isNull()){
+        if(pEpub_ != nullptr)
             img = coverEpub();
         else if(sArchive_.contains(u".zip/"_s))
             img = coverZip();
@@ -188,8 +192,10 @@ QImage BookFile::cover()
     if(!img.isNull() && img.width() < img.height()*2){
         img.save(sImg);
         cleanCoversCache();
-    }else
-        img = createCover();
+    }else{
+        cover_ = createCover();
+        return cover_;
+    }
 
     return img;
 }
@@ -215,6 +221,8 @@ bool BookFile::isBusy()
 
 bool BookFile::isCoverCached()
 {
+    if(!cover_.isNull())
+        return true;
     QString sImg = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) % u"/covers/"_s % QString::number(idBook_) % u".jpg"_s;
     return QFile::exists(sImg);
 }
@@ -257,10 +265,12 @@ QImage BookFile::coverEpub()
     return cover;
 }
 
-void BookFile::annotationEpub()
+QString BookFile::annotationEpub()
 {
+    QString sAnnotation;
     if(pEpub_ != nullptr)
-        sAnnotation_ = pEpub_->readAnnotation();
+        sAnnotation = pEpub_->readAnnotation();
+    return sAnnotation;
 }
 
 bool isUniformColor(const QImage& img) {
@@ -366,9 +376,7 @@ QImage BookFile::coverDjvu()
     QImage img;
     static DjVu djvu;
     static std::mutex m;
-    if(bOpen_ && djvu.loadLibrary()){
-        std::lock_guard<std::mutex> guard(m);
-
+    if(bOpen_ && djvu.loadLibrary()){       
         QString sDjVuFile;
         QFile fileDjVu;
         if(sArchive_.isEmpty()){
@@ -381,11 +389,15 @@ QImage BookFile::coverDjvu()
             fileDjVu.write(data_);
             fileDjVu.close();
         }
-
-        if(djvu.openDocument(sDjVuFile))
-            img = djvu.getCover();
+        {
+            std::lock_guard<std::mutex> guard(m);
+            if(djvu.openDocument(sDjVuFile))
+                img = djvu.getCover();
+        }
         if(!fileDjVu.fileName().isEmpty())
             fileDjVu.remove();
+        if(isUniformColor(img))
+            img = QImage();
     }
     return img;
 }
@@ -404,8 +416,9 @@ QImage BookFile::coverZip()
     zip.open(QuaZip::mdUnzip);
     auto listFi = zip.getFileInfoList64();
     for(const auto &fi :std::as_const(listFi)){
+        QString sFileName = fi.name.toLower();
 #ifdef USE_DEJVULIBRE
-        if(fi.name.endsWith(u".djvu")){
+        if(sFileName.endsWith(u".djvu")){
             zip.setCurrentFile(fi.name);
             QuaZipFile zipFile(&zip);
             zipFile.open(QIODevice::ReadOnly);
@@ -419,14 +432,21 @@ QImage BookFile::coverZip()
             fileDjVu.write(data);
             fileDjVu.close();
             static DjVu djvu;
-            if(djvu.loadLibrary() && djvu.openDocument(sDjVuFile))
-                img = djvu.getCover();
+            static std::mutex m;
+            if(djvu.loadLibrary()){
+                std::lock_guard<std::mutex> guard(m);
+                if(djvu.openDocument(sDjVuFile)){
+                    img = djvu.getCover();
+                }
+            }
             if(!fileDjVu.fileName().isEmpty())
                 fileDjVu.remove();
+            if(isUniformColor(img))
+                img = QImage();
         } else
 #endif
 #ifdef USE_POPPLER
-        if(fi.name.endsWith(u".pdf")){
+        if(sFileName.endsWith(u".pdf")){
             zip.setCurrentFile(fi.name);
             QuaZipFile zipFile(&zip);
             zipFile.open(QIODevice::ReadOnly);
@@ -443,10 +463,11 @@ QImage BookFile::coverZip()
             }
         } else
 #endif //USE_POPPLER
-        if(fi.name.endsWith(u".epub")){
-            Q_ASSERT(pEpub_);
-            img = pEpub_->readCover();
-            return img;
+        if(sFileName.endsWith(u".epub")){
+            if(pEpub_){
+                img = pEpub_->readCover();
+                return img;
+            }
         }
     }
 
@@ -504,20 +525,18 @@ QString BookFile::annotation()
 {
     if(!bOpen_)
         return u" "_s;
-    if(sAnnotation_.isEmpty() && doc_.isDocument())
-        annotationFb2();
 
-    if(sAnnotation_.isEmpty()){
-        if(pEpub_ != nullptr || sFormat_ == u"epub")
-            annotationEpub();
-        else if(sFormat_ == u"fb2"_s)
-            annotationFb2();
-        else if(sFormat_.endsWith(u"zip"))
-            annotationZip();
+    QString sAnnotation;
+    if(doc_.isDocument())
+        sAnnotation = annotationFb2();
 
-        sAnnotation_ = sAnnotation_.trimmed();
+    if(sAnnotation.isEmpty() && pEpub_ != nullptr)
+        sAnnotation = annotationEpub();
+
+    sAnnotation = sAnnotation.trimmed();
+    if(!sAnnotation.isEmpty()){
         QDomDocument htmlDoc;
-        if(htmlDoc.setContent(u"<html>"_s % sAnnotation_ % u"</html>"_s)){
+        if(htmlDoc.setContent(u"<html>"_s % sAnnotation % u"</html>"_s)){
             // Функция для обработки элементов
             auto processElement = [](QDomElement &element, QDomDocument &doc, auto &self) -> void{
                 // Удаляем style
@@ -565,25 +584,27 @@ QString BookFile::annotation()
             QString result = htmlDoc.toString(-1).trimmed();
             result.remove(0, result.indexOf(u'>') + 1);
             result.chop(7); // Удаляем </html>
-            sAnnotation_ = result.trimmed();
+            sAnnotation = result.trimmed();
         }else{
             // Fallback: используем QTextDocument
+            sAnnotation.replace(u"<p>"_s, u""_s)
+                       .replace(u"</p>"_s, u"<br/>"_s)
+                       .replace(u'\n', u"<br/>"_s);
             QTextDocument textDoc;
-            textDoc.setHtml(sAnnotation_);
+            textDoc.setHtml(sAnnotation);
             QString plainText = textDoc.toPlainText().trimmed();
             QStringList lines = plainText.split(u'\n', Qt::SkipEmptyParts);
             QStringList paragraphs;
             for (const QString &line : std::as_const(lines)) {
                 QString trimmedLine = line.trimmed();
-                if (!trimmedLine.isEmpty()) {
+                if (!trimmedLine.isEmpty())
                     paragraphs.append(u"<p>"_s % trimmedLine.toHtmlEscaped() % u"</p>"_s);
-                }
             }
-            sAnnotation_ = paragraphs.join(u""_s);        }
-        if(sAnnotation_.isEmpty())
-            sAnnotation_ = u" "_s;
-    }
-    return sAnnotation_;
+            sAnnotation = paragraphs.join(u""_s);
+        }
+    }else
+        sAnnotation = u" "_s;
+    return sAnnotation;
 }
 
 QFuture<QString> BookFile::annotationAsync()
@@ -595,31 +616,26 @@ QFuture<QString> BookFile::annotationAsync()
     return futureAnnotation_;
 }
 
-void BookFile::annotationFb2()
+QString BookFile::annotationFb2()
 {
+    QString sAnnotation;
     if(doc_.isDocument()){
         QDomElement titleInfo = doc_.elementsByTagName(u"title-info"_s).at(0).toElement();
-        sAnnotation_ = titleInfo.elementsByTagName(u"annotation"_s).at(0).toElement().text();
-    }
-}
+        QDomElement annotation = titleInfo.elementsByTagName(u"annotation"_s).at(0).toElement();
 
-void BookFile::annotationZip()
-{
-    QBuffer buffer;
-    QuaZip zip;
-    if(data_.size() != 0){
-        buffer.setData(data_);
-        zip.setIoDevice(&buffer);
-    }
-    zip.open(QuaZip::mdUnzip);
-    auto listFi = zip.getFileInfoList64();
-    for(const auto &fi :std::as_const(listFi)){
-        if(fi.name.endsWith(u".epub")){
-            Q_ASSERT(pEpub_);
-            sAnnotation_ = pEpub_->readAnnotation();
-            return;
+        // Обрабатываем дочерние узлы annotation
+        QDomNodeList children = annotation.childNodes();
+        for (int i = 0; i < children.count(); ++i) {
+            QDomNode node = children.at(i);
+            if (node.isElement() && node.nodeName() == u"p"_s) {
+                // Добавляем текст параграфа с тегом <p>
+                QString sText = node.toElement().text().trimmed();
+                if(!sText.isEmpty())
+                    sAnnotation += u"<p>"_s % sText % u"</p>"_s;
+            }
         }
     }
+    return sAnnotation;
 }
 
 QDateTime BookFile::birthTime() const
@@ -803,7 +819,7 @@ void BookFile::cleanCoversCache()
     }
 }
 
-void BookFile::initializeEpub()
+void BookFile::openEpub()
 {
     if(pEpub_ == nullptr){
         if(sArchive_.isEmpty()){

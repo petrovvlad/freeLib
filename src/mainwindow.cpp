@@ -1502,7 +1502,6 @@ void MainWindow::onSelectBook()
         std::erase_if(g::activeBooks, [idBook, idAbove, idBelow](const auto& pair) {
             return (pair.first != idBook) && (pair.first != idAbove) && (pair.first != idBelow) && (!pair.second->isBusy());
         });
-        qDebug() << g::activeBooks.size();
     }
 #endif
 }
@@ -1598,7 +1597,7 @@ void MainWindow::fillReview(const BookFile &bookFile)
     {
         QString sAuthor = lib.authors[idAuthor].getName();
         sAuthors += (sAuthors.isEmpty() ?u""_s :u"; "_s) + u"<a href='author_%1'>%2</a>"_s
-                                                                 .arg(QString::number(idAuthor), sAuthor.replace(',', ' '), sAuthor.at(0));
+                .arg(QString::number(idAuthor), sAuthor.replace(',', ' '));
     }
     QString sGenres;
     for(auto idGenre: book.vIdGenres)

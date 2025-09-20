@@ -32,10 +32,9 @@ public:
 private:
     QByteArray openZipInZip(const QString &sArchive, const QString &sFileName);
     QImage coverFb2();
-    void annotationFb2();
-    void annotationZip();
+    QString annotationFb2();
     QImage coverEpub();
-    void annotationEpub();
+    QString annotationEpub();
 #ifdef USE_POPPLER
     QImage coverPdf();
 #endif //USE_POPPLER
@@ -46,7 +45,7 @@ private:
     QImage coverZip();
     QImage createCover();
     void cleanCoversCache();
-    void initializeEpub();
+    void openEpub();
 
     uint idBook_;
     QFile file_;
@@ -56,10 +55,10 @@ private:
     QString sFile_;
     QString sFormat_;
     QString sArchive_;
-    QString sAnnotation_;
     QString sBookName_;
     QString sAuthorName_;
     QString sSequence_;
+    QImage cover_;
     std::unique_ptr<EpubReader> pEpub_;
     QDomDocument doc_;
     bool bOpen_;
