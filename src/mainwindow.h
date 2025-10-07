@@ -22,6 +22,7 @@
 #include "opds_server.h"
 #endif
 #include "importthread.h"
+#include "bookfile.h"
 
 namespace Ui {
 class MainWindow;
@@ -58,6 +59,7 @@ private:
     void FillListBooks();
     void FillListBooks(const std::vector<uint> &vBooks, const std::vector<uint> &vCheckedBooks, uint idCurrentAuthor);
     void FillAlphabet(const QString &sAlphabetName);
+    void fillReview(const BookFile& bookFile);
     bool IsBookInList(const SBook &book);
     void checkLetter(const QChar cLetter);
     std::vector<uint> getCheckedBooks(bool bCheckedOnly = false);
@@ -70,7 +72,10 @@ private:
     void updateItemIcon(QTreeWidgetItem *item);
     QIcon getTagIcon(const std::unordered_set<uint> &vIdTags);
     void updateTitle();
-
+    uint idSelectedBook();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+    void loadBookDetailsAsync(uint idBook);
+#endif
 
 #ifdef USE_KStatusNotifier
     KStatusNotifierItem *statusNotifierItem_;
@@ -128,11 +133,11 @@ private slots:
     void onSerachSeriesChanded(const QString& str);
     void btnSearch();
     void SelectAuthor();
-    void selectBook();
+    void onSelectBook();
     void SelectGenre();
     void SelectSeria();
     void onItemChanged(QTreeWidgetItem*,int);
-    void BookDblClick();
+    void onDblClickBook();
     void About();
 //    void LanguageChange();
     void onStartSearch();
@@ -140,13 +145,13 @@ private slots:
     void HelpDlg();
     void ContextMenu(QPoint point);
     void HeaderContextMenu(QPoint point);
-    void MoveToAuthor(uint id, const QString &FirstLetter);
-    void MoveToGenre(uint id);
-    void MoveToSeria(uint id, const QString &FirstLetter);
+    void moveToAuthor(uint id);
+    void moveToGenre(uint id);
+    void moveToSeria(uint id);
     void onTagFilterChanged(int index);
     void onSetTag();
     void ChangingLanguage();
-    void ReviewLink(const QUrl &url);
+    void onReviewLinkClicked(const QUrl &url);
     void SelectLibrary();
     void onTabWidgetChanged(int index);
     void onLanguageFilterChanged(int index);

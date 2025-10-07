@@ -351,24 +351,29 @@ void Options::setExportDefault()
 
 void Options::Load(QSharedPointer<QSettings> pSettings)
 {
-    bShowDeleted = pSettings->value(QStringLiteral("ShowDeleted"), false).toBool();
-    bUseTag = pSettings->value(QStringLiteral("use_tag"), true).toBool();
-    bShowSplash = !pSettings->value(QStringLiteral("no_splash"), false).toBool();
-    bStorePosition = pSettings->value(QStringLiteral("store_position"), true).toBool();
-    sAlphabetName = pSettings->value(QStringLiteral("localeABC"), QLocale::system().name().left(2)).toString();
-    sUiLanguageName = pSettings->value(QStringLiteral("localeUI"), QLocale::system().name()).toString();
+    bShowDeleted = pSettings->value(u"ShowDeleted"_s, false).toBool();
+    bUseTag = pSettings->value(u"use_tag"_s, true).toBool();
+    bShowSplash = !pSettings->value(u"no_splash"_s, false).toBool();
+    bStorePosition = pSettings->value(u"store_position"_s, true).toBool();
+    sAlphabetName = pSettings->value(u"localeABC"_s, QLocale::system().name().left(2)).toString();
+    sUiLanguageName = pSettings->value(u"localeUI"_s, QLocale::system().name()).toString();
     QString sAppDir = QStandardPaths::standardLocations(QStandardPaths::AppDataLocation).constFirst();
-    sDatabasePath = pSettings->value(QStringLiteral("database_path"), QString(sAppDir + QStringLiteral("/freeLib.sqlite"))).toString();
-    nIconTray = pSettings->value(QStringLiteral("tray_icon"), 0).toInt();
-    bTrayColor = pSettings->value(QStringLiteral("tray_color"), 0).toBool();
-    bCloseDlgAfterExport = pSettings->value(QStringLiteral("CloseExpDlg"), true).toBool();
-    bUncheckAfterExport = pSettings->value(QStringLiteral("uncheck_export"), true).toBool();
-    bExtendedSymbols = pSettings->value(QStringLiteral("extended_symbols"), false).toBool();
+    sDatabasePath = pSettings->value(u"database_path"_s, QString(sAppDir + QStringLiteral("/freeLib.sqlite"))).toString();
+    nIconTray = pSettings->value(u"tray_icon"_s, 0).toInt();
+    bTrayColor = pSettings->value(u"tray_color"_s, 0).toBool();
+    bCloseDlgAfterExport = pSettings->value(u"CloseExpDlg"_s, true).toBool();
+    bUncheckAfterExport = pSettings->value(u"uncheck_export"_s, true).toBool();
+    bExtendedSymbols = pSettings->value(u"extended_symbols"_s, false).toBool();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+    bGuiAsyncInfo = pSettings->value(u"ui.info.async"_s, false).toBool();
+#else
+    bGuiAsyncInfo = false;
+#endif
 #ifdef USE_HTTSERVER
-    bOpdsEnable = pSettings->value(QStringLiteral("OPDS_enable"), false).toBool();
-    bOpdsShowCover = pSettings->value(QStringLiteral("srv_covers"), true).toBool();
-    bOpdsShowAnotation = pSettings->value(QStringLiteral("srv_annotation"), true).toBool();
-    bOpdsNeedPassword = pSettings->value(QStringLiteral("HTTP_need_pasword"), false).toBool();
+    bOpdsEnable = pSettings->value(u"OPDS_enable"_s, false).toBool();
+    bOpdsShowCover = pSettings->value(u"srv_covers"_s, true).toBool();
+    bOpdsShowAnotation = pSettings->value(u"srv_annotation"_s, true).toBool();
+    bOpdsNeedPassword = pSettings->value(u"HTTP_need_pasword"_s, false).toBool();
     sOpdsUser = pSettings->value(u"HTTP_user"_s).toString();
     QString sSaltHashPassword = pSettings->value(u"httpPassword"_s).toString();
     if(!sSaltHashPassword.isEmpty()){
@@ -508,6 +513,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"CloseExpDlg"_s,bCloseDlgAfterExport);
     pSettings->setValue(u"uncheck_export"_s,bUncheckAfterExport);
     pSettings->setValue(u"extended_symbols"_s, bExtendedSymbols);
+    pSettings->setValue(u"ui.info.async"_s, bGuiAsyncInfo);
 #ifdef USE_HTTSERVER
     pSettings->setValue(u"OPDS_enable"_s, bOpdsEnable);
     pSettings->setValue(u"HTTP_need_pasword"_s, bOpdsNeedPassword);
@@ -549,7 +555,7 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"ui.font.usesystem"_s, bUseSytemFonts);
     pSettings->setValue(u"ui.font.sidebar"_s, sSidebarFontFamaly);
     pSettings->setValue(u"ui.font.size.sidebar"_s, nSidebarFontSize);
-    pSettings->setValue(u"ui.fonts.bookslist"_s, sBooksListFontFamaly);
+    pSettings->setValue(u"ui.font.bookslist"_s, sBooksListFontFamaly);
     pSettings->setValue(u"ui.font.size.booklist"_s, nBooksListFontSize);
     pSettings->setValue(u"ui.font.annotation"_s, sAnnotationFontFamaly);
     pSettings->setValue(u"ui.font.size.annotation"_s, nAnnotationFontSize);

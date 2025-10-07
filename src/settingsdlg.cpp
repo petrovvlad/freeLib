@@ -221,6 +221,11 @@ void SettingsDlg::LoadSettings()
 
     ui->ShowDeleted->setChecked(options_.bShowDeleted);
     ui->use_tag->setChecked(options_.bUseTag);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+    ui->async_info->setChecked(options_.bGuiAsyncInfo);
+#else
+    ui->async_info->hide();
+#endif
     ui->splash->setChecked(!options_.bShowSplash);
     ui->store_pos->setChecked(options_.bStorePosition);
     if(g::bTray){
@@ -489,6 +494,9 @@ void SettingsDlg::btnOK()
     g::options.sDatabasePath = ui->database_path->text().trimmed();
     g::options.bShowDeleted = ui->ShowDeleted->isChecked();
     g::options.bUseTag = ui->use_tag->isChecked();
+#if QT_VERSION >= QT_VERSION_CHECK(6, 1, 0)
+    g::options.bGuiAsyncInfo = ui->async_info->isChecked();
+#endif
     g::options.bShowSplash = !ui->splash->isChecked();
     g::options.bStorePosition = ui->store_pos->isChecked();
     g::options.nIconTray = ui->trayIcon->currentIndex();

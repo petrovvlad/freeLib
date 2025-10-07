@@ -13,12 +13,14 @@
 EpubReader::EpubReader(QByteArray data)
     : data_(std::move(data)), buffer_(&data_), device_(&buffer_)
 {
+    openOpf();
 }
 
 EpubReader::EpubReader(QIODevice *device)
     : device_(device)
 {
     Q_ASSERT(device_ != nullptr);
+    openOpf();
 }
 
 bool EpubReader::openOpf()
@@ -495,21 +497,21 @@ QString EpubReader::parseAnnotation() const
 bool EpubReader::readMetadata(BookMetadata &metadata)
 {
     if(opf_.isNull())
-        openOpf();
+        return false;
     return parseMetadata(metadata);
 }
 
 QImage EpubReader::readCover()
 {
     if(opf_.isNull())
-        openOpf();
+        return QImage();
     return parseCover();
 }
 
 QString EpubReader::readAnnotation()
 {
     if(opf_.isNull())
-        openOpf();
+        return u""_s;
     return parseAnnotation();
 }
 

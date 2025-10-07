@@ -40,6 +40,8 @@ DjVu::~DjVu()
 
 bool DjVu::loadLibrary()
 {
+    static std::mutex m;
+    std::lock_guard<std::mutex> guard(m);
 
     if ( !djvu_context_create && !(djvu_context_create = (DjvuContextCreate)libDjVu.resolve("ddjvu_context_create")) ) [[unlikely]]
         return false;
