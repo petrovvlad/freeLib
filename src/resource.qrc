@@ -48,6 +48,7 @@
         <file>xsl/opds/favicon.ico</file>
         <file>xsl/opds/icon_256x256.png</file>
         <file>xsl/opds/splash_opera.png</file>
+        <file>xsl/opds/scripts.js</file>
         <file>xsl/opds/styles.css</file>
         <file>xsl/opds/download.svg</file>
         <file>img/icons/stars/0star.svg</file>

@@ -6,29 +6,13 @@
 }
 
 a {
-  font-size: 1.5em;
+  font-size: 1.5rem;
   font-weight: bold;
   text-decoration: none;
   color: light-dark(black, white);
 }
-/*a:active {
-  text-decoration: underline;
-}
-a:link {
-  text-decoration: none;
-
-}
-a:visited {
-  text-decoration: none;
-}
-a:focus {
-  text-decoration: underline;
-}
-a:hover {
-  text-decoration: underline;
-}*/
 a.block {
-  font-size: 1.5em;
+  font-size: 1.5rem;
   display: block;
 }
 a.block:hover {
@@ -38,37 +22,29 @@ a.block:focus {
   text-decoration: underline;
 }
 
-a.lib {
-  font-size:2em;
-  font-weight:bold;
+div.hat{
+  display: flex;
 }
-/*a.lib:hover {
-  text-decoration: none;
+svg.home {
+  fill: light-dark(#000, #fff);
+  width: 1em;
+  height: 1em;
 }
-a.lib:focus {
-  text-decoration: none;*/
+.languageSelector {
+  display: inline-flex;
+  justify-content: flex-end;
+  gap: 10px;
+  margin-left: auto;
+  font-family: sans-serif;
 }
 
-a.book {
-  font-size:2em;
-  font-weight: bold;
+a.lib {
+  font-size:2rem;
+  font-weight:bold;
 }
-div.book {
-  font-size: 1.5em;
-  font-weight: bold;
-  font-family: sans-serif;
-  padding-bottom: 0.1em
-}
-a.author {
-  font-size: 1.4em;
-  font-weight: normal;
-  font-style: oblique;
-  font-family: sans-serif;
-  display: block;
-  color: light-dark(#444444, #c0c0c0);
-}
+
 a.item {
-  font-size: 1.5em;
+  font-size: 1.5rem;
   font-weight: bold;
   color: light-dark(#444444, #c0c0c0);
 }
@@ -79,22 +55,56 @@ a.item:focus {
   text-decoration: underline;
 }
 div.item {
-  font-size: 1em;
+  font-size: 1rem;
   background: light-dark(#eeeeee, #303030);
   border-radius: 0.5em;
   margin: 0.5em;
   padding: 0.1em;
 }
 
+div.bookslist{
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
+}
+div.bookcard{
+  display: flex;
+  gap: 5px;
+  background: light-dark(#eeeeee, #303030);
+  border-radius: 0.5rem;
+  padding: 0.5rem;
+}
+img.cover {
+  width: 9rem;
+  display: block;
+}
+
 div.caption {
   font-size: 2em;
   font-weight: bold;
-  padding-bottom: 0.1em;
-  text-decoration: underline;
+  padding-bottom: 0.1rem;
+}
+a.book {
+  font-size:2rem;
+  font-weight: bold;
+}
+div.book {
+  font-size: 1.7rem;
+  font-weight: bold;
+  font-family: sans-serif;
+/*  padding-bottom: 0.1em*/
+}
+a.author {
+  font-size: 1.4rem;
+  font-weight: normal;
+  font-style: oblique;
+  font-family: sans-serif;
+  display: block;
+  color: light-dark(#444444, #c0c0c0);
 }
 
 div.search {
-  font-size:1.5em;
+  font-size:1.5rem;
   font-weight: bold;
 }
 
@@ -104,7 +114,7 @@ div.page-bar {
   justify-content: center;
   font-weight: 500;
   font-family: Arial,sans-serif;
-  font-size: 1.2em;
+  font-size: 1.4rem;
 }
 span.page-current {
   display: flex;
@@ -119,9 +129,6 @@ span.page-current {
   border-radius: 3px;
 }
 span.page {
-/*  font-size: 1.2em;*/
-
-/*  text-decoration: none;*/
   padding: 0 0.2em;
   align-items: center;
 }
@@ -137,34 +144,38 @@ a.page {
 }
 
 input {
-  font-size: 1.5em;
+  font-size: 1.5rem;
   font-weight: bold;
-  padding-bottom: 0.1em;
+  padding-bottom: 0.1rem;
 }
-img.cover {
-  height: 7.5em;
-  float:left;
-  margin-right: 0.5em;
-}
-svg.home {
-  fill: light-dark(#000, #fff);
-  width: 1em;
-  height: 1em;
+div.download {
+  display: flex;
+  gap: 0.1em;
 }
 a.download {
+  display: inline-flex;
   font-family: Arial,sans-serif;
-  font-size: 1em;
-  padding: 0.1em;
+  font-size: 1rem;
+  padding: 0.1rem;
   border: 1px;
   border-radius: 3px;
   border-style: solid;
   border-color: #888;
 }
 img.download {
-  height: 1em;
+  height: 1rem;
+}
+div.annotation {
+  margin-top: 0.4rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.5em;
 }
 .annotation p {
   margin: 0;
+  font-weight: normal;
+  font-size: 1rem;
+}
 hr {
   color: light-dark(black, white);
   background-color: light-dark(black, white);
@@ -172,34 +183,30 @@ hr {
 }
 
 /*for mobile device*/
-@media screen and (max-width: 990px) {
+@media screen and (max-width: 900px) {
   a {
-    font-size: 2em;
+    font-size: 2rem;
   }
-  a.lib {
-    font-size:3em;
-  }
-  div.item {
-    font-size: 1.5em;
+  div.bookcard {
+    font-size: 1.5rem;
+    flex-direction: column;
   }
   div.caption {
-    font-size: 3em;
-  }
-  div.book {
-    font-size: 2em;
+    font-size: 3rem;
   }
   input {
-    font-size: 2em;
-  }
-  img.cover {
-    height: 9.5em;
+    font-size: 2rem;
   }
   img.home {
     height: 48px;
   }
-  td {
-    margin: 0.1em
+  div.hat{
+    display: flex;
+    flex-direction: column;
   }
-
+  .languageSelector {
+    font-size: 1.5rem;
+    flex-direction: column;
+  }
 }
 
