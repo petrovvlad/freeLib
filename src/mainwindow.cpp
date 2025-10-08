@@ -3293,7 +3293,7 @@ void MainWindow::changeEvent(QEvent *event)
 {
     if(event->type() == QEvent::WindowStateChange)
     {
-        if(isMinimized())
+        if(isMinimized() && g::options.nIconTray !=0)
             hide();
     }
     QMainWindow::changeEvent(event);
