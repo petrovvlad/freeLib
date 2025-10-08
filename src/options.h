@@ -104,7 +104,7 @@ struct ExportOptions
     bool bRemovePersonal;
     bool bRepairCover;
     bool bMlToc;
-    bool bSeriaTranslit;
+    bool bSeriesTranslit;
     bool bAuthorTranslit;
     bool bCreateCover;
     bool bCreateCoverAlways;

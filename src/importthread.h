@@ -44,29 +44,29 @@ private:
     bool bWoDeleted_;
     std::atomic_bool stopped_;
     std::unordered_map<uint, uint> mIdBookInLib_;
-    std::unordered_map<uint, std::vector<uint>> mBookSequences_;
-    std::unordered_map<QString, uint> mSequences_;
+    std::unordered_map<uint, std::vector<uint>> mBookSeries_;
+    std::unordered_map<QString, uint> series_;
     std::unordered_set<SAuthor> stTagetAuthors_;
     std::unordered_map<SAuthor, uint> hashAuthors_;
     std::unordered_map<uint, std::unordered_set<uint>> mBooksTags_;
-    std::unordered_map<QString, std::unordered_set<uint>> mSequenceTags_;
+    std::unordered_map<QString, std::unordered_set<uint>> mSeriesTags_;
 
     QStringList listFiles_;
     QSqlQuery query_;
     QSqlQuery queryInsertBook_;
     QSqlQuery queryInsertAuthor_;
     QSqlQuery queryInsertBookAuthor_;
-    QSqlQuery queryInsertBookSequence_;
+    QSqlQuery queryInsertBookSeries_;
     QSqlQuery queryInsertBookGenre_;
-    QSqlQuery queryInsertSeria_;
+    QSqlQuery queryInsertSeries_;
     QSqlQuery queryInsertAuthorTag_;
     QSqlQuery queryInsertBookTag_;
-    QSqlQuery queryInsertSequennceTag_;
+    QSqlQuery queryInsertSeriesTag_;
 
     std::unordered_map <QString, ushort> mGenreKeys_;
-    void addSequence(const QString &str, uint idLib, uint idBook, uint numInSequence, const QVariantList *pTags = nullptr);
+    void addSeries(const QString &str, uint idLib, uint idBook, uint numInSeries, const QVariantList *pTags = nullptr);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);
-    uint addBook(uchar star, QString &name, int num_in_seria, const QString &file,
+    uint addBook(uchar star, QString &name, int numInSeries, const QString &file,
                  int size, uint idInLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
 
     void AddGenre(uint idBook, const QString &sGenre, uint idLib);

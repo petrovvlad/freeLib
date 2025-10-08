@@ -54,7 +54,7 @@ private:
     QToolButton *btn_Hash;
     void UpdateExportMenu();
     void FillAuthors();
-    void FillSerials();
+    void fillSeries();
     void FillGenres();
     void FillListBooks();
     void FillListBooks(const std::vector<uint> &vBooks, const std::vector<uint> &vCheckedBooks, uint idCurrentAuthor);
@@ -67,7 +67,7 @@ private:
     QList<QTreeWidgetItem *> checkedItemsBookList(const QTreeWidgetItem *item = nullptr);
     void setTagAuthor(uint idTag, uint idAuthor, bool bSet);
     void setTagBook(uint idTag, uint idBook, bool bSet);
-    void setTagSequence(uint idTag, uint idSequence, bool bSet);
+    void setTagSeries(uint idTag, uint idSeries, bool bSet);
     void updateIcons();
     void updateItemIcon(QTreeWidgetItem *item);
     QIcon getTagIcon(const std::unordered_set<uint> &vIdTags);
@@ -89,7 +89,7 @@ private:
     int idCurrentLanguage_;
     uint idCurrentAuthor_;
     ushort idCurrentGenre_;
-    uint idCurrentSerial_;
+    uint idCurrentSeries_;
     uint idCurrentBook_;
     std::vector<uint> vBooks_;
     std::vector<uint> vFoundBooks_;
@@ -135,7 +135,7 @@ private slots:
     void SelectAuthor();
     void onSelectBook();
     void SelectGenre();
-    void SelectSeria();
+    void selectSeries();
     void onItemChanged(QTreeWidgetItem*,int);
     void onDblClickBook();
     void About();
@@ -147,7 +147,7 @@ private slots:
     void HeaderContextMenu(QPoint point);
     void moveToAuthor(uint id);
     void moveToGenre(uint id);
-    void moveToSeria(uint id);
+    void moveToSeries(uint id);
     void onTagFilterChanged(int index);
     void onSetTag();
     void ChangingLanguage();
