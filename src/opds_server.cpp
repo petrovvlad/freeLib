@@ -21,8 +21,6 @@
 #include "utilites.h"
 #include "bookfile.h"
 
-#define MAX_COLUMN_COUNT    3
-
 QString mime(QStringView sFormat)
 {
     if(sFormat == u"djv" || sFormat == u"djvu")
@@ -764,8 +762,9 @@ QDomElement opds_server::docHeaderHTML(const QString &sQuery, SLib &lib, const Q
     html.appendChild(body);
 
     auto divHat  = addNode(body, u"div"_s, u"hat"_s);
+    auto divHome = addNode(divHat, u"div"_s, u"home"_s);
     QString sHref = (sLibUrl.isEmpty() ?u"/"_s :sLibUrl) + sQuery;
-    QDomElement a = addHRefNode(divHat, u""_s, sHref, u"lib"_s);
+    QDomElement a = addHRefNode(divHome, u""_s, sHref, u"lib"_s);
     QDomElement svg = addNode(a, u"svg"_s, u"home"_s);
     svg.setAttribute(u"xmlns"_s, u"http://www.w3.org/2000/svg"_s);
     svg.setAttribute(u"viewBox"_s, u"0 0 32 32"_s);
@@ -773,7 +772,7 @@ QDomElement opds_server::docHeaderHTML(const QString &sQuery, SLib &lib, const Q
     path.setAttribute(u"d"_s, u"M 1,17 16,1 31,17 h -4 v 14 h -8 v -9 h -6 v 9 h -8 V 17 Z"_s);
     svg.appendChild(path);
 
-    addHRefNode(divHat, lib.name, sHref, u"lib"_s);
+    addHRefNode(divHome, lib.name, sHref, u"lib"_s);
 
     QUrlQuery urlquery(url);
     QString sLangFilter = urlquery.queryItemValue(u"lang"_s);
@@ -782,7 +781,6 @@ QDomElement opds_server::docHeaderHTML(const QString &sQuery, SLib &lib, const Q
 
     auto divlang = addNode(divHat,u"div"_s, u"languageSelector"_s);
     auto divTxt = addTextNode(divlang, u"div"_s, tr("Book language:"));
-    divTxt.setAttribute(u"style"_s, u"align-content: center;"_s);
 
     QDomElement select = doc_.createElement(u"select"_s);
     select.setAttribute(u"id"_s, u"language-filter"_s);
@@ -1526,7 +1524,6 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
     QString sQuery = query(urlquery);
 
@@ -1565,23 +1562,11 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
     if(count>30 && !bByBooks)
     {
         attachSearchFormHTML(feed, tr("Finding authors") + u": "_s, sLibUrl + u"/searchauthor"_s, sIndex, urlquery);
-
-        QDomElement tag_table;
-        QDomElement tag_tr;
-        int nCurrentColumn = 0;
-        tag_table = doc_.createElement(u"TABLE"_s);
-        feed.appendChild(tag_table);
+        auto divGrid = addNode(feed, u"div"_s, u"griditems"_s);
 
         for(const auto &[sIndex, count] :mCount)
         {
-            if(nCurrentColumn == 0)
-            {
-                tag_tr = doc_.createElement(u"tr"_s);
-                tag_table.appendChild(tag_tr);
-            }
-            QDomElement td = doc_.createElement(u"td"_s);
-            tag_tr.appendChild(td);
-            QDomElement div = addNode(td, u"div"_s, u"item"_s);
+            auto div = addNode(divGrid, u"div"_s, u"item"_s);
             QString sHref;
             if(count == 1)
             {
@@ -1603,14 +1588,6 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
             }
             addHRefNode(div, sIndex, sHref, u"block"_s);
             addTextNode(div, u"div"_s, QString::number(count) % u" "_s % tr("authors beginning with") % u" '"_s % sIndex % u"'"_s );
-            nCurrentColumn++;
-            if(nCurrentColumn == MAX_COLUMN_COUNT)
-                nCurrentColumn = 0;
-        }
-        while(nCurrentColumn < MAX_COLUMN_COUNT)
-        {
-            addTextNode(tag_tr, u"td"_s, u""_s);
-            nCurrentColumn++;
         }
     }
     else
@@ -1628,19 +1605,20 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
         {
             return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();
         });
-        for(uint iIndex: vAuthorId)
+        auto divList = addNode(feed, u"div"_s, u"listitems"_s);
+        for(uint idAuthor: vAuthorId)
         {
             uint nBooksCount = 0;
-            auto range = pLib->authorBooksLink.equal_range(iIndex);
-            for (auto it = range.first; it != range.second; ++it) {
+            auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+            for (auto it = begin; it != end; ++it) {
                 auto &book = pLib->books.at(it->second);
                 if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
 
-            QDomElement div = addNode(feed, u"div"_s, u"item"_s);
-            addHRefNode(div, pLib->authors.at(iIndex).getName(), sLibUrl % u"/author/"_s % QString::number(iIndex) % sQuery, u"block"_s);
+            QDomElement div = addNode(divList, u"div"_s, u"item"_s);
+            addHRefNode(div, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery, u"block"_s);
             addTextNode(div, u"div"_s, QString::number(nBooksCount) % u" "_s % tr("books"));
         }
     }
@@ -1735,19 +1713,19 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
             }
         }
         std::sort(vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
-        for(uint iIndex: vAuthorId)
+        for(uint idAuthor: vAuthorId)
         {
             uint nBooksCount = 0;
-            auto range = pLib->authorBooksLink.equal_range(iIndex);
-            for (auto it = range.first; it != range.second; ++it) {
+            auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+            for (auto it = begin; it != end; ++it) {
                 auto &book = pLib->books.at(it->second);
                 if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
 
-            addEntry(feed, u"tag:author:"_s + QString::number(iIndex), sLibUrl % u"/author/"_s % QString::number(iIndex) % sSessionQuery,
-                     pLib->authors.at(iIndex).getName(), QString::number(nBooksCount) % u" "_s % tr("books"));
+            addEntry(feed, u"tag:author:"_s + QString::number(idAuthor), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery,
+                     pLib->authors.at(idAuthor).getName(), QString::number(nBooksCount) % u" "_s % tr("books"));
         }
     }
 
@@ -1840,17 +1818,17 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
             }
         }
         std::sort(vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
-        for(uint iIndex: vAuthorId)
+        for(uint idAuthor: vAuthorId)
         {
             uint nBooksCount = 0;
-            auto range = pLib->authorBooksLink.equal_range(iIndex);
-            for (auto it = range.first; it != range.second; ++it) {
+            auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+            for (auto it = begin; it != end; ++it) {
                 auto &book = pLib->books.at(it->second);
                 if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
-            addNavigation(navigation, pLib->authors.at(iIndex).getName(), sLibUrl % u"/author/"_s % QString::number(iIndex) % sSessionQuery, nBooksCount);
+            addNavigation(navigation, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery, nBooksCount);
         }
     }
     root[u"navigation"] = navigation;
@@ -2022,8 +2000,8 @@ QHttpServerResponse opds_server::authorSeriesHTML(uint idLib, uint idAuthor, con
 
     SeriesComparator comporator(pLib->series);
     std::map<uint, uint, SeriesComparator> mCountBooks(comporator);
-    auto range = pLib->authorBooksLink.equal_range(idAuthor);
-    for (auto it = range.first; it != range.second; ++it) {
+    auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+    for (auto it = begin; it != end; ++it) {
         const SBook& book = pLib->books.at(it->second);
         if(book.bDeleted) [[unlikely]]
             continue;
@@ -2033,10 +2011,11 @@ QHttpServerResponse opds_server::authorSeriesHTML(uint idLib, uint idAuthor, con
                     ++mCountBooks[iSeries.first];
     }
 
+    auto divList = addNode(feed, u"div"_s, u"listitems"_s);
     QString sIdAuthor = QString::number(idAuthor);
     for(auto [idSeries, count] :mCountBooks)
     {
-        QDomElement entry = addNode(feed, u"div"_s, u"item"_s);
+        QDomElement entry = addNode(divList, u"div"_s, u"item"_s);
         addHRefNode(entry, pLib->series.at(idSeries).sName, sLibUrl % u"/authorseries/"_s % sIdAuthor % u"/"_s % QString::number(idSeries) % sQuery, u"block"_s);
         addTextNode(entry, u"div"_s, QString::number(count) % u" "_s % tr("books in series"));
     }
@@ -2062,8 +2041,8 @@ QHttpServerResponse opds_server::authorSeriesOPDS(uint idLib, uint idAuthor, con
 
     SeriesComparator comporator(pLib->series);
     std::map<uint, uint, SeriesComparator> mCountBooks(comporator);
-    auto range = pLib->authorBooksLink.equal_range(idAuthor);
-    for (auto it = range.first; it != range.second; ++it) {
+    auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+    for (auto it = begin; it != end; ++it) {
         const SBook& book = pLib->books.at(it->second);
         if(book.bDeleted) [[unlikely]]
             continue;
@@ -2103,8 +2082,8 @@ QHttpServerResponse opds_server::authorSeriesOPDS2(uint idLib, uint idAuthor, co
 
     SeriesComparator comporator(pLib->series);
     std::map<uint, uint, SeriesComparator> mCountBooks(comporator);
-    auto range = pLib->authorBooksLink.equal_range(idAuthor);
-    for (auto it = range.first; it != range.second; ++it) {
+    auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+    for (auto it = begin; it != end; ++it) {
         const SBook& book = pLib->books.at(it->second);
         if(book.bDeleted) [[unlikely]]
             continue;
@@ -2243,7 +2222,6 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
     QString sQuery = query(urlquery);
 
@@ -2280,26 +2258,14 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
     if(count > 30 && !bByBooks)
     {
         attachSearchFormHTML(feed, tr("Finding series") + u": "_s, sLibUrl + u"/searchseries"_s, sIndex, urlquery);
+        auto divGrid = addNode(feed, u"div"_s, u"griditems"_s);
 
-        QDomElement tag_table;
-        QDomElement tag_tr;
-        int current_column = 0;
-        tag_table = doc_.createElement(u"TABLE"_s);
-        feed.appendChild(tag_table);
         for(const auto &[sIndex, count] :mCount)
         {
             if(sIndex.trimmed().isEmpty() || sIndex[0] == '\0')
                 continue;
 
-            if(current_column == 0)
-            {
-                tag_tr = doc_.createElement(u"tr"_s);
-                tag_table.appendChild(tag_tr);
-            }
-            QDomElement td = doc_.createElement(u"td"_s);
-            tag_tr.appendChild(td);
-
-            QDomElement div = addNode(td, u"div"_s, u"item"_s);
+            auto div = addNode(divGrid, u"div"_s, u"item"_s);
             QString sHref;
             if(count == 1)
             {
@@ -2320,14 +2286,6 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
             addHRefNode(div, sIndex,sHref, u"block"_s);
             addTextNode(div, u"div"_s, QString::number(count) % u" "_s % tr("series starting with") % u" '"_s % sIndex % u"'"_s);
 
-            current_column++;
-            if(current_column == MAX_COLUMN_COUNT)
-                current_column = 0;
-        }
-        while(current_column < MAX_COLUMN_COUNT)
-        {
-            addTextNode(tag_tr, u"td"_s, u""_s);
-            current_column++;
         }
     }
     else
@@ -2342,6 +2300,7 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
             }
         }
         std::sort(vSeriesId.begin(), vSeriesId.end(),[pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
+        auto divList = addNode(feed, u"div"_s, u"listitems"_s);
 
         for(auto idSeries: vSeriesId)
         {
@@ -2355,7 +2314,7 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
                     if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
-            QDomElement div = addNode(feed, u"div"_s, u"item"_s);
+            QDomElement div = addNode(divList, u"div"_s, u"item"_s);
             addHRefNode(div, pLib->series.at(idSeries).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery, u"block"_s);
             addTextNode(div, u"div"_s, QString::number(nBooksCount) % u" "_s % tr("books"));
         }
@@ -2594,7 +2553,7 @@ QHttpServerResponse opds_server::seriesBooksHTML(uint idLib, uint idSeries, cons
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
     std::vector<uint> vBooks = listBooks(*pLib, 0, idSeries, sLanguageFilter, false);
-    return generatePageHTML(vBooks, *pLib, tr("Books of series") % u" ("_s % pLib->series[idSeries].sName % u")"_s, sLibUrl, url, false);
+    return generatePageHTML(vBooks, *pLib, tr("Books of series") % u" ("_s % pLib->series[idSeries].sName % u")"_s, sLibUrl, url, true);
 }
 
 QHttpServerResponse opds_server::seriesBooksOPDS(uint idLib, uint idSeries, const QHttpServerRequest &request)
@@ -2643,10 +2602,10 @@ std::unordered_map<ushort, uint> opds_server::countBooksByGenre(const SLib &lib,
     std::unordered_map<ushort, uint> mCounts;
     for(const auto &iBook :lib.books){
         if(!iBook.second.bDeleted) [[likely]]{
-            for(auto iGenre: iBook.second.vIdGenres){
-                if(g::genres.at(iGenre).idParrentGenre == idParentGenre){
+            for(auto idGenre: iBook.second.vIdGenres){
+                if(g::genres.at(idGenre).idParrentGenre == idParentGenre){
                     if(sLanguageFilter.isEmpty() || sLanguageFilter == lib.vLaguages[iBook.second.idLanguage])
-                        ++mCounts[iGenre];
+                        ++mCounts[idGenre];
                 }
             }
         }
@@ -2665,7 +2624,6 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
     QString sQuery = query(urlquery);
 
@@ -2681,8 +2639,8 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
         }
 
         mCounts = countBooksByGenre(*pLib, idParentGenre, sLanguageFilter);
-        vIdGenres.reserve(mCounts.size());
-        std::ranges::copy(mCounts | std::views::keys, std::back_inserter(vIdGenres));
+        auto keys = mCounts | std::views::keys;
+        vIdGenres.assign(keys.begin(), keys.end());
     }
     else
     {
@@ -2692,11 +2650,12 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
     std::ranges::sort(vIdGenres, [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QDomElement feed;
     feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    auto divList = addNode(feed, u"div"_s, u"listitems"_s);
 
     for(auto idGenre: vIdGenres)
     {
         uint nCount = mCounts[idGenre];
-        QDomElement div = addNode(feed, u"div"_s, u"item"_s);
+        QDomElement div = addNode(divList, u"div"_s, u"item"_s);
         addHRefNode(div, g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sQuery, u"block"_s);
         if(idParentGenre != 0)
             addTextNode(div, u"div"_s, QString::number(nCount) % u" "_s % tr("books"));
@@ -2858,20 +2817,20 @@ QHttpServerResponse opds_server::searchAuthorHTML(uint idLib, const QHttpServerR
 
     QDomElement feed;
     feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
-
     attachSearchFormHTML(feed, tr("Finding authors") + u": "_s, sLibUrl + u"/searchauthor"_s, sSearchString, urlquery);
+    auto divList = addNode(feed, u"div"_s, u"listitems"_s);
 
     for(auto idAuthor :vAuthors){
         uint nBooksCount = 0;
-        auto range = pLib->authorBooksLink.equal_range(idAuthor);
-        for (auto it = range.first; it != range.second; ++it) {
+        auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+        for (auto it = begin; it != end; ++it) {
             auto &book = pLib->books.at(it->second);
             if(!book.bDeleted) [[likely]]
                 if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                     nBooksCount++;
         }
         if(nBooksCount >0 ){
-            QDomElement div = addNode(feed, u"div"_s, u"item"_s);
+            QDomElement div = addNode(divList, u"div"_s, u"item"_s);
             addHRefNode(div, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery, u"block"_s);
             addTextNode(div, u"div"_s, QString::number(nBooksCount) % u" "_s % tr("books"));
         }
@@ -2893,7 +2852,6 @@ QHttpServerResponse opds_server::searchSeriesHTML(uint idLib, const QHttpServerR
     QUrlQuery urlquery(url);
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
     QString sSearchString = urlquery.queryItemValue(u"search_string"_s, QUrl::FullyDecoded).replace(u'+', u' ');
-    QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sQuery = query(urlquery);
 
     QDomElement feed;
@@ -2901,8 +2859,9 @@ QHttpServerResponse opds_server::searchSeriesHTML(uint idLib, const QHttpServerR
     attachSearchFormHTML(feed, tr("Finding series") + u": "_s, sLibUrl + u"/searchseries"_s, sSearchString, urlquery);
 
     auto mSeries  = searchSeries(*pLib, sSearchString, sLanguageFilter);
+    auto divList = addNode(feed, u"div"_s, u"listitems"_s);
     for(auto [idSeries, count]: mSeries){
-        QDomElement div = addNode(feed, u"div"_s, u"item"_s);
+        QDomElement div = addNode(divList, u"div"_s, u"item"_s);
         addHRefNode(div, pLib->series.at(idSeries).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery, u"block"_s);
         addTextNode(div, u"div"_s, QString::number(count) % u" "_s % tr("books"));
     }
@@ -2963,8 +2922,8 @@ QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest
         QDomElement feed = docHeaderOPDS(tr("Finding authors"), u"tag:search:authors"_s, sLibUrl, sSession);
         for(auto idAuthor :vAuthors){
             uint nBooksCount = 0;
-            auto range = pLib->authorBooksLink.equal_range(idAuthor);
-            for (auto it = range.first; it != range.second; ++it) {
+            auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+            for (auto it = begin; it != end; ++it) {
                 auto &book = pLib->books.at(it->second);
                 if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
@@ -3052,8 +3011,8 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
         QJsonArray navigation;
         for(auto idAuthor :vAuthors){
             uint nBooksCount = 0;
-            auto range = pLib->authorBooksLink.equal_range(idAuthor);
-            for (auto it = range.first; it != range.second; ++it) {
+            auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
+            for (auto it = begin; it != end; ++it) {
                 auto &book = pLib->books.at(it->second);
                 if(!book.bDeleted) [[likely]]
                     if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])

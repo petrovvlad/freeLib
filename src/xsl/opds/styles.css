@@ -37,12 +37,26 @@ svg.home {
   margin-left: auto;
   font-family: sans-serif;
 }
+.languageSelector > div{
+  align-content: center;
+}
 
 a.lib {
   font-size:2rem;
   font-weight:bold;
 }
-
+div.listitems{
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+  margin: 1rem;
+}
+div.griditems {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, max-content));
+  gap: 0.4rem;
+  margin: 1rem;
+}
 a.item {
   font-size: 1.5rem;
   font-weight: bold;
@@ -58,8 +72,7 @@ div.item {
   font-size: 1rem;
   background: light-dark(#eeeeee, #303030);
   border-radius: 0.5em;
-  margin: 0.5em;
-  padding: 0.1em;
+  padding: 0.5rem;
 }
 
 div.bookslist{
@@ -115,6 +128,7 @@ div.page-bar {
   font-weight: 500;
   font-family: Arial,sans-serif;
   font-size: 1.4rem;
+  margin-top: 0.5rem;
 }
 span.page-current {
   display: flex;
@@ -191,22 +205,31 @@ hr {
     font-size: 1.5rem;
     flex-direction: column;
   }
-  div.caption {
-    font-size: 3rem;
-  }
   input {
-    font-size: 2rem;
-  }
-  img.home {
-    height: 48px;
+    font-size: 1.5rem;
+    width: 100%;
   }
   div.hat{
     display: flex;
     flex-direction: column;
   }
+  div.home{
+    text-align: center;
+  }
+  img.home {
+    height: 48px;
+  }
   .languageSelector {
     font-size: 1.5rem;
     flex-direction: column;
   }
+  div.griditems {
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    margin: 1rem 0.1rem;
+  }
+  div.listitems{
+    margin: 1rem 0.1rem;
+}
+
 }
 
