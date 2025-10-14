@@ -6,7 +6,7 @@
 #include <QString>
 #include <QSqlDatabase>
 #include <QSettings>
-#include <QtConcurrent/QtConcurrentFilter>
+#include <QtConcurrent>
 
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazip.h"
@@ -14,21 +14,39 @@
 #include <quazip/quazip.h>
 #endif
 
+#if __has_include(<execution>) //checking to see if the <execution> header is there
+#ifdef emit
+#undef emit
+#define NOQTEMIT
+#endif
+#include <execution>
+#ifdef NOQTEMIT
+#define emit
+#endif
+#endif //__has_include(<execution>)
+
+
 #define LogWarning (qWarning()<<__FILE__<<__LINE__<<__PRETTY_FUNCTION__)
 
 #if (QT_VERSION < QT_VERSION_CHECK(6, 4, 0))
 // https://doc.qt.io/qt-6/qstring.html#operator-22-22_s
-inline QString operator"" _s(const char16_t *str, const std::size_t size)
+inline QString operator""_s(const char16_t *str, const std::size_t size)
 {
 #if (QT_VERSION < QT_VERSION_CHECK(6, 0, 0))
     return QString::fromRawData(reinterpret_cast<const QChar *>(str), static_cast<int>(size));
-#else
+#else // Qt≥6.0
     return operator""_qs(str, size);
-#endif
+
+#endif // Qt<6.0
 }
-#else
+
+inline QByteArray operator""_ba(const char *str, std::size_t size)
+{
+    return QByteArray(str, static_cast<int>(size));
+}
+#else //Qt≥6.4
 using namespace Qt::Literals::StringLiterals;
-#endif
+#endif //Qt<6.4
 
 #if (QT_VERSION < QT_VERSION_CHECK(5, 14, 0))
 template<>
@@ -101,6 +119,26 @@ void blockingMap(const std::unordered_map<T, SequenceType> &sequence, MapFunctor
     });
 }
 
+namespace g {
+#ifdef __cpp_lib_execution
+#ifdef USE_TBB
+inline constexpr auto executionpolicy = std::execution::par;
+#else
+inline constexpr auto executionpolicy = std::execution::seq;
+#endif //USE_TBB
+#endif //__cpp_lib_execution
+}
 
+template<typename T, typename Compare>
+void sort(std::vector<T>& v, Compare comp) {
+#ifdef USE_TBB
+    if (v.size() > 1000)
+        std::sort(std::execution::par, v.begin(), v.end(), comp);
+    else
+        std::sort(std::execution::seq, v.begin(), v.end(), comp);
+#else
+    std::sort(v.begin(), v.end(), comp);
+#endif //USE_TBB
+}
 
 #endif // UTILITES_H

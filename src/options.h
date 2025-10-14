@@ -9,17 +9,6 @@
 #include "utilites.h"
 
 
-#if __has_include(<execution>) //checking to see if the <execution> header is there
-#ifdef emit
-#undef emit
-#define NOQTEMIT
-#endif
-#include <execution>
-#ifdef NOQTEMIT
-#define emit
-#endif
-#endif //__has_include(<execution>)
-
 enum SendType{ST_Device, ST_Mail};
 
 struct ToolsOptions
@@ -193,14 +182,6 @@ inline bool bVerbose;
 inline bool bTray;
 inline bool bUseGui;
 
-
-#ifdef __cpp_lib_execution
-#ifdef USE_TBB
-inline constexpr auto executionpolicy = std::execution::par;
-#else
-inline constexpr auto executionpolicy = std::execution::seq;
-#endif //USE_TBB
-#endif //__cpp_lib_execution
 }
 
 
