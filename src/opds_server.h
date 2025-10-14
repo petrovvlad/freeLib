@@ -32,13 +32,13 @@ private:
     void addLink(QDomNode &node, const QString &sType, const QString &sHRef, const QString &sRel);
     void addLink(QDomNode &node, const QString &sType, const QString &sHRef);
     void addEntry(QDomElement &feed, const QString &sId, const QString &sHRef, const QString &sTitle, const QString &sContent);
-    QString query(const QUrlQuery &urlQuery);
+    static QString query(const QUrlQuery &urlQuery);
 
     std::vector<uint> listBooks(const SLib& lib, uint idAuthor, uint idSeries, const QStringView sLanguageFilter, bool bSeriesless);
     std::vector<uint> listGenreBooks(const SLib& lib, ushort idGenre, const QStringView sLanguageFilter);
     std::unordered_map<ushort, uint> countBooksByGenre(const SLib &lib, ushort idParentGenre, const QString &sLanguageFilter);
     std::vector<uint> searchTitle(const SLib &lib, const QString &sTitle, const QStringView sLanguageFilter);
-    std::vector<uint> searchBooks(const SLib& lib, const QString &sAuthor, const QString &sTitle);
+    std::vector<uint> searchBooks(const SLib& lib, const QString &sAuthor, const QString &sTitle, const QStringView sLanguageFilter);
     static std::vector<uint> searchAuthors(const SLib &lib, const QString &sAuthor);
     auto searchSeries(const SLib& lib, const QString &sSeries, const QStringView sLanguageFilter);
 
@@ -52,9 +52,9 @@ private:
     QHttpServerResponse generatePageOPDS2(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url);
 
     bool checkAuth(const QHttpServerRequest &request, QUrl &url);
-    QDomElement docHeaderHTML(const QString &sQuery, SLib &lib, const QString &sLibUrl, const QUrl &url);
+    QDomElement docHeaderHTML(SLib &lib, QUrlQuery urlQuery, const QString &sLibUrl);
     QDomElement docHeaderOPDS(const QString &sTitle, const QString &sID, const QString &sLibUrl, const QString &sSession);
-    QJsonObject docHeaderOPDS2(const QString &sTitle, const QString &sLibUrl, const QString &sSession);
+    QJsonObject docHeaderOPDS2(SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url);
 
     SLib* getLib(uint &idLib, const QString &sTypeServer = u"opds"_s, QString *pLibUrl = nullptr);
     QHttpServerResponse responseHTML();

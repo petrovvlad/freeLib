@@ -44,6 +44,14 @@ struct SeriesComparator {
     }
 };
 
+void setQueryItem(QUrlQuery &query, const QString &key, const QString &value) {
+    if (query.hasQueryItem(key)) {
+        query.removeQueryItem(key);
+    }
+    if(!value.isEmpty())
+        query.addQueryItem(key, value);
+}
+
 opds_server::opds_server(QObject *parent) :
     QObject(parent)
 {
@@ -444,10 +452,7 @@ void opds_server::addEntry(QDomElement &feed, const QString &sId, const QString 
 
 QString opds_server::query(const QUrlQuery &urlQuery)
 {
-    auto tmpQuery = urlQuery;
-    tmpQuery.removeAllQueryItems(u"search_string"_s);
-    tmpQuery.removeAllQueryItems(u"page"_s);
-    QString sQuery = tmpQuery.toString();
+    QString sQuery = urlQuery.toString();
     if(!sQuery.isEmpty())
         sQuery.insert(0, u'?');
     return sQuery;
@@ -476,7 +481,7 @@ std::vector<uint> opds_server::listBooks(const SLib &lib, uint idAuthor, uint id
                 if(sLanguageFilter.isEmpty() || sLanguageFilter == lib.vLaguages[book.idLanguage])
                     vBooks.push_back(idBook);
         }
-        std::sort(vBooks.begin(), vBooks.end(),[&lib](uint id1, uint id2)
+        sort(vBooks,[&lib](uint id1, uint id2)
         {
             const auto &series1 = lib.books.at(id1).series;
             const auto &series2 = lib.books.at(id2).series;
@@ -507,7 +512,7 @@ std::vector<uint> opds_server::listBooks(const SLib &lib, uint idAuthor, uint id
                         vBooks.push_back(idBook);
             }
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName); });
+        sort(vBooks, [&lib](uint lhs, uint rhs){ return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName); });
     }
     if(idAuthor == 0 && idSeries != 0){
         for(const auto &[idBook, book] :lib.books){
@@ -517,7 +522,7 @@ std::vector<uint> opds_server::listBooks(const SLib &lib, uint idAuthor, uint id
                 if(sLanguageFilter.isEmpty() || sLanguageFilter == lib.vLaguages[book.idLanguage])
                     vBooks.push_back(idBook);
         }
-        std::sort(vBooks.begin(), vBooks.end(), [&lib](uint id1, uint id2)
+        sort(vBooks, [&lib](uint id1, uint id2)
         {
             const auto &series1 = lib.books.at(id1).series;
             const auto &series2 = lib.books.at(id2).series;
@@ -544,7 +549,8 @@ std::vector<uint> opds_server::listGenreBooks(const SLib &lib, ushort idGenre, c
             }
         }
     }
-    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
+
+    sort(vBooks, [&lib](uint lhs, uint rhs){
         return localeStringCompare(lib.books.at(lhs).sName,lib.books.at(rhs).sName);
     });
 
@@ -567,14 +573,14 @@ std::vector<uint> opds_server::searchTitle(const SLib &lib, const QString &sTitl
             return false;
         });
 
-        std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint lhs, uint rhs){
-                return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName);
+        sort(vBooks, [&lib](uint lhs, uint rhs){
+            return localeStringCompare(lib.books.at(lhs).sName, lib.books.at(rhs).sName);
         });
     }
     return vBooks;
 }
 
-std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuthor, const QString &sTitle)
+std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuthor, const QString &sTitle, const QStringView sLanguageFilter)
 {
     auto vAuthors = searchAuthors(lib, sAuthor);
     QString sSimplifiedTitle = simplifySearchString(sTitle);
@@ -586,14 +592,14 @@ std::vector<uint> opds_server::searchBooks(const SLib &lib, const QString &sAuth
             QString sName = simplifySearchString(book.sName);
             if(sName.contains(sSimplifiedTitle)){
                 if(sAuthor.isEmpty() || std::any_of(book.vIdAuthors.begin(), book.vIdAuthors.end(), [&stIdAuthors](auto idAuthor){return stIdAuthors.contains(idAuthor);}))
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == lib.vLaguages[book.idLanguage])
+                    if(sLanguageFilter.isEmpty() || sLanguageFilter == lib.vLaguages[book.idLanguage])
                         return true;
             }
         }
         return false;
     });
 
-    std::sort(g::executionpolicy, vBooks.begin(), vBooks.end(), [&lib](uint id1, uint id2){
+    sort(vBooks, [&lib](uint id1, uint id2){
         return localeStringCompare(lib.books.at(id1).sName, lib.books.at(id2).sName);
     });
 
@@ -606,13 +612,8 @@ auto opds_server::searchSeries(const SLib &lib, const QString &sSeries, const QS
     SeriesComparator comporator(lib.series);
     std::map<uint, uint, SeriesComparator> mSeries(comporator);
 
-    std::vector<uint> v;
-    v.reserve(lib.books.size());
-    std::ranges::copy(lib.books | std::views::keys,  std::back_inserter(v));
-
     std::mutex m;
-    QtConcurrent::blockingMap(v, [&](auto id){
-        auto &book = lib.books.at(id);
+    blockingMap(lib.books, [&](auto &book){
         if(!book.series.empty() && !book.bDeleted){
             if(sLanguageFilter.isEmpty() || sLanguageFilter == lib.vLaguages[book.idLanguage]){
                 for(const auto &iSeries :book.series){
@@ -626,7 +627,6 @@ auto opds_server::searchSeries(const SLib &lib, const QString &sSeries, const QS
             }
         }
     });
-
     return mSeries;
 }
 
@@ -718,8 +718,12 @@ bool opds_server::checkAuth(const QHttpServerRequest &request, QUrl &url)
     return bResult;
 }
 
-QDomElement opds_server::docHeaderHTML(const QString &sQuery, SLib &lib, const QString &sLibUrl, const QUrl &url)
+QDomElement opds_server::docHeaderHTML(SLib &lib, QUrlQuery urlQuery, const QString &sLibUrl)
 {
+    urlQuery.removeQueryItem(u"page"_s);
+    urlQuery.removeQueryItem(u"search_string"_s);
+    QString sQuery = query(urlQuery);
+
     doc_ = QDomDocument(u"HTML"_s);
     QDomElement html = doc_.createElement(u"html"_s);
     doc_.appendChild(html);
@@ -774,8 +778,7 @@ QDomElement opds_server::docHeaderHTML(const QString &sQuery, SLib &lib, const Q
 
     addHRefNode(divHome, lib.name, sHref, u"lib"_s);
 
-    QUrlQuery urlquery(url);
-    QString sLangFilter = urlquery.queryItemValue(u"lang"_s);
+    QString sLangFilter = urlQuery.queryItemValue(u"lang"_s);
     if(lib.vSortedLaguages.empty())
         lib.sortLanguages();
 
@@ -835,24 +838,77 @@ QDomElement opds_server::docHeaderOPDS(const QString &sTitle, const QString &sID
     return feed;
 }
 
-QJsonObject opds_server::docHeaderOPDS2(const QString &sTitle, const QString &sLibUrl, const QString &sSession)
+QJsonObject opds_server::docHeaderOPDS2(SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url)
 {
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
-    QJsonObject root;
+     QUrlQuery urlquery(url);
+    QString sQuery = query(urlquery);
+    QString sLangFilter = urlquery.queryItemValue(u"lang"_s);
 
+    QJsonObject root;
     QJsonObject metadata;
     metadata[u"title"] = sTitle;
-    root[u"metadata"] = metadata;
+    root[u"metadata"] = std::move(metadata);
 
     QJsonArray links;
-    addLink(links, u"application/opds+json"_s, sLibUrl + sSessionQuery, u"self"_s);
+    addLink(links, u"application/opds+json"_s, sLibUrl % sQuery, u"self"_s);
 
     QJsonObject linkSearch;
     linkSearch[u"rel"] = u"search"_s;
-    linkSearch[u"href"] = QString(sLibUrl % u"/search{?query,title,author}"_s % (sSession.isEmpty() ?u""_s :u"&session="_s % sSession));
+    QString sHref = sLibUrl % u"/search{?query,title,author}"_s;
+    if(!sQuery.isEmpty())
+        sHref += u"&" + sQuery;
+    linkSearch[u"href"] = sHref;
     linkSearch[u"type"] = u"application/opds+json"_s;
     linkSearch[u"templated"] = true;
     links.push_back(std::move(linkSearch));
+
+    QJsonArray facets;
+    QJsonObject languageFilter;
+    metadata[u"title"] = tr("Book language:");
+    languageFilter[u"metadata"] = std::move(metadata);
+
+    QJsonArray linksLanguage;
+    QJsonObject linkLanguage;
+
+    if(lib.vSortedLaguages.empty())
+        lib.sortLanguages();
+    QUrl newUrl;
+    if(g::options.sBaseUrl.isEmpty())
+        newUrl = url;
+    else{
+        newUrl = g::options.sBaseUrl;
+        newUrl.setPath(url.path());
+    }
+
+    linkLanguage[u"type"] = u"application/opds+json"_s;
+    linkLanguage[u"title"] = tr("All");
+    auto tmpQuery = urlquery;
+    setQueryItem(tmpQuery, u"lang"_s, u""_s);
+    sHref = tmpQuery.toString();
+    linkLanguage[u"href"] = u"?"_s + sHref;
+    linksLanguage.push_back(linkLanguage);
+
+    for(size_t iLang = 0; iLang<lib.vSortedLaguages.size(); iLang++){
+        QString sAbbrLanguage = lib.vSortedLaguages[iLang];
+        if(!sAbbrLanguage.isEmpty() && sAbbrLanguage != u"un"){
+            QString sLanguage;
+            if(g::languges.contains(sAbbrLanguage))
+                sLanguage = g::languges.at(sAbbrLanguage);
+            else
+                sLanguage = sAbbrLanguage;
+            linkLanguage[u"title"] = sLanguage;
+            setQueryItem(tmpQuery, u"lang"_s, sAbbrLanguage);
+            newUrl.setQuery(tmpQuery);
+            linkLanguage[u"href"] = newUrl.toString();
+            linkLanguage[u"active"] = sLangFilter==sAbbrLanguage ?u"true"_s :u"false"_s;
+            linksLanguage.push_back(linkLanguage);
+        }
+    }
+
+    languageFilter[u"links"] = linksLanguage;
+    facets.push_back(std::move(languageFilter));
+    root[u"facets"] = facets;
+
 
     root[u"links"] = links;
     return root;
@@ -911,18 +967,7 @@ QHttpServerResponse opds_server::responseUnauthorized()
 QString hrefOfPage(const QUrl &url, uint nPage)
 {
     QUrlQuery urlquery(url);
-    auto listQueryItems = urlquery.queryItems();
-    int i;
-    for(i=0; i<listQueryItems.size(); i++){
-        if(listQueryItems[i].first == u"page"_s){
-            listQueryItems[i].second = QString::number(nPage);
-            break;
-        }
-    }
-    if(i >= listQueryItems.size())
-        listQueryItems.emplace_back(u"page"_s, QString::number(nPage));
-
-    urlquery.setQueryItems(listQueryItems);
+    setQueryItem(urlquery, u"page"_s, QString::number(nPage));
     QUrl newUrl;
     if(g::options.sBaseUrl.isEmpty())
         newUrl = url;
@@ -959,10 +1004,9 @@ void opds_server::loadAnnotations(const std::vector<uint> &vBooks, SLib &lib, ui
 QHttpServerResponse opds_server::generatePageHTML(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor)
 {
     QUrlQuery urlquery(url);
-    QString sQuery = query(urlquery);
 
     QDomElement feed;
-    feed = docHeaderHTML(sQuery, lib, sLibUrl, url);
+    feed = docHeaderHTML(lib, urlquery, sLibUrl);
     addTextNode(feed, u"div"_s, sTitle, u"caption"_s);
 
     fillPageHTML(vBooks, lib, feed, sLibUrl, url, bShowAuthor);
@@ -1099,7 +1143,7 @@ void opds_server::fillPageHTML(const std::vector<uint> &vBooks, SLib &lib, QDomE
             addTextNode(pageBar, u"span"_s, u"…"_s, u"page"_s);
 
         if(nPage < nPageCount){
-            addHRefNode(pageBar, QString::number(nPageCount),hrefOfPage(url, nPageCount), u"page"_s);
+            addHRefNode(pageBar, QString::number(nPageCount), hrefOfPage(url, nPageCount), u"page"_s);
             addHRefNode(pageBar, u">"_s, hrefOfPage(url, nPage+1), u"page"_s);
         }else
             addTextNode(pageBar, u"span"_s, u">"_s, u"arrow"_s);
@@ -1228,6 +1272,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
     if(nPage == 0)
         nPage = 1;
     uint nPageCount = (vBooks.size()-1) / nMaxBooksPerPage + 1;
+    QString sQuery = query(urlquery);
     QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
 
@@ -1235,7 +1280,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
     uint iBookEnd = std::min(static_cast<uint>(vBooks.size()), nPage*nMaxBooksPerPage);
     loadAnnotations(vBooks, lib, iBookBegin, iBookEnd);
 
-    auto root = docHeaderOPDS2(sTitle, sLibUrl, sSession);
+    auto root = docHeaderOPDS2(lib, lib.name, sLibUrl, url);
     QJsonArray links = root[u"links"].toArray();
     if(nPage>1)
         addLink(links, u"application/opds+json"_s, hrefOfPage(url, nPage-1), u"previous"_s);
@@ -1282,7 +1327,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
                 QJsonArray links;
                 QJsonObject link;
                 link[u"type"] = u"application/opds+json"_s;
-                link[u"href"] = QString(sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery);
+                link[u"href"] = QString(sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery);
                 links.push_back(std::move(link));
                 joAuthor[u"links"] = links;
             }
@@ -1298,7 +1343,7 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
             QJsonArray links;
             QJsonObject link;
             link[u"type"] = u"application/opds+json"_s;
-            link[u"href"] = QString(sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery);
+            link[u"href"] = QString(sLibUrl % u"/genres/"_s % QString::number(idGenre) % sQuery);
             links.push_back(std::move(link));
             genre[u"links"] = links;
             subject.push_back(std::move(genre));
@@ -1378,7 +1423,7 @@ QHttpServerResponse opds_server::rootHTML(uint idLib, const QHttpServerRequest &
     QUrlQuery urlquery(url);
     QString sQuery = query(urlquery);
 
-    QDomElement feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    QDomElement feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     QDomElement div = doc_.createElement(u"div"_s);
     feed.appendChild(div);
     QDomElement el;
@@ -1427,21 +1472,19 @@ QHttpServerResponse opds_server::rootOPDS2(uint idLib, const QHttpServerRequest 
     QUrl url;
     if(!checkAuth(request, url))
         return responseUnauthorized();
-    QUrlQuery urlquery(url);
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
-    QString sSession = urlquery.queryItemValue(u"session"_s);
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
-
-    QJsonObject root = docHeaderOPDS2(pLib->name, sLibUrl, sSession);
+    QUrlQuery urlquery(url);
+    QString sQuery = query(urlquery);
+    QJsonObject root = docHeaderOPDS2(*pLib, pLib->name, sLibUrl, url);
 
     QJsonArray navigation;
-    addNavigation(navigation, tr("Books by authors"), sLibUrl % u"/authorsindex"_s % sSessionQuery);
-    addNavigation(navigation, tr("Books by series"), sLibUrl % u"/seriesindex"_s % sSessionQuery);
-    addNavigation(navigation, tr("Books by genre"), sLibUrl % u"/genres"_s % sSessionQuery);
+    addNavigation(navigation, tr("Books by authors"), sLibUrl % u"/authorsindex"_s % sQuery);
+    addNavigation(navigation, tr("Books by series"), sLibUrl % u"/seriesindex"_s % sQuery);
+    addNavigation(navigation, tr("Books by genre"), sLibUrl % u"/genres"_s % sQuery);
     root[u"navigation"] = navigation;
 
     QJsonDocument doc(root);
@@ -1527,7 +1570,7 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
     QString sQuery = query(urlquery);
 
-    QDomElement feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    QDomElement feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
 
     std::map<QString, int, LocaleAwareQStringComparator> mCount;
 
@@ -1601,21 +1644,18 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
                 vAuthorId.push_back(idAuthor);
             }
         }
-        std::sort(g::executionpolicy, vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2)
+        std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2)
         {
             return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();
         });
         auto divList = addNode(feed, u"div"_s, u"listitems"_s);
         for(uint idAuthor: vAuthorId)
         {
-            uint nBooksCount = 0;
             auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
-            for (auto it = begin; it != end; ++it) {
-                auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted) [[likely]]
-                    if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
-                        nBooksCount++;
-            }
+            uint nBooksCount = std::count_if(begin, end, [&pLib, &sLanguageFilter](const auto& pair) {
+                const auto& book = pLib->books.at(pair.second);
+                return !book.bDeleted && (sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage]);
+            });
 
             QDomElement div = addNode(divList, u"div"_s, u"item"_s);
             addHRefNode(div, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery, u"block"_s);
@@ -1708,21 +1748,16 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
         {
             const auto &author = pLib->authors.at(idAuthor);
             if(author.getName().left(sIndex.length()).toCaseFolded() == sLowerIndex)
-            {
                 vAuthorId.push_back(idAuthor);
-            }
         }
-        std::sort(vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
+        std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
         for(uint idAuthor: vAuthorId)
         {
-            uint nBooksCount = 0;
             auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
-            for (auto it = begin; it != end; ++it) {
-                auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted) [[likely]]
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
-                        nBooksCount++;
-            }
+            uint nBooksCount = std::count_if(begin, end, [&pLib, this](const auto& pair) {
+                const auto& book = pLib->books.at(pair.second);
+                return !book.bDeleted && (sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage]);
+            });
 
             addEntry(feed, u"tag:author:"_s + QString::number(idAuthor), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery,
                      pLib->authors.at(idAuthor).getName(), QString::number(nBooksCount) % u" "_s % tr("books"));
@@ -1739,15 +1774,15 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
     if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
+    QString sQuery = query(urlquery);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
-    QJsonObject root = docHeaderOPDS2(tr("Books by authors"), sLibUrl, sSession);
+    QJsonObject root = docHeaderOPDS2(*pLib, tr("Books by authors"), sLibUrl, url);
 
     std::map<QString, int, LocaleAwareQStringComparator> mCount;
 
@@ -1757,7 +1792,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
     QString sLowerIndex = sIndex.toCaseFolded();
     for(const auto &iBook :pLib->books){
         if(!iBook.second.bDeleted) [[likely]]{
-            if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
+            if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[iBook.second.idLanguage])
                 for(auto idAuthor :iBook.second.vIdAuthors)
                     stIdAuthors.insert(idAuthor);
         }
@@ -1792,7 +1827,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
                     const auto &author = pLib->authors.at(idAuthor);
                     if(author.getName().left(sIndex.size()).toCaseFolded() == lowerIndex)
                     {
-                        sHRef = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery;
+                        sHRef = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery;
                         break;
                     }
                 }
@@ -1800,7 +1835,7 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
             else
             {
                 sHRef = sLibUrl % u"/authorsindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData()) %
-                                                    (setAuthors.contains(sIndex) && count<30 ?u"/books"_s :u""_s) % sSessionQuery;
+                                                    (setAuthors.contains(sIndex) && count<30 ?u"/books"_s :u""_s) % sQuery;
 
             }
             addNavigation(navigation, sIndex, sHRef,  count);
@@ -1817,18 +1852,15 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
                 vAuthorId.push_back(idAuthor);
             }
         }
-        std::sort(vAuthorId.begin(), vAuthorId.end(), [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
+        std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
         for(uint idAuthor: vAuthorId)
         {
-            uint nBooksCount = 0;
             auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
-            for (auto it = begin; it != end; ++it) {
-                auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted) [[likely]]
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
-                        nBooksCount++;
-            }
-            addNavigation(navigation, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery, nBooksCount);
+            uint nBooksCount = std::count_if(begin, end, [&pLib, &sLanguageFilter](const auto& pair) {
+                const auto& book = pLib->books.at(pair.second);
+                return !book.bDeleted && (sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage]);
+            });
+            addNavigation(navigation, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery, nBooksCount);
         }
     }
     root[u"navigation"] = navigation;
@@ -1853,7 +1885,7 @@ QHttpServerResponse opds_server::authorHTML(uint idLib, uint idAuthor, const QHt
 
     QString sAuthor = pLib->authors.at(idAuthor).getName();
     QString sIdAuthor = QString::number(idAuthor);
-    QDomElement feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    QDomElement feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     QDomElement divAuth = addNode(feed, u"div"_s, u"item"_s);
     addTextNode(divAuth, u"div"_s, tr("Books by") % u" "_s % sAuthor, u"caption"_s);
 
@@ -1904,22 +1936,21 @@ QHttpServerResponse opds_server::authorOPDS2(uint idLib, uint idAuthor, const QH
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
+    QString sQuery = query(urlquery);
 
     QString sAuthor = pLib->authors.at(idAuthor).getName();
     QString sIdAuthor = QString::number(idAuthor);
-    QJsonObject root = docHeaderOPDS2(tr("Books by") % u" "_s % sAuthor, sLibUrl, sSession);
+    QJsonObject root = docHeaderOPDS2(*pLib, tr("Books by") % u" "_s % sAuthor, sLibUrl, url);
 
     QJsonArray navigation;
-    addNavigation(navigation, tr("Books by series"), sLibUrl % u"/authorseries/"_s % sIdAuthor % sSessionQuery);
-    addNavigation(navigation, tr("Books without series"), sLibUrl % u"/authorseriesless/"_s % sIdAuthor % sSessionQuery);
-    addNavigation(navigation, tr("All books"), sLibUrl % u"/authorbooks/"_s % sIdAuthor % sSessionQuery);
+    addNavigation(navigation, tr("Books by series"), sLibUrl % u"/authorseries/"_s % sIdAuthor % sQuery);
+    addNavigation(navigation, tr("Books without series"), sLibUrl % u"/authorseriesless/"_s % sIdAuthor % sQuery);
+    addNavigation(navigation, tr("All books"), sLibUrl % u"/authorbooks/"_s % sIdAuthor % sQuery);
     root[u"navigation"] = navigation;
 
     QJsonDocument doc(root);
@@ -1973,10 +2004,9 @@ QHttpServerResponse opds_server::authorBooksOPDS2(uint idLib, uint idAuthor, con
     if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
     QUrlQuery urlquery(url);
-    QString sLangFilter = urlquery.queryItemValue(u"lang"_s);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
-
-    std::vector<uint> vBooks = listBooks(*pLib, idAuthor, 0, sLangFilter, false);
+    std::vector<uint> vBooks = listBooks(*pLib, idAuthor, 0, sLanguageFilter, false);
     QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books by ABC") % u" ("_s % pLib->authors.at(idAuthor).getName() % u")"_s, sLibUrl, url);
     return result;
 }
@@ -1995,7 +2025,7 @@ QHttpServerResponse opds_server::authorSeriesHTML(uint idLib, uint idAuthor, con
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
     QString sQuery = query(urlquery);
 
-    QDomElement feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    QDomElement feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     addTextNode(feed, u"div"_s, tr("Book series") % u" "_s % pLib->authors.at(idAuthor).getName(), u"caption"_s);
 
     SeriesComparator comporator(pLib->series);
@@ -2069,16 +2099,15 @@ QHttpServerResponse opds_server::authorSeriesOPDS2(uint idLib, uint idAuthor, co
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
-
+    QString sQuery = query(urlquery);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
     QString sIdAuthor = QString::number(idAuthor);
-    auto root = docHeaderOPDS2(tr("Book series") % u" "_s % pLib->authors.at(idAuthor).getName(), sLibUrl, sSession);
+    auto root = docHeaderOPDS2(*pLib, tr("Book series") % u" "_s % pLib->authors.at(idAuthor).getName(), sLibUrl, url);
 
     SeriesComparator comporator(pLib->series);
     std::map<uint, uint, SeriesComparator> mCountBooks(comporator);
@@ -2088,7 +2117,7 @@ QHttpServerResponse opds_server::authorSeriesOPDS2(uint idLib, uint idAuthor, co
         if(book.bDeleted) [[unlikely]]
             continue;
         if(!book.series.empty()){
-            if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
+            if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSeries :book.series)
                     ++mCountBooks[iSeries.first];
         }
@@ -2098,7 +2127,7 @@ QHttpServerResponse opds_server::authorSeriesOPDS2(uint idLib, uint idAuthor, co
     for(auto [idSeries, count] :mCountBooks)
     {
         QString sIdSeries = QString::number(idSeries);
-        addNavigation(navigation, pLib->series.at(idSeries).sName, sLibUrl % u"/authorseries/"_s % sIdAuthor % u"/"_s % sIdSeries % sSessionQuery, count);
+        addNavigation(navigation, pLib->series.at(idSeries).sName, sLibUrl % u"/authorseries/"_s % sIdAuthor % u"/"_s % sIdSeries % sQuery, count);
     }
     root[u"navigation"] = navigation;
 
@@ -2120,7 +2149,6 @@ QHttpServerResponse opds_server::authorSeriesHTML(uint idLib, uint idAuthor, uin
     QUrlQuery urlquery(url);
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
-
     std::vector<uint> vBooks = listBooks(*pLib, idAuthor, idSeries, sLanguageFilter, false);
     return generatePageHTML(vBooks, *pLib, tr("Books of series") % u" ("_s % pLib->series[idSeries].sName % u")"_s, sLibUrl, url, false);
 }
@@ -2134,7 +2162,6 @@ QHttpServerResponse opds_server::authorSeriesOPDS(uint idLib, uint idAuthor, uin
     SLib *pLib = getLib(idLib, u"/opds"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->series.contains(idSeries)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
-
     std::vector<uint> vBooks = listBooks(*pLib, idAuthor, idSeries, sLanguageFilter_, false);
     QString sPage = generatePageOPDS(vBooks, *pLib, tr("Books of series") % u" ("_s % pLib->series[idSeries].sName % u")"_s,
                                  u"tag:author:"_s % QString::number(idAuthor) % u":series:"_s % QString::number(idSeries), sLibUrl, url);
@@ -2152,7 +2179,10 @@ QHttpServerResponse opds_server::authorSeriesOPDS2(uint idLib, uint idAuthor, ui
     if(pLib == nullptr || !pLib->authors.contains(idAuthor) || !pLib->series.contains(idSeries)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
-    std::vector<uint> vBooks = listBooks(*pLib, idAuthor, idSeries, sLanguageFilter_, false);
+    QUrlQuery urlquery(url);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
+
+    std::vector<uint> vBooks = listBooks(*pLib, idAuthor, idSeries, sLanguageFilter, false);
     QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books of series") % u" ("_s % pLib->series[idSeries].sName % u")"_s, sLibUrl, url);
     return result;
 }
@@ -2185,7 +2215,6 @@ QHttpServerResponse opds_server::authorSerieslessOPDS(uint idLib, uint idAuthor,
     QUrlQuery urlquery(url);
     QString sLangFilter = urlquery.queryItemValue(u"lang"_s);
 
-
     std::vector<uint> vBooks = listBooks(*pLib, idAuthor, 0, sLangFilter, true);
     QString sPage = generatePageOPDS(vBooks, *pLib, tr("Books without series") % u" ("_s % pLib->authors[idAuthor].getName() % u")"_s,
                                  u"tag:author:"_s % QString::number(idAuthor) % u":seriesless"_s, sLibUrl, url);
@@ -2204,7 +2233,6 @@ QHttpServerResponse opds_server::authorSerieslessOPDS2(uint idLib, uint idAuthor
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
     QUrlQuery urlquery(url);
     QString sLangFilter = urlquery.queryItemValue(u"lang"_s);
-
 
     std::vector<uint> vBooks = listBooks(*pLib, idAuthor, 0, sLangFilter, true);
     QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books without series") % u" ("_s % pLib->authors[idAuthor].getName() % u")"_s, sLibUrl, url);
@@ -2226,7 +2254,7 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
     QString sQuery = query(urlquery);
 
     QDomElement feed;
-    feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     std::map<QString, int, LocaleAwareQStringComparator> mCount;
 
     std::unordered_set<QString> stSeries;
@@ -2299,7 +2327,7 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
                 vSeriesId.push_back(idSeries);
             }
         }
-        std::sort(vSeriesId.begin(), vSeriesId.end(),[pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
+        std::ranges::sort(vSeriesId,[pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
         auto divList = addNode(feed, u"div"_s, u"listitems"_s);
 
         for(auto idSeries: vSeriesId)
@@ -2409,7 +2437,7 @@ QHttpServerResponse opds_server::seriesIndexOPDS(uint idLib, const QString &sInd
                 vSeriesId.push_back(idSeries);
             }
         }
-        std::sort(vSeriesId.begin(), vSeriesId.end(), [pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
+        std::ranges::sort(vSeriesId, [pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
 
         for(auto iIndex: vSeriesId)
         {
@@ -2436,15 +2464,15 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
     if(!checkAuth(request, url))
         return responseUnauthorized();
     QString sLibUrl;
-    const SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
+    SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
     if(pLib == nullptr)
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
+    QString sQuery = query(urlquery);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
-    auto root = docHeaderOPDS2(tr("Books by series"), sLibUrl, sSession);
+    auto root = docHeaderOPDS2(*pLib, tr("Books by series"), sLibUrl, url);
 
     std::map<QString, int, LocaleAwareQStringComparator> mCount;
     std::unordered_set<QString> stSeries;
@@ -2457,7 +2485,7 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
         if(book.bDeleted) [[unlikely]]
             continue;
         if(!book.series.empty()){
-            if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
+            if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSeries :book.series)
                     stIdSeries.insert(iSeries.first);
         }
@@ -2492,7 +2520,7 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
                     if(stSeries.contains(sIndex) ?series.sName.toCaseFolded() == sIndex.toCaseFolded()
                             :series.sName.left(sIndex.size()).toCaseFolded() == sIndex.toCaseFolded())
                     {
-                        sHRef = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sSessionQuery;
+                        sHRef = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery;
                         break;
                     }
                 }
@@ -2500,7 +2528,7 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
             else
             {
                 sHRef = sLibUrl % u"/seriesindex/"_s %  QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData())
-                        % (stSeries.contains(sIndex) ?u"/books"_s :u""_s) % sSessionQuery;
+                        % (stSeries.contains(sIndex) ?u"/books"_s :u""_s) % sQuery;
             }
             addNavigation(navigation, sIndex, sHRef, count);
         }
@@ -2516,7 +2544,7 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
                 vSeriesId.push_back(idSeries);
             }
         }
-        std::sort(vSeriesId.begin(), vSeriesId.end(), [pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
+        std::ranges::sort(vSeriesId, [pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
 
         for(auto iIndex: vSeriesId)
         {
@@ -2527,10 +2555,10 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
                 if(book.bDeleted) [[unlikely]]
                     continue;
                 if(book.series.contains(iIndex))
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
+                    if(sQuery.isEmpty() || sQuery == pLib->vLaguages[book.idLanguage])
                         nBooksCount++;
             }
-            addNavigation(navigation, pLib->series.at(iIndex).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(iIndex) % sSessionQuery, nBooksCount);
+            addNavigation(navigation, pLib->series.at(iIndex).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(iIndex) % sQuery, nBooksCount);
         }
     }
     root[u"navigation"] = navigation;
@@ -2573,7 +2601,7 @@ QHttpServerResponse opds_server::seriesBooksOPDS(uint idLib, uint idSeries, cons
 }
 
 QHttpServerResponse opds_server::seriesBooksOPDS2(uint idLib, uint idSeries, const QHttpServerRequest &request)
-{
+{   
     QUrl url;
     if(!checkAuth(request, url))
         return responseUnauthorized();
@@ -2581,8 +2609,10 @@ QHttpServerResponse opds_server::seriesBooksOPDS2(uint idLib, uint idSeries, con
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
     if(pLib == nullptr || !pLib->series.contains(idSeries)) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+    QUrlQuery urlquery(url);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
-    std::vector<uint> vBooks = listBooks(*pLib, 0, idSeries, sLanguageFilter_, false);
+    std::vector<uint> vBooks = listBooks(*pLib, 0, idSeries, sLanguageFilter, false);
     QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books of series") % u" ("_s % pLib->series[idSeries].sName % u")"_s, sLibUrl, url);
     return result;
 }
@@ -2639,8 +2669,8 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
         }
 
         mCounts = countBooksByGenre(*pLib, idParentGenre, sLanguageFilter);
-        auto keys = mCounts | std::views::keys;
-        vIdGenres.assign(keys.begin(), keys.end());
+        vIdGenres.reserve(mCounts.size());
+        std::ranges::copy(mCounts | std::views::keys,  std::back_inserter(vIdGenres));
     }
     else
     {
@@ -2649,7 +2679,7 @@ QHttpServerResponse opds_server::genresHTML(uint idLib, ushort idParentGenre, co
     }
     std::ranges::sort(vIdGenres, [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
     QDomElement feed;
-    feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     auto divList = addNode(feed, u"div"_s, u"listitems"_s);
 
     for(auto idGenre: vIdGenres)
@@ -2675,10 +2705,8 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
+    QString sQuery = query(urlquery);
     QString sSession = urlquery.queryItemValue(u"session"_s);
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
-    // QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
-
 
     std::vector<ushort> vIdGenres;
     std::unordered_map<ushort, uint> mCounts;
@@ -2712,7 +2740,7 @@ QHttpServerResponse opds_server::genresOPDS(uint idLib, ushort idParentGenre, co
             sContent = QString::number(mCounts[idGenre]) % u" "_s % tr("books");
         else
             sContent =  tr("Books of genre") % u" "_s % g::genres[idGenre].sName;
-        addEntry(feed, u"tag:root:genre:"_s + g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery,
+        addEntry(feed, u"tag:root:genre:"_s + g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sQuery,
                  g::genres[idGenre].sName, sContent);
     }
 
@@ -2731,20 +2759,19 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
 
     QUrlQuery urlquery(url);
-    QString sSession = urlquery.queryItemValue(u"session"_s);
-    QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
-    // QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
+    QString sQuery = query(urlquery);
 
     std::vector<ushort> vIdGenres;
     std::unordered_map<ushort, uint> mCounts;
     if(idParentGenre != 0)
     {
         if(g::genres[idParentGenre].idParrentGenre > 0){
-            std::vector<uint> vBooks = listGenreBooks(*pLib, idParentGenre, sLanguageFilter_);
+            std::vector<uint> vBooks = listGenreBooks(*pLib, idParentGenre, sLanguageFilter);
             QHttpServerResponse result = generatePageOPDS2(vBooks, *pLib, tr("Books by genre") % u": " % g::genres[idParentGenre].sName, sLibUrl, url);
             return result;
         }
-        mCounts = countBooksByGenre(*pLib, idParentGenre, sLanguageFilter_);
+        mCounts = countBooksByGenre(*pLib, idParentGenre, sLanguageFilter);
         vIdGenres.reserve(mCounts.size());
         std::ranges::copy(mCounts | std::views::keys, std::back_inserter(vIdGenres));
     }
@@ -2755,13 +2782,13 @@ QHttpServerResponse opds_server::genresOPDS2(uint idLib, ushort idParentGenre, c
     }
 
     std::ranges::sort(vIdGenres, [&](ushort id1, ushort id2){return g::genres.at(id1).sName < g::genres.at(id2).sName;});
-    QJsonObject root = docHeaderOPDS2(tr("Books by genre"), sLibUrl, sSession);
+    QJsonObject root = docHeaderOPDS2(*pLib, tr("Books by genre"), sLibUrl, url);
 
     QJsonArray navigation;
     for(auto idGenre: vIdGenres)
     {
         uint nCount = idParentGenre != 0 ?mCounts[idGenre] :0;
-        addNavigation(navigation, g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sSessionQuery, nCount);
+        addNavigation(navigation, g::genres[idGenre].sName, sLibUrl % u"/genres/"_s % QString::number(idGenre) % sQuery, nCount);
     }
     root[u"navigation"] = navigation;
 
@@ -2782,15 +2809,11 @@ QHttpServerResponse opds_server::searchTitleHTML(uint idLib, const QHttpServerRe
 
     QUrlQuery urlquery(url);
     QString sSearchString = urlquery.queryItemValue(u"search_string"_s, QUrl::FullyDecoded).replace(u'+', u' ');
-    QString sSession = urlquery.queryItemValue(u"session"_s);
     QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
-    QString sQuery = urlquery.toString();
-    if(!sQuery.isEmpty())
-        sQuery.insert(0, u'?');
 
     std::vector<uint> vBooks = searchTitle(*pLib, sSearchString, sLanguageFilter);
     QDomElement feed;
-    feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     attachSearchFormHTML(feed, tr("Finding books by title") + u": "_s, sLibUrl + u"/searchtitle"_s, sSearchString, urlquery);
 
     fillPageHTML(vBooks, *pLib, feed, sLibUrl, url, true);
@@ -2810,13 +2833,14 @@ QHttpServerResponse opds_server::searchAuthorHTML(uint idLib, const QHttpServerR
     QUrlQuery urlquery(url);
     QString sSearchString = urlquery.queryItemValue(u"search_string"_s, QUrl::FullyDecoded).replace(u'+', u' ');
     QString sQuery = query(urlquery);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
     auto vAuthors = searchAuthors(*pLib, sSearchString);
-    std::sort(vAuthors.begin(), vAuthors.end(), [pLib](uint id1, uint id2)
+    sort(vAuthors, [pLib](uint id1, uint id2)
               { return localeStringCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()); });
 
     QDomElement feed;
-    feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     attachSearchFormHTML(feed, tr("Finding authors") + u": "_s, sLibUrl + u"/searchauthor"_s, sSearchString, urlquery);
     auto divList = addNode(feed, u"div"_s, u"listitems"_s);
 
@@ -2826,7 +2850,7 @@ QHttpServerResponse opds_server::searchAuthorHTML(uint idLib, const QHttpServerR
         for (auto it = begin; it != end; ++it) {
             auto &book = pLib->books.at(it->second);
             if(!book.bDeleted) [[likely]]
-                if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
+                if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
                     nBooksCount++;
         }
         if(nBooksCount >0 ){
@@ -2855,7 +2879,7 @@ QHttpServerResponse opds_server::searchSeriesHTML(uint idLib, const QHttpServerR
     QString sQuery = query(urlquery);
 
     QDomElement feed;
-    feed = docHeaderHTML(sQuery, *pLib, sLibUrl, url);
+    feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
     attachSearchFormHTML(feed, tr("Finding series") + u": "_s, sLibUrl + u"/searchseries"_s, sSearchString, urlquery);
 
     auto mSeries  = searchSeries(*pLib, sSearchString, sLanguageFilter);
@@ -2914,7 +2938,7 @@ QHttpServerResponse opds_server::searchOPDS(uint idLib, const QHttpServerRequest
     if(!sSearchAuthor.isEmpty()){
         sSearchAuthor.replace(u'+', u' ');
         auto vAuthors = searchAuthors(*pLib, sSearchAuthor);
-        std::sort(vAuthors.begin(), vAuthors.end(), [pLib](uint id1, uint id2)
+        sort(vAuthors, [pLib](uint id1, uint id2)
                   { return localeStringCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) /*< 0*/; });
 
         QString sSession = urlquery.queryItemValue(u"session"_s);
@@ -2966,11 +2990,13 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
     QUrl url;
     if(!checkAuth(request, url))
         return responseUnauthorized();
-    QUrlQuery urlquery(url);
     QString sLibUrl;
     SLib *pLib = getLib(idLib, u"/opds2"_s, &sLibUrl);
     if(pLib == nullptr) [[unlikely]]
         return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+    QUrlQuery urlquery(url);
+    QString sQuery = query(urlquery);
+    QString sLanguageFilter = urlquery.queryItemValue(u"lang"_s);
 
     QString sSearchString = urlquery.queryItemValue(u"query"_s, QUrl::FullyDecoded).replace(u'+', u' ');
     QString sSearchAuthor = urlquery.queryItemValue(u"author"_s, QUrl::FullyDecoded).replace(u'+', u' ');
@@ -2979,12 +3005,19 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
 
     if(!sSearchString.isEmpty() && sSearchAuthor.isEmpty() && sSearchTitle.isEmpty()){
         QString sSession = urlquery.queryItemValue(u"session"_s);
-        QJsonObject root = docHeaderOPDS2(pLib->name, sLibUrl, sSession);
+        QJsonObject root = docHeaderOPDS2(*pLib, pLib->name, sLibUrl, url);
 
         QJsonArray navigation;
-        addNavigation(navigation, tr("Finding authors"), sLibUrl % u"/search?author="_s % sSearchString % u"&session="_s + sSession);
-        addNavigation(navigation, tr("Finding books by title"), sLibUrl % u"/search?title="_s % sSearchString % u"&session="_s + sSession);
-        addNavigation(navigation, tr("Finding series"), sLibUrl % u"/search?series="_s % sSearchString % u"&session="_s + sSession);
+        urlquery.removeQueryItem(u"query"_s);
+        auto querySearchAuthor = urlquery;
+        setQueryItem(querySearchAuthor, u"author"_s, sSearchString);
+        addNavigation(navigation, tr("Finding authors"), sLibUrl % u"/search?"_s % querySearchAuthor.toString());
+        auto querySearchTitle = urlquery;
+        setQueryItem(querySearchTitle, u"title"_s, sSearchString);
+        addNavigation(navigation, tr("Finding books by title"), sLibUrl % u"/search?" % querySearchTitle.toString());
+        auto querySearchSeries = urlquery;
+        setQueryItem(querySearchSeries, u"series"_s, sSearchString);
+        addNavigation(navigation, tr("Finding series"), sLibUrl % u"/search?" % querySearchSeries.toString());
         root[u"navigation"] = navigation;
 
         QJsonDocument doc(root);
@@ -2995,31 +3028,26 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
     std::vector<uint> vBooks;
     if(!sSearchTitle.isEmpty()){
         if(!sSearchAuthor.isEmpty()){
-            vBooks = searchBooks(*pLib, sSearchAuthor, sSearchTitle);
+            vBooks = searchBooks(*pLib, sSearchAuthor, sSearchTitle, sLanguageFilter);
         }else
-            vBooks = searchTitle(*pLib, sSearchTitle, sLanguageFilter_);
+            vBooks = searchTitle(*pLib, sSearchTitle, sLanguageFilter);
         return generatePageOPDS2(vBooks, *pLib, tr("Books search"), sLibUrl, url);
     }
 
     if(!sSearchAuthor.isEmpty()){
         auto vAuthors = searchAuthors(*pLib, sSearchAuthor);
-        std::sort(vAuthors.begin(), vAuthors.end(), [pLib](uint id1, uint id2)
+        sort(vAuthors, [pLib](uint id1, uint id2)
                   { return localeStringCompare(pLib->authors.at(id1).getName(), pLib->authors.at(id2).getName()) /*< 0*/; });
-        QString sSession = urlquery.queryItemValue(u"session"_s);
-        QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
-        QJsonObject root = docHeaderOPDS2(tr("Finding authors"), sLibUrl, sSession);
+        QJsonObject root = docHeaderOPDS2(*pLib, tr("Finding authors"), sLibUrl, url);
         QJsonArray navigation;
         for(auto idAuthor :vAuthors){
-            uint nBooksCount = 0;
             auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
-            for (auto it = begin; it != end; ++it) {
-                auto &book = pLib->books.at(it->second);
-                if(!book.bDeleted) [[likely]]
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
-                        nBooksCount++;
-            }
+            uint nBooksCount = std::count_if(begin, end, [&pLib, &sLanguageFilter](const auto& pair) {
+                const auto& book = pLib->books.at(pair.second);
+                return !book.bDeleted && (sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage]);
+            });
             if(nBooksCount >0 ) [[likely]]{
-                addNavigation(navigation, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery);
+                addNavigation(navigation, pLib->authors.at(idAuthor).getName(), sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery);
             }
             root[u"navigation"] = navigation;
 
@@ -3029,14 +3057,12 @@ QHttpServerResponse opds_server::searchOPDS2(uint idLib, const QHttpServerReques
         return result;
     }
     if(!sSeries.isEmpty()){
-        auto mSeries  = searchSeries(*pLib, sSeries, sLanguageFilter_);
-        QString sSession = urlquery.queryItemValue(u"session"_s);
-        QString sSessionQuery = sSession.isEmpty() ?u""_s :u"?session="_s + sSession;
-        QJsonObject root = docHeaderOPDS2(tr("Finding series"), sLibUrl, sSession);
+        auto mSeries  = searchSeries(*pLib, sSeries, sLanguageFilter);
+        QJsonObject root = docHeaderOPDS2(*pLib, tr("Finding series"), sLibUrl, url);
         QJsonArray navigation;
 
         for(auto [idSeries, count]: mSeries)
-            addNavigation(navigation, pLib->series.at(idSeries).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sSessionQuery, count);
+            addNavigation(navigation, pLib->series.at(idSeries).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery, count);
 
         root[u"navigation"] = navigation;
 
