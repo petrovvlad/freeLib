@@ -856,7 +856,7 @@ QJsonObject opds_server::docHeaderOPDS2(SLib &lib, const QString &sTitle, const 
     linkSearch[u"rel"] = u"search"_s;
     QString sHref = sLibUrl % u"/search{?query,title,author}"_s;
     if(!sQuery.isEmpty())
-        sHref += u"&" + sQuery;
+        sHref += u"&"_s + sQuery;
     linkSearch[u"href"] = sHref;
     linkSearch[u"type"] = u"application/opds+json"_s;
     linkSearch[u"templated"] = true;
