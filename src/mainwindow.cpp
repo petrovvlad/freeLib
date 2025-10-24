@@ -1715,7 +1715,7 @@ void MainWindow::ManageLibrary()
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         QFuture<void> future;
-        if(g::idCurrentLib != idOldLib){
+        if(g::idCurrentLib != idOldLib && g::libs.contains(idOldLib)){
             auto &oldLib = g::libs[idOldLib];
             if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
                 future = QtConcurrent::run([&oldLib]()
@@ -1729,9 +1729,9 @@ void MainWindow::ManageLibrary()
                 });
             }
         }
+        loadLibrary(g::idCurrentLib);
         ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
         ui->find_books->clear();
-        loadLibrary(g::idCurrentLib);
         vFoundBooks_.clear();
 
         fillLanguages();
@@ -1753,7 +1753,8 @@ void MainWindow::ManageLibrary()
         case TabSearch:
             ui->Books->clear();
         }
-        future.waitForFinished();
+        if(g::idCurrentLib != idOldLib)
+            future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
     updateTitle();
@@ -2150,8 +2151,6 @@ void MainWindow::moveToAuthor(uint id)
 
 void MainWindow::FillLibrariesMenu()
 {
-    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
-        return;
     QMenu *menu = ui->actionLibraries->menu();
     if(menu){
         menu->clear();
@@ -2161,10 +2160,9 @@ void MainWindow::FillLibrariesMenu()
         ui->btnLibrary->setMenu(menu);
     }
 
-    for(const auto &iLib :g::libs){
-        uint idLib = iLib.first;
+    for(const auto &[idLib, lib] :g::libs){
         if(idLib>0){
-            QAction *action = new QAction(iLib.second.name, menu);
+            QAction *action = new QAction(lib.name, menu);
             action->setData(idLib);
             action->setCheckable(true);
             menu->insertAction(nullptr, action);
@@ -2204,12 +2202,12 @@ void MainWindow::FillAuthors()
     std::mutex m;
     QtConcurrent::blockingMap(vIdAuthors, [&](uint idAuthor){
         auto &author = authors.at(idAuthor);
-        int count = 0;
-        for (auto it = currentLib.authorBooksLink.equal_range(idAuthor); it.first != it.second; ++it.first) {
-            SBook &book = currentLib.books[it.first->second];
-            if( IsBookInList(book))
-                count++;
-        }
+        auto [begin, end] = currentLib.authorBooksLink.equal_range(idAuthor);
+        uint count = std::count_if(begin, end, [&currentLib, this](const auto& pair) {
+                const auto& book = currentLib.books.at(pair.second);
+                return IsBookInList(book);
+        });
+
         if(count>0){
             QListWidgetItem *item = new QListWidgetItem(author.getName() % u" ("_s % QString::number(count) % u")"_s);
             if(g::options.bUseTag)
@@ -2228,11 +2226,8 @@ void MainWindow::FillAuthors()
         }
     });
 
-#ifdef __cpp_lib_execution
-    std::sort(g::executionpolicy, vItems.begin(), vItems.end(), [](auto item1, auto item2){
-#else
-    std::sort(vItems.begin(), vItems.end(), [](auto item1, auto item2){
-#endif
+    sort(vItems, [](auto item1, auto item2)
+    {
         return localeStringCompare(item1->text(), item2->text());
     });
 
@@ -2270,7 +2265,6 @@ void MainWindow::fillSeries()
     const SLib& lib = g::libs[g::idCurrentLib];
     auto &series = lib.series;
 
-
     for(const auto &iBook :lib.books){
         auto &book = iBook.second;
         if(!book.series.empty() && IsBookInList(book)){
@@ -2287,11 +2281,7 @@ void MainWindow::fillSeries()
 
     std::vector<uint> vIdSeries(mCounts.size());
     std::ranges::copy(mCounts | std::views::keys, vIdSeries.begin());
-#ifdef __cpp_lib_execution
-    std::sort(g::executionpolicy, vIdSeries.begin(), vIdSeries.end(), [&series](uint id1, uint id2)
-#else
-    std::sort(vIdSeries.begin(), vIdSeries.end(), [&series](uint id1, uint id2)
-#endif
+    sort(vIdSeries, [&series](uint id1, uint id2)
     {
         return localeStringCompare(series.at(id1).sName, series.at(id2).sName);
     });
