@@ -481,7 +481,7 @@ std::vector<uint> opds_server::listBooks(const SLib &lib, uint idAuthor, uint id
                 if(sLanguageFilter.isEmpty() || sLanguageFilter == lib.vLaguages[book.idLanguage])
                     vBooks.push_back(idBook);
         }
-        sort(vBooks,[&lib](uint id1, uint id2)
+        sort(vBooks, [&lib](uint id1, uint id2)
         {
             const auto &series1 = lib.books.at(id1).series;
             const auto &series2 = lib.books.at(id2).series;
@@ -1506,12 +1506,6 @@ QByteArray opds_server::cover(uint idLib, uint idBook)
     return baResult;
 }
 
-struct LocaleAwareQStringComparator {
-    bool operator()(const QString& str1, const QString& str2) const {
-        return localeStringCompare(str1, str2);
-    }
-};
-
 void opds_server::attachSearchFormHTML(QDomElement &feed, const QString &sTitle, const QString &sAction, const QString &sSearch, const QUrlQuery &urlQuery)
 {
     QDomElement div = doc_.createElement(u"div"_s);
@@ -1572,10 +1566,11 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
 
     QDomElement feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
 
-    std::map<QString, int, LocaleAwareQStringComparator> mCount;
-
+    std::unordered_map<QString, uint> mCount;
+    std::vector<QString> vIndex;
     std::unordered_set<QString> setAuthors;
-    std::unordered_set<uint>stIdAuthors;
+    std::unordered_set<uint>setIdAuthors;
+    std::unordered_map<QString, uint> mIdIndex;
 
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
@@ -1583,10 +1578,10 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
         if(!iBook.second.bDeleted) [[likely]]{
             if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[iBook.second.idLanguage])
                 for(auto idAuthor :iBook.second.vIdAuthors)
-                    stIdAuthors.insert(idAuthor);
+                    setIdAuthors.insert(idAuthor);
         }
     }
-    for(auto idAuthor :stIdAuthors)
+    for(auto idAuthor :setIdAuthors)
     {
         const auto &author  = pLib->authors.at(idAuthor);
         QString sAuthorName = author.getName();
@@ -1597,57 +1592,52 @@ QHttpServerResponse opds_server::authorsIndexHTML(uint idLib, const QString &sIn
 
             sNewIndex[0] = sNewIndex[0].toUpper();
             ++mCount[sNewIndex];
+            if(!mIdIndex.contains(sNewIndex)){
+                mIdIndex[sNewIndex] = idAuthor;
+                vIndex.push_back(sNewIndex);
+            }
             if(sNewIndex.length() == sAuthorName.length())
                 setAuthors.insert(sNewIndex);
         }
     }
+
 
     if(count>30 && !bByBooks)
     {
         attachSearchFormHTML(feed, tr("Finding authors") + u": "_s, sLibUrl + u"/searchauthor"_s, sIndex, urlquery);
         auto divGrid = addNode(feed, u"div"_s, u"griditems"_s);
 
-        for(const auto &[sIndex, count] :mCount)
+        std::ranges::sort(vIndex, [](const auto &s1, const auto &s2){return localeStringCompare(s1, s2);});
+
+        for(const auto &sIndex :vIndex)
         {
-            auto div = addNode(divGrid, u"div"_s, u"item"_s);
             QString sHref;
-            if(count == 1)
+            auto nCount = mCount.at(sIndex);
+            if(nCount == 1)
             {
-                QString lowerIndex = sIndex.toCaseFolded();
-                for(auto idAuthor :stIdAuthors)
-                {
-                    const auto &author = pLib->authors.at(idAuthor);
-                    if(author.getName().left(sIndex.size()).toCaseFolded() == lowerIndex)
-                    {
-                        sHref = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery;
-                        break;
-                    }
-                }
-            }
-            else
-            {
-                sHref = sLibUrl % u"/authorsindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData()) %
+                auto idAuthor = mIdIndex[sIndex];
+                sHref = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery;
+            }else{
+                sHref = sLibUrl % u"/authorsindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba)) %
                         (setAuthors.contains(sIndex) ?u"/books"_s :u""_s) % sQuery;
             }
+            auto div = addNode(divGrid, u"div"_s, u"item"_s);
             addHRefNode(div, sIndex, sHref, u"block"_s);
-            addTextNode(div, u"div"_s, QString::number(count) % u" "_s % tr("authors beginning with") % u" '"_s % sIndex % u"'"_s );
+            addTextNode(div, u"div"_s, QString::number(nCount) % u" "_s % tr("authors beginning with") % u" '"_s % sIndex % u"'"_s );
         }
+
     }
     else
     {
         std::vector<uint> vAuthorId;
-        for(auto idAuthor :stIdAuthors)
+        for(auto idAuthor :setIdAuthors)
         {
             const auto &author = pLib->authors.at(idAuthor);
             if(author.getName().left(sIndex.length()).toCaseFolded() == sLowerIndex)
-            {
                 vAuthorId.push_back(idAuthor);
-            }
         }
         std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2)
-        {
-            return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();
-        });
+                          { return localeStringCompare(pLib->authors.at(id1).getName(),  pLib->authors.at(id2).getName()); });
         auto divList = addNode(feed, u"div"_s, u"listitems"_s);
         for(uint idAuthor: vAuthorId)
         {
@@ -1682,20 +1672,22 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
 
     QDomElement feed = docHeaderOPDS(tr("Books by authors"), u"tag:root:authors"_s, sLibUrl, sSession);
 
-    std::map<QString, int, LocaleAwareQStringComparator> mCount;
-
+    std::unordered_map<QString, uint> mCount;
+    std::vector<QString> vIndex;
     std::unordered_set <QString> setAuthors;
-    std::unordered_set<uint>stIdAuthors;
+    std::unordered_set<uint> setIdAuthors;
+    std::unordered_map<QString, uint> mIdIndex;
+
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
     for(const auto &iBook :pLib->books){
         if(!iBook.second.bDeleted) [[likely]]{
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])
                 for(auto idAuthor :iBook.second.vIdAuthors)
-                    stIdAuthors.insert(idAuthor);
+                    setIdAuthors.insert(idAuthor);
         }
     }
-    for(auto idAuthor :stIdAuthors)
+    for(auto idAuthor :setIdAuthors)
     {
         const auto &author  = pLib->authors.at(idAuthor);
         QString sAuthorName = author.getName();
@@ -1706,6 +1698,10 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
 
             sNewIndex[0] = sNewIndex[0].toUpper();
             ++mCount[sNewIndex];
+            if(!mIdIndex.contains(sNewIndex)){
+                mIdIndex[sNewIndex] = idAuthor;
+                vIndex.push_back(sNewIndex);
+            }
             if(sNewIndex.length() == sAuthorName.length())
                 setAuthors.insert(sNewIndex);
         }
@@ -1713,44 +1709,35 @@ QHttpServerResponse opds_server::authorsIndexOPDS(uint idLib, const QString &sIn
 
     if(count>30 && !bByBooks)
     {
-        QDomElement tag_table;
-        QDomElement tag_tr;
-
-        for(const auto &[sIndex, count] :mCount)
+        std::ranges::sort(vIndex, [](const auto &s1, const auto &s2){return localeStringCompare(s1, s2);});
+        for(const auto &sIndex :vIndex)
         {
-            QString sContent = QString::number(count) % u" "_s % tr("authors beginning with") % u" '"_s % sIndex % u"'"_s;
-            QString sHRef;
-            if(count == 1)
+            QString sHref;
+            auto nCount = mCount.at(sIndex);
+            QString sContent = QString::number(nCount) % u" "_s % tr("authors beginning with") % u" '"_s % sIndex % u"'"_s;
+            if(nCount == 1)
             {
-                QString lowerIndex = sIndex.toCaseFolded();
-                for(auto idAuthor :stIdAuthors)
-                {
-                    const auto &author = pLib->authors.at(idAuthor);
-                    if(author.getName().left(sIndex.size()).toCaseFolded() == lowerIndex)
-                    {
-                        sHRef = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery;
-                        break;
-                    }
-                }
+                auto idAuthor = mIdIndex[sIndex];
+                sHref = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sSessionQuery;
+            }else{
+                sHref = sLibUrl % u"/authorsindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba)) %
+                        (setAuthors.contains(sIndex) ?u"/books"_s :u""_s) % sSessionQuery;
             }
-            else
-            {
-                sHRef = sLibUrl % u"/authorsindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData()) %
-                                                       (setAuthors.contains(sIndex) && count<30 ?u"/books"_s :u""_s) % sSessionQuery;
-            }
-            addEntry(feed, u"tag:authors:"_s + sIndex, sHRef, sIndex, sContent);
+            addEntry(feed, u"tag:authors:"_s + sIndex, sHref, sIndex, sContent);
         }
     }
     else
     {
         std::vector<uint> vAuthorId;
-        for(auto idAuthor :stIdAuthors)
+        for(auto idAuthor :setIdAuthors)
         {
             const auto &author = pLib->authors.at(idAuthor);
             if(author.getName().left(sIndex.length()).toCaseFolded() == sLowerIndex)
                 vAuthorId.push_back(idAuthor);
         }
-        std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
+        std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2)
+                          { return localeStringCompare(pLib->authors.at(id1).getName(),  pLib->authors.at(id2).getName()); });
+
         for(uint idAuthor: vAuthorId)
         {
             auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
@@ -1784,20 +1771,22 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
 
     QJsonObject root = docHeaderOPDS2(*pLib, tr("Books by authors"), sLibUrl, url);
 
-    std::map<QString, int, LocaleAwareQStringComparator> mCount;
-
+    std::unordered_map<QString, uint> mCount;
+    std::vector<QString> vIndex;
     std::unordered_set <QString> setAuthors;
-    std::unordered_set<uint>stIdAuthors;
+    std::unordered_set<uint>setIdAuthors;
+    std::unordered_map<QString, uint> mIdIndex;
+
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
     for(const auto &iBook :pLib->books){
         if(!iBook.second.bDeleted) [[likely]]{
             if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[iBook.second.idLanguage])
                 for(auto idAuthor :iBook.second.vIdAuthors)
-                    stIdAuthors.insert(idAuthor);
+                    setIdAuthors.insert(idAuthor);
         }
     }
-    for(auto idAuthor :stIdAuthors)
+    for(auto idAuthor :setIdAuthors)
     {
         const auto &author  = pLib->authors.at(idAuthor);
         QString sAuthorName = author.getName();
@@ -1808,6 +1797,10 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
 
             sNewIndex[0] = sNewIndex[0].toUpper();
             ++mCount[sNewIndex];
+            if(!mIdIndex.contains(sNewIndex)){
+                mIdIndex[sNewIndex] = idAuthor;
+                vIndex.push_back(sNewIndex);
+            }
             if(sNewIndex.length() == sAuthorName.length())
                 setAuthors.insert(sNewIndex);
         }
@@ -1816,43 +1809,33 @@ QHttpServerResponse opds_server::authorsIndexOPDS2(uint idLib, const QString &sI
     QJsonArray navigation;
     if(count>30 && !bByBooks)
     {
-        for(const auto &[sIndex, count] :mCount)
+        std::ranges::sort(vIndex, [](const auto &s1, const auto &s2){return localeStringCompare(s1, s2);});
+        for(const auto &sIndex :vIndex)
         {
-            QString sHRef;
-            if(count == 1)
+            QString sHref;
+            auto nCount = mCount.at(sIndex);
+            if(nCount == 1)
             {
-                QString lowerIndex = sIndex.toCaseFolded();
-                for(auto idAuthor :stIdAuthors)
-                {
-                    const auto &author = pLib->authors.at(idAuthor);
-                    if(author.getName().left(sIndex.size()).toCaseFolded() == lowerIndex)
-                    {
-                        sHRef = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery;
-                        break;
-                    }
-                }
+                auto idAuthor = mIdIndex[sIndex];
+                sHref = sLibUrl % u"/author/"_s % QString::number(idAuthor) % sQuery;
+            }else{
+                sHref = sLibUrl % u"/authorsindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba)) %
+                        (setAuthors.contains(sIndex) ?u"/books"_s :u""_s) % sQuery;
             }
-            else
-            {
-                sHRef = sLibUrl % u"/authorsindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData()) %
-                                                    (setAuthors.contains(sIndex) && count<30 ?u"/books"_s :u""_s) % sQuery;
-
-            }
-            addNavigation(navigation, sIndex, sHRef,  count);
+            addNavigation(navigation, sIndex, sHref,  nCount);
         }
     }
     else
     {
         std::vector<uint> vAuthorId;
-        for(auto idAuthor :stIdAuthors)
+        for(auto idAuthor :setIdAuthors)
         {
             const auto &author = pLib->authors.at(idAuthor);
             if(author.getName().left(sIndex.length()).toCaseFolded() == sLowerIndex)
-            {
                 vAuthorId.push_back(idAuthor);
-            }
         }
-        std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2) {return pLib->authors.at(id1).getName() < pLib->authors.at(id2).getName();});
+        std::ranges::sort(vAuthorId, [pLib](uint id1, uint id2)
+                          { return localeStringCompare(pLib->authors.at(id1).getName(),  pLib->authors.at(id2).getName()); });
         for(uint idAuthor: vAuthorId)
         {
             auto [begin, end] = pLib->authorBooksLink.equal_range(idAuthor);
@@ -2255,31 +2238,36 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
 
     QDomElement feed;
     feed = docHeaderHTML(*pLib, urlquery, sLibUrl);
-    std::map<QString, int, LocaleAwareQStringComparator> mCount;
+    std::unordered_map<QString, int> mCount;
+    std::vector<QString> vIndex;
+    std::unordered_set<QString> setSeries;
+    std::unordered_set<uint>setIdSeries;
+    std::unordered_map<QString, uint> mIdIndex;
 
-    std::unordered_set<QString> stSeries;
-    std::unordered_set<uint>stIdSeries;
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
-    for(const auto &iBook :pLib->books){
-        const auto &book = iBook.second;
-        if(book.bDeleted) [[unlikely]]
-            continue;
-        if(!book.series.empty()){
-            if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
-                for(const auto &iSeries :book.series)
-                    stIdSeries.insert(iSeries.first);
-        }
-    }
-    for(auto &idSeries :stIdSeries){
+    auto seriesIds = pLib->books | std::views::values |
+    std::views::filter([&](const auto& book) {
+        return !book.bDeleted &&  !book.series.empty() &&
+                (sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage]);
+    }) |
+    std::views::transform([](const auto& book) { return book.series | std::views::keys; }) |
+    std::views::join;
+    std::ranges::copy(seriesIds, std::inserter(setIdSeries, setIdSeries.end()));
+
+    for(auto &idSeries :setIdSeries){
         const auto &series = pLib->series.at(idSeries);
         if(series.sName.left(sIndex.length()).toCaseFolded() == sLowerIndex){
             count++;
             QString sNewIndex = series.sName.left(sIndex.length()+1).toCaseFolded();
             sNewIndex[0] = sNewIndex[0].toUpper();
             ++mCount[sNewIndex];
+            if(!mIdIndex.contains(sNewIndex)){
+                mIdIndex[sNewIndex] = idSeries;
+                vIndex.push_back(sNewIndex);
+            }
             if(sNewIndex.length() == series.sName.length())
-                stSeries.insert(sNewIndex);
+                setSeries.insert(sNewIndex);
         }
     }
 
@@ -2287,61 +2275,43 @@ QHttpServerResponse opds_server::seriesIndexHTML(uint idLib, const QString &sInd
     {
         attachSearchFormHTML(feed, tr("Finding series") + u": "_s, sLibUrl + u"/searchseries"_s, sIndex, urlquery);
         auto divGrid = addNode(feed, u"div"_s, u"griditems"_s);
+        std::ranges::sort(vIndex, [](const auto &s1, const auto &s2){return localeStringCompare(s1, s2);});
 
-        for(const auto &[sIndex, count] :mCount)
+        for(const auto &sIndex :vIndex)
         {
-            if(sIndex.trimmed().isEmpty() || sIndex[0] == '\0')
-                continue;
-
-            auto div = addNode(divGrid, u"div"_s, u"item"_s);
             QString sHref;
-            if(count == 1)
+            auto nCount = mCount.at(sIndex);
+            if(nCount == 1)
             {
-                for(auto &idSeries :stIdSeries){
-                    const auto &series = pLib->series.at(idSeries);
-                    if(series.sName.left(sIndex.size()).toCaseFolded() == sIndex.toCaseFolded())
-                    {
-                        sHref = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery;
-                        break;
-                    }
-                }
+                auto idSeries = mIdIndex[sIndex];
+                sHref = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery;
+            }else{
+                sHref = sLibUrl % u"/seriesindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba)) %
+                        (setSeries.contains(sIndex) && nCount<30 ?u"/books"_s :u""_s) % sQuery;
+
             }
-            else
-            {
-                sHref = sLibUrl % u"/seriesindex/"_s % QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData()) %
-                        (stSeries.contains(sIndex) && count<30 ?u"/books"_s :u""_s) % sQuery;
-            }
-            addHRefNode(div, sIndex,sHref, u"block"_s);
-            addTextNode(div, u"div"_s, QString::number(count) % u" "_s % tr("series starting with") % u" '"_s % sIndex % u"'"_s);
+            auto div = addNode(divGrid, u"div"_s, u"item"_s);
+            addHRefNode(div, sIndex, sHref, u"block"_s);
+            addTextNode(div, u"div"_s, QString::number(nCount) % u" "_s % tr("series starting with") % u" '"_s % sIndex % u"'"_s);
 
         }
     }
     else
     {
         std::vector<uint> vSeriesId;
-        for(auto &idSeries :stIdSeries)
-        {
-            const auto &series = pLib->series.at(idSeries);
-            if(series.sName.left((sIndex.length())).toCaseFolded() == sLowerIndex)
-            {
-                vSeriesId.push_back(idSeries);
-            }
-        }
-        std::ranges::sort(vSeriesId,[pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
+        auto filtered = setIdSeries | std::views::filter([&](uint idSeries) {
+            const auto& series = pLib->series.at(idSeries);
+            return series.sName.left(sIndex.length()).toCaseFolded() == sLowerIndex;
+        });
+        std::ranges::copy(filtered, std::back_inserter(vSeriesId));
+        std::ranges::sort(vSeriesId,[pLib](uint id1, uint id2) {return localeStringCompare(pLib->series.at(id1).sName, pLib->series.at(id2).sName);});
         auto divList = addNode(feed, u"div"_s, u"listitems"_s);
 
         for(auto idSeries: vSeriesId)
         {
-            uint nBooksCount = 0;
-            for(const auto &iBook :pLib->books)
-            {
-                const auto &book = iBook.second;
-                if(book.bDeleted) [[unlikely]]
-                    continue;
-                if(book.series.contains(idSeries))
-                    if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
-                        nBooksCount++;
-            }
+            uint nBooksCount = std::ranges::count_if(pLib->books | std::views::values, [pLib, idSeries, &sLanguageFilter](const auto& book) {
+                return !book.bDeleted && (sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage]) && book.series.contains(idSeries);
+            });
             QDomElement div = addNode(divList, u"div"_s, u"item"_s);
             addHRefNode(div, pLib->series.at(idSeries).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery, u"block"_s);
             addTextNode(div, u"div"_s, QString::number(nBooksCount) % u" "_s % tr("books"));
@@ -2367,9 +2337,12 @@ QHttpServerResponse opds_server::seriesIndexOPDS(uint idLib, const QString &sInd
 
     QDomElement feed = docHeaderOPDS(tr("Books by series"), u"tag:root:series"_s, sLibUrl, sSession);
 
-    std::map<QString, int, LocaleAwareQStringComparator> mCount;
-    std::unordered_set<QString> stSeries;
-    std::unordered_set<uint>stIdSeries;
+    std::unordered_map<QString, int> mCount;
+    std::vector<QString> vIndex;
+    std::unordered_set<QString> setSeries;
+    std::unordered_set<uint>setIdSeries;
+    std::unordered_map<QString, uint> mIdIndex;
+
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
 
@@ -2380,56 +2353,49 @@ QHttpServerResponse opds_server::seriesIndexOPDS(uint idLib, const QString &sInd
         if(!book.series.empty()){
             if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSeries :book.series)
-                    stIdSeries.insert(iSeries.first);
+                    setIdSeries.insert(iSeries.first);
         }
     }
-    for(auto &idSeries :stIdSeries){
+    for(auto &idSeries :setIdSeries){
         const auto &series = pLib->series.at(idSeries);
         if(series.sName.left(sIndex.length()).toCaseFolded() == sLowerIndex){
             count++;
             QString sNewIndex = series.sName.left(sIndex.length()+1).toCaseFolded();
             sNewIndex[0] = sNewIndex[0].toUpper();
             ++mCount[sNewIndex];
+            if(!mIdIndex.contains(sNewIndex)){
+                mIdIndex[sNewIndex] = idSeries;
+                vIndex.push_back(sNewIndex);
+            }
             if(sNewIndex.length() == series.sName.length())
-                stSeries.insert(sNewIndex);
+                setSeries.insert(sNewIndex);
         }
     }
 
     if(count > 30 && !bByBooks)
     {
-        QDomElement tag_table;
-        QDomElement tag_tr;
-        for(const auto &[sIndex, count] :mCount)
-        {
-            if(sIndex.trimmed().isEmpty() || sIndex[0] == '\0')
-                continue;
+        std::ranges::sort(vIndex, [](const auto &s1, const auto &s2){return localeStringCompare(s1, s2);});
 
-            QString sContent = QString::number(count) % u" "_s % tr("series starting with") % u" '"_s % sIndex % u"'"_s;
-            QString sHRef;
-            if(count == 1)
+        for(const auto &sIndex :vIndex)
+        {
+            QString sHref;
+            auto nCount = mCount.at(sIndex);
+            QString sContent = QString::number(nCount) % u" "_s % tr("series starting with") % u" '"_s % sIndex % u"'"_s;
+            if(nCount == 1)
             {
-                for(auto &idSeries :stIdSeries){
-                    const auto &series = pLib->series.at(idSeries);
-                    if(stSeries.contains(sIndex) ?series.sName.toCaseFolded() == sIndex.toCaseFolded()
-                            :series.sName.left(sIndex.size()).toCaseFolded() == sIndex.toCaseFolded())
-                    {
-                        sHRef = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sSessionQuery;
-                        break;
-                    }
-                }
+                auto idSeries = mIdIndex[sIndex];
+                sHref = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sSessionQuery;
+            }else{
+                sHref = sLibUrl % u"/seriesindex/"_s %  QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData())
+                % (setSeries.contains(sIndex) ?u"/books"_s :u""_s) % sSessionQuery;
             }
-            else
-            {
-                sHRef = sLibUrl % u"/seriesindex/"_s %  QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData())
-                        % (stSeries.contains(sIndex) ?u"/books"_s :u""_s) % sSessionQuery;
-            }
-            addEntry(feed, u"tag:series:"_s + sIndex, sHRef, sIndex, sContent);
+            addEntry(feed, u"tag:series:"_s + sIndex, sHref, sIndex, sContent);
         }
     }
     else
     {
         std::vector<uint> vSeriesId;
-        for(auto &idSeries :stIdSeries)
+        for(auto &idSeries :setIdSeries)
         {
             const auto &series = pLib->series.at(idSeries);
             if(series.sName.left((sIndex.length())).toCaseFolded() == sLowerIndex)
@@ -2437,21 +2403,17 @@ QHttpServerResponse opds_server::seriesIndexOPDS(uint idLib, const QString &sInd
                 vSeriesId.push_back(idSeries);
             }
         }
-        std::ranges::sort(vSeriesId, [pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
+        std::ranges::sort(vSeriesId, [pLib](uint id1, uint id2)
+                          {return localeStringCompare(pLib->series.at(id1).sName, pLib->series.at(id2).sName);});
 
-        for(auto iIndex: vSeriesId)
+        for(auto idSeries: vSeriesId)
         {
-            uint nBooksCount = 0;
-            for(const auto &iBook :pLib->books)
-            {
-                const auto &book = iBook.second;
-                if(book.bDeleted) [[unlikely]]
-                    continue;
-                if(book.series.contains(iIndex))
-                    if(sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[iBook.second.idLanguage])                            
-                        nBooksCount++;
-            }
-            addEntry(feed, u"tag:series:"_s + QString::number(iIndex), sLibUrl % u"/seriesbooks/"_s % QString::number(iIndex) % sSessionQuery, pLib->series.at(iIndex).sName, u""_s);
+            uint nBooksCount = std::ranges::count_if(pLib->books | std::views::values, [pLib, idSeries, this](const auto& book) {
+                return !book.bDeleted && (sLanguageFilter_.isEmpty() || sLanguageFilter_ == pLib->vLaguages[book.idLanguage]) && book.series.contains(idSeries);
+            });
+
+            addEntry(feed, u"tag:series:"_s + QString::number(idSeries), sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sSessionQuery,
+                     pLib->series.at(idSeries).sName, QString::number(nBooksCount) % u" "_s % tr("books"));
         }
     }
     QHttpServerResponse result(doc_.toString());
@@ -2474,9 +2436,11 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
 
     auto root = docHeaderOPDS2(*pLib, tr("Books by series"), sLibUrl, url);
 
-    std::map<QString, int, LocaleAwareQStringComparator> mCount;
-    std::unordered_set<QString> stSeries;
-    std::unordered_set<uint>stIdSeries;
+    std::unordered_map<QString, int> mCount;
+    std::vector<QString> vIndex;
+    std::unordered_set<QString> setSeries;
+    std::unordered_set<uint>setIdSeries;
+    std::unordered_map<QString, uint> mIdIndex;
     int count = 0;
     QString sLowerIndex = sIndex.toCaseFolded();
 
@@ -2487,78 +2451,63 @@ QHttpServerResponse opds_server::seriesIndexOPDS2(uint idLib, const QString &sIn
         if(!book.series.empty()){
             if(sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage])
                 for(const auto &iSeries :book.series)
-                    stIdSeries.insert(iSeries.first);
+                    setIdSeries.insert(iSeries.first);
         }
     }
-    for(auto &idSeries :stIdSeries){
+    for(auto &idSeries :setIdSeries){
         const auto &series = pLib->series.at(idSeries);
         if(series.sName.left(sIndex.length()).toCaseFolded() == sLowerIndex){
             count++;
             QString sNewIndex = series.sName.left(sIndex.length()+1).toCaseFolded();
             sNewIndex[0] = sNewIndex[0].toUpper();
             ++mCount[sNewIndex];
+            if(!mIdIndex.contains(sNewIndex)){
+                mIdIndex[sNewIndex] = idSeries;
+                vIndex.push_back(sNewIndex);
+            }
             if(sNewIndex.length() == series.sName.length())
-                stSeries.insert(sNewIndex);
+                setSeries.insert(sNewIndex);
         }
     }
 
     QJsonArray navigation;
     if(count > 30 && !bByBooks)
     {
-        QDomElement tag_table;
-        QDomElement tag_tr;
-        for(const auto &[sIndex, count] :mCount)
+        std::ranges::sort(vIndex, [](const auto &s1, const auto &s2){return localeStringCompare(s1, s2);});
+        for(const auto &sIndex :vIndex)
         {
-            if(sIndex.trimmed().isEmpty() || sIndex[0] == '\0')
-                continue;
+            QString sHref;
+            auto nCount = mCount.at(sIndex);
+            if(nCount == 1)
+            {
+                auto idSeries = mIdIndex[sIndex];
+                sHref = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery;
+            }else{
+                sHref = sLibUrl % u"/seriesindex/"_s %  QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba))
+                             % (setSeries.contains(sIndex) ?u"/books"_s :u""_s) % sQuery;
 
-            QString sHRef;
-            if(count == 1)
-            {
-                for(auto &idSeries :stIdSeries){
-                    const auto &series = pLib->series.at(idSeries);
-                    if(stSeries.contains(sIndex) ?series.sName.toCaseFolded() == sIndex.toCaseFolded()
-                            :series.sName.left(sIndex.size()).toCaseFolded() == sIndex.toCaseFolded())
-                    {
-                        sHRef = sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery;
-                        break;
-                    }
-                }
             }
-            else
-            {
-                sHRef = sLibUrl % u"/seriesindex/"_s %  QString::fromUtf8(QUrl::toPercentEncoding(sIndex, ""_ba, "."_ba).constData())
-                        % (stSeries.contains(sIndex) ?u"/books"_s :u""_s) % sQuery;
-            }
-            addNavigation(navigation, sIndex, sHRef, count);
+            addNavigation(navigation, sIndex, sHref, nCount);
+
         }
     }
     else
     {
         std::vector<uint> vSeriesId;
-        for(auto &idSeries :stIdSeries)
-        {
-            const auto &series = pLib->series.at(idSeries);
-            if(series.sName.left((sIndex.length())).toCaseFolded() == sLowerIndex)
-            {
-                vSeriesId.push_back(idSeries);
-            }
-        }
-        std::ranges::sort(vSeriesId, [pLib](uint id1, uint id2) {return pLib->series.at(id1).sName < pLib->series.at(id2).sName;});
+        auto filtered = setIdSeries | std::views::filter([&](uint idSeries) {
+            const auto& series = pLib->series.at(idSeries);
+            return series.sName.left(sIndex.length()).toCaseFolded() == sLowerIndex;
+        });
+        std::ranges::copy(filtered, std::back_inserter(vSeriesId));
+        std::ranges::sort(vSeriesId, [pLib](uint id1, uint id2) {return localeStringCompare(pLib->series.at(id1).sName, pLib->series.at(id2).sName);});
 
-        for(auto iIndex: vSeriesId)
+        for(auto idSeries: vSeriesId)
         {
-            uint nBooksCount = 0;
-            for(const auto &iBook :pLib->books)
-            {
-                const auto &book = iBook.second;
-                if(book.bDeleted) [[unlikely]]
-                    continue;
-                if(book.series.contains(iIndex))
-                    if(sQuery.isEmpty() || sQuery == pLib->vLaguages[book.idLanguage])
-                        nBooksCount++;
-            }
-            addNavigation(navigation, pLib->series.at(iIndex).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(iIndex) % sQuery, nBooksCount);
+            uint nBooksCount = std::ranges::count_if(pLib->books | std::views::values, [&](const auto& book) {
+                return !book.bDeleted && (sLanguageFilter.isEmpty() || sLanguageFilter == pLib->vLaguages[book.idLanguage]) && book.series.contains(idSeries);
+            });
+
+            addNavigation(navigation, pLib->series.at(idSeries).sName, sLibUrl % u"/seriesbooks/"_s % QString::number(idSeries) % sQuery, nBooksCount);
         }
     }
     root[u"navigation"] = navigation;
