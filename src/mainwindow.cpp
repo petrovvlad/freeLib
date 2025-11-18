@@ -1146,7 +1146,7 @@ void MainWindow::onItemChanged(QTreeWidgetItem *item, int)
 void MainWindow::ExportBookListBtn(bool Enable)
 {
     ui->btnExport->setEnabled(Enable);
-    ui->btnOpenBook->setEnabled(false);
+    ui->btnOpenBook->setEnabled(Enable);
 }
 
 void MainWindow::onStartSearch()
