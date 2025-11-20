@@ -4,7 +4,7 @@
 #include <QTreeWidgetItem>
 
 #define ITEM_TYPE_BOOK QTreeWidgetItem::UserType+1
-#define ITEM_TYPE_SERIA QTreeWidgetItem::UserType+2
+#define ITEM_TYPE_SERIES QTreeWidgetItem::UserType+2
 #define ITEM_TYPE_AUTHOR QTreeWidgetItem::UserType+3
 
 

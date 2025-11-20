@@ -41,9 +41,9 @@ BookFile::BookFile(const SLib &lib, uint idBook)
     sArchive_ = book.sArchive;
     sBookName_ = book.sName;
     sAuthorName_ = lib.authors.at(book.idFirstAuthor).getName();
-    if(!book.mSequences.empty()){
-        const auto &sequence = book.mSequences.begin();
-        sSequence_ = lib.serials.at(sequence->first).sName % (sequence->second>0 ?u"\n"_s % QString::number(sequence->second) :u""_s);
+    if(!book.series.empty()){
+        const auto &sequence = book.series.begin();
+        sSequence_ = lib.series.at(sequence->first).sName % (sequence->second>0 ?u"\n"_s % QString::number(sequence->second) :u""_s);
     }
 }
 

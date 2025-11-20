@@ -132,7 +132,7 @@ void ExportOptions::Save(QSharedPointer<QSettings> pSettings, bool bSavePassword
     pSettings->setValue(QStringLiteral("ml_toc"), bMlToc);
     pSettings->setValue(QStringLiteral("MAXcaptionLevel"), nMaxCaptionLevel);
     pSettings->setValue(QStringLiteral("authorTranslit"), bAuthorTranslit);
-    pSettings->setValue(QStringLiteral("seriaTranslit"), bSeriaTranslit);
+    pSettings->setValue(QStringLiteral("seriaTranslit"), bSeriesTranslit);
     pSettings->setValue(QStringLiteral("bookseriestitle"), sBookSeriesTitle);
     pSettings->setValue(QStringLiteral("authorstring"), sAuthorSring);
     pSettings->setValue(QStringLiteral("createCover"), bCreateCover);
@@ -223,7 +223,7 @@ void ExportOptions::Load(QSharedPointer<QSettings> pSettings)
     bRepairCover = pSettings->value(QStringLiteral("repairCover"), true).toBool();
     bMlToc = pSettings->value(QStringLiteral("ml_toc"), true).toBool();
     nMaxCaptionLevel = pSettings->value(QStringLiteral("MAXcaptionLevel"), 2).toUInt();
-    bSeriaTranslit = pSettings->value(QStringLiteral("seriaTranslit"), false).toBool();
+    bSeriesTranslit = pSettings->value(QStringLiteral("seriaTranslit"), false).toBool();
     bAuthorTranslit = pSettings->value(QStringLiteral("authorTranslit"), false).toBool();
     sBookSeriesTitle = pSettings->value(QStringLiteral("bookseriestitle")).toString();
     sAuthorSring = pSettings->value(QStringLiteral("authorstring")).toString();
@@ -278,7 +278,7 @@ void ExportOptions::setDefault(const QString &_sName, ExportFormat _OtputFormat,
     bRepairCover = true;
     bMlToc = true;
     nMaxCaptionLevel = 2;
-    bSeriaTranslit = false;
+    bSeriesTranslit = false;
     bAuthorTranslit = false;
     bCreateCover = false;
     bCreateCoverAlways = false;

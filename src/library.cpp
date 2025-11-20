@@ -56,26 +56,26 @@ void loadLibrary(uint idLibrary)
             QSqlQuery query(dbReadAuthors);
             query.setForwardOnly(true);
 
-            lib.serials.clear();
+            lib.series.clear();
             query.prepare(u"SELECT id, name FROM seria WHERE id_lib=:id_lib;"_s);
             //                     0   1
             query.bindValue(u":id_lib"_s, idLibrary);
             if(!query.exec()) [[unlikely]]
                 LogWarning << query.lastError().text();
             while (query.next()) {
-                uint idSerial = query.value(0).toUInt();
+                uint idSeries = query.value(0).toUInt();
                 QString sName = query.value(1).toString();
-                lib.serials[idSerial].sName = sName;
+                lib.series[idSeries].sName = sName;
             }
             query.prepare(u"SELECT seria_tag.id_seria, seria_tag.id_tag FROM seria_tag INNER JOIN seria ON seria.id = seria_tag.id_seria WHERE seria.id_lib = :id_lib"_s);
             query.bindValue(u":id_lib"_s,idLibrary);
             if(!query.exec()) [[unlikely]]
                 LogWarning << query.lastError().text();
             while (query.next()) {
-                uint idSeria = query.value(0).toUInt();
+                uint idSeries = query.value(0).toUInt();
                 uint idTag = query.value(1).toUInt();
-                if(lib.serials.contains(idSeria))
-                    lib.serials[idSeria].idTags.insert(idTag);
+                if(lib.series.contains(idSeries))
+                    lib.series[idSeries].idTags.insert(idTag);
             }
 
             query.prepare(u"SELECT author.id, name1, name2, name3 FROM author WHERE id_lib=:id_lib;"_s);
@@ -287,23 +287,23 @@ void loadLibrary(uint idLibrary)
         QSqlDatabase::removeDatabase(u"readgenre"_s);
     });
 
-    auto futureSequence = QtConcurrent::run([idLibrary, &lib]()
+    auto futureSeries = QtConcurrent::run([idLibrary, &lib]()
     {
         {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
-            QSqlDatabase dbReadSequence = QSqlDatabase::cloneDatabase(u"libdb"_s, u"readsequences"_s);
+            QSqlDatabase dbReadSeries = QSqlDatabase::cloneDatabase(u"libdb"_s, u"readseries"_s);
 #else
             QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
             QString sDbFile = fi.canonicalFilePath();
-            QSqlDatabase dbReadSequence = QSqlDatabase::addDatabase(u"QSQLITE"_s, u"readsequences"_s);
-            dbReadSequence.setDatabaseName(sDbFile);
+            QSqlDatabase dbReadSeries = QSqlDatabase::addDatabase(u"QSQLITE"_s, u"readseqries"_s);
+            dbReadSeries.setDatabaseName(sDbFile);
 #endif
-            if (!dbReadSequence.open()) [[unlikely]]
+            if (!dbReadSeries.open()) [[unlikely]]
             {
-                LogWarning << dbReadSequence.lastError().text();
+                LogWarning << dbReadSeries.lastError().text();
                 return;
             }
-            QSqlQuery query(dbReadSequence);
+            QSqlQuery query(dbReadSeries);
             query.setForwardOnly(true);
 
             query.prepare(u"SELECT id_book, id_sequence, num_in_sequence FROM book_sequence INNER JOIN book ON book.id=id_book WHERE book.id_lib = :id_lib;"_s);
@@ -313,14 +313,14 @@ void loadLibrary(uint idLibrary)
                 LogWarning << query.lastError().text();
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
-                uint idSequence = query.value(1).toUInt();
-                uint numInSequence = query.value(2).toUInt();
-                if(lib.books.contains(idBook) && lib.serials.contains(idSequence)){
-                    lib.books.at(idBook).mSequences[idSequence] = numInSequence;
+                uint idSeries = query.value(1).toUInt();
+                uint numInSeries = query.value(2).toUInt();
+                if(lib.books.contains(idBook) && lib.series.contains(idSeries)){
+                    lib.books.at(idBook).series[idSeries] = numInSeries;
                 }
             }
         }
-        QSqlDatabase::removeDatabase(u"readsequences"_s);
+        QSqlDatabase::removeDatabase(u"readseries"_s);
     });
 
     lib.authorBooksLink.clear();
@@ -346,7 +346,7 @@ void loadLibrary(uint idLibrary)
         }
     }
     future.waitForFinished();
-    futureSequence.waitForFinished();
+    futureSeries.waitForFinished();
     lib.bLoaded = true;
 
     if(g::bVerbose){
@@ -429,24 +429,24 @@ uint SLib::findAuthor(SAuthor &author) const
     return idAuthor;
 }
 
-uint SLib::findSerial(const QString &sSerial) const
+uint SLib::findSeries(const QString &sSeries) const
 {
-    uint idSerial = 0;
+    uint idSeries = 0;
 #ifdef __cpp_lib_ranges
-    auto it = std::ranges::find_if(serials, [&sSerial](const auto &s){
-        return sSerial == s.second.sName;
+    auto it = std::ranges::find_if(series, [&sSeries](const auto &s){
+        return sSeries == s.second.sName;
     });
-    if(it != serials.cend())
-        idSerial = it->first;
+    if(it != series.cend())
+        idSeries = it->first;
 #else
-    for(const auto &iSerial :serials){
-        if(sSerial == iSerial.second.sName){
-            idSerial = iSerial.first;
+    for(const auto &iSeries :series){
+        if(sSeries == iSeries.second.sName){
+            idSeries = iSeries.first;
             break;
         }
     }
 #endif
-    return idSerial;
+    return idSeries;
 }
 
 QString removeStartDots(const QString& str)
@@ -505,15 +505,15 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
     const SAuthor& sFirstAuthor = authors[book.idFirstAuthor];
 
     if(result.contains(u"%s"_s)){
-        if(book.mSequences.empty()){
+        if(book.series.empty()){
             if(bNestedBlock)
                 return u""_s;
             else
                 result.replace(u"%s"_s, u""_s);
 
         }else {
-            result.replace(u"/%s"_s, u"/"_s + removeStartDots(serials[book.mSequences.begin()->first].sName));
-            result.replace(u"%s"_s, serials[book.mSequences.begin()->first].sName);
+            result.replace(u"/%s"_s, u"/"_s + removeStartDots(series[book.series.begin()->first].sName));
+            result.replace(u"%s"_s, series[book.series.begin()->first].sName);
         }
     }
 
@@ -528,7 +528,7 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
             if(sFirstAuthor.sLastName.isEmpty())
                 return u""_s;
         if(result.contains(u"%abbrs"_s))
-            if(book.mSequences.empty())
+            if(book.series.empty())
                 return u""_s;
         if(result.contains(u"%id"_s))
             if(book.idInLib == 0)
@@ -537,12 +537,12 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
         result.replace(u"%app_dir"_s, QApplication::applicationDirPath() + u"/"_s);
 
         QString abbr = u""_s;
-        if(!book.mSequences.empty()){
-            const auto listSerials =  serials[book.mSequences.begin()->first].sName.split(u" "_s);
-            for(const QString &sSerial: listSerials)
+        if(!book.series.empty()){
+            const auto listSeries =  series[book.series.begin()->first].sName.split(u" "_s);
+            for(const QString &sSeries: listSeries)
             {
-                if(!sSerial.isEmpty())
-                    abbr += sSerial.at(0);
+                if(!sSeries.isEmpty())
+                    abbr += sSeries.at(0);
             }
         }
         result.replace(u"%abbrs"_s, abbr.toLower());
@@ -573,16 +573,16 @@ QString SLib::fillParams(const QString &str, uint idBook, bool bNestedBlock)
 #else
         int len = result.midRef(in + 2, 1).toInt();
 #endif
-        if(book.mSequences.empty() || book.mSequences.begin()->second == 0){
+        if(book.series.empty() || book.series.begin()->second == 0){
             if(bNestedBlock)
                 return u""_s;
             else
                 result.replace(u"%n"_s + QString::number(len), u""_s);
         }else{
-            QString sNumInSeria = QString::number(book.mSequences.begin()->second);
+            QString sNumInSeries = QString::number(book.series.begin()->second);
             QString zerro;
             result.replace(u"%n"_s + (len>0 ?QString::number(len) :u""_s),
-                           (len>0 ?zerro.fill(u'0', len-sNumInSeria.length()) :u""_s) + sNumInSeria);
+                           (len>0 ?zerro.fill(u'0', len-sNumInSeries.length()) :u""_s) + sNumInSeries);
         }
     }
 
@@ -603,8 +603,8 @@ void SLib::deleteTag(uint idTag)
 {
     for(auto &book :books)
         book.second.idTags.erase(idTag);
-    for(auto &iSerial :serials)
-        iSerial.second.idTags.erase(idTag);
+    for(auto &iSeries :series)
+        iSeries.second.idTags.erase(idTag);
     for(auto &iAuthor :authors)
         iAuthor.second.idTags.erase(idTag);
     QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
@@ -643,4 +643,42 @@ QString SLib::nameFromInpx(const QString &sInpx)
             }
     }
     return sName.simplified();
+}
+
+void SLib::sortLanguages()
+{
+    QLocale locale;
+    auto sLocale = locale.name().left(2);
+    vSortedLaguages = vLaguages;
+    std::ranges::sort(vSortedLaguages, [&sLocale](auto i1, auto i2)
+    {
+        bool bFavorite1 = contains(g::options.vFavoriteLanguges, i1);
+        bool bFavorite2 = contains(g::options.vFavoriteLanguges, i2);
+
+        if(!(bFavorite1 & bFavorite2)){
+            if(bFavorite1)
+                return true;
+            if(bFavorite2)
+                return false;
+        }
+
+        if(i1 == sLocale)
+            return true;
+        if(i2 == sLocale)
+            return false;
+
+        QString sLanguage1;
+        if(g::languges.contains(i1))
+            sLanguage1 = g::languges.at(i1);
+        else
+            sLanguage1 = i1;
+        QString sLanguage2;
+        if(g::languges.contains(i2))
+            sLanguage2 = g::languges.at(i2);
+        else
+            sLanguage2 = i2;
+
+        return localeStringCompare(sLanguage1, sLanguage2);
+    });
+
 }

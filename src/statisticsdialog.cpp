@@ -21,11 +21,11 @@ StatisticsDialog::StatisticsDialog(QWidget *parent) :
 #if (QT_VERSION >= QT_VERSION_CHECK(5, 15, 0))
             u"<tr><td>"_s % tr("Book count") % u"</td><td>"_s % locale.toString(lib.books.size()) % u"</td></tr>"_s
             u"<tr><td>"_s % tr("Author count") % u"</td><td>"_s % locale.toString(lib.authors.size() - 1) % u"</td></tr>"_s
-            u"<tr><td>"_s % tr("Seria count") % u"</td><td>"_s % locale.toString(lib.serials.size()) % u"</td></tr>"_s
+            u"<tr><td>"_s % tr("Series count") % u"</td><td>"_s % locale.toString(lib.series.size()) % u"</td></tr>"_s
 #else
             u"<tr><td>"_s % tr("Book count") % u"</td><td>"_s % locale.toString((uint)lib.books.size()) % u"</td></tr>"_s
             u"<tr><td>"_s % tr("Author count") % u"</td><td>"_s % locale.toString((uint)(lib.authors.size() - 1)) % u"</td></tr>"_s
-            u"<tr><td>"_s % tr("Seria count") % u"</td><td>"_s % locale.toString((uint)lib.serials.size()) % u"</td></tr>"_s
+            u"<tr><td>"_s % tr("Series count") % u"</td><td>"_s % locale.toString((uint)lib.series.size()) % u"</td></tr>"_s
 #endif
             u"</table>"_s;
     ui->textEdit->setText(sText);

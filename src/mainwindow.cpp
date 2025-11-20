@@ -198,7 +198,7 @@ MainWindow::MainWindow(QWidget *parent) :
     if(g::options.bStorePosition)
     {
         idCurrentAuthor_= settings->value(u"current_author_id"_s, 0).toUInt();
-        idCurrentSerial_ = settings->value(u"current_serial_id"_s, 0).toUInt();
+        idCurrentSeries_ = settings->value(u"current_serial_id"_s, 0).toUInt();
         idCurrentBook_ = settings->value(u"current_book_id"_s, 0).toUInt();
         idCurrentGenre_ = settings->value(u"current_genre_id"_s, 0).toUInt();
         nCurrentTab = settings->value(u"current_tab"_s, 0).toInt();
@@ -208,8 +208,8 @@ MainWindow::MainWindow(QWidget *parent) :
         ui->s_name->setText(sTitle);
         QString sAuthor = settings->value(u"search.author"_s).toString();
         ui->s_author->setText(sAuthor);
-        QString sSequence = settings->value(u"search.sequence"_s).toString();
-        ui->s_seria->setText(sSequence);
+        QString sSeries = settings->value(u"search.series"_s).toString();
+        ui->s_seria->setText(sSeries);
         QString sFile = settings->value(u"search.file"_s).toString();
         ui->s_FileName->setText(sFile);
         int nMaxCount = settings->value(u"search.max.books"_s, 1000).toInt();
@@ -220,7 +220,7 @@ MainWindow::MainWindow(QWidget *parent) :
     else
     {
         idCurrentAuthor_ = 0;
-        idCurrentSerial_ = 0;
+        idCurrentSeries_ = 0;
         idCurrentBook_ = 0;
         idCurrentGenre_ = 0;
         nCurrentTab = TabAuthors;
@@ -274,7 +274,7 @@ MainWindow::MainWindow(QWidget *parent) :
     connect(ui->Books, &QTreeWidget::itemSelectionChanged, this, &MainWindow::onSelectBook);
     connect(ui->Books, &QTreeWidget::itemDoubleClicked, this, &MainWindow::onDblClickBook);
     connect(ui->GenreList, &QTreeWidget::itemSelectionChanged, this, &MainWindow::SelectGenre);
-    connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::SelectSeria);
+    connect(ui->SeriaList, &QListWidget::itemSelectionChanged, this, &MainWindow::selectSeries);
     connect(ui->do_search, &QAbstractButton::clicked, this, &MainWindow::onStartSearch);
     connect(ui->buttonClear, &QAbstractButton::clicked, this, &MainWindow::onClearSearch);
     connect(ui->s_author, &QLineEdit::returnPressed, this, &MainWindow::onStartSearch);
@@ -302,7 +302,7 @@ MainWindow::MainWindow(QWidget *parent) :
     case TabSeries:
         ui->searchSeries->setText(sFilter);
         ui->searchSeries->setFocus();
-        SelectSeria();
+        selectSeries();
         break;
     case TabGenres:
         SelectGenre();
@@ -417,8 +417,8 @@ void MainWindow::updateIcons()
     const auto &lib = g::libs[g::idCurrentLib];
     for(int i=0; i<nCount; i++){
         auto item = ui->SeriaList->item(i);
-        uint idSerial = item->data(Qt::UserRole).toUInt();
-        item->setIcon(getTagIcon(lib.serials.at(idSerial).idTags));
+        uint idSeries = item->data(Qt::UserRole).toUInt();
+        item->setIcon(getTagIcon(lib.series.at(idSeries).idTags));
     }
     ui->SeriaList->blockSignals(wasBlocked);
 
@@ -455,8 +455,8 @@ void MainWindow::updateItemIcon(QTreeWidgetItem *item)
     case ITEM_TYPE_BOOK:
         item->setIcon(0, getTagIcon(g::libs[g::idCurrentLib].books[id].idTags));
         break;
-    case ITEM_TYPE_SERIA:
-        item->setIcon(0, getTagIcon(g::libs[g::idCurrentLib].serials[id].idTags));
+    case ITEM_TYPE_SERIES:
+        item->setIcon(0, getTagIcon(g::libs[g::idCurrentLib].series[id].idTags));
         break;
     case ITEM_TYPE_AUTHOR:
         item->setIcon(0, getTagIcon(g::libs[g::idCurrentLib].authors[id].idTags));
@@ -525,9 +525,9 @@ void MainWindow::onReviewLinkClicked(const QUrl &url)
     {
         moveToGenre(sPath.right(sPath.length()-6).toLongLong());
     }
-    else if(sPath.startsWith(u"sequence_"))
+    else if(sPath.startsWith(u"series_"))
     {
-        moveToSeria(sPath.right(sPath.length()-9).toLongLong());
+        moveToSeries(sPath.right(sPath.length()-7).toLongLong());
     }
 }
 
@@ -635,8 +635,8 @@ void MainWindow::onSetTag()
                 setTagBook(idTag, id, bSet);
                 break;
 
-            case ITEM_TYPE_SERIA:
-                setTagSequence(idTag, id, bSet);
+            case ITEM_TYPE_SERIES:
+                setTagSeries(idTag, id, bSet);
 
                 break;
 
@@ -657,7 +657,7 @@ void MainWindow::onSetTag()
     else if(currentListForTag_ == ui->SeriaList)
     {
         id = ui->SeriaList->selectedItems().at(0)->data(Qt::UserRole).toUInt();
-        setTagSequence(idTag, id, bSet);
+        setTagSeries(idTag, id, bSet);
     }
 
     //TODO оптимизировать обновление иконок при большом количестве отображаемых авторов/книг
@@ -769,15 +769,15 @@ void MainWindow::setTagBook(uint idTag, uint idBook, bool bSet)
     }
 }
 
-void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
+void MainWindow::setTagSeries(uint idTag, uint idSeries, bool bSet)
 {
     QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
-    auto &sequence = g::libs[g::idCurrentLib].serials.at(idSequence);
-    auto &idTags = sequence.idTags;
+    auto &series = g::libs[g::idCurrentLib].series.at(idSeries);
+    auto &idTags = series.idTags;
     if(bSet){
         idTags.insert(idTag);
-        query.prepare(u"INSERT INTO seria_tag (id_seria,id_tag) VALUES(:idSequence,:idTag)"_s);
-        query.bindValue(u":idSequence"_s, idSequence);
+        query.prepare(u"INSERT INTO seria_tag (id_seria,id_tag) VALUES(:idSeria,:idTag)"_s);
+        query.bindValue(u":idSeria"_s, idSeries);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
             LogWarning << query.lastError().text();
@@ -786,14 +786,14 @@ void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
                       "SELECT id, :idTag FROM seria WHERE name=:name AND id_lib!=:idLib"_s);
         query.bindValue(u":idTag"_s, idTag);
         query.bindValue(u":idLib"_s, g::idCurrentLib);
-        query.bindValue(u":name"_s, sequence.sName);
+        query.bindValue(u":name"_s, series.sName);
         if(!query.exec()) [[unlikely]]
             LogWarning << query.lastError().text();
     }else{
         idTags.erase(idTag);
         query.exec(u"PRAGMA foreign_keys = ON"_s);
-        query.prepare(u"DELETE FROM seria_tag WHERE (id_seria=:idSequence) AND (id_tag=:idTag)"_s);
-        query.bindValue(u":idSequence"_s, idSequence);
+        query.prepare(u"DELETE FROM seria_tag WHERE (id_seria=:idSeria) AND (id_tag=:idTag)"_s);
+        query.bindValue(u":idSeria"_s, idSeries);
         query.bindValue(u":idTag"_s, idTag);
         if(!query.exec()) [[unlikely]]
             LogWarning << query.lastError().text();
@@ -802,7 +802,7 @@ void MainWindow::setTagSequence(uint idTag, uint idSequence, bool bSet)
                       "SELECT id FROM seria WHERE name=:name AND id_lib!=:idLib);"_s);
         query.bindValue(u":idTag"_s, idTag);
         query.bindValue(u":idLib"_s, g::idCurrentLib);
-        query.bindValue(u":name"_s, sequence.sName);
+        query.bindValue(u":name"_s, series.sName);
         if(!query.exec()) [[unlikely]]
             LogWarning << query.lastError().text();
     }
@@ -824,7 +824,7 @@ void MainWindow::onTagFilterChanged(int index)
     {
         settings->setValue(u"current_tag"_s, index);
         FillAuthors();
-        FillSerials();
+        fillSeries();
         FillGenres();
         FillListBooks();
     }
@@ -1146,7 +1146,7 @@ void MainWindow::onItemChanged(QTreeWidgetItem *item, int)
 void MainWindow::ExportBookListBtn(bool Enable)
 {
     ui->btnExport->setEnabled(Enable);
-    ui->btnOpenBook->setEnabled(false);
+    ui->btnOpenBook->setEnabled(Enable);
 }
 
 void MainWindow::onStartSearch()
@@ -1158,7 +1158,7 @@ void MainWindow::onStartSearch()
     ExportBookListBtn(false);
     QString sName = ui->s_name->text().trimmed();
     QString sAuthor = ui->s_author->text().trimmed();
-    QString sSeria = ui->s_seria->text().trimmed();
+    QString sSeries = ui->s_seria->text().trimmed();
     QString sFile = ui->s_FileName->text().trimmed();
     QDate dateFrom = ui->date_from->date();
     QDate dateTo = ui->date_to->date();
@@ -1235,19 +1235,19 @@ void MainWindow::onStartSearch()
         if(!sName.isEmpty() &&  !book.sName.contains(sName, Qt::CaseInsensitive))
             continue;
 
-        bool bSequence = false;
-        if(sSeria.isEmpty())
-            bSequence = true;
+        bool bSeries = false;
+        if(sSeries.isEmpty())
+            bSeries = true;
         else{
-            for(const auto &iSequence :book.mSequences){
-                uint idSequence = iSequence.first;
-                if(lib.serials.at(idSequence).sName.contains(sSeria, Qt::CaseInsensitive)){
-                    bSequence = true;
+            for(const auto &iSeries :book.series){
+                uint idSeries = iSeries.first;
+                if(lib.series.at(idSeries).sName.contains(sSeries, Qt::CaseInsensitive)){
+                    bSeries = true;
                     break;
                 }
             }
         }
-        if(!bSequence)
+        if(!bSeries)
             continue;
 
         if(idGenre == 0){
@@ -1272,7 +1272,7 @@ void MainWindow::onStartSearch()
         auto settings = GetSettings();
         settings->setValue(u"search.title"_s, sName);
         settings->setValue(u"search.author"_s, sAuthor);
-        settings->setValue(u"search.sequence"_s, sSeria);
+        settings->setValue(u"search.series"_s, sSeries);
         settings->setValue(u"search.id.genre"_s, idGenre);
 
         QString sLanguage = idLanguage>=0 ?lib.vLaguages[idLanguage] :u""_s;
@@ -1302,7 +1302,7 @@ void MainWindow::onClearSearch()
         auto settings = GetSettings();
         settings->remove(u"search.title"_s);
         settings->remove(u"search.author"_s);
-        settings->remove(u"search.sequence"_s);
+        settings->remove(u"search.series"_s);
         settings->remove(u"search.id.genre"_s);
         settings->remove(u"search.language"_s);
         settings->remove(u"search.min.rating"_s);
@@ -1329,7 +1329,7 @@ void MainWindow::SelectLibrary()
                 oldLib.bLoaded = false;
                 oldLib.books.clear();
                 oldLib.authors.clear();
-                oldLib.serials.clear();
+                oldLib.series.clear();
                 oldLib.authorBooksLink.clear();
                 oldLib.vLaguages.clear();
             });
@@ -1342,7 +1342,7 @@ void MainWindow::SelectLibrary()
             loadLibrary(g::idCurrentLib);
         fillLanguages();
         FillAuthors();
-        FillSerials();
+        fillSeries();
         FillGenres();
         switch(ui->tabWidget->currentIndex()){
         case TabAuthors:
@@ -1403,7 +1403,7 @@ void MainWindow::SelectGenre()
 /*
     выбор Серии в списке Серий
 */
-void MainWindow::SelectSeria()
+void MainWindow::selectSeries()
 {
     ui->Books->clear();
     ExportBookListBtn(false);
@@ -1412,12 +1412,12 @@ void MainWindow::SelectSeria()
         return;
     }
     QListWidgetItem* cur_item = ui->SeriaList->selectedItems().at(0);
-    idCurrentSerial_ = cur_item->data(Qt::UserRole).toUInt();
+    idCurrentSeries_ = cur_item->data(Qt::UserRole).toUInt();
     vBooks_.clear();
     SLib& lib = g::libs[g::idCurrentLib];
 
     for(const auto &[idBook, book] :lib.books){
-        if(book.mSequences.contains(idCurrentSerial_) && IsBookInList(book)){
+        if(book.series.contains(idCurrentSeries_) && IsBookInList(book)){
             vBooks_.push_back(idBook);
         }
     }
@@ -1425,7 +1425,7 @@ void MainWindow::SelectSeria()
 
     if(g::options.bStorePosition){
         auto settings = GetSettings();
-        settings->setValue(u"current_serial_id"_s, idCurrentSerial_);
+        settings->setValue(u"current_serial_id"_s, idCurrentSeries_);
     }
 }
 
@@ -1580,14 +1580,14 @@ void MainWindow::fillReview(const BookFile &bookFile)
     SLib& lib = g::libs[g::idCurrentLib];
     SBook &book = lib.books[idCurrentBook_];
 
-    QString sSequence;
-    if(!book.mSequences.empty()){
-        sSequence = u"<tr><td><b>Серия:</b></td><td>"_s;
+    QString sSeries;
+    if(!book.series.empty()){
+        sSeries = u"<tr><td><b>Серия:</b></td><td>"_s;
         bool bFirst = true;
-        for(auto [idSequence, numInSequence] :book.mSequences){
+        for(auto [idSeries, numInSeries] :book.series){
             if(!bFirst)
-                sSequence += u"; "_s;
-            sSequence += u"<a href=sequence_%1>%2</a>"_s.arg(QString::number(idSequence),lib.serials[idSequence].sName);
+                sSeries += u"; "_s;
+            sSeries += u"<a href=series_%1>%2</a>"_s.arg(QString::number(idSeries),lib.series[idSeries].sName);
             bFirst = false;
         }
     }
@@ -1618,7 +1618,7 @@ void MainWindow::fillReview(const BookFile &bookFile)
         replace(u"#title#"_s, book.sName).
         replace(u"#author#"_s, sAuthors).
         replace(u"#genre#"_s, sGenres).
-        replace(u"#sequence#"_s, sSequence).
+        replace(u"#series#"_s, sSeries).
         replace(u"#file_path#"_s, bookFile.filePath()).
 #if QT_VERSION >= QT_VERSION_CHECK(5, 10, 0)
         replace(u"#file_size#"_s, size>0 ?locale.formattedDataSize(size, 1, QLocale::DataSizeTraditionalFormat) : u""_s).
@@ -1638,106 +1638,6 @@ void MainWindow::fillLanguages()
 {
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
     SLib &currentLib = g::libs[g::idCurrentLib];
-    static std::unordered_map<QString, QString> mLanguges = {{u"ab"_s, u"Аԥсшәа"_s},
-                                                             {u"ad"_s, u"Адыгэбзэ"_s},
-                                                             {u"am"_s, u"አማርኛ"_s},
-                                                             {u"ar"_s, u"العربية"_s},
-                                                             {u"az"_s, u"Azərbaycanca"_s},
-                                                             {u"ba"_s, u"Башҡортса"_s},
-                                                             {u"be"_s, u"Беларуская"_s},
-                                                             {u"bg"_s, u"Български"_s},
-                                                             {u"bm"_s, u"ߓߡߊߣߊ߲ߞߊ߲"_s},
-                                                             {u"bn"_s, u"বাংলা"_s},
-                                                             {u"bo"_s, u"བོད་སྐད"_s},
-                                                             {u"br"_s, u"Brezhoneg"_s},
-                                                             {u"bs"_s, u"Bosanski"_s},
-                                                             {u"ca"_s, u"Catala"_s},
-                                                             {u"ce"_s, u"Нохчийн"_s},
-                                                             {u"co"_s, u"Corsu"_s},
-                                                             {u"cr"_s, u"Qırımtatar"_s},
-                                                             {u"cs"_s, u"Čeština"_s},
-                                                             {u"cu"_s, u"Словѣньскъ"_s},
-                                                             {u"cv"_s, u"Чӑвашла"_s},
-                                                             {u"da"_s, u"Dansk"_s},
-                                                             {u"de"_s, u"Deutsch"_s},
-                                                             {u"dv"_s, u"Dhivehi bas"_s},
-                                                             {u"el"_s, u"Ελληνικά"_s},
-                                                             {u"en"_s, u"English"_s},
-                                                             {u"eo"_s, u"Esperanto"_s},
-                                                             {u"es"_s, u"Español"_s},
-                                                             {u"et"_s, u"Eesti"_s},
-                                                             {u"ev"_s, u"Эвэды"_s},
-                                                             {u"fa"_s, u"فارسی"_s},
-                                                             {u"fi"_s, u"Suomi"_s},
-                                                             {u"fr"_s, u"Français"_s},
-                                                             {u"ga"_s, u"Gaeilge"_s},
-                                                             {u"gu"_s, u"ગુજરાતી"_s},
-                                                             {u"he"_s, u"עברית"_s},
-                                                             {u"hi"_s, u"हिन्दी"_s},
-                                                             {u"hr"_s, u"Hrvatski"_s},
-                                                             {u"hu"_s, u"Magyar"_s},
-                                                             {u"hy"_s, u"Հայերեն"_s},
-                                                             {u"ia"_s, u"Interlingua"_s},
-                                                             {u"id"_s, u"Bahasa Indonesia"_s},
-                                                             {u"ie"_s, u"Interlingue"_s},
-                                                             {u"is"_s, u"Íslenska"_s},
-                                                             {u"it"_s, u"Italiano"_s},
-                                                             {u"ja"_s, u"日本語"_s},
-                                                             {u"ka"_s, u"ქართული"_s},
-                                                             {u"kb"_s, u"Къарачай-малкъар"_s},
-                                                             {u"kk"_s, u"Қазақша"_s},
-                                                             {u"kl"_s, u"Kalaallisut"_s},
-                                                             {u"km"_s, u"ភាសាខ្មែរ"_s},
-                                                             {u"kn"_s, u"ಕನ್ನಡ"_s},
-                                                             {u"ko"_s, u"한국어"_s},
-                                                              //{u"kr"_s, u"Къарачай-Малкъар тил"_s},
-                                                             {u"ks"_s, u"کٲشُر"_s},
-                                                             {u"ku"_s, u"کوردی"_s},
-                                                             {u"kv"_s, u"Коми"_s},
-                                                             {u"ky"_s, u"Кыргызский"_s},
-                                                             {u"la"_s, u"Latina"_s},
-                                                             {u"le"_s, u"Лезги"_s},
-                                                             {u"lt"_s, u"Lietuvių"_s},
-                                                             {u"lv"_s, u"Latviešu"_s},
-                                                             {u"mk"_s, u"Македонски"_s},
-                                                             {u"ml"_s, u"മലയാളം"_s},
-                                                             {u"mn"_s, u"Монгол"_s},
-                                                             {u"mr"_s, u"मराठी"_s},
-                                                             {u"my"_s, u"ဗမာစာ"_s},
-                                                             {u"ne"_s, u"नेपाली"_s},
-                                                             {u"nl"_s, u"Nederlands"_s},
-                                                             {u"no"_s, u"Norsk"_s},
-                                                             {u"oc"_s, u"Occitan"_s},
-                                                             {u"os"_s, u"Ирон"_s},
-                                                             {u"pl"_s, u"Polski"_s},
-                                                             {u"ps"_s, u"پښتو"_s},
-                                                             {u"pt"_s, u"Português"_s},
-                                                             {u"ro"_s, u"Română"_s},
-                                                             {u"ru"_s, u"Русский"_s},
-                                                             {u"rw"_s, u"Kinyarwanda"_s},
-                                                             {u"sa"_s, u"संस्कृत"_s},
-                                                             {u"sd"_s, u"सिन्धी"_s},
-                                                             {u"sk"_s, u"Slovenčina"_s},
-                                                             {u"sl"_s, u"Slovenski"_s},
-                                                             {u"sp"_s, u"Español"_s},
-                                                             {u"sq"_s, u"Shqip"_s},
-                                                             {u"sr"_s, u"Српски"_s},
-                                                             {u"sv"_s, u"Svenska"_s},
-                                                             {u"sw"_s, u"Kiswahili"_s},
-                                                             {u"ta"_s, u"தமிழ்"_s},
-                                                             {u"te"_s, u"తెలుగు"_s},
-                                                             {u"tg"_s, u"Тоҷикӣ"_s},
-                                                             {u"th"_s, u"ภาษาไทย"_s},
-                                                             {u"tk"_s, u"Türkmençe"_s},
-                                                             {u"tr"_s, u"Türkçe"_s},
-                                                             {u"tt"_s, u"Татарча"_s},
-                                                             {u"ug"_s, u"ئۇيغۇرچە"_s},
-                                                             {u"uk"_s, u"Українська"_s},
-                                                             {u"ur"_s, u"اردو"_s},
-                                                             {u"uz"_s, u"Oʻzbekcha"_s},
-                                                             {u"vi"_s, u"Tiếng Việt"_s},
-                                                             {u"yi"_s, u"ייִדיש"_s},
-                                                             {u"zh"_s, u"中文"_s}};
 
     ui->language->blockSignals(true);
     ui->findLanguage->blockSignals(true);
@@ -1755,46 +1655,17 @@ void MainWindow::fillLanguages()
     QString sSearchLanguage;
     if(g::options.bStorePosition)
         sSearchLanguage = settings->value(u"search.language"_s).toString();
-    auto vLaguages = currentLib.vLaguages;
-    std::ranges::sort(vLaguages, [&sLocale](auto i1, auto i2)
-    {
-        bool bFavorite1 = contains(g::options.vFavoriteLanguges, i1);
-        bool bFavorite2 = contains(g::options.vFavoriteLanguges, i2);
-
-        if(!(bFavorite1 & bFavorite2)){
-            if(bFavorite1)
-                return true;
-            if(bFavorite2)
-                return false;
-        }
-
-        if(i1 == sLocale)
-            return true;
-        if(i2 == sLocale)
-            return false;
-
-        QString sLanguage1;
-        if(mLanguges.contains(i1))
-            sLanguage1 = mLanguges.at(i1);
-        else
-            sLanguage1 = i1;
-        QString sLanguage2;
-        if(mLanguges.contains(i2))
-            sLanguage2 = mLanguges.at(i2);
-        else
-            sLanguage2 = i2;
-
-        return localeStringCompare(sLanguage1, sLanguage2);
-    });
+    if(currentLib.vSortedLaguages.empty())
+        currentLib.sortLanguages();
 
     int iCurrentLang = 0;
     int iSearchLang = 0;
-    for(int iLang = 0; iLang<vLaguages.size(); iLang++){
-        QString sAbbrLanguage = vLaguages[iLang];
+    for(int iLang = 0; iLang<currentLib.vSortedLaguages.size(); iLang++){
+        QString sAbbrLanguage = currentLib.vSortedLaguages[iLang];
         if(!sAbbrLanguage.isEmpty() && sAbbrLanguage != u"un"){
             QString sLanguage;
-            if(mLanguges.contains(sAbbrLanguage))
-                sLanguage = mLanguges.at(sAbbrLanguage);
+            if(g::languges.contains(sAbbrLanguage))
+                sLanguage = g::languges.at(sAbbrLanguage);
             else
                 sLanguage = sAbbrLanguage;
 
@@ -1816,8 +1687,8 @@ void MainWindow::fillLanguages()
     }
 
     if(!g::options.vFavoriteLanguges.empty()){
-        int iSeparator = std::ranges::count_if(g::options.vFavoriteLanguges, [&vLaguages](auto sLang)
-            { return contains(vLaguages, sLang); }) + 1;
+        int iSeparator = std::ranges::count_if(g::options.vFavoriteLanguges, [&currentLib](auto sLang)
+            { return contains(currentLib.vSortedLaguages, sLang); }) + 1;
         ui->language->insertSeparator(iSeparator);
         ui->findLanguage->insertSeparator(iSeparator);
     }
@@ -1844,7 +1715,7 @@ void MainWindow::ManageLibrary()
         QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
         QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
         QFuture<void> future;
-        if(g::idCurrentLib != idOldLib){
+        if(g::idCurrentLib != idOldLib && g::libs.contains(idOldLib)){
             auto &oldLib = g::libs[idOldLib];
             if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
                 future = QtConcurrent::run([&oldLib]()
@@ -1852,20 +1723,20 @@ void MainWindow::ManageLibrary()
                     oldLib.bLoaded = false;
                     oldLib.books.clear();
                     oldLib.authors.clear();
-                    oldLib.serials.clear();
+                    oldLib.series.clear();
                     oldLib.authorBooksLink.clear();
                     oldLib.vLaguages.clear();
                 });
             }
         }
+        loadLibrary(g::idCurrentLib);
         ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
         ui->find_books->clear();
-        loadLibrary(g::idCurrentLib);
         vFoundBooks_.clear();
 
         fillLanguages();
         FillAuthors();
-        FillSerials();
+        fillSeries();
         FillGenres();
         switch(ui->tabWidget->currentIndex()){
         case TabAuthors:
@@ -1874,7 +1745,7 @@ void MainWindow::ManageLibrary()
             break;
         case TabSeries:
             onSerachSeriesChanded(ui->searchSeries->text());
-            SelectSeria();
+            selectSeries();
             break;
         case TabGenres:
             SelectGenre();
@@ -1882,7 +1753,8 @@ void MainWindow::ManageLibrary()
         case TabSearch:
             ui->Books->clear();
         }
-        future.waitForFinished();
+        if(g::idCurrentLib != idOldLib)
+            future.waitForFinished();
         QGuiApplication::restoreOverrideCursor();
     }
     updateTitle();
@@ -1942,7 +1814,7 @@ void MainWindow::addBooksFinished()
     loadLibrary(g::idCurrentLib);
     fillLanguages();
     FillAuthors();
-    FillSerials();
+    fillSeries();
     FillGenres();
     switch(ui->tabWidget->currentIndex()){
     case TabAuthors:
@@ -2034,7 +1906,7 @@ void MainWindow::onSerachSeriesChanded(const QString &str)
             ui->searchSeries->setText(str.right(str.length()-1));
         }
         checkLetter(last_search_symbol.at(0).toUpper());
-        FillSerials();
+        fillSeries();
     }
     if(ui->SeriaList->count() > 0){
         if(ui->SeriaList->selectedItems().count() == 0)
@@ -2111,8 +1983,8 @@ void MainWindow::ContextMenu(QPoint point)
                 case ITEM_TYPE_BOOK:
                     idTags = lib.books[id].idTags;
                     break;
-                case ITEM_TYPE_SERIA:
-                    idTags = lib.serials[id].idTags;
+                case ITEM_TYPE_SERIES:
+                    idTags = lib.series[id].idTags;
                     break;
                 case ITEM_TYPE_AUTHOR:
                     idTags = lib.authors[id].idTags;
@@ -2141,8 +2013,8 @@ void MainWindow::ContextMenu(QPoint point)
             const auto actions = TagMenu.actions();
             for(const auto action :actions){
                 uint idTag = action->data().toUInt();
-                uint idSerial = ui->SeriaList->itemAt(point)->data(Qt::UserRole).toUInt();
-                action->setChecked( lib.serials[idSerial].idTags.contains(idTag) );
+                uint idSeries = ui->SeriaList->itemAt(point)->data(Qt::UserRole).toUInt();
+                action->setChecked( lib.series[idSeries].idTags.contains(idTag) );
             }
         }
 
@@ -2169,7 +2041,7 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     connect(action, &QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(1, !action->isChecked());});
     menu.addAction(action);
 
-    action = new QAction(tr("Serial"), this);
+    action = new QAction(tr("Series"), this);
     action->setCheckable(true);
     action->setChecked(!ui->Books->isColumnHidden(2));
     connect(action, &QAction::triggered,this, [action, this]{ui->Books->setColumnHidden(2, !action->isChecked());});
@@ -2220,10 +2092,10 @@ void MainWindow::HeaderContextMenu(QPoint /*point*/)
     menu.exec(QCursor::pos());
 }
 
-void MainWindow::moveToSeria(uint id)
+void MainWindow::moveToSeries(uint id)
 {
     SLib& lib = g::libs[g::idCurrentLib];
-    QString sFirstLetter = lib.serials[id].sName.at(0).toUpper();
+    QString sFirstLetter = lib.series[id].sName.at(0).toUpper();
     ui->searchSeries->setText(sFirstLetter);
     ui->tabWidget->setCurrentIndex(TabSeries);
     ui->SeriaList->clearSelection();
@@ -2233,7 +2105,7 @@ void MainWindow::moveToSeria(uint id)
         {
             ui->SeriaList->item(i)->setSelected(true);
             ui->SeriaList->scrollToItem(ui->SeriaList->item(i));
-            SelectSeria();
+            selectSeries();
             return;
         }
     }
@@ -2279,8 +2151,6 @@ void MainWindow::moveToAuthor(uint id)
 
 void MainWindow::FillLibrariesMenu()
 {
-    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
-        return;
     QMenu *menu = ui->actionLibraries->menu();
     if(menu){
         menu->clear();
@@ -2290,10 +2160,9 @@ void MainWindow::FillLibrariesMenu()
         ui->btnLibrary->setMenu(menu);
     }
 
-    for(const auto &iLib :g::libs){
-        uint idLib = iLib.first;
+    for(const auto &[idLib, lib] :g::libs){
         if(idLib>0){
-            QAction *action = new QAction(iLib.second.name, menu);
+            QAction *action = new QAction(lib.name, menu);
             action->setData(idLib);
             action->setCheckable(true);
             menu->insertAction(nullptr, action);
@@ -2333,12 +2202,12 @@ void MainWindow::FillAuthors()
     std::mutex m;
     QtConcurrent::blockingMap(vIdAuthors, [&](uint idAuthor){
         auto &author = authors.at(idAuthor);
-        int count = 0;
-        for (auto it = currentLib.authorBooksLink.equal_range(idAuthor); it.first != it.second; ++it.first) {
-            SBook &book = currentLib.books[it.first->second];
-            if( IsBookInList(book))
-                count++;
-        }
+        auto [begin, end] = currentLib.authorBooksLink.equal_range(idAuthor);
+        uint count = std::count_if(begin, end, [&currentLib, this](const auto& pair) {
+                const auto& book = currentLib.books.at(pair.second);
+                return IsBookInList(book);
+        });
+
         if(count>0){
             QListWidgetItem *item = new QListWidgetItem(author.getName() % u" ("_s % QString::number(count) % u")"_s);
             if(g::options.bUseTag)
@@ -2357,11 +2226,8 @@ void MainWindow::FillAuthors()
         }
     });
 
-#ifdef __cpp_lib_execution
-    std::sort(g::executionpolicy, vItems.begin(), vItems.end(), [](auto item1, auto item2){
-#else
-    std::sort(vItems.begin(), vItems.end(), [](auto item1, auto item2){
-#endif
+    sort(vItems, [](auto item1, auto item2)
+    {
         return localeStringCompare(item1->text(), item2->text());
     });
 
@@ -2383,7 +2249,7 @@ void MainWindow::FillAuthors()
     QApplication::restoreOverrideCursor();
 }
 
-void MainWindow::FillSerials()
+void MainWindow::fillSeries()
 {
     if(g::idCurrentLib == 0)
         return;
@@ -2397,44 +2263,39 @@ void MainWindow::FillSerials()
 
     std::unordered_map<uint, uint> mCounts;
     const SLib& lib = g::libs[g::idCurrentLib];
-    auto &sequences = lib.serials;
-
+    auto &series = lib.series;
 
     for(const auto &iBook :lib.books){
         auto &book = iBook.second;
-        if(!book.mSequences.empty() && IsBookInList(book)){
-            for(const auto &iSequence: book.mSequences){
-                uint idSequence = iSequence.first;
-                if((sSearch == u"*" || (sSearch == u"#" && !sequences.at(idSequence).sName.left(1).contains(re)) ||
-                     sequences.at(idSequence).sName.startsWith(sSearch, Qt::CaseInsensitive)))
+        if(!book.series.empty() && IsBookInList(book)){
+            for(const auto &iSeries: book.series){
+                uint idSeries = iSeries.first;
+                if((sSearch == u"*" || (sSearch == u"#" && !series.at(idSeries).sName.left(1).contains(re)) ||
+                     series.at(idSeries).sName.startsWith(sSearch, Qt::CaseInsensitive)))
                 {
-                    mCounts[idSequence]++;
+                    mCounts[idSeries]++;
                 }
             }
         }
     }
 
-    std::vector<uint> vIdSequence(mCounts.size());
-    std::ranges::copy(mCounts | std::views::keys, vIdSequence.begin());
-#ifdef __cpp_lib_execution
-    std::sort(g::executionpolicy, vIdSequence.begin(), vIdSequence.end(), [&sequences](uint id1, uint id2)
-#else
-    std::sort(vIdSequence.begin(), vIdSequence.end(), [&sequences](uint id1, uint id2)
-#endif
+    std::vector<uint> vIdSeries(mCounts.size());
+    std::ranges::copy(mCounts | std::views::keys, vIdSeries.begin());
+    sort(vIdSeries, [&series](uint id1, uint id2)
     {
-        return localeStringCompare(sequences.at(id1).sName, sequences.at(id2).sName);
+        return localeStringCompare(series.at(id1).sName, series.at(id2).sName);
     });
 
     QListWidgetItem *selectedItem = nullptr;
 
-    for(auto idSequnce :vIdSequence)
+    for(auto idSeries :vIdSeries)
     {
-        QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(sequences.at(idSequnce).sName).arg(mCounts.at(idSequnce)));
-        item->setData(Qt::UserRole, idSequnce);
+        QListWidgetItem *item = new QListWidgetItem(u"%1 (%2)"_s.arg(series.at(idSeries).sName).arg(mCounts.at(idSeries)));
+        item->setData(Qt::UserRole, idSeries);
         if(g::options.bUseTag)
-            item->setIcon(getTagIcon(sequences.at(idSequnce).idTags));
+            item->setIcon(getTagIcon(series.at(idSeries).idTags));
         ui->SeriaList->addItem(item);
-        if(idSequnce == idCurrentSerial_)
+        if(idSeries == idCurrentSeries_)
         {
             selectedItem = item;
             item->setSelected(true);
@@ -2446,7 +2307,7 @@ void MainWindow::FillSerials()
     ui->SeriaList->blockSignals(wasBlocked);
     if(g::bVerbose){
         qint64 timeEnd = QDateTime::currentMSecsSinceEpoch();
-        qDebug()<< "FillSerials " << timeEnd - timeStart << "msec";
+        qDebug()<< "fillSeries " << timeEnd - timeStart << "msec";
     }
 }
 
@@ -2540,7 +2401,7 @@ void MainWindow::FillListBooks()
         break;
 
         case TabSeries:
-            SelectSeria();
+            selectSeries();
         break;
 
         case TabGenres:
@@ -2561,23 +2422,23 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
     TreeBookItem* ScrollItem = nullptr;
     QLocale locale;
 
-    TreeBookItem* item_seria = nullptr;
+    TreeBookItem* itemSeries = nullptr;
     TreeBookItem* item_author;
     std::unordered_map<uint, TreeBookItem*> mAuthorItems;
-    std::unordered_multimap<uint, TreeBookItem*> mSeriaItems;
+    std::unordered_multimap<uint, TreeBookItem*> mSeriesItems;
 
     const bool wasBlocked = ui->Books->blockSignals(true);
     ui->Books->clear();
     SLib &lib = g::libs[g::idCurrentLib];
 
-    bool bSequenceInTree;
-    uint idCurrentSequence;
+    bool bSeriesInTree;
+    uint idCurrentSeries;
     if(ui->tabWidget->currentIndex() == 1){
-        bSequenceInTree = false;
+        bSeriesInTree = false;
         QListWidgetItem* cur_item = ui->SeriaList->selectedItems().at(0);
-        idCurrentSequence = cur_item->data(Qt::UserRole).toUInt();
+        idCurrentSeries = cur_item->data(Qt::UserRole).toUInt();
     }else
-        bSequenceInTree = true;
+        bSeriesInTree = true;
 
     for( uint idBook: vBooks) {
         SBook &book = lib.books[idBook];
@@ -2613,38 +2474,38 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                     item_author->setCheckState(0, Qt::PartiallyChecked);
             }
 
-            if(!bSequenceInTree){
+            if(!bSeriesInTree){
                 itemsBook.push_back(new TreeBookItem(item_author, ITEM_TYPE_BOOK));
             }else{
-                if(!book.mSequences.empty()){
-                    for(auto [idSequence, numInSequenc] :book.mSequences){
+                if(!book.series.empty()){
+                    for(auto [idSeries, numInSeries] :book.series){
                         bool bFound = false;
-                        auto items = mSeriaItems | std::views::filter([idSequence](const auto& pair){return pair.first == idSequence;});
+                        auto items = mSeriesItems | std::views::filter([idSeries](const auto& pair){return pair.first == idSeries;});
                         for (const auto& [id, item] :items) {
                             if(item->parent()->data(0, Qt::UserRole) == idAuthor){
                                 auto checkedState = item->checkState(0);
                                 if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
                                     item->setCheckState(0, Qt::PartiallyChecked);
                                 bFound = true;
-                                item_seria = item;
+                                itemSeries = item;
                                 break;
                             }
                         }
                         if(!bFound){
-                            item_seria = new TreeBookItem(mAuthorItems[idAuthor], ITEM_TYPE_SERIA);
-                            item_seria->setText(0, lib.serials[idSequence].sName);
-                            item_author->addChild(item_seria);
-                            item_seria->setExpanded(true);
-                            item_seria->setFont(0, bold_font);
-                            item_seria->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
-                            item_seria->setData(0, Qt::UserRole, idSequence);
-                            item_seria->setData(3, Qt::UserRole, -1);
-                            item_seria->setData(5, Qt::UserRole, -1);
+                            itemSeries = new TreeBookItem(mAuthorItems[idAuthor], ITEM_TYPE_SERIES);
+                            itemSeries->setText(0, lib.series[idSeries].sName);
+                            item_author->addChild(itemSeries);
+                            itemSeries->setExpanded(true);
+                            itemSeries->setFont(0, bold_font);
+                            itemSeries->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
+                            itemSeries->setData(0, Qt::UserRole, idSeries);
+                            itemSeries->setData(3, Qt::UserRole, -1);
+                            itemSeries->setData(5, Qt::UserRole, -1);
                             if(g::options.bUseTag)
-                                item_seria->setIcon(0, getTagIcon(lib.serials[idSequence].idTags));
-                            mSeriaItems.insert({idSequence, item_seria});
+                                itemSeries->setIcon(0, getTagIcon(lib.series[idSeries].idTags));
+                            mSeriesItems.insert({idSeries, itemSeries});
                         }
-                        itemsBook.push_back(new TreeBookItem(item_seria, ITEM_TYPE_BOOK));
+                        itemsBook.push_back(new TreeBookItem(itemSeries, ITEM_TYPE_BOOK));
                     }
                 }else{
                     itemsBook.push_back(new TreeBookItem(item_author, ITEM_TYPE_BOOK));
@@ -2664,37 +2525,37 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
 
             itemBook->setText(1, sAuthor);
 
-            uint numInSequence = 0;
-            QString sSequence;
+            uint numInSeries = 0;
+            QString sSeries;
             if(bTreeView_){
-                if(!bSequenceInTree){
-                    sSequence = lib.serials[idCurrentSequence].sName;
-                    numInSequence = book.mSequences[idCurrentSequence];
+                if(!bSeriesInTree){
+                    sSeries = lib.series[idCurrentSeries].sName;
+                    numInSeries = book.series[idCurrentSeries];
 
                 }else{
                     TreeBookItem* parrentItem = static_cast<TreeBookItem*>(itemBook->parent());
-                    if(parrentItem && parrentItem->type() == ITEM_TYPE_SERIA){
-                        uint idSequence = parrentItem->data(0, Qt::UserRole).toUInt();
-                        sSequence = lib.serials[idSequence].sName;
-                        numInSequence = book.mSequences[idSequence];
+                    if(parrentItem && parrentItem->type() == ITEM_TYPE_SERIES){
+                        uint idSeries = parrentItem->data(0, Qt::UserRole).toUInt();
+                        sSeries = lib.series[idSeries].sName;
+                        numInSeries = book.series[idSeries];
                     }
                 }
             }else{
-                if(book.mSequences.size() == 1)
-                    numInSequence = book.mSequences.begin()->second;
+                if(book.series.size() == 1)
+                    numInSeries = book.series.begin()->second;
                 bool bFirst = true;
-                for(auto [idSequence, numInSequence] :book.mSequences){
+                for(auto [idSeries, numInSeries] :book.series){
                     if(!bFirst)
-                        sSequence += u"; "_s;
-                    sSequence += lib.serials[idSequence].sName;
+                        sSeries += u"; "_s;
+                    sSeries += lib.series[idSeries].sName;
                     bFirst = false;
                 }
 
             }
-            if(!sSequence.isEmpty())
-                itemBook->setText(2, sSequence);
-            if(numInSequence>0){
-                itemBook->setText(3, QString::number(numInSequence));
+            if(!sSeries.isEmpty())
+                itemBook->setText(2, sSeries);
+            if(numInSeries>0){
+                itemBook->setText(3, QString::number(numInSeries));
                 itemBook->setTextAlignment(3, Qt::AlignRight|Qt::AlignVCenter);
             }
 
@@ -2769,8 +2630,8 @@ bool MainWindow::IsBookInList(const SBook &book)
             return true;
 
         const auto& lib = g::libs[g::idCurrentLib];
-        if(std::ranges::any_of(book.mSequences, [&lib, idTagFilter](const auto& seq)
-                                { return lib.serials.at(seq.first).idTags.contains(idTagFilter); }))
+        if(std::ranges::any_of(book.series, [&lib, idTagFilter](const auto& seq)
+                                { return lib.series.at(seq.first).idTags.contains(idTagFilter); }))
             return true;
 
         return std::ranges::any_of(book.vIdAuthors, [&lib, idTagFilter](uint authorId)
@@ -2864,7 +2725,7 @@ void MainWindow::onLanguageFilterChanged(int index)
     settings->setValue(u"BookLanguage"_s, sLanguage);
     idCurrentLanguage_ = ui->language->itemData(index).toInt();
 
-    FillSerials();
+    fillSeries();
     FillAuthors();
     FillGenres();
     FillListBooks();
@@ -3060,7 +2921,7 @@ void MainWindow::onTabWidgetChanged(int index)
         }
         ui->frame_3->setEnabled(true);
         ui->language->setEnabled(true);
-        SelectSeria();
+        selectSeries();
     }
         break;
     case TabGenres: //Жанры

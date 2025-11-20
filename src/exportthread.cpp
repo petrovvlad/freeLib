@@ -361,11 +361,11 @@ void ExportThread::export_books()
     for(auto idBook: vBbooks_)
     {
         const SBook &book = lib.books.at(idBook);
-        if(bNeedGroupSeries && !book.mSequences.empty()){
+        if(bNeedGroupSeries && !book.series.empty()){
             auto iBookGroup = vBbooksGroup.begin();
             while(iBookGroup != vBbooksGroup.end()){
-                auto &groupeSequence = lib.books.at(iBookGroup->front()).mSequences;
-                if(!groupeSequence.empty() && groupeSequence.begin()->first == book.mSequences.begin()->first){
+                auto &groupeSequence = lib.books.at(iBookGroup->front()).series;
+                if(!groupeSequence.empty() && groupeSequence.begin()->first == book.series.begin()->first){
                     break;
                 }
                 ++iBookGroup;
@@ -568,11 +568,11 @@ void ExportThread::export_lib()
         for(auto idTag :firstAuthor.idTags)
             sAuthorTags += tagsName[idTag] + u':';
 
-        QString sSerialTags;
-        if(!book.mSequences.empty()){
-            const auto &idTags = lib.serials.at(book.mSequences.begin()->first).idTags;
+        QString sSeriesTags;
+        if(!book.series.empty()){
+            const auto &idTags = lib.series.at(book.series.begin()->first).idTags;
             for(auto idTag :idTags){
-                sSerialTags += tagsName[idTag] + ':';
+                sSeriesTags += tagsName[idTag] + ':';
             }
         }
 
@@ -581,14 +581,14 @@ void ExportThread::export_lib()
             sGenres += g::genres.at(idGenre).listKeys.constFirst() + ':';
         }
         //TODO Добавить мультисерийность при экспорте.
-        bool bSecuence = !book.mSequences.empty();
-        QString sNumInSeria = bSecuence ?QString::number(book.mSequences.begin()->second) :u""_s;
-        QString sSequence = bSecuence ?lib.serials.at(book.mSequences.begin()->first).sName :u""_s;
+        bool bSecuence = !book.series.empty();
+        QString sNumInSeries = bSecuence ?QString::number(book.series.begin()->second) :u""_s;
+        QString sSequence = bSecuence ?lib.series.at(book.series.begin()->first).sName :u""_s;
         QString sLine = (u"%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8"_s.arg(
                              sAuthors,      //AUTHOR
                              book.sName,    //TITLE
                              sSequence,     //SERIES
-                             sNumInSeria,   //SERNO
+                             sNumInSeries,   //SERNO
                              sGenres,       //GENRE
                              QString::number(book.idInLib),  //LIBID
                              book.sFile,    //FILE
@@ -608,7 +608,7 @@ void ExportThread::export_lib()
                         (
                              sBookTags,     //TAG
                              sAuthorTags,   //TAGAUTHOR
-                             sSerialTags    //TAGSERIES
+                             sSeriesTags    //TAGSERIES
                         ));
 
         inpx.write(sLine.toUtf8());

@@ -97,7 +97,7 @@ void ConversionFrame::Load(const ExportOptions *pExportOptions)
     ui->repairCover->setChecked(pExportOptions->bRepairCover);
     ui->ml_toc->setChecked(pExportOptions->bMlToc);
     ui->MAXcaptionLevel->setValue(pExportOptions->nMaxCaptionLevel);
-    ui->seriaTranslit->setChecked(pExportOptions->bSeriaTranslit);
+    ui->seriaTranslit->setChecked(pExportOptions->bSeriesTranslit);
     ui->authorTranslit->setChecked(pExportOptions->bAuthorTranslit);
     ui->seriastring->setText(pExportOptions->sBookSeriesTitle);
     ui->authorstring->setText(pExportOptions->sAuthorSring);
@@ -155,7 +155,7 @@ QStringList ConversionFrame::Save(ExportOptions *pExportOptions)
     pExportOptions->bMlToc = ui->ml_toc->isChecked();
     pExportOptions->nMaxCaptionLevel = ui->MAXcaptionLevel->value();
     pExportOptions->bAuthorTranslit = ui->authorTranslit->isChecked();
-    pExportOptions->bSeriaTranslit = ui->seriaTranslit->isChecked();
+    pExportOptions->bSeriesTranslit = ui->seriaTranslit->isChecked();
     pExportOptions->sBookSeriesTitle = ui->seriastring->text().trimmed();
     pExportOptions->sAuthorSring = ui->authorstring->text().trimmed();
     pExportOptions->bCreateCover = ui->createCover->isChecked();
