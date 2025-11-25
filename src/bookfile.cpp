@@ -5,11 +5,6 @@
 #include <QPainter>
 #include <QStringBuilder>
 #include <QTextDocument>
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazipfile.h>
-#endif
 
 #include "utilites.h"
 #include "options.h"
@@ -23,6 +18,8 @@
 #include <poppler/qt6/poppler-qt6.h>
 #endif//QT_VERSION
 #endif //USE_POPPLER
+
+#include "qarchive.h"
 
 BookFile::BookFile(uint idLib, uint idBook)
     :BookFile(g::libs[idLib], idBook)
@@ -42,8 +39,8 @@ BookFile::BookFile(const SLib &lib, uint idBook)
     sBookName_ = book.sName;
     sAuthorName_ = lib.authors.at(book.idFirstAuthor).getName();
     if(!book.series.empty()){
-        const auto &sequence = book.series.begin();
-        sSequence_ = lib.series.at(sequence->first).sName % (sequence->second>0 ?u"\n"_s % QString::number(sequence->second) :u""_s);
+        const auto &series = book.series.begin();
+        sSeries_ = lib.series.at(series->first).sName % (series->second>0 ?u"\n"_s % QString::number(series->second) :u""_s);
     }
 }
 
@@ -76,35 +73,18 @@ void BookFile::open()
 
         QuaZipFile zipFile;
         if(bZipInZip){
-            data_ = openZipInZip(sArchive, sFile);
+            data_ = openArcInArc(sArchive, sFile);
             QString sFbdFile = sFile_ + u".fbd"_s;
-            QByteArray ba = openZipInZip(sArchive, sFbdFile);
+            QByteArray ba = openArcInArc(sArchive, sFbdFile);
             if(!ba.isEmpty())
                 doc_.setContent(ba);
             bOpen_ = !data_.isEmpty();
         }else{
-            QuaZip zip;
-            zip.setZipName(sArchive);
-            if( !zip.open(QuaZip::mdUnzip) ) [[unlikely]]
-            {
-                LogWarning << "Error open archive!" << sArchive;
-                return;
-            }
-            setCurrentZipFileName(&zip, sFile);
-            zipFile.setZip(&zip);
-            if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-            {
-                LogWarning << "Error open file:" << sFile;
-            }else{
-                data_ = zipFile.readAll();
-                QuaZipFileInfo64 fiZip;
-                if(zip.getCurrentFileInfo(&fiZip))
-                    timeBirth_ =  fiZip.dateTime;
-                zipFile.close();
-                bOpen_ = true;
-            }
-
-            zip.close();
+            QArchive ar(sArchive);
+            ar.setCurrentFile(sFile);
+            data_ = ar.readFile();
+            timeBirth_ = ar.getMTime();
+            bOpen_ = true;
         }
     }
     if(sFormat_ == u"fb2")
@@ -120,34 +100,23 @@ void BookFile::open()
         }
     }else if(sFormat_ == u"epub")
         openEpub();
-    else if(sFormat_.endsWith(u"zip"))
+    bool bArch = std::ranges::any_of(archFormats_, [this](const QString& suffix)
+        { return sFormat_.endsWith(suffix); });
+    if(bArch)
     {
         if(data_.size() != 0){
-            QBuffer buffer;
-            QuaZip zip;
-            buffer.setData(data_);
-            zip.setIoDevice(&buffer);
-            zip.open(QuaZip::mdUnzip);
-            auto listFi = zip.getFileInfoList64();
-            for(const auto &fi :std::as_const(listFi)){
-                if(fi.name.endsWith(u".fbd") && !doc_.isDocument()){
-                    zip.setCurrentFile(fi.name);
-                    QuaZipFile zipFile(&zip);
-                    zipFile.open(QIODevice::ReadOnly);
-                    QByteArray ba = zipFile.readAll();
-                    zipFile.close();
+            QArchive a(data_);
+            auto fileList = a.fileList();
+            for( const auto &sFile :fileList){
+                if(sFile.endsWith(u".fbd") && !doc_.isDocument()){
+                    QByteArray ba = a.readFile(sFile);
                     doc_.setContent(ba);
                 }else
-                if(fi.name.endsWith(u".epub") && pEpub_ == nullptr){
-                    zip.setCurrentFile(fi.name);
-                    QuaZipFile zipFile(&zip);
-                    zipFile.open(QIODevice::ReadOnly);
-                    QByteArray data = zipFile.readAll();
-                    zipFile.close();
-                    pEpub_ = std::make_unique<EpubReader>(data);
+                if(sFile.endsWith(u".epub") && pEpub_ == nullptr){
+                    QByteArray ba = a.readFile(sFile);
+                    pEpub_ = std::make_unique<EpubReader>(ba);
                 }
             }
-            zip.close();
         }
     }
 }
@@ -176,7 +145,7 @@ QImage BookFile::cover()
         if(pEpub_ != nullptr)
             img = coverEpub();
         else if(sArchive_.contains(u".zip/"_s))
-            img = coverZip();
+            img = coverArchive();
 #ifdef USE_DEJVULIBRE
         else if(sFormat_ == u"djvu" || sFormat_ == u"djv")
             img = coverDjvu();
@@ -185,8 +154,10 @@ QImage BookFile::cover()
         else if(sFormat_ == u"pdf")
             img = coverPdf();
 #endif //USE_POPPLER
-        else if(sFormat_.endsWith(u"zip"))
-            img = coverZip();
+        bool bArch = std::ranges::any_of(archFormats_, [this](const QString& suffix)
+                                         { return sFormat_.endsWith(suffix); });
+        if(bArch)
+            img = coverArchive();
     }
 
     if(!img.isNull() && img.width() < img.height()*2){
@@ -403,34 +374,20 @@ QImage BookFile::coverDjvu()
 }
 #endif
 
-QImage BookFile::coverZip()
+QImage BookFile::coverArchive()
 {
     QImage img;
-
-    QBuffer buffer;
-    QuaZip zip;
+    QArchive ar;
     if(data_.size() != 0){
-        buffer.setData(data_);
-        zip.setIoDevice(&buffer);
+        ar.setData(data_);
     }
-    zip.open(QuaZip::mdUnzip);
-    auto listFi = zip.getFileInfoList64();
-    for(const auto &fi :std::as_const(listFi)){
-        QString sFileName = fi.name.toLower();
+    auto files = ar.fileList();
+    for(auto &sFile :files){
 #ifdef USE_DEJVULIBRE
-        if(sFileName.endsWith(u".djvu")){
-            zip.setCurrentFile(fi.name);
-            QuaZipFile zipFile(&zip);
-            zipFile.open(QIODevice::ReadOnly);
-            QByteArray data = zipFile.readAll();
-            zipFile.close();
+        if(sFile.endsWith(u".djvu")){
             QString sDjVuFile = QDir::tempPath() % u"/freeLib/"_s % QString::number(idBook_) % u".djvu"_s;
-            QFile fileDjVu;
-            fileDjVu.setFileName(sDjVuFile);
-            if(!fileDjVu.open(QIODevice::ReadWrite))
-                break;
-            fileDjVu.write(data);
-            fileDjVu.close();
+            if(!ar.extractFileTo(sFile, sDjVuFile))
+                return img;
             static DjVu djvu;
             static std::mutex m;
             if(djvu.loadLibrary()){
@@ -439,19 +396,14 @@ QImage BookFile::coverZip()
                     img = djvu.getCover();
                 }
             }
-            if(!fileDjVu.fileName().isEmpty())
-                fileDjVu.remove();
+            QFile::remove(sDjVuFile);
             if(isUniformColor(img))
                 img = QImage();
         } else
 #endif
 #ifdef USE_POPPLER
-        if(sFileName.endsWith(u".pdf")){
-            zip.setCurrentFile(fi.name);
-            QuaZipFile zipFile(&zip);
-            zipFile.open(QIODevice::ReadOnly);
-            QByteArray ba = zipFile.readAll();
-            zipFile.close();
+        if(sFile.endsWith(u".pdf")){
+            QByteArray ba = ar.readFile(sFile);
             std::unique_ptr<Poppler::Document> doc(Poppler::Document::loadFromData(ba));
             if(doc){
                 std::unique_ptr<Poppler::Page> page(doc->page(0));
@@ -461,17 +413,16 @@ QImage BookFile::coverZip()
                         return img;
                 }
             }
-        } else
+        }
 #endif //USE_POPPLER
-        if(sFileName.endsWith(u".epub")){
+        if(sFile.endsWith(u".epub")){
             if(pEpub_){
                 img = pEpub_->readCover();
                 return img;
             }
         }
-    }
 
-    zip.close();
+    }
     return img;
 }
 
@@ -510,13 +461,13 @@ QImage BookFile::createCover()
     paintText(painter, QRect(delta, delta+r_heigthTopBottom+delta2, r_width, r_heigth-r_heigthTopBottom*2-delta2*2),
               Qt::AlignHCenter|Qt::AlignVCenter|Qt::TextWordWrap, sBookName_);
 
-    if(!sSequence_.isEmpty()){
+    if(!sSeries_.isEmpty()){
         font.setBold(false);
         font.setPixelSize(img.height() / 17);
         painter.setFont(font);
         paintText(painter, QRect(delta, delta+r_heigth-r_heigthTopBottom+delta2, r_width, r_heigthTopBottom-delta2),
                   Qt::AlignHCenter|Qt::AlignBottom|Qt::TextWordWrap,
-                  sSequence_);
+                  sSeries_);
     }
     return img;
 }
@@ -652,19 +603,31 @@ QString BookFile::fileName() const
 QString BookFile::fileFormat() const
 {
     QString sFormat;
-    if(sFormat_.endsWith(u".zip") && sFormat_.size()>4)
-        sFormat = sFormat_.left(sFormat_.size()-4);
-    else if(sFormat_ == u"zip"){
-        if(sBookName_.endsWith(u"(pdf)"))
-            sFormat = u"pdf"_s;
-        else if(sBookName_.endsWith(u"(djvu)") || sBookName_.endsWith(u"(djv)"))
-            sFormat = u"djvu"_s;
-        else if(sBookName_.endsWith(u"(epub)"))
-            sFormat = u"epub"_s;
+    bool bCompoundArchFormat = false;
+    if(bOneBookInArchive_){
+        for(const auto &sArchFormat :archFormats_){
+            if(sFormat_.endsWith(sArchFormat) && sFormat_.size()>sArchFormat.size()+1){
+                sFormat = sFormat_.left(sFormat_.size() - (sArchFormat.size()+1));
+                break;
+            }
+        }
+        if(sFormat.isEmpty()){
+            bool bArch = std::ranges::any_of(archFormats_, [this](const QString& suffix)
+                                             { return sFormat_.endsWith(suffix); });
+            if(bArch){
+                if(sBookName_.endsWith(u"(pdf)"))
+                    sFormat = u"pdf"_s;
+                else if(sBookName_.endsWith(u"(djvu)") || sBookName_.endsWith(u"(djv)"))
+                    sFormat = u"djvu"_s;
+                else if(sBookName_.endsWith(u"(epub)"))
+                    sFormat = u"epub"_s;
+            }
 
+        }
     }
-    else
+    if(sFormat.isEmpty())
         sFormat = sFormat_;
+
     return sFormat;
 }
 
@@ -704,52 +667,52 @@ QByteArray BookFile::data()
     if(sArchive_.isEmpty())
         data_ = file_.readAll();
     else{
-        if(sFormat_ == u"pdf.zip" || (sFormat_ == u"zip" && sBookName_.endsWith(u"(pdf)")))
-            return dataZip(u".pdf"_s);
-        else if(sFormat_ == u"djvu.zip" || (sFormat_ == u"zip" && (sBookName_.endsWith(u"(djvu)") || sBookName_.endsWith(u"(djv)"))))
-            return dataZip(u".djvu"_s);
-        else if(sFormat_ == u"epub.zip" || (sFormat_ == u"zip" && sBookName_.endsWith(u"(epub)")))
-            return dataZip(u".epub"_s);
+        for(const auto &sArchFormat :archFormats_){
+            if(sFormat_ == u"pdf."_s + sArchFormat || (sFormat_ == sArchFormat && sBookName_.endsWith(u"(pdf)")))
+                return dataArchive(u".pdf"_s);
+            else if(sFormat_ == u"djvu."_s + sArchFormat || (sFormat_ == sArchFormat && (sBookName_.endsWith(u"(djvu)") || sBookName_.endsWith(u"(djv)"))))
+                return dataArchive(u".djvu"_s);
+            else if(sFormat_ == u"epub."_s + sArchFormat || (sFormat_ == sArchFormat && sBookName_.endsWith(u"(epub)")))
+                return dataArchive(u".epub"_s);
+        }
     }
     return data_;
 }
 
-QByteArray BookFile::dataZip(const QString &sSubFormat)
+QByteArray BookFile::dataArchive(const QString &sSubFormat)
 {
-    QBuffer buffer;
-    QuaZip zip;
     QByteArray ba;
     if(data_.size() != 0){
-        buffer.setData(data_);
-        zip.setIoDevice(&buffer);
-        zip.open(QuaZip::mdUnzip);
-        auto listFi = zip.getFileInfoList64();
-        for(const auto &fi :std::as_const(listFi)){
-            if(fi.name.endsWith(sSubFormat)){
-                zip.setCurrentFile(fi.name);
-                QuaZipFile zipFile(&zip);
-                zipFile.open(QIODevice::ReadOnly);
-                ba = zipFile.readAll();
-                zipFile.close();
-                break;
+        QArchive a(data_);
+        auto fileList = a.fileList();
+        int nCount = 0;
+        for(const auto &sFile :fileList){
+            if(sFile.endsWith(sSubFormat)){
+                nCount++;
+                if(nCount > 1)
+                    continue;
+                ba = a.readFile(sFile);
             }
+        }
+        bOneBookInArchive_ = (nCount == 1);
+        if(!bOneBookInArchive_){
+            return data_;
         }
     }
     return ba;
 }
 
-QByteArray BookFile::openZipInZip(const QString &sArchive, const QString &sFileName)
+QByteArray BookFile::openArcInArc(const QString &sArchive, const QString &sFileName)
 {
     QByteArray data;
-    QBuffer buffer;
     QStringList sZipChain;
-    QuaZip uz;
-    QuaZipFile zipFile;
     qsizetype posNext = 0;
     qsizetype posPrev = 0;
-    while(posNext != -1){
+
+    // Собираем цепочку "archive.zip", "inner.zip", ...
+    while (posNext != -1) {
         posNext = sArchive.indexOf(u".zip"_s, posPrev);
-        if(posNext != -1){
+        if (posNext != -1) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
             sZipChain << sArchive.sliced(posPrev, posNext + 4 - posPrev);
 #else
@@ -760,44 +723,33 @@ QByteArray BookFile::openZipInZip(const QString &sArchive, const QString &sFileN
         }
     }
 
-    std::vector<QByteArray> vData;
-    for(int i=1; i<sZipChain.count(); i++){
-        QBuffer tmpBuffer;
-        if(i==1){
-            QString sFirstArchive = sZipChain[0];
-            uz.setZipName(sFirstArchive);
-        }else{
-            tmpBuffer.setData(vData.back());
-            uz.setIoDevice(&tmpBuffer);
-        }
+    if (sZipChain.isEmpty()) {
+        LogWarning << "No zip chain found in:" << sArchive;
+        return data;
+    }
 
-        if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
-        {
-            LogWarning << "Error open archive:" << sArchive;
+    QArchive archive;
+    // Первый элемент — реальный файл на диске
+    archive.setPath(sZipChain[0]);
+
+    // Для каждого вложенного zip'а читаем его содержимое и инициализируем QArchive из байтов
+    for (int i = 1; i < sZipChain.count(); ++i) {
+        const QString &innerZipName = sZipChain[i];
+        QByteArray innerData = archive.readFile(innerZipName); // читаем вложенный zip
+        if (innerData.isEmpty()) {
+            LogWarning << "Error open nested zip:" << innerZipName;
             return data;
         }
-        zipFile.setZip(&uz);
-        setCurrentZipFileName(&uz, sZipChain[i]);
-        if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-        {
-            LogWarning << "Error open file:" << sZipChain[i];
-            return data;
-        }
-        vData.emplace_back(zipFile.readAll());
-        zipFile.close();
-        uz.close();
+        archive.close();
+        archive.setData(innerData); // теперь archive работает с in-memory zip
     }
-    if(!vData.empty()){
-        buffer.setData(vData.back());
-        uz.setIoDevice(&buffer);
-        uz.open(QuaZip::mdUnzip);
+
+    // Находим и читаем запрошенный файл в последнем (внешнем/вложенном) архиве
+    data = archive.readFile(sFileName);
+    if (data.isEmpty()) {
+        if(!sFileName.endsWith(u".fbd"))
+            LogWarning << "Error open file:" << sFileName;
     }
-    setCurrentZipFileName(&uz, sFileName);
-    zipFile.setZip(&uz);
-    if(!zipFile.open(QIODevice::ReadOnly))
-        LogWarning << "Error open file:" << sFileName;
-    else
-        data = zipFile.readAll();
 
     return data;
 }

@@ -90,6 +90,8 @@ set(PROJECT_SOURCES
         SmtpClient/src/mimeqpformatter.cpp      SmtpClient/src/mimeqpformatter.h
         SmtpClient/src/mimeqpencoder.cpp        SmtpClient/src/mimeqpencoder.h
         SmtpClient/src/mimecontentencoder.cpp   SmtpClient/src/mimecontentencoder.h
+
+        qarchive.cpp     qarchive.h
 )
 
 add_subdirectory(Help)
@@ -117,6 +119,15 @@ if(NOT QuaZip-Qt${FREELIB_QT_MAJOR_VERSION}_FOUND)
     add_subdirectory(quazip)
 endif()
 
+find_package(LibArchive QUIET)
+if(LibArchive_FOUND)
+    message(STATUS "Found LibArchive")
+    add_compile_definitions(USE_LIBARCHIVE)
+    set(PROJECT_SOURCES
+        ${PROJECT_SOURCES}
+    )
+endif()
+
 if(DJVULIBRE_FOUND)
     message(STATUS "Found DjVuLibre")
     set(PROJECT_SOURCES
@@ -140,18 +151,18 @@ if(UNIX AND NOT APPLE)
 endif(UNIX AND NOT APPLE)
 
 if(FREELIB_QT_MAJOR_VERSION EQUAL 6)
-  if(WIN32)
-    qt_add_executable(freelib
-      WIN32
-      MANUAL_FINALIZATION
-      ${PROJECT_SOURCES})
-  else()
     qt6_add_resources(PROJECT_SOURCES resource.qrc)
-    qt_add_executable(freelib
-      MANUAL_FINALIZATION
-      ${PROJECT_SOURCES}
-    )
-  endif(WIN32)
+    if(WIN32)
+        qt_add_executable(freelib
+            WIN32
+            MANUAL_FINALIZATION
+            ${PROJECT_SOURCES})
+    else()
+        qt_add_executable(freelib
+            MANUAL_FINALIZATION
+            ${PROJECT_SOURCES}
+        )
+    endif(WIN32)
 else()
     qt5_add_resources(PROJECT_SOURCES resource.qrc)
     add_executable(freelib
@@ -163,7 +174,6 @@ endif()
 #qt5_add_translation(QM_FILES ${TS_FILES})
 
 file(GLOB QM_FILES "${CMAKE_CURRENT_SOURCE_DIR}/language_*.qm")
-#file(COPY ${QM_FILES} DESTINATION ${CMAKE_CURRENT_BINARY_DIR}/translations)
 install(FILES ${QM_FILES} DESTINATION ${DATA_INSTALL_DIR}/translations)
 
 if(CMAKE_BUILD_TYPE STREQUAL "Debug")
@@ -211,6 +221,10 @@ endif()
 
 if(TBB_FOUND)
     target_link_libraries(freelib PRIVATE TBB::tbb)
+endif()
+
+if(LibArchive_FOUND)
+    target_link_libraries(freelib PRIVATE LibArchive::LibArchive)
 endif()
 
 target_precompile_headers(freelib

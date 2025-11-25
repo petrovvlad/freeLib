@@ -1022,28 +1022,35 @@ void ImportThread::process()
             {
                 deleted = (substrings[field_index[_DELETED]].trimmed().toInt() > 0);
             }
-            QString format;
+            QString sFormat;
             if(substrings.count() > field_index[_FORMAT])
             {
-                format = substrings[field_index[_FORMAT]].trimmed().toLower();
-                if(format == u"zip"){
-                    if(file.endsWith(u".pdf", Qt::CaseInsensitive)){
-                        format = u"pdf.zip"_s;
-                        file.chop(4);
-                        if(name.endsWith(u"(pdf)"))
-                            name.chop(5);
-                    } else
-                    if(file.endsWith(u".djvu", Qt::CaseInsensitive)){
-                        format = u"djvu.zip"_s;
-                        file.chop(5);
-                        if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
-                            name.chop(6);
-                    } else
-                    if(file.endsWith(u".epub", Qt::CaseInsensitive)){
-                        format = u"epub.zip"_s;
-                        file.chop(5);
-                        if(name.endsWith(u"(epub)") || name.endsWith(u"[epub]"))
-                            name.chop(6);
+                static const std::vector<QString> arcFormat = {u"zip"_s,
+#ifdef USE_LIBARCHIVE
+                    u"rar"_s, u"7z"_s
+#endif //USE_LIBARCHIVE
+                };
+                sFormat = substrings[field_index[_FORMAT]].trimmed().toLower();
+                for(const auto &sArcFormat: arcFormat){
+                    if(sFormat == sArcFormat){
+                        if(file.endsWith(u".pdf", Qt::CaseInsensitive)){
+                            sFormat = u"pdf."_s + sArcFormat;
+                            file.chop(4);
+                            if(name.endsWith(u"(pdf)"))
+                                name.chop(5);
+                        } else
+                        if(file.endsWith(u".djvu", Qt::CaseInsensitive)  || file.endsWith(u".djv", Qt::CaseInsensitive)){
+                            sFormat = u"djvu."_s + sArcFormat;
+                            file.chop(5);
+                            if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
+                                name.chop(6);
+                        } else
+                        if(file.endsWith(u".epub", Qt::CaseInsensitive)){
+                            sFormat = u"epub."_s + sArcFormat;
+                            file.chop(5);
+                            if(name.endsWith(u"(epub)") || name.endsWith(u"[epub]"))
+                                name.chop(6);
+                        }
                     }
                 }
             }
@@ -1113,7 +1120,7 @@ void ImportThread::process()
                 }
             }
             if(!bWoDeleted_ || !deleted){
-                uint idBook = addBook(star, name, numInSeries, file, size, idInLib, deleted, format, date, language, keys, idLib_, folder, &listBookTags);
+                uint idBook = addBook(star, name, numInSeries, file, size, idInLib, deleted, sFormat, date, language, keys, idLib_, folder, &listBookTags);
                 if(!sSeries.isEmpty())
                     addSeries(sSeries, idLib_, idBook, numInSeries, &listSeriesTags);
 
@@ -1133,12 +1140,12 @@ void ImportThread::process()
                     QString sAuthorLow = sAuthor.toLower();
                     bool bUnkownAuthor = (sAuthorLow.contains(QStringLiteral("автор")) && (sAuthorLow.contains(QStringLiteral("неизвестен")) || sAuthorLow.contains(QStringLiteral("неизвестный"))))
                                       || sAuthorLow == QStringLiteral("неизвестно");
-                    if(format == u"fb2" && Authors.size()==1 && bUnkownAuthor)
+                    if(sFormat == u"fb2" && Authors.size()==1 && bUnkownAuthor)
                     {
                         QString sFile, sArchive;
                         QBuffer buffer;
-                        sFile = QStringLiteral("%1.%2").arg(file, format);
-                        sArchive = QStringLiteral("%1/%2").arg(sPath_, folder.replace(QStringLiteral(".inp"), QStringLiteral(".zip")));
+                        sFile = file % u"." % sFormat;
+                        sArchive = sPath_ % u"/"_s % folder.replace(u".inp"_s, u".zip"_s);
                         if(archiveFile.getZipName() != sArchive){
                             archiveFile.close();
                             archiveFile.setZipName(sArchive);
