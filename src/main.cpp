@@ -50,12 +50,25 @@ void UpdateLibs()
 
 QString parseOption(int argc, char* argv[], const char* option)
 {
+    // QString sRet;
+    // if(argc >= 2){
+    //     for(int j=0; j+1<argc; j++){
+    //         if(!strcmp(argv[j], option)){
+    //             sRet = QString::fromUtf8(argv[j+1]);
+    //             break;
+    //         }
+    //     }
+    // }
     QString sRet;
     if(argc >= 2){
-        for(int j=0; j+1<argc; j++){
-            if(!strcmp(argv[j], option)){
-                sRet = QString::fromUtf8(argv[j+1]);
-                break;
+        if(strcmp(option, "") == 0){
+            sRet = QString::fromUtf8(argv[1]);
+        } else {
+            for(int j=0; j+1<argc; j++){
+                if(!strcmp(argv[j], option)){
+                    sRet = QString::fromUtf8(argv[j+1]);
+                    break;
+                }
             }
         }
     }
@@ -64,33 +77,32 @@ QString parseOption(int argc, char* argv[], const char* option)
 
 void cmdhelp(){
 
-std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Option [Parameters]\n"
-             "Options:\n"
-             "-t,\t--tray\t\tMinimize to tray on start\n"
+std::cout  << "freelib " << FREELIB_VERSION << "\n\nfreelib [Options] [Comand [Parameters]\n"
+            "Comands:\n"
+            "  tray\t\tMinimize to tray on start\n"
 #ifdef USE_HTTSERVER
-             "-s,\t--server\tStart server\n"
-                    "\t\t-lang [lang]\tLanguage filter\n"
-            "\t--set\t Set server parameters\n"
-                "\t\t-u [user]\n"
-                "\t\t-p [password]\n"
-                "\t\t-port [port]\n"
+            "  server\tStart server\n"
+            "  set\t\tSet server parameters\n"
+                "\t-u [user]\n"
+                "\t-p [password]\n"
+                "\t-port [port]\n"
 #endif
-             "-v,\t--version\tShow version and exit\n"
-             "\t--verbose\tVerbose mode\n"
-             "\t--lib-ls\tShow libraries\n"
-             "\t--lib-db [path]\tSet database path\n"
-             "\t--lib-in [id]\tLibrary information\n"
-             "\t--lib-sp\tSet paths for a library\n"
-                    "\t\t-id [id]\n"
-                    "\t\t-inpx [inpx path]\n"
-                    "\t\t-path [library directory]\n"
-             "\t--lib-ad\tAdd library\n"
-                    "\t\t-name [name]\n"
-                    "\t\t-inpx [inpx path]\n"
-                    "\t\t-path [library directory]\n"
-             "\t--lib-dl [id]\tDelete library\n"
-             "\t--lib-up [id]\tUpdate library\n"
-			 ;
+            "  version\tShow version and exit\n"
+            "  lib-ls\tShow libraries\n"
+            "  lib-db [path]\tSet database path\n"
+            "  lib-in [id]\tLibrary information\n"
+            "  lib-sp\tSet paths for a library\n"
+                    "\t-id [id]\n"
+                    "\t-inpx [inpx path]\n"
+                    "\t-path [library directory]\n"
+            "  lib-ad\tAdd library\n"
+                    "\t-name [name]\n"
+                    "\t-inpx [inpx path]\n"
+                    "\t-path [library directory]\n"
+            "  lib-dl [id]\tDelete library\n"
+            "  lib-up [id]\tUpdate library\n"
+            "Options:\n"
+                    "  --verbose\tVerbose mode\n";
 }
 
 int main(int argc, char *argv[])
@@ -104,6 +116,22 @@ int main(int argc, char *argv[])
     g::bVerbose = false;
     std::unique_ptr<QCoreApplication> a;
     QString cmdparam;
+    const char *commands[] = {"tray", "--tray", "server", "--server", "set", "--set", "--version", "lib-ls", "lib-ls", "lib-db", "lib-in", "lib-ad", "lib-dl", "lib-up"};
+    const int numСommands = sizeof(commands) / sizeof(commands[0]);
+    int nCommandCount = 0;
+    for(int i=1; i<argc; i++){
+        for (int j = 0; j < numСommands; j++) {
+            if (strcmp(argv[i], commands[j]) == 0) {
+                nCommandCount++;
+                break;
+            }
+        }
+    }
+    if(nCommandCount>1){
+        std::cout << "Ошибка: можно указать не более одной команды\n";
+        cmdhelp();
+        return 1;
+    }
 
     for(int i=1; i<argc; i++){
 
@@ -118,22 +146,22 @@ int main(int argc, char *argv[])
             g::bVerbose = true;
 
 #ifdef USE_HTTSERVER
-        if (cmdparam == u"--server" || cmdparam == u"-s"){
+        if (cmdparam == u"server" || cmdparam == u"--server" || cmdparam == u"-s"){
             bServer = true;
             sLanguageFilter = parseOption(argc-(i), &argv[i], "-lang");
         }else
 #endif
-        if (cmdparam == u"--tray" || cmdparam == u"-t"){
+        if (cmdparam == u"tray" || cmdparam == u"--tray" || cmdparam == u"-t"){
             g::bTray = true;
         }else
 
-        if (cmdparam == u"--version" || cmdparam == u"-v"){
+        if (cmdparam == u"version" || cmdparam == u"--version" || cmdparam == u"-v"){
             std::cout << "freelib " << FREELIB_VERSION << "\n";
             return 0;
         }
 
 #ifdef USE_HTTSERVER
-        if (cmdparam == u"--set"){
+        if (cmdparam == u"set" || cmdparam == u"--set"){
             g::bUseGui = false;
             auto settings = GetSettings();
             QString sUser = parseOption(argc-(i), &argv[i], "-u");
@@ -159,7 +187,7 @@ int main(int argc, char *argv[])
 #endif
 
         // Edit libraries
-        if (cmdparam.contains(u"--lib"_s)){
+        if (cmdparam.startsWith(u"lib-"_s)){
             a = std::unique_ptr<QCoreApplication>(new QCoreApplication(argc, argv));
             a->setApplicationName(u"freeLib"_s);
 
@@ -167,7 +195,7 @@ int main(int argc, char *argv[])
             auto settings = GetSettings();
             g::options.Load(settings);
 
-            openDB(QStringLiteral("libdb"));
+            openDB(u"libdb"_s);
             UpdateLibs();
 
             setLocale(g::options.sUiLanguageName);
@@ -175,17 +203,22 @@ int main(int argc, char *argv[])
             uint nId = 0;
 
             // List libraries
-            if(cmdparam == u"--lib-ls"){
+            if(cmdparam == u"lib-ls"){
                 std::cout << "id\tlibrary\n"
                              "----------------------------------------------------------\n";
-                for(const auto &iLib :g::libs){
-                    std::cout << iLib.first << "\t" << iLib.second.name.toStdString() << "\n";
+                std::vector<uint> vIdLib;
+                std::ranges::copy(g::libs | std::views::keys, std::back_inserter(vIdLib));
+                std::ranges::sort(vIdLib);
+                // for(const auto &iLib :g::libs){
+                for(auto idLib :vIdLib){
+                    const auto &lib = g::libs.at(idLib);
+                    std::cout << idLib << "\t" << lib.name.toStdString() << "\n";
                 }
             }
 
             // Set database path
-            if(cmdparam == u"--lib-db"){
-                QString sDbpath = parseOption(argc-(i), &argv[i], "--lib-db");
+            if(cmdparam == u"lib-db"){
+                QString sDbpath = parseOption(argc-(i), &argv[i], "");
                 sDbpath = QFileInfo{sDbpath}.absoluteFilePath();
                 if(!sDbpath.isEmpty()){
 
@@ -204,8 +237,8 @@ int main(int argc, char *argv[])
             }
 
             // Get library information
-            if(cmdparam == u"--lib-in"){
-                nId = (parseOption(argc-(i), &argv[i], "--lib-in")).toUInt();
+            if(cmdparam == u"lib-in"){
+                nId = (parseOption(argc-i, &argv[i], "")).toUInt();
                 if(g::libs.contains(nId)){
 
                     std::cout
@@ -232,7 +265,7 @@ int main(int argc, char *argv[])
 
 
             // Set library path
-            if(cmdparam == u"--lib-sp"){
+            if(cmdparam == u"lib-sp"){
                 QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
                 QString sId = parseOption(argc-(i), &argv[i], "-id");
                 nId = sId.toUInt();
@@ -275,10 +308,11 @@ int main(int argc, char *argv[])
                     }
                 }else
                     std::cout << QApplication::translate("main", "Library not found!").toStdString() << "\n\n";
+
             }
 
             // Add library
-            if(cmdparam == u"--lib-ad"){
+            if(cmdparam == u"lib-ad"){
                 QString sPath = parseOption(argc-(i), &argv[i], "-path");
                 sPath = QFileInfo{sPath}.absoluteFilePath();
                 QString sInpx = parseOption(argc-(i), &argv[i], "-inpx");
@@ -317,9 +351,8 @@ int main(int argc, char *argv[])
 
 
             // Delete library
-            if(cmdparam == u"--lib-dl"){
-
-                nId = (parseOption(argc-(i), &argv[i], "--lib-dl")).toUInt();
+            if(cmdparam == u"lib-dl"){
+                nId = (parseOption(argc-(i), &argv[i], "")).toUInt();
                 if(g::libs.contains(nId)){
                     char ans;
                     std::cout << QApplication::translate("LibrariesDlg", "Delete library ").toStdString()
@@ -338,8 +371,8 @@ int main(int argc, char *argv[])
             }
 
             // Update libraries
-            if(cmdparam == u"--lib-up"){
-                nId = (parseOption(argc-(i), &argv[i], "--lib-up")).toUInt();
+            if(cmdparam == u"lib-up" || cmdparam == u"--lib-up"){
+                nId = (parseOption(argc-(i), &argv[i], "")).toUInt();
 
                 if(g::libs.contains(nId)){
                     auto thread = new QThread;
@@ -387,6 +420,7 @@ int main(int argc, char *argv[])
         setenv("QT_QPA_PLATFORM", "offscreen", 1);
 #endif //Q_OS_WINDOWS
         a = std::unique_ptr<QCoreApplication>(new QGuiApplication(argc, argv));
+        // a = std::unique_ptr<QCoreApplication>(new QCoreApplication(argc, argv));
         g::bUseGui = false;
     }else
 #endif //USE_HTTSERVER
