@@ -245,13 +245,12 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
            if(urlDst.scheme().isEmpty())
                urlDst.setScheme(u"file"_s);
            urlDst.setPath(sBookFileName);
-           urlDst.setQuery(u""_s);
            validateFileName(urlDst);
            if(!kioMkDir(urlDst.adjusted(QUrl::RemoveFilename))) [[unlikely]]{
                LogWarning << "Could not make dir:" << urlDst;
                return false;
            }
-           KIO::FileCopyJob *jobCopy = KIO::file_move(urlSrc, urlDst, -1, KIO::Overwrite | KIO::HideProgressInfo );
+           KIO::FileCopyJob *jobCopy = KIO::file_move(urlSrc, urlDst.adjusted(QUrl::RemoveQuery), -1, KIO::Overwrite | KIO::HideProgressInfo );
            jobCopy->start();
            jobCopy->exec();
            if (jobCopy->error()) [[unlikely]]{
