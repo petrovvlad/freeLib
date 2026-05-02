@@ -716,7 +716,7 @@ QByteArray BookFile::openArcInArc(const QString &sArchive, const QString &sFileN
 
         // Ищем любой из поддерживаемых форматов
         for (const QString &format : QArchive::formats) {
-            qsizetype pos = sArchive.indexOf(u"." + format, posPrev);
+            qsizetype pos = sArchive.indexOf(u"."_s + format, posPrev);
             if (pos != -1 && (foundPos == -1 || pos < foundPos)) {
                 foundPos = pos;
                 foundExt = format;

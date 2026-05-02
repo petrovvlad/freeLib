@@ -60,19 +60,16 @@ void QArchive::setPath(const QString &sArchivePath)
     data_.clear();
 }
 
-void QArchive::setCurrentFile(const QString &sFileName)
+bool QArchive::setCurrentFile(const QString &sFileName)
 {
-    qint64 timeStart, timeEnd;
-    timeStart = QDateTime::currentMSecsSinceEpoch();
-
     if(!open())
-        return;
+        return false;
 #ifdef USE_LIBARCHIVE
     if( archive_ ){
         entry_ = archive_entry_new();
         bool bFound  = false;
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
-            const char *path = archive_entry_pathname(entry_);
+            const char *path = archive_entry_pathname_utf8(entry_);
             if (path) {
                 QString filePath = QString::fromUtf8(path);
                 if(filePath == sFileName){
@@ -88,14 +85,13 @@ void QArchive::setCurrentFile(const QString &sFileName)
             LogWarning << "File not found in archive: " << sFileName;
             archive_entry_free(entry_);
             entry_ = nullptr;
+            return false;
         }
+        return true;
     }
     else
 #endif //USE_LIBARCHIVE
-        zip_.setCurrentFile(sFileName);
-
-    timeEnd = QDateTime::currentMSecsSinceEpoch();
-    qDebug() << "setCurrentFile " << timeEnd - timeStart << "msec " << sFileName;
+        return zip_.setCurrentFile(sFileName);
 }
 
 bool QArchive::open()
@@ -162,8 +158,10 @@ void QArchive::close()
         archive_read_close(archive_);
         archive_read_free(archive_);
         archive_ = nullptr;
-        if(entry_)
+        if(entry_){
             archive_entry_free(entry_);
+            entry_ = nullptr;
+        }
     }
     else
 #endif //USE_LIBARCHIVE
@@ -183,7 +181,7 @@ std::vector<QString> QArchive::fileList()
         entry_ = archive_entry_new();
 
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
-            const char *path = archive_entry_pathname(entry_);
+            const char *path = archive_entry_pathname_utf8(entry_);
             if (path) {
                 QString filePath = QString::fromUtf8(path);
                 // Пропускаем директории
@@ -208,7 +206,50 @@ std::vector<QString> QArchive::fileList()
     return vFilesList;
 }
 
-QByteArray QArchive::readFile(const QString &filePathInArchive)
+std::vector<AchiveFileInfo> QArchive::fileInfoList()
+{
+    std::vector<AchiveFileInfo> vFilesList;
+    if(!open())
+        return vFilesList;
+#ifdef USE_LIBARCHIVE
+    if (archive_) {
+        entry_ = archive_entry_new();
+
+        while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
+            AchiveFileInfo fi;
+            const char *path = archive_entry_pathname_utf8(entry_);
+            if (path) {
+                QString filePath = QString::fromUtf8(path);
+                fi.sFileName = filePath;
+                fi.uncompressedSize = archive_entry_size(entry_);
+                // Пропускаем директории
+                if (!filePath.endsWith('/')) {
+                    vFilesList.push_back(fi);
+                }
+            }
+            archive_entry_clear(entry_);
+        }
+        close();
+    }
+    else
+#endif //USE_LIBARCHIVE
+    {
+        auto listFi = zip_.getFileInfoList64();
+        for(const auto &quafi :std::as_const(listFi)){
+            if (!quafi.name.endsWith('/')){
+                AchiveFileInfo fi;
+                fi.sFileName = quafi.name;
+                fi.uncompressedSize = quafi.uncompressedSize;
+                vFilesList.push_back(fi);
+            }
+        }
+    }
+
+    return vFilesList;
+
+}
+
+QByteArray QArchive::readFile(const QString &sFileName)
 {
     QByteArray result;
     if(!open())
@@ -219,17 +260,17 @@ QByteArray QArchive::readFile(const QString &filePathInArchive)
         bool found = false;
 
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
-            QString currentPath = QString::fromUtf8(archive_entry_pathname(entry_));
-            if (currentPath == filePathInArchive) {
+            QString currentPath = QString::fromUtf8(archive_entry_pathname_utf8(entry_));
+            if (currentPath == sFileName) {
                 found = true;
 
-                qint64 size = archive_entry_size(entry_);
+                auto size = archive_entry_size(entry_);
                 if (size <= 0 || size > 1024 * 1024 * 250) {  // Ограничение 250 МБ
                     archive_read_data_skip(archive_);
                     break;
                 }
 
-                result.resize(static_cast<int>(size));
+                result.resize(size);
                 la_ssize_t bytesRead = archive_read_data(archive_, result.data(), size);
                 if (bytesRead != size) {
                     LogWarning << "Failed to read file data: " << archive_error_string(archive_);
@@ -241,8 +282,8 @@ QByteArray QArchive::readFile(const QString &filePathInArchive)
         }
 
         if (!found) {
-            if(!filePathInArchive.endsWith(u".fbd"))
-                LogWarning << "File not found in archive: " << filePathInArchive;
+            if(!sFileName.endsWith(u".fbd"))
+                LogWarning << "File not found in archive: " << sFileName;
         }
 
         close();
@@ -250,11 +291,11 @@ QByteArray QArchive::readFile(const QString &filePathInArchive)
 #endif //USE_LIBARCHIVE
 
     {
-        zip_.setCurrentFile(filePathInArchive);
+        zip_.setCurrentFile(sFileName);
         QuaZipFile zipFile(&zip_);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
         {
-            LogWarning << "Error open file:" << filePathInArchive;
+            LogWarning << "Error open file:" << sFileName;
         }else{
             result = zipFile.readAll();
             zipFile.close();
@@ -262,6 +303,99 @@ QByteArray QArchive::readFile(const QString &filePathInArchive)
     }
 
     return result;
+}
+
+QByteArray QArchive::readFile(const QString &sFileName, size_t size)
+{
+    QByteArray result;
+    if(!open())
+        return result;
+#ifdef USE_LIBARCHIVE
+    if(archive_){
+        entry_ = archive_entry_new();
+        bool found = false;
+
+        while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
+            QString currentPath = QString::fromUtf8(archive_entry_pathname_utf8(entry_));
+            if (currentPath == sFileName) {
+                found = true;
+
+                size = std::min(static_cast<size_t>(archive_entry_size(entry_)), size);
+                if (size == 0 ) {
+                    archive_read_data_skip(archive_);
+                    break;
+                }
+
+                result.resize(size);
+                la_ssize_t bytesRead = archive_read_data(archive_, result.data(), size);
+                if (bytesRead != size) {
+                    LogWarning << "Failed to read file data: " << archive_error_string(archive_);
+                    result.clear();
+                }
+                break;
+            }
+            archive_entry_clear(entry_);
+        }
+
+        if (!found) {
+            if(!sFileName.endsWith(u".fbd"))
+                LogWarning << "File not found in archive: " << sFileName;
+        }
+
+        close();
+    }else
+#endif //USE_LIBARCHIVE
+
+    {
+        zip_.setCurrentFile(sFileName);
+        QuaZipFile zipFile(&zip_);
+        if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
+        {
+            LogWarning << "Error open file:" << sFileName;
+        }else{
+            result = zipFile.read(size);
+            zipFile.close();
+        }
+    }
+
+    return result;
+}
+
+QByteArray QArchive::readFile(size_t size)
+{
+    QByteArray result;
+
+#ifdef USE_LIBARCHIVE
+    if(archive_){
+        if(!entry_)
+            return result;
+        size = std::min(static_cast<size_t>(archive_entry_size(entry_)), size);
+        if (size == 0) {
+            return result;
+        }
+
+        result.resize(size);
+        la_ssize_t bytesRead = archive_read_data(archive_, result.data(), size);
+        if (bytesRead != size) {
+            LogWarning << "Failed to read file data: " << archive_error_string(archive_);
+            result.clear();
+        }
+    }
+    else
+#endif //USE_LIBARCHIVE
+    {
+        QuaZipFile zipFile(&zip_);
+        if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
+        {
+            LogWarning << "Error open file";
+        }else{
+            result = zipFile.read(size);
+            zipFile.close();
+        }
+    }
+
+    return result;
+
 }
 
 QByteArray QArchive::readFile()
@@ -272,7 +406,7 @@ QByteArray QArchive::readFile()
     if(archive_){
         if(!entry_)
             return result;
-        qint64 size = archive_entry_size(entry_);
+        auto size = archive_entry_size(entry_);
         if (size <= 0 || size > 1024 * 1024 * 250) {  // Ограничение 250 МБ
             return result;
         }
@@ -298,7 +432,6 @@ QByteArray QArchive::readFile()
     }
 
     return result;
-
 }
 
 bool QArchive::extractFileTo(const QString sFileName, const QString &sDst)
@@ -313,7 +446,7 @@ bool QArchive::extractFileTo(const QString sFileName, const QString &sDst)
         bool found = false;
 
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
-            QString currentPath = QString::fromUtf8(archive_entry_pathname(entry_));
+            QString currentPath = QString::fromUtf8(archive_entry_pathname_utf8(entry_));
             if (currentPath == sFileName) {
                 found = true;
 
@@ -375,7 +508,7 @@ QDateTime QArchive::getMTime(const QString sFileName)
     if(archive_){
         entry_ = archive_entry_new();
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
-            const char *path = archive_entry_pathname(entry_);
+            const char *path = archive_entry_pathname_utf8(entry_);
             if (path) {
                 QString filePath = QString::fromUtf8(path);
                 if(filePath == sFileName){
@@ -428,4 +561,9 @@ QDateTime QArchive::getMTime()
     }
     return time;
 
+}
+
+QString QArchive::getArcName()
+{
+    return sArchivePath_;
 }
