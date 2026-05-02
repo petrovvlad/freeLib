@@ -9,11 +9,7 @@
 #include <QDebug>
 #include <QDir>
 
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazipfile.h>
-#endif
+#include"qarchive.h"
 
 #include "utilites.h"
 #include "options.h"
@@ -431,10 +427,9 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     }
     else
     {
-        QString sTempZipDir = QDir::tempPath() + u"/freeLib/zip/"_s ;
-        if(arh_name.startsWith(sTempZipDir)){
-            arh_name = arh_name.right(arh_name.length() - sTempZipDir.length());
-            arh_name.replace(QStringLiteral(".zip.dir/"), QStringLiteral(".zip/"));
+        QString sTempArcDir = QDir::tempPath() + u"/freeLib/arc/"_s ;
+        if(arh_name.startsWith(sTempArcDir)){
+            arh_name = arh_name.right(arh_name.length() - sTempArcDir.length());
         }else
             arh_name = arh_name.right(arh_name.length() - sPath_.length());
         if(!arh_name.isEmpty() && (arh_name.at(0) == '/' || arh_name.at(0) == '\\'))
@@ -455,8 +450,8 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
     QDomElement title_info = doc.elementsByTagName(u"title-info"_s).at(0).toElement();
     QString sTitle = title_info.elementsByTagName(u"book-title"_s).at(0).toElement().text();
     QString sLanguage = title_info.elementsByTagName(u"lang"_s).at(0).toElement().text().left(2);
-    QString sSeries = title_info.elementsByTagName(u"sequence"_s).at(0).attributes().namedItem(QStringLiteral("name")).toAttr().value().trimmed();
-    uint numInSeries = title_info.elementsByTagName(u"sequence"_s).at(0).attributes().namedItem(QStringLiteral("number")).toAttr().value().trimmed().toUInt();
+    QString sSeries = title_info.elementsByTagName(u"sequence"_s).at(0).attributes().namedItem(u"name"_s).toAttr().value().trimmed();
+    uint numInSeries = title_info.elementsByTagName(u"sequence"_s).at(0).attributes().namedItem(u"number"_s).toAttr().value().trimmed().toUInt();
 
     std::vector<SAuthor> vAuthors;
     QDomNodeList authors = title_info.elementsByTagName(u"author"_s);
@@ -469,14 +464,12 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
         author.sMiddleName = element.elementsByTagName(u"middle-name"_s).at(0).toElement().text().trimmed();
         vAuthors.push_back(author);
     }
-    QStringList listGenres;
-    QDomNodeList genre = title_info.elementsByTagName(QStringLiteral("genre"));
+    std::vector<QString> vGenres;
+    QDomNodeList genre = title_info.elementsByTagName(u"genre"_s);
     for(int i=0; i<genre.count(); i++)
-    {
-        listGenres << genre.at(i).toElement().text().trimmed();
-    }
-    QDomElement publish_info = doc.elementsByTagName(QStringLiteral("publish-info")).at(0).toElement();
-    QString sIsbn = publish_info.elementsByTagName(QStringLiteral("isbn")).at(0).toElement().text();
+        vGenres.push_back( genre.at(i).toElement().text().trimmed() );
+    QDomElement publish_info = doc.elementsByTagName(u"publish-info"_s).at(0).toElement();
+    QString sIsbn = publish_info.elementsByTagName(u"isbn"_s).at(0).toElement().text();
 
     uint idBook = addBook(0, sTitle, numInSeries, file_name, (file_size == 0 ?ba.size() :file_size), 0, false, fi.suffix(), QDate::currentDate(),
                                 sLanguage, u""_s, idLib_, arh_name);
@@ -490,7 +483,7 @@ void ImportThread::readFB2(const QByteArray& ba, QString file_name, QString arh_
         if(bFirstAuthorOnly_)
             break;
     }
-    for(const auto &sGenre: std::as_const(listGenres))
+    for(const auto &sGenre: vGenres)
         AddGenre(idBook, sGenre, idLib_);
 }
 
@@ -501,10 +494,9 @@ void ImportThread::readEPUB(const QByteArray &ba, QString sFileName, QString sAr
             sFileName = sFileName.right(sFileName.length() - 1);
         }
     } else {
-        QString sTempZipDir = QDir::tempPath() + u"/freeLib/zip/"_s;
-        if (sArhName.startsWith(sTempZipDir)) {
-            sArhName = sArhName.right(sArhName.length() - sTempZipDir.length());
-            sArhName.replace(u".zip.dir/"_s, u".zip/"_s);
+        QString sTempArcDir = QDir::tempPath() + u"/freeLib/arc/"_s ;
+        if (sArhName.startsWith(sTempArcDir)) {
+            sArhName = sArhName.right(sArhName.length() - sTempArcDir.length());
         } else {
             sArhName = sArhName.right(sArhName.length() - sPath_.length());
         }
@@ -550,7 +542,9 @@ void ImportThread::readEPUB(const QByteArray &ba, QString sFileName, QString sAr
 
 QFileInfoList getFileList(const QString &sPath)
 {
-    QStringList filter = {u"*.fb2"_s, u"*.epub"_s, u"*.zip"_s};
+    QStringList filter = {u"*.fb2"_s, u"*.epub"_s};
+    for(const auto& format :QArchive::formats)
+        filter.append(u"*."_s + format);
     QDir dir(sPath);
     const auto &listEntry = dir.entryInfoList(filter, QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable|QDir::Files|QDir::AllDirs);
     QFileInfoList listFiles;
@@ -568,7 +562,7 @@ void ImportThread::importBooksFromPath(const QString &sPath)
     auto listFiles = getFileList(sPath);
     if(listFiles.count() > 0)
         importBooksFromList(listFiles);
-    QDir(QDir::tempPath() + u"/freeLib/zip/"_s).removeRecursively();
+        QDir(QDir::tempPath() % u"/freeLib/arc/"_s).removeRecursively();
 }
 
 
@@ -582,30 +576,33 @@ void ImportThread::importBooksFromList(const QFileInfoList &listFiles)
         auto &fileInfo = listFiles[i];
         QString sFileName = fileInfo.absoluteFilePath();
         QString sSuffix = fileInfo.suffix().toLower();
+        bool bArcSuffix = contains(QArchive::formats, sSuffix);
         if(sSuffix != u"fbd" &&
-         !(sSuffix == u"zip" || sSuffix == u"fb2" || sSuffix == u"epub"))
+         !(sSuffix == u"fb2" || sSuffix == u"epub" || bArcSuffix))
         {
             QString fbd = fileInfo.absolutePath() % u"/"_s % fileInfo.completeBaseName() % u".fbd"_s;
             QFile file(fbd);
             if(file.exists())
             {
-                file.open(QFile::ReadOnly);
-                readFB2(file.readAll(), sFileName, u""_s, fileInfo.size());
-                nBooksCount++;
+                if(file.open(QFile::ReadOnly)){
+                    readFB2(file.readAll(), sFileName, u""_s, fileInfo.size());
+                    nBooksCount++;
+                }
             }
         }
         else if(sSuffix == u"fb2" || sSuffix == u"epub")
         {
             QFile file(sFileName);
-            file.open(QFile::ReadOnly);
-            QByteArray ba = file.readAll();
-            if(sSuffix == u"fb2")
-                readFB2(ba, sFileName, u""_s);
-            else
-                readEPUB(ba, sFileName, u""_s);
-            nBooksCount++;
+            if(file.open(QFile::ReadOnly)){
+                QByteArray ba = file.readAll();
+                if(sSuffix == u"fb2")
+                    readFB2(ba, sFileName, u""_s);
+                else
+                    readEPUB(ba, sFileName, u""_s);
+                nBooksCount++;
+            }
         }
-        else if(sSuffix == u"zip")
+        else if(bArcSuffix)
         {
             QString sArchName;
             if(nUpdateType_ == UT_NEW)
@@ -620,7 +617,7 @@ void ImportThread::importBooksFromList(const QFileInfoList &listFiles)
             QDir dir(sPath_);
 
             sArchName = dir.relativeFilePath(sFileName) ;
-            importBooksFromZip(sPath_ + u"/"_s, sArchName, nBooksCount);
+            importBooksFromArchive(sPath_ + u"/"_s, sArchName, nBooksCount);
         }
         emit progress(nBooksCount, (float)(i + 1)/(float)(listFiles.count()));
     }
@@ -628,94 +625,66 @@ void ImportThread::importBooksFromList(const QFileInfoList &listFiles)
 
 }
 
-void ImportThread::importBooksFromZip(const QString &sPath, const QString &sArchName, uint &nBooksCount)
+void ImportThread::importBooksFromArchive(const QString &sPath, const QString &sArchName, uint &nBooksCount)
 {
-    QString sZipFileName = sPath + sArchName;
-    QuaZip uz(sZipFileName);
-    uz.setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-    if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
+    QString sArchiveFileName = sPath + sArchName;
+    QArchive ar(sArchiveFileName);
+    const auto list = ar.fileInfoList();
+    for(const auto &fi :list)
     {
-        LogWarning << "Error open archive:" << sZipFileName;
-        return;
-    }
-
-    QuaZipFile fileInZip(&uz);
-    const auto list = uz.getFileInfoList64();
-    for(const auto &fiZip: list  )
-    {
-        if(stopped_.load(std::memory_order_relaxed)) [[unlikely]]
+        if(stopped_) [[unlikely]]
             break;
-
-        if(fiZip.uncompressedSize == 0) [[unlikely]]
+        if(fi.uncompressedSize == 0) [[unlikely]]
             continue;
         QByteArray fileData;
-        bool isFB2 = fiZip.name.endsWith(u".fb2", Qt::CaseInsensitive);
-        bool isEPUB = fiZip.name.endsWith(u".epub", Qt::CaseInsensitive);
 
-        if(isFB2 || isEPUB)
+        if(fi.sFileName.endsWith(u".fb2", Qt::CaseInsensitive))
         {
-            setCurrentZipFileName(&uz, fiZip.name);
-            if(!fileInZip.open(QIODevice::ReadOnly)) {
-                LogWarning << "Error open:" << fiZip.name << "in" << sArchName;
-                continue;
-            }
-            if(isFB2)
-                fileData = fileInZip.read(16*1024);
-            else
-                fileData = fileInZip.readAll();
-            fileInZip.close();
-
-            if(isFB2)
-                readFB2(fileData, fiZip.name, sZipFileName, fiZip.uncompressedSize);
-            else
-                readEPUB(fileData, fiZip.name, sZipFileName, fiZip.uncompressedSize);
+            fileData = ar.readFile(fi.sFileName, 16*1024);
+            readFB2(fileData, fi.sFileName, sArchiveFileName, fi.uncompressedSize);
             nBooksCount++;
         }
-        else if(fiZip.name.endsWith(u".zip", Qt::CaseInsensitive))
+        else if(fi.sFileName.endsWith(u".epub", Qt::CaseInsensitive))
         {
-            setCurrentZipFileName(&uz, fiZip.name);
-            if(!fileInZip.open(QIODevice::ReadOnly)) {
-                LogWarning << "Error open " << fiZip.name << " in " << sArchName;
-                continue;
-            }
-            fileData = fileInZip.readAll();
-            fileInZip.close();
-            QString sZipDir;
-            if(sPath.startsWith(QDir::tempPath() + u"/freeLib/zip/"_s))
-                sZipDir = sPath % sArchName % u".dir/"_s;
-            else
-                sZipDir = QDir::tempPath() % u"/freeLib/zip/"_s % sArchName % u".dir/"_s;
-            QString sTmpFile = sZipDir + fiZip.name;
-            QString sTmpFilePath = QFileInfo(sTmpFile).absolutePath();
-            QDir dir(sTmpFilePath);
-            if (!dir.exists())
-                dir.mkpath(sTmpFilePath);
-            QFile fileZiped(sTmpFile);
-            fileZiped.open(QIODevice::WriteOnly);
-            fileZiped.write(fileData);
-            fileZiped.close();
-            importBooksFromZip(sZipDir , fiZip.name, nBooksCount);
-
-            fileZiped.remove();
+            fileData = ar.readFile(fi.sFileName);
+            readEPUB(fileData, fi.sFileName, sArchiveFileName, fi.uncompressedSize);
+            nBooksCount++;
         }
-        else if(fiZip.name.endsWith(u".fbd", Qt::CaseInsensitive))
+        else if(fi.sFileName.endsWith(u".fbd", Qt::CaseInsensitive))
         {
-            QFileInfo fi(fiZip.name);
-            if(!fi.completeBaseName().isEmpty() && fi.completeBaseName().at(0) != '.')
+            QString sBookFile = fi.sFileName.left(fi.sFileName.length() - 4);
+            for(const auto &fi2 :list)
             {
-                QString fbd = fi.completeBaseName() + u".fbd"_s;
-                if(setCurrentZipFileName(&uz, fbd))
-                {
-                    if(!fileInZip.open(QIODevice::ReadOnly)) {
-                        LogWarning << "Error open:" << fiZip.name << "in" << sArchName;
-                        continue;
-                    }
-                    fileData = fileInZip.readAll();
-                    readFB2(fileData, fiZip.name, sZipFileName, fiZip.uncompressedSize);
+                if(fi.sFileName != fi2.sFileName && fi2.sFileName.startsWith(sBookFile)){
+                    fileData = ar.readFile(fi.sFileName);
+                    readFB2(fileData, fi2.sFileName, sArchiveFileName, fi.uncompressedSize);
                     nBooksCount++;
+                    break;
                 }
             }
         }
+
+        else
+        {
+            for(const auto &format :QArchive::formats){
+                if(fi.sFileName.endsWith(u"."_s + format, Qt::CaseInsensitive)){
+                    QString sArchDir;
+                    if(sPath.startsWith(QDir::tempPath() + u"/freeLib/arc/"_s))
+                        sArchDir = sPath % sArchName % u"/"_s;
+                    else
+                        sArchDir = QDir::tempPath() % u"/freeLib/arc/"_s % sArchName % u"/"_s;
+                    QString sTmpFile = sArchDir + fi.sFileName;
+                    QString sTmpFilePath = QFileInfo(sTmpFile).absolutePath();
+                    QDir dir(sTmpFilePath);
+                    if (!dir.exists())
+                        dir.mkpath(sTmpFilePath);
+                    ar.extractFileTo(fi.sFileName, sTmpFile);
+                    importBooksFromArchive(sArchDir, fi.sFileName, nBooksCount);
+                    QFile::remove(sTmpFilePath);
+                }
+            }
+        }
+
     }
 }
 
@@ -812,22 +781,13 @@ void ImportThread::process()
         emit End();
         return;
     }
-    QuaZip archiveFile;
-    QuaZip uz(sInpxFile_);
-    if (!uz.open(QuaZip::mdUnzip)) [[unlikely]]
-    {
-        LogWarning << "Error open inpx!";
-        emit End();
-        return;
-    }
+    QArchive archiveFile;
+    QArchive fileInpx(sInpxFile_);
 
-    if(setCurrentZipFileName(&uz, u"version.info"_s))
+    if(fileInpx.setCurrentFile(u"version.info"_s))
     {
         QBuffer outbuff;
-        QuaZipFile zip_file(&uz);
-        zip_file.open(QIODevice::ReadOnly);
-        outbuff.setData(zip_file.readAll());
-        zip_file.close();
+        outbuff.setData(fileInpx.readFile());
         QString sVersion = QString::fromUtf8(outbuff.data()).simplified();
         if(!query_.exec(u"UPDATE lib SET version='"_s % sVersion % u"' WHERE id="_s % QString::number(idLib_))) [[unlikely]]
             LogWarning << query_.lastError().text();
@@ -872,19 +832,16 @@ void ImportThread::process()
     field_index[_TAG_SERIA]     =-1; //TagSeria
     field_index[_TAG_AUTHOR]    =-1; //TagAuthor
 
-    QuaZipFile zip_file(&uz);
-    if(setCurrentZipFileName(&uz, u"structure.info"_s))
+    if(fileInpx.setCurrentFile(u"structure.info"_s))
     {
         for(unsigned int i=0; i<sizeof(field_index)/sizeof(int); i++)
             field_index[i] = -1;
         QBuffer outbuff;
-        zip_file.open(QIODevice::ReadOnly);
-        outbuff.setData(zip_file.readAll());
-        zip_file.close();
+        outbuff.setData(fileInpx.readFile());
         const QStringList lines = (QString::fromUtf8(outbuff.data())).split(QStringLiteral("\n"));
         for(const QString &line: lines)
         {
-            const QStringList substrings = line.toUpper().split(QStringLiteral(";"));
+            const QStringList substrings = line.toUpper().split(u";"_s);
             int i = 0;
             for(const QString &substring: substrings)
             {
@@ -931,7 +888,8 @@ void ImportThread::process()
     }
 
     uint nBooksCount = 0;
-    const QStringList listFiles = uz.getFileNameList();
+    const auto listFiles = fileInpx.fileList();
+
     QStringList listInpFiles;
     for(const auto &sFileName :listFiles)
         if(sFileName.right(4).toUpper() == u".INP")
@@ -943,20 +901,17 @@ void ImportThread::process()
     for(uint i=0; i<listInpFiles.count(); i++)
     {
         QCoreApplication::processEvents();
-        if(stopped_.load(std::memory_order_relaxed)) [[unlikely]]
+        if(stopped_) [[unlikely]]
             break;
-        const QString str = listInpFiles[i];
+        const QString &sFileInInpx = listInpFiles[i];
         if(nUpdateType_ == UT_NEW)
         {
-            query_.exec(u"SELECT * FROM book WHERE archive='%1' AND id_lib=%2 LIMIT 1"_s.arg(str, QString::number(idLib_)));
+            query_.exec(u"SELECT * FROM book WHERE archive='%1' AND id_lib=%2 LIMIT 1"_s.arg(sFileInInpx, QString::number(idLib_)));
             if(query_.next())
                 continue;
         }
         QBuffer outbuff;
-        setCurrentZipFileName(&uz, str);
-        zip_file.open(QIODevice::ReadOnly);
-        outbuff.setData(zip_file.readAll());
-        zip_file.close();
+        outbuff.setData(fileInpx.readFile(sFileInInpx));
         const QStringList lines = (QString::fromUtf8(outbuff.data())).split('\n');
         uint iLine = 0;
         uint count = 0;
@@ -1025,13 +980,8 @@ void ImportThread::process()
             QString sFormat;
             if(substrings.count() > field_index[_FORMAT])
             {
-                static const std::vector<QString> arcFormat = {u"zip"_s,
-#ifdef USE_LIBARCHIVE
-                    u"rar"_s, u"7z"_s
-#endif //USE_LIBARCHIVE
-                };
                 sFormat = substrings[field_index[_FORMAT]].trimmed().toLower();
-                for(const auto &sArcFormat: arcFormat){
+                for(const auto &sArcFormat: QArchive::formats){
                     if(sFormat == sArcFormat){
                         if(file.endsWith(u".pdf", Qt::CaseInsensitive)){
                             sFormat = u"pdf."_s + sArcFormat;
@@ -1075,7 +1025,7 @@ void ImportThread::process()
             {
                 keys = substrings[field_index[_KEYS]].trimmed();
             }
-            QString folder = str;
+            QString folder = sFileInInpx;
             if(substrings.count() > field_index[_FOLDER] && field_index[_FOLDER] >= 0)
             {
                 folder = substrings[field_index[_FOLDER]].trimmed();
@@ -1146,18 +1096,10 @@ void ImportThread::process()
                         QBuffer buffer;
                         sFile = file % u"." % sFormat;
                         sArchive = sPath_ % u"/"_s % folder.replace(u".inp"_s, u".zip"_s);
-                        if(archiveFile.getZipName() != sArchive){
-                            archiveFile.close();
-                            archiveFile.setZipName(sArchive);
-                            if (!archiveFile.open(QuaZip::mdUnzip)) [[unlikely]]
-                                LogWarning << "Error open archive:" << sArchive;
+                        if(archiveFile.getArcName() != sArchive){
+                            archiveFile.setPath(sArchive);
                         }
-                        QuaZipFile zip_file(&archiveFile);
-                        setCurrentZipFileName(&archiveFile, sFile);
-                        if(!zip_file.open(QIODevice::ReadOnly)) [[unlikely]]
-                            LogWarning << "Error open file:" << sFile;
-                        buffer.setData(zip_file.read(16*1024));
-                        zip_file.close();
+                        buffer.setData(archiveFile.readFile(sFile, 16*1024));
 
                         QDomDocument doc;
                         doc.setContent(buffer.data());

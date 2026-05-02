@@ -29,7 +29,7 @@ public slots:
 protected:
     void importBooksFromPath(const QString &sPath);
     void importBooksFromList(const QFileInfoList &listFiles);
-    void importBooksFromZip(const QString &sPath, const QString &sArchName, uint &nBooksCount);
+    void importBooksFromArchive(const QString &sPath, const QString &sArchName, uint &nBooksCount);
 
     void readFB2(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
     void readEPUB(const QByteArray &ba, QString sFileName, QString sArhName,qint32 fileSize=0);

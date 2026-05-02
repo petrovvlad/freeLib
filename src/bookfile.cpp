@@ -69,10 +69,9 @@ void BookFile::open()
         QString sArchive = sLibPath_ % sArchive_;
         QString sFile = u"%1.%2"_s.arg(sFile_, sFormat_);
         sArchive.replace(u".inp"_s, u".zip"_s);
-        bool bZipInZip = sArchive_.contains(u".zip/"_s);
+        bool bArcInArc = std::ranges::any_of(QArchive::formats, [this](const QString& format){return sArchive_.contains(u"."_s % format % u"/"_s);});
 
-        QuaZipFile zipFile;
-        if(bZipInZip){
+        if(bArcInArc){
             data_ = openArcInArc(sArchive, sFile);
             QString sFbdFile = sFile_ + u".fbd"_s;
             QByteArray ba = openArcInArc(sArchive, sFbdFile);
@@ -100,7 +99,7 @@ void BookFile::open()
         }
     }else if(sFormat_ == u"epub")
         openEpub();
-    bool bArch = std::ranges::any_of(archFormats_, [this](const QString& suffix)
+    bool bArch = std::ranges::any_of(QArchive::formats, [this](const QString& suffix)
         { return sFormat_.endsWith(suffix); });
     if(bArch)
     {
@@ -144,8 +143,6 @@ QImage BookFile::cover()
     if(img.isNull()){
         if(pEpub_ != nullptr)
             img = coverEpub();
-        else if(sArchive_.contains(u".zip/"_s))
-            img = coverArchive();
 #ifdef USE_DEJVULIBRE
         else if(sFormat_ == u"djvu" || sFormat_ == u"djv")
             img = coverDjvu();
@@ -154,10 +151,13 @@ QImage BookFile::cover()
         else if(sFormat_ == u"pdf")
             img = coverPdf();
 #endif //USE_POPPLER
-        bool bArch = std::ranges::any_of(archFormats_, [this](const QString& suffix)
-                                         { return sFormat_.endsWith(suffix); });
-        if(bArch)
-            img = coverArchive();
+        else
+        {
+            bool bArch = std::ranges::any_of(QArchive::formats, [this](const QString& format)
+                       { return sFormat_.endsWith(format) || sArchive_.contains(u"."_s % format % u"/"_s); });
+            if(bArch)
+                img = coverArchive();
+        }
     }
 
     if(!img.isNull() && img.width() < img.height()*2){
@@ -605,14 +605,14 @@ QString BookFile::fileFormat() const
     QString sFormat;
     bool bCompoundArchFormat = false;
     if(bOneBookInArchive_){
-        for(const auto &sArchFormat :archFormats_){
+        for(const auto &sArchFormat :QArchive::formats){
             if(sFormat_.endsWith(sArchFormat) && sFormat_.size()>sArchFormat.size()+1){
                 sFormat = sFormat_.left(sFormat_.size() - (sArchFormat.size()+1));
                 break;
             }
         }
         if(sFormat.isEmpty()){
-            bool bArch = std::ranges::any_of(archFormats_, [this](const QString& suffix)
+            bool bArch = std::ranges::any_of(QArchive::formats, [this](const QString& suffix)
                                              { return sFormat_.endsWith(suffix); });
             if(bArch){
                 if(sBookName_.endsWith(u"(pdf)"))
@@ -667,7 +667,7 @@ QByteArray BookFile::data()
     if(sArchive_.isEmpty())
         data_ = file_.readAll();
     else{
-        for(const auto &sArchFormat :archFormats_){
+        for(const auto &sArchFormat :QArchive::formats){
             if(sFormat_ == u"pdf."_s + sArchFormat || (sFormat_ == sArchFormat && sBookName_.endsWith(u"(pdf)")))
                 return dataArchive(u".pdf"_s);
             else if(sFormat_ == u"djvu."_s + sArchFormat || (sFormat_ == sArchFormat && (sBookName_.endsWith(u"(djvu)") || sBookName_.endsWith(u"(djv)"))))
@@ -705,43 +705,58 @@ QByteArray BookFile::dataArchive(const QString &sSubFormat)
 QByteArray BookFile::openArcInArc(const QString &sArchive, const QString &sFileName)
 {
     QByteArray data;
-    QStringList sZipChain;
+    QStringList sArcChain;
     qsizetype posNext = 0;
     qsizetype posPrev = 0;
 
-    // Собираем цепочку "archive.zip", "inner.zip", ...
+    // Собираем цепочку архивов, поддерживая разные форматы
     while (posNext != -1) {
-        posNext = sArchive.indexOf(u".zip"_s, posPrev);
-        if (posNext != -1) {
+        qsizetype foundPos = -1;
+        QString foundExt;
+
+        // Ищем любой из поддерживаемых форматов
+        for (const QString &format : QArchive::formats) {
+            qsizetype pos = sArchive.indexOf(u"." + format, posPrev);
+            if (pos != -1 && (foundPos == -1 || pos < foundPos)) {
+                foundPos = pos;
+                foundExt = format;
+            }
+        }
+
+        if (foundPos != -1) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
-            sZipChain << sArchive.sliced(posPrev, posNext + 4 - posPrev);
+            sArcChain << sArchive.sliced(posPrev, foundPos + foundExt.length() + 1 - posPrev);
 #else
-            QStringRef sZip = sArchive.leftRef(posNext + 4);
-            sZipChain << sZip.right(sZip.length() - posPrev).toString();
+            QStringRef sArc = sArchive.leftRef(foundPos + foundExt.length() + 1);
+            sArcChain << sArc.right(sArc.length() - posPrev).toString();
 #endif
-            posPrev = posNext + 5;
+            posPrev = foundPos + foundExt.length() + 2; // +2 for '.' and next char
+            posNext = foundPos + 1; // Continue search
+        } else {
+            posNext = -1;
         }
     }
 
-    if (sZipChain.isEmpty()) {
+
+    if (sArcChain.isEmpty()) {
         LogWarning << "No zip chain found in:" << sArchive;
         return data;
     }
 
     QArchive archive;
     // Первый элемент — реальный файл на диске
-    archive.setPath(sZipChain[0]);
+    archive.setPath(sArcChain[0]);
 
-    // Для каждого вложенного zip'а читаем его содержимое и инициализируем QArchive из байтов
-    for (int i = 1; i < sZipChain.count(); ++i) {
-        const QString &innerZipName = sZipChain[i];
-        QByteArray innerData = archive.readFile(innerZipName); // читаем вложенный zip
+    // Для каждого вложенного архива читаем его содержимое и инициализируем QArchive из байтов
+    for (int i = 1; i < sArcChain.count(); ++i) {
+        const QString &innerArcName = sArcChain[i];
+        QByteArray innerData = archive.readFile(innerArcName); // читаем вложенный архив
         if (innerData.isEmpty()) {
-            LogWarning << "Error open nested zip:" << innerZipName;
+            LogWarning << "Error open nested arc:" << innerArcName;
             return data;
         }
         archive.close();
-        archive.setData(innerData); // теперь archive работает с in-memory zip
+        archive.setData(innerData); // теперь archive работает с in-memory архив
     }
 
     // Находим и читаем запрошенный файл в последнем (внешнем/вложенном) архиве

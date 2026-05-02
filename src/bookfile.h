@@ -64,12 +64,6 @@ private:
     QDomDocument doc_;
     bool bOpen_;
     bool bOneBookInArchive_;
-    inline static std::vector<QString> archFormats_ ={
-        u"zip"_s
-#ifdef USE_LIBARCHIVE
-        ,u"rar"_s, u"7z"_s
-#endif //USE_LIBARCHIVE
-    };
     QFuture<void> futureOpen_;
     QFuture<QImage> futureCover_;
     QFuture<QString> futureAnnotation_;
