@@ -61,10 +61,12 @@ void ConversionFrame::onBtnDefaultCSSclicked()
             return;
     }
     QFile file(u":/xsl/css/style.css"_s);
-    file.open(QFile::ReadOnly);
-    QTextStream in(&file);
-    ui->UserCSStext->setPlainText(in.readAll());
-    file.close();
+    if(file.open(QFile::ReadOnly)){
+        QTextStream in(&file);
+        ui->UserCSStext->setPlainText(in.readAll());
+        file.close();
+    }else
+        LogWarning << "Error open file:" << file.fileName();
 
 }
 

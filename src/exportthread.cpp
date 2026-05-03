@@ -158,9 +158,11 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
         i++;
         QFile::remove(out_file.back());
         file.setFileName(out_file.back());
-        file.open(QFile::WriteOnly);
-        file.write(buf->data());
-        file.close();
+        if(file.open(QFile::WriteOnly)){
+            file.write(buf->data());
+            file.close();
+        }else
+            LogWarning << "Error open file:" << file.fileName();
     }
     if(out_file.size() == 0) [[unlikely]]
         return false;
@@ -337,9 +339,11 @@ void ExportThread::export_books()
                 QFile::remove(out_dir % u"/"_s % file);
                 QFile outfile;
                 outfile.setFileName(out_dir % u"/"_s % file);
-                outfile.open(QFile::WriteOnly);
-                outfile.write(fileBook.data());
-                outfile.close();
+                if(outfile.open(QFile::WriteOnly)){
+                    outfile.write(fileBook.data());
+                    outfile.close();
+                }else
+                    LogWarning << "Error open file:" << outfile.fileName();
             }
             else
             {
@@ -527,23 +531,31 @@ void ExportThread::export_lib()
     QDir().mkpath(tmp_dir);
     QFile inpx(sInpxFile);
     QFile structure(structure_file);
-    structure.open(QFile::WriteOnly);
+    if(!structure.open(QFile::WriteOnly)){
+        LogWarning << "Error open file:" << structure_file;
+        return;
+    }
     structure.write(u"AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;FILE;FOLDER;EXT;SIZE;LANG;STARS;DATE;DEL;KEYWORDS;TAG;TAGAUTHOR;TAGSERIES;\r\n"_s.toUtf8());
     structure.close();
     QFile version(version_file);
-    version.open(QFile::WriteOnly);
+    if(!version.open(QFile::WriteOnly)){
+        LogWarning << "Error open file:" << version_file;
+        return;
+    }
     version.write((QDate::currentDate().toString(QStringLiteral("dd.MM.yyyy")) + QStringLiteral("\r\n")).toUtf8());
     version.close();
     QFile collection(collection_file);
-    collection.open(QFile::WriteOnly);
+    if(!collection.open(QFile::WriteOnly)){
+        LogWarning << "Error open file:" << collection_file;
+        return;
+    }
     const auto &lib = g::libs[idLib_];
     collection.write((lib.name + u"\r\n"_s).toUtf8());
     collection.write((lib.name + u"\r\n"_s).toUtf8());
     collection.write(u"0\r\n"_s.toUtf8());
     collection.write(u"freeLib\r\n"_s.toUtf8());
     collection.close();
-    inpx.open(QFile::WriteOnly);
-    if(!inpx.isOpen()) [[unlikely]]
+    if(!inpx.open(QFile::WriteOnly))
     {
         LogWarning << u"Error create file:"_s + sInpxFile;
         return;
@@ -623,30 +635,41 @@ void ExportThread::export_lib()
 
     zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"freeLib.inp"_s), nullptr, 0, Z_BZIP2ED, Z_BEST_COMPRESSION);
     file.setFileName(sInpxFile);
-    file.open(QIODevice::ReadOnly);
-    zip_file.write(file.readAll());
-    file.close();
+    if(file.open(QIODevice::ReadOnly)){
+        zip_file.write(file.readAll());
+        file.close();
+    }else
+        LogWarning << "Error open file:" << sInpxFile;
     zip_file.close();
 
     zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"structure.info"_s), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(structure_file);
-    file.open(QIODevice::ReadOnly);
-    zip_file.write(file.readAll());
-    file.close();
+    if(file.open(QIODevice::ReadOnly)){
+        zip_file.write(file.readAll());
+        file.close();
+    }else
+        LogWarning << "Error open file:" << structure_file;
+
     zip_file.close();
 
     zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"version.info"_s), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(version_file);
-    file.open(QIODevice::ReadOnly);
-    zip_file.write(file.readAll());
-    file.close();
+    if(file.open(QIODevice::ReadOnly)){
+        zip_file.write(file.readAll());
+        file.close();
+    }else
+        LogWarning << "Error open file:" << version_file;
+
     zip_file.close();
 
     zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"collection.info"_s), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(collection_file);
-    file.open(QIODevice::ReadOnly);
-    zip_file.write(file.readAll());
-    file.close();
+    if(file.open(QIODevice::ReadOnly)){
+        zip_file.write(file.readAll());
+        file.close();
+    }else
+        LogWarning << "Error open file:" << collection_file;
+
     zip_file.close();
 
     zip.close();

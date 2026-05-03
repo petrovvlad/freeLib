@@ -1,4 +1,3 @@
-#define QT_USE_QSTRINGBUILDER
 #include "utilites.h"
 
 #include <QFileInfo>
@@ -34,14 +33,19 @@ void creatDB(const QString &sFileDB)
     QDir dir;
     QFile file;
     dir.mkpath(QFileInfo(sFileDB).absolutePath());
-    file.setFileName(QStringLiteral(":/freeLib.sqlite"));
-    file.open(QFile::ReadOnly);
-    QByteArray data = file.readAll();
-    file.close();
-    file.setFileName(sFileDB);
-    file.open(QFile::WriteOnly);
-    file.write(data);
-    file.close();
+    file.setFileName(u":/freeLib.sqlite"_s);
+    if(file.open(QFile::ReadOnly)){
+        QByteArray data = file.readAll();
+        file.close();
+        file.setFileName(sFileDB);
+        if(file.open(QFile::WriteOnly)){
+            file.write(data);
+            file.close();
+        }else
+            LogWarning << "Error open file:" << file.fileName();
+    }else
+        LogWarning << "Error open file:" << file.fileName();
+
 }
 
 bool openDB(const QString &sName)
@@ -455,3 +459,4 @@ QIcon themedIcon(const QString &sIcon)
     QPixmap pixmap = renderSvg(svgRenderer, palette.color(QPalette::Window).lightness() < 128);
     return QIcon(pixmap);
 }
+

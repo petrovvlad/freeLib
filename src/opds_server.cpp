@@ -1,4 +1,3 @@
-#define QT_USE_QSTRINGBUILDER
 #include "opds_server.h"
 
 #include <algorithm>
@@ -87,8 +86,9 @@ opds_server::opds_server(QObject *parent) :
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QString sAssetsFile = u":/xsl/opds/"_s + sFile;
         QFile file(sAssetsFile);
-        file.open(QFile::ReadOnly);
-        QByteArray ba = file.readAll();
+        QByteArray ba;
+        if(file.open(QFile::ReadOnly))
+            ba = file.readAll();
         if(ba.isEmpty())
             return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
         QHttpServerResponse response(contentType, ba);
@@ -3087,16 +3087,17 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
             if(sBookFormat != sFormat){
                 QFile file;
                 file.setFileName(QDir::tempPath() % u"/freeLib/book0."_s % sBookFormat);
-                file.open(QFile::WriteOnly);
-                file.write(baBook);
-                file.close();
+                if(file.open(QFile::WriteOnly)){
+                    file.write(baBook);
+                    file.close();
+                }
                 QFileInfo fi(file);
 
                 fb2mobi conv(pExportOptions, idLib);
                 QString sOutFile = conv.convert({fi.absoluteFilePath()}, idBook);
                 file.setFileName(sOutFile);
-                file.open(QFile::ReadOnly);
-                baBook = file.readAll();
+                if(file.open(QFile::ReadOnly))
+                    baBook = file.readAll();
             }
         }
         switch (format) {

@@ -460,19 +460,20 @@ void SettingsDlg::ChangeLanguage()
 
 void SettingsDlg::btnOK()
 {
+    QString appDir = QApplication::applicationDirPath();
     if(ui->settings_to_file->isChecked())
     {
 #ifdef Q_OS_MAC
 //        QString dir=app->applicationDirPath()+"/../../../freeLib";
         QString dir=app->applicationDirPath();
 #else
-        QString dir = QApplication::applicationDirPath();
 #endif
-        QDir().mkpath(dir);
-        QFile cfg(dir + u"/freeLib.cfg"_s);
+        QDir().mkpath(appDir);
+        QFile cfg(appDir + u"/freeLib.cfg"_s);
         if(!cfg.exists())
         {
-            cfg.open(QFile::WriteOnly);
+            if(!cfg.open(QFile::WriteOnly))
+                LogWarning << "Error create file: " << appDir + u"/freeLib.cfg"_s;
             cfg.close();
         }
     }
@@ -484,7 +485,7 @@ void SettingsDlg::btnOK()
 //        if(QDir(app->applicationDirPath()+"/../../../freeLib").entryList(QDir::Files).count()==0)
 //            QDir(app->applicationDirPath()+"/../../../freeLib").removeRecursively();
 #else
-        QFile().remove(QApplication::applicationDirPath() + u"/freeLib.cfg"_s);
+        QFile().remove(appDir + u"/freeLib.cfg"_s);
 #endif
     }
     auto settings = GetSettings(true);
@@ -886,7 +887,8 @@ void SettingsDlg::onBtnSaveExportClicked()
 
     zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"export.ini"_s, settings->fileName()));
     QFile file(settings->fileName());
-    file.open(QIODevice::ReadOnly);
+    if(!file.open(QIODevice::ReadOnly))
+        LogWarning << "Error open: " << settings->fileName();
     zip_file.write(file.readAll());
     file.close();
     zip_file.close();
@@ -919,7 +921,8 @@ void SettingsDlg::onBtnSaveExportClicked()
         {
             zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"Fonts/"_s + QFileInfo(font_file).fileName(), font_file));
             file.setFileName(font_file);
-            file.open(QIODevice::ReadOnly);
+            if(!file.open(QIODevice::ReadOnly))
+                LogWarning << "Error open: " << font_file;
             zip_file.write(file.readAll());
             file.close();
             zip_file.close();
@@ -969,9 +972,11 @@ void SettingsDlg::onBtnOpenExportClicked()
                 zip_file.open(QIODevice::ReadOnly);
                 QFile font_file(font_name);
                 font_file.remove();
-                font_file.open(QFile::WriteOnly);
-                font_file.write(zip_file.readAll());
-                font_file.close();
+                if(font_file.open(QFile::WriteOnly)){
+                    font_file.write(zip_file.readAll());
+                    font_file.close();
+                }else
+                    LogWarning << "Error open: " << font_name;
 
                 QFile::copy(font_name, db_path % u"/"_s % fi.fileName());
             }
@@ -984,9 +989,12 @@ void SettingsDlg::onBtnOpenExportClicked()
     QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s;
     QFile file(ini_name);
     file.remove();
-    file.open(QFile::WriteOnly);
-    file.write(zip_file.readAll());
-    file.close();
+    if(file.open(QFile::WriteOnly)){
+        file.write(zip_file.readAll());
+        file.close();
+    }else
+        LogWarning << "Error open: " << ini_name;
+
     auto settings = QSharedPointer<QSettings> (new QSettings(ini_name, QSettings::IniFormat));
 
     if(msgBox.clickedButton() == pButtonLoadNew)
