@@ -865,7 +865,7 @@ void ImportThread::process()
                     field_index[_DATE] = i;
                 else if(substring == u"LANG")
                     field_index[_LANGUAGE] = i;
-                else if(substring == u"STARS")
+                else if(substring == u"STARS" || substring == u"LIBRATE")
                     field_index[_STAR] = i;
                 else if(substring == u"KEYWORDS")
                     field_index[_KEYS] = i;
