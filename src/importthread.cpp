@@ -157,15 +157,23 @@ uint ImportThread::addBook(uchar star, QString &name, int numInSeries, const QSt
         return idBook;
     }
     QString sRepairLanguge = language.toLower();
-    if(sRepairLanguge == u"io")
+    if(sRepairLanguge == u"бъ")
+        sRepairLanguge = u"бе"_s;
+    else if(sRepairLanguge == u"bu")
+        sRepairLanguge = u"bg"_s;
+    else if(sRepairLanguge == u"io")
         sRepairLanguge = u"eo"_s;
+    else if(sRepairLanguge == u"cz")
+        sRepairLanguge = u"cs"_s;
     else if(sRepairLanguge == u"ua")
         sRepairLanguge = u"uk"_s;
+    else if(sRepairLanguge == u"po")
+        sRepairLanguge = u"pl"_s;
     else if(sRepairLanguge == u"sh")
         sRepairLanguge = u"sr"_s;
     else if(sRepairLanguge == u"in")
         sRepairLanguge = u"id"_s;
-    else if(sRepairLanguge == u"кг")
+    else if(sRepairLanguge == u"кг" || sRepairLanguge == u"ру")
         sRepairLanguge = u"ru"_s;
     else if(sRepairLanguge == u"ge")
         sRepairLanguge = u"de"_s;
@@ -988,18 +996,21 @@ void ImportThread::process()
                             file.chop(4);
                             if(name.endsWith(u"(pdf)"))
                                 name.chop(5);
+                            break;
                         } else
                         if(file.endsWith(u".djvu", Qt::CaseInsensitive)  || file.endsWith(u".djv", Qt::CaseInsensitive)){
                             sFormat = u"djvu."_s + sArcFormat;
                             file.chop(5);
                             if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
                                 name.chop(6);
+                            break;
                         } else
                         if(file.endsWith(u".epub", Qt::CaseInsensitive)){
                             sFormat = u"epub."_s + sArcFormat;
                             file.chop(5);
                             if(name.endsWith(u"(epub)") || name.endsWith(u"[epub]"))
                                 name.chop(6);
+                            break;
                         }
                     }
                 }
