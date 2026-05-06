@@ -62,9 +62,9 @@ private:
     QHttpServerResponse rootHTML(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse rootOPDS(uint idLib, const QHttpServerRequest &request);
     QHttpServerResponse rootOPDS2(uint idLib, const QHttpServerRequest &request);
-    QHttpServerResponse authorsIndexHTML(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
-    QHttpServerResponse authorsIndexOPDS(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
-    QHttpServerResponse authorsIndexOPDS2(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
+    QHttpServerResponse authorsIndexHTML(uint idLib, const QString &sIndex, const QHttpServerRequest &request);
+    QHttpServerResponse authorsIndexOPDS(uint idLib, const QString &sIndex, const QHttpServerRequest &request);
+    QHttpServerResponse authorsIndexOPDS2(uint idLib, const QString &sIndex, const QHttpServerRequest &request);
     QHttpServerResponse authorHTML(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorOPDS2(uint idLib, uint idAuthor, const QHttpServerRequest &request);
@@ -80,9 +80,9 @@ private:
     QHttpServerResponse authorSerieslessHTML(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorSerieslessOPDS(uint idLib, uint idAuthor, const QHttpServerRequest &request);
     QHttpServerResponse authorSerieslessOPDS2(uint idLib, uint idAuthor, const QHttpServerRequest &request);
-    QHttpServerResponse seriesIndexHTML(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
-    QHttpServerResponse seriesIndexOPDS(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
-    QHttpServerResponse seriesIndexOPDS2(uint idLib, const QString &sIndex, bool bByBooks, const QHttpServerRequest &request);
+    QHttpServerResponse seriesIndexHTML(uint idLib, const QString &sIndex, const QHttpServerRequest &request);
+    QHttpServerResponse seriesIndexOPDS(uint idLib, const QString &sIndex, const QHttpServerRequest &request);
+    QHttpServerResponse seriesIndexOPDS2(uint idLib, const QString &sIndex, const QHttpServerRequest &request);
     QHttpServerResponse seriesBooksHTML(uint idLib, uint idSeries, const QHttpServerRequest &request);
     QHttpServerResponse seriesBooksOPDS(uint idLib, uint idSeries, const QHttpServerRequest &request);
     QHttpServerResponse seriesBooksOPDS2(uint idLib, uint idSeries, const QHttpServerRequest &request);
