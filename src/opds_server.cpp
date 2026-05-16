@@ -54,6 +54,15 @@ void setQueryItem(QUrlQuery &query, const QString &key, const QString &value) {
 opds_server::opds_server(QObject *parent) :
     QObject(parent)
 {
+    httpServer_.route(u"/"_s, QHttpServerRequest::Method::Get, [this](const QHttpServerRequest &request)
+    {
+        if(g::libs.size() == 1){
+            auto idLib = g::libs.begin()->first;
+            return rootHTML(idLib, request);
+        }else
+            return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+    });
+
     httpServer_.route(u"/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
     {
         return rootHTML(idLib, request);
@@ -62,8 +71,28 @@ opds_server::opds_server(QObject *parent) :
     httpServer_.route(u"/opds/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
     { return rootOPDS(idLib, request); });
 
+    httpServer_.route(u"/opds>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
+    {
+        if(g::libs.size() == 1){
+            auto idLib = g::libs.begin()->first;
+            return rootOPDS(idLib, request);
+        }else
+            return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+    });
+
+
     httpServer_.route(u"/opds2/<arg>"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
                       { return rootOPDS2(idLib, request); });
+
+    httpServer_.route(u"/opds2"_s, QHttpServerRequest::Method::Get, [this](uint idLib, const QHttpServerRequest &request)
+    {
+        if(g::libs.size() == 1){
+            auto idLib = g::libs.begin()->first;
+            return rootOPDS2(idLib, request);
+        }else
+            return QHttpServerResponse(QHttpServerResponder::StatusCode::NotFound);
+    });
+
 
     httpServer_.route(u"/assets/<arg>"_s, QHttpServerRequest::Method::Get, [](const QString &sFile)
     {
