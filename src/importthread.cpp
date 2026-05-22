@@ -243,15 +243,15 @@ void ImportThread::AddGenre(uint idBook, const QString &sGenre, uint idLib)
 void ImportThread::cleanUnsortedGenre()
 {
     QString sql = u"DELETE FROM book_genre "
-                  u"WHERE book_genre.id_genre = 1112 "
+                  u"WHERE book_genre.id_genre = 0 "
                   u"AND EXISTS ( "
                   u"  SELECT 1 "
                   u"  FROM book_genre bg "
                   u"  WHERE bg.id_book = book_genre.id_book "
-                  u"  AND bg.id_genre != 1112 "
+                  u"  AND bg.id_genre != 0 "
                   u");"_s;
     if (!query_.exec(sql))
-        LogWarning << "Error cleaning genre 1112: " << query_.lastError().text();
+        LogWarning << "Error cleaning genre 0: " << query_.lastError().text();
 }
 
 void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
