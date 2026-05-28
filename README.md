@@ -41,15 +41,15 @@ yay -S freelib-git
 
 в Ubuntu 25.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev libarchive-dev
 ```
 в Ubuntu ≥23.04 и <25.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev libarchive-dev
 ```
 в Ubuntu <23.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qtbase5-dev libqt5svg5-dev libqt5sql5-sqlite libquazip5-dev libtbb-dev
+sudo apt update && sudo apt install git cmake build-essential qtbase5-dev libqt5svg5-dev libqt5sql5-sqlite libquazip5-dev libtbb-dev libarchive-dev
 ```
 Для отображения обложек djvu файлов установить библиотеку [DjVuLibre](https://djvu.sourceforge.net/)
 ```
@@ -71,7 +71,6 @@ sudo cmake --install . --config Release
 pkg install qt5-qmake qt5-buildtools djvulibre
 ```
 
-
 Скачать исходники программы:
 
 ```
@@ -79,7 +78,6 @@ git clone --recurse-submodules https://github.com/petrovvlad/freeLib.git
 ```
 
 Собрать и установить:
-
 
 ```
 mkdir freeLib/build && cd freeLib/build && \
