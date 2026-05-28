@@ -268,9 +268,13 @@ void loadLibrary(uint idLibrary)
             while (query.next()) {
                 uint idBook = query.value(0).toUInt();
                 ushort idGenre = query.value(1).toUInt();
-                if(!g::genres.contains(idGenre)) idGenre = 1112;
+                if(!g::genres.contains(idGenre)) idGenre = 0;
                 if(lib.books.contains(idBook))
                     lib.books.at(idBook).vIdGenres.push_back(idGenre);
+            }
+            for(auto &book :lib.books){
+                if(book.second.vIdGenres.empty())
+                    book.second.vIdGenres.push_back(0);
             }
             query.prepare(u"SELECT book_tag.id_book, book_tag.id_tag FROM book_tag INNER JOIN book ON book.id = book_tag.id_book WHERE book.id_lib = :id_lib"_s);
             //                     0                 1

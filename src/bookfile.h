@@ -22,7 +22,7 @@ public:
     QString filePath() const;
     qint64 fileSize() const;
     QByteArray data();
-    QByteArray dataZip(const QString &sSubFormat);
+    QByteArray dataArchive(const QString &sSubFormat);
 
     QFuture<QString> annotationAsync();
     QFuture<QImage> coverAsync();
@@ -30,7 +30,8 @@ public:
     bool isCoverCached();
 
 private:
-    QByteArray openZipInZip(const QString &sArchive, const QString &sFileName);
+    QByteArray openArcInArc(const QString &sArchive, const QString &sFileName);
+
     QImage coverFb2();
     QString annotationFb2();
     QImage coverEpub();
@@ -42,7 +43,7 @@ private:
 #ifdef USE_DEJVULIBRE
     QImage coverDjvu();
 #endif
-    QImage coverZip();
+    QImage coverArchive();
     QImage createCover();
     void cleanCoversCache();
     void openEpub();
@@ -57,11 +58,12 @@ private:
     QString sArchive_;
     QString sBookName_;
     QString sAuthorName_;
-    QString sSequence_;
+    QString sSeries_;
     QImage cover_;
     std::unique_ptr<EpubReader> pEpub_;
     QDomDocument doc_;
     bool bOpen_;
+    bool bOneBookInArchive_;
     QFuture<void> futureOpen_;
     QFuture<QImage> futureCover_;
     QFuture<QString> futureAnnotation_;

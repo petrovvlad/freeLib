@@ -1052,9 +1052,12 @@ void MainWindow::onDblClickBook()
             return;
         sFileName = QDir::tempPath() % u"/freeLib/"_s % bookFile->fileName();
         QFile file(sFileName);
-        file.open(QFile::WriteOnly);
-        file.write(baBook);
-        file.close();
+        if(file.open(QFile::WriteOnly)){
+            file.write(baBook);
+            file.close();
+        }else
+            LogWarning << "Error open: " << sFileName;
+
     }
     if(g::options.applications.contains(book.sFormat)){
         if(
@@ -1607,7 +1610,10 @@ void MainWindow::fillReview(const BookFile &bookFile)
                                                                .arg(QString::number(idGenre), sGenre);
     }
     QFile file_html(u":/preview.html"_s);
-    file_html.open(QIODevice::ReadOnly);
+    if(!file_html.open(QIODevice::ReadOnly)){
+        LogWarning << "Error open: " << u":/preview.html"_s;
+        return;
+    }
     QString content(file_html.readAll());
     auto size = bookFile.fileSize();
     auto dataFile = bookFile.birthTime();

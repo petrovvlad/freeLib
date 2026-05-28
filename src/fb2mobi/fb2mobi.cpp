@@ -173,10 +173,11 @@ void fb2mobi::parse_binary(const QDomNode &elem)
         QDir dir;
         dir.mkpath(sTmpDir_ + u"/OEBPS/img%1/"_s.arg(current_book));
         QFile file(sTmpDir_ % u"/OEBPS/img%1/"_s.arg(current_book) % filename);
-        file.open(QIODevice::WriteOnly);
-        file.write(QByteArray::fromBase64((elem.toElement().text().toStdString().c_str())));
-        file.close();
-        vImageList_.emplace_back(u"img%1/"_s.arg(current_book) + filename);
+        if(file.open(QIODevice::WriteOnly)){
+            file.write(QByteArray::fromBase64((elem.toElement().text().toStdString().c_str())));
+            file.close();
+            vImageList_.emplace_back(u"img%1/"_s.arg(current_book) + filename);
+        }
     }
 }
 
@@ -1557,7 +1558,10 @@ QString fb2mobi::convert(uint idBook)
     QString out_file = sTmpDir_ + u"/book.fb2"_s;
     QFile::remove(out_file);
     file.setFileName(out_file);
-    file.open(QFile::WriteOnly);
+    if(!file.open(QFile::WriteOnly)){
+        LogWarning << "Error open file:" << out_file;
+        return u""_s;
+    }
     file.write(outbuff.data());
     file.close();
 
@@ -1862,9 +1866,11 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     {
         QString html_file = sTmpDir_ + u"/OEBPS/%1"_s.arg(html.sFileName);
         f.setFileName(html_file);
-        f.open(QIODevice::WriteOnly);
-        ts << html.sContent;
-        f.close();
+        if(f.open(QIODevice::WriteOnly)){
+            ts << html.sContent;
+            f.close();
+        }else
+            LogWarning << "Error open file:" << html_file;
     }
     int height{0}, width{0};
     if(!sFileCover_.isEmpty()){
@@ -1958,7 +1964,8 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         if(fileCoverHtml.open(QIODevice::WriteOnly)){
             fileCoverHtml.write(sCoverHtml.toUtf8());
             fileCoverHtml.close();
-        }
+        }else
+            LogWarning << "Error open file:" << fileCoverHtml.fileName();
     }
 
     generate_toc();
@@ -1966,18 +1973,24 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     {
         QString toc_file = sTmpDir_ + u"/OEBPS/toc.html"_s;
         f.setFileName(toc_file);
-        f.open(QIODevice::WriteOnly);
-        ts << buf;
-        f.close();
+        if(f.open(QIODevice::WriteOnly)){
+            ts << buf;
+            f.close();
+        }else
+            LogWarning << "Error open file:" << toc_file;
+
     }
 
     if(!sBufAnnotation_.isEmpty() && !pExportOptions_->bAnnotation)
     {
         QString annotation_file = sTmpDir_ + u"/OEBPS/annotation.html"_s;
         f.setFileName(annotation_file);
-        f.open(QIODevice::WriteOnly);
-        ts << sBufAnnotation_;
-        f.close();
+        if(f.open(QIODevice::WriteOnly)){
+            ts << sBufAnnotation_;
+            f.close();
+        }else
+            LogWarning << "Error open file:" << annotation_file;
+
     }
 
     if(pExportOptions_->format == mobi || pExportOptions_->format == azw3 || pExportOptions_->format == mobi7)
@@ -1986,9 +1999,12 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         generate_ncx_epub();
     QString ncx_file = sTmpDir_ + u"/OEBPS/toc.ncx"_s;
     f.setFileName(ncx_file);
-    f.open(QIODevice::WriteOnly);
-    ts << buf;
-    f.close();
+    if(f.open(QIODevice::WriteOnly)){
+        ts << buf;
+        f.close();
+    }else
+        LogWarning << "Error open file:" << ncx_file;
+
 
     if(pExportOptions_->format == mobi || pExportOptions_->format == azw3 || pExportOptions_->format == mobi7)
         generate_opf();
@@ -1996,9 +2012,12 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         generate_opf_epub();
     QString opf_file = sTmpDir_ + u"/OEBPS/book.opf"_s;
     f.setFileName(opf_file);
-    f.open(QIODevice::WriteOnly);
-    ts << buf;
-    f.close();
+    if(f.open(QIODevice::WriteOnly)){
+        ts << buf;
+        f.close();
+    }else
+        LogWarning << "Error open file:" << opf_file;
+
 
     if(pExportOptions_->format == mobi || pExportOptions_->format == azw3 || pExportOptions_->format == mobi7)
     {
@@ -2025,23 +2044,33 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         generate_mime();
         QString mime_file = sTmpDir_ + u"/mimetype"_s;;
         f.setFileName(mime_file);
-        f.open(QIODevice::WriteOnly);
-        ts << buf;
-        f.close();
+        if(f.open(QIODevice::WriteOnly)){
+            ts << buf;
+            f.close();
+        }else
+            LogWarning << "Error open file:" << mime_file;
+
         generate_container();
         QString container_file = sTmpDir_ + u"/META-INF/container.xml"_s;
         f.setFileName(container_file);
-        f.open(QIODevice::WriteOnly);
-        ts << buf;
-        f.close();
+        if(f.open(QIODevice::WriteOnly)){
+            ts << buf;
+            f.close();
+        }else
+            LogWarning << "Error open file:" << container_file;
+
 
         QuaZip zip(sTmpDir_ + u"/book.epub"_s);
         zip.open(QuaZip::mdCreate);
         QuaZipFile zip_file(&zip);
         zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"mimetype"_s), 0, 0, 0, 0);
         QFile file(mime_file);
-        file.open(QIODevice::ReadOnly);
-        zip_file.write(file.readAll());
+        if(file.open(QIODevice::ReadOnly)){
+            zip_file.write(file.readAll());
+            file.close();
+        }else
+            LogWarning << "Error open file:" << mime_file;
+
         zip_file.close();
         ZipDir(&zip, QDir(sTmpDir_ + u"/OEBPS"_s));
         ZipDir(&zip, QDir(sTmpDir_ + u"/META-INF"_s));

@@ -77,7 +77,13 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
         case 6: //дата добавления
             return bookThis.date < bookOther.date;
         case 7: //Жанр
+        {
+            if(bookThis.vIdGenres.empty())
+                return false;
+            if(bookOther.vIdGenres.empty())
+                return true;
             return g::genres[bookThis.vIdGenres.at(0)].sName < g::genres[bookOther.vIdGenres.at(0)].sName;
+        }
         case 8: //Язык
             return lib.vLaguages[bookThis.idLanguage] < lib.vLaguages[bookOther.idLanguage];
         case 9: //Формат
