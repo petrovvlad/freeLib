@@ -403,7 +403,7 @@ bool setCurrentZipFileName(QuaZip *zip, const QString &name)
     bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     if(!result)
     {
-        zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
+        zip->setFileNameCodec("IBM 866");
         result = zip->setCurrentFile(name, QuaZip::csInsensitive);
     }
     return result;
