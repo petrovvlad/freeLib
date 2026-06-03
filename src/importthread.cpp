@@ -774,10 +774,13 @@ void ImportThread::process()
     switch(nUpdateType_)
     {
     case UT_FULL:
-        ClearLib(dbase, idLib_, false);
+        query_.exec(u"PRAGMA foreign_keys = ON"_s);
+        query_.exec(u"delete from book where id_lib="_s + QString::number(idLib_));
+        query_.exec(u"delete from author where id_lib="_s + QString::number(idLib_));
+        query_.exec(u"delete from seria where id_lib="_s + QString::number(idLib_));
         break;
     case UT_DEL_AND_NEW:
-        ClearLib(dbase, idLib_, true);
+        query_.exec(u"update book set deleted=1 where id_lib="_s + QString::number(idLib_));
         break;
     }
 
@@ -1180,6 +1183,7 @@ void ImportThread::process()
     }
     cleanUnsortedGenre();
     dbase.commit();
+    query_.exec(u"VACUUM"_s);
     if(!stopped_) [[likely]]
         emit progress(nBooksCount, 1.0f);
 

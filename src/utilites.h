@@ -60,7 +60,7 @@ struct std::hash<QString> {
 template <typename T>
 bool contains(const std::vector<T> &v, T id)
 {
-    return std::find(v.begin(), v.end(), id) != v.end();
+    return std::ranges::find(v, id) != v.end();
 }
 
 struct tag
@@ -80,7 +80,6 @@ inline std::vector<tag> vTags;
 
 QString RelativeToAbsolutePath(QString path);
 bool openDB(const QString &sName);
-void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only);
 QString Transliteration(QString str);
 bool localeStringCompare(const QString &str1, const QString &str2);
 #ifdef USE_HTTSERVER

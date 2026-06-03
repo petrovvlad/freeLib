@@ -241,23 +241,6 @@ bool openDB(const QString &sName)
     return true;
 }
 
-void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
-{
-    QSqlQuery query(dbase);
-    if(delete_only)
-    {
-        query.exec(u"update book set deleted=1 where id_lib="_s + QString::number(id_lib));
-    }
-    else
-    {
-        query.exec(u"PRAGMA foreign_keys = ON"_s);
-        query.exec(u"delete from book where id_lib="_s + QString::number(id_lib));
-        query.exec(u"delete from author where id_lib="_s + QString::number(id_lib));
-        query.exec(u"delete from seria where id_lib="_s + QString::number(id_lib));
-        query.exec(u"VACUUM"_s);
-    }
-}
-
 QString Transliteration(QString str)
 {
     str = str.trimmed();
