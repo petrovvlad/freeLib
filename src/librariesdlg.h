@@ -31,8 +31,8 @@ private:
 
 private slots:
     void progressImport(uint nBooksAdded, float fProgress);
-    void InputINPX();
-    void SelectBooksDir();
+    void inpxPathChanged(const QString &sPath);
+    void bookDirChanged(const QString &sDir);
     void StartImport();
     void SelectLibrary();
     void DeleteLibrary();

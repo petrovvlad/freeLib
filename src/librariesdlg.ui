@@ -107,10 +107,30 @@
       </widget>
      </item>
      <item row="1" column="1">
-      <widget class="QLineEdit" name="BookDir"/>
+      <widget class="FileLineEdit" name="BookDir">
+       <property name="nameFilter" stdset="0">
+        <string notr="true">All files (*.*)</string>
+       </property>
+       <property name="buttonText" stdset="0">
+        <string notr="true">…</string>
+       </property>
+       <property name="captionDialog" stdset="0">
+        <string>Select books directory</string>
+       </property>
+      </widget>
      </item>
      <item row="2" column="1">
-      <widget class="QLineEdit" name="inpx"/>
+      <widget class="FileLineEdit" name="inpx">
+       <property name="nameFilter" stdset="0">
+        <string>Library (*.inpx)</string>
+       </property>
+       <property name="buttonText" stdset="0">
+        <string notr="true">…</string>
+       </property>
+       <property name="captionDialog" stdset="0">
+        <string>Add library</string>
+       </property>
+      </widget>
      </item>
      <item row="0" column="1">
       <layout class="QHBoxLayout" name="Name_layout">
@@ -384,6 +404,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FileLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>filelineedit.h</header>
+  </customwidget>
+ </customwidgets>
  <resources/>
  <connections>
   <connection>

@@ -128,7 +128,7 @@ private slots:
     void onBtnSaveExportClicked();
     void onBtnOpenExportClicked();
     void onChangeAlphabetCombobox(int index);
-    void btnDBPath();
+    void onMoveDB(const QString &sPath);
     void onChangePage();
     void onExportFormatChanged();
 #ifdef USE_HTTSERVER

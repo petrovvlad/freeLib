@@ -15,6 +15,8 @@
 #include "conversionframe.h"
 #include "config-freelib.h"
 #include "utilites.h"
+#include "filelineedit.h"
+
 
 SettingsDlg::SettingsDlg(QWidget *parent) :
     QDialog(parent),
@@ -152,16 +154,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 
     connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &SettingsDlg::onChangePage);
 
-    QToolButton* btnDBPath = new QToolButton(this);
-    btnDBPath->setFocusPolicy(Qt::NoFocus);
-    btnDBPath->setCursor(Qt::ArrowCursor);
-    btnDBPath->setText(tr("Move to ..."));
-    QHBoxLayout*  layout = new QHBoxLayout(ui->database_path);
-    layout->addWidget(btnDBPath, 0, Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
-
 
 #ifdef USE_HTTSERVER
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
@@ -175,6 +167,8 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 #endif //USE_HTTSERVER
 
     LoadSettings();
+    connect(ui->database_path, &FileLineEdit::textChanged, this, & SettingsDlg::onMoveDB);
+
 #ifdef USE_HTTSERVER
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
 #endif //USE_HTTSERVER
@@ -420,27 +414,19 @@ void SettingsDlg::reject()
     QDialog::reject();
 }
 
-void SettingsDlg::btnDBPath()
+void SettingsDlg::onMoveDB(const QString &sPath)
 {
-    QDir::setCurrent(QFileInfo(ui->database_path->text()).absolutePath());
-    QString dir=QFileDialog::getExistingDirectory(this, tr("Select database directory"));
-    if(!dir.isEmpty() && dir != ui->database_path->text())
+    QSqlDatabase dbase = QSqlDatabase::database(u"libdb"_s, false);
+    if (dbase.isOpen())
+        dbase.close();
+    if(QFile().rename(g::options.sDatabasePath, sPath))
     {
-        g::options.sDatabasePath = ui->database_path->text().trimmed();
-        QSqlDatabase dbase = QSqlDatabase::database(u"libdb"_s, false);
-        if (dbase.isOpen())
-            dbase.close();
-        if(QFile().rename(RelativeToAbsolutePath(ui->database_path->text()), dir + u"/freeLib.sqlite"_s))
-        {
-            QFile().remove(RelativeToAbsolutePath(ui->database_path->text()));
-            ui->database_path->setText(dir + u"/freeLib.sqlite"_s);
-            dbase.setDatabaseName(RelativeToAbsolutePath(ui->database_path->text()));
-            if(!dbase.open())
-            {
-                QApplication::closingDown();
-            }
-        }
+        g::options.sDatabasePath = sPath;
+        dbase.setDatabaseName(sPath);
+        if(!dbase.open())
+            QApplication::closingDown();
     }
+
 }
 
 void SettingsDlg::onChangePage()

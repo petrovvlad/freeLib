@@ -41,16 +41,6 @@ ExportFrame::ExportFrame(QWidget *parent) :
 #endif //USE_HTTSERVER
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
 
-    QToolButton* btnPath = new QToolButton(this);
-    btnPath->setFocusPolicy(Qt::NoFocus);
-    btnPath->setCursor(Qt::ArrowCursor);
-    btnPath->setText(u"..."_s);
-    QHBoxLayout*  layout = new QHBoxLayout(ui->Path);
-    layout->addWidget(btnPath, 0, Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
-
     QRegularExpression rx(u"\\b[^@\\s]+@[^@\\s]+\\.[^@\\s]+\\b"_s, QRegularExpression::CaseInsensitiveOption);
     validatorEMail.setRegularExpression(rx);
 
@@ -195,14 +185,6 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
 void ExportFrame::onUseForHttpChanged(int state)
 {
     emit UseForHttpChanged(state);
-}
-
-void ExportFrame::btnPath()
-{
-    QDir::setCurrent(ui->Path->text());
-    QString dir = QFileDialog::getExistingDirectory(this, tr("Select device directory"));
-    if(!dir.isEmpty())
-        ui->Path->setText(dir);
 }
 
 void ExportFrame::onOriginalFileNameChanged(int state)

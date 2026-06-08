@@ -106,7 +106,7 @@
         </sizepolicy>
        </property>
        <property name="currentIndex">
-        <number>6</number>
+        <number>0</number>
        </property>
        <widget class="QWidget" name="pageCommon">
         <property name="sizePolicy">
@@ -260,7 +260,7 @@
             </widget>
            </item>
            <item>
-            <widget class="QLineEdit" name="database_path">
+            <widget class="FileLineEdit" name="database_path">
              <property name="sizePolicy">
               <sizepolicy hsizetype="MinimumExpanding" vsizetype="Fixed">
                <horstretch>0</horstretch>
@@ -275,6 +275,18 @@
              </property>
              <property name="placeholderText">
               <string notr="true"/>
+             </property>
+             <property name="fileMode">
+              <enum>FileLineEdit::FileMode::FileInDirectory</enum>
+             </property>
+             <property name="captionDialog">
+              <string>Select database directory</string>
+             </property>
+             <property name="buttonText">
+              <string>Move to ...</string>
+             </property>
+             <property name="fileName">
+              <string>freeLib.sqlite</string>
              </property>
             </widget>
            </item>
@@ -1284,6 +1296,11 @@
   </layout>
  </widget>
  <customwidgets>
+  <customwidget>
+   <class>FileLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>filelineedit.h</header>
+  </customwidget>
   <customwidget>
    <class>PasswordLineEdit</class>
    <extends>QWidget</extends>

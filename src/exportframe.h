@@ -40,8 +40,6 @@ private slots:
     void onPostprocessingCopyChanged(int state);
     void validateEmail(QLineEdit* leEmail);
 
-    void btnPath();
-
 private:
     Ui::ExportFrame *ui;
     QRegularExpressionValidator validatorEMail;
