@@ -108,27 +108,30 @@
      </item>
      <item row="1" column="1">
       <widget class="FileLineEdit" name="BookDir">
-       <property name="nameFilter" stdset="0">
+       <property name="nameFilter">
         <string notr="true">All files (*.*)</string>
        </property>
-       <property name="buttonText" stdset="0">
-        <string notr="true">…</string>
+       <property name="fileMode">
+        <enum>FileLineEdit::FileMode::Directory</enum>
        </property>
-       <property name="captionDialog" stdset="0">
+       <property name="captionDialog">
         <string>Select books directory</string>
+       </property>
+       <property name="buttonText">
+        <string notr="true">…</string>
        </property>
       </widget>
      </item>
      <item row="2" column="1">
       <widget class="FileLineEdit" name="inpx">
-       <property name="nameFilter" stdset="0">
+       <property name="nameFilter">
         <string>Library (*.inpx)</string>
        </property>
-       <property name="buttonText" stdset="0">
-        <string notr="true">…</string>
-       </property>
-       <property name="captionDialog" stdset="0">
+       <property name="captionDialog">
         <string>Add library</string>
+       </property>
+       <property name="buttonText">
+        <string notr="true">…</string>
        </property>
       </widget>
      </item>
