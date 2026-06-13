@@ -398,12 +398,14 @@ void Options::Load(QSharedPointer<QSettings> pSettings)
     sBaseUrl = pSettings->value(u"BaseUrl"_s).toString();
     if(sBaseUrl.endsWith(u"/"))
         sBaseUrl.chop(1);
-    nHttpPort = pSettings->value(u"OPDS_port"_s, 0).toInt();
+    sCertPath = pSettings->value(u"net.sslcert").toString();
+    sKeyPath = pSettings->value(u"net.sslkey").toString();
+    nHttpPort = pSettings->value(u"portHttp"_s, 0).toInt();
     if(nHttpPort>0){
-        pSettings->setValue(u"portHttp"_s, nHttpPort);
-        pSettings->remove(u"OPDS_port"_s);
+        pSettings->setValue(u"net.port"_s, nHttpPort);
+        pSettings->remove(u"portHttp"_s);
     }else
-        nHttpPort = pSettings->value(u"portHttp"_s, nDefaultHttpPort).toInt();
+        nHttpPort = pSettings->value(u"net.port"_s, nDefaultHttpPort).toInt();
     nOpdsBooksPerPage = pSettings->value(QStringLiteral("books_per_page"), 15).toInt();
     nProxyType = pSettings->value(QStringLiteral("proxy_type"), 0).toInt();
     nProxyPort = pSettings->value(QStringLiteral("proxy_port"), nDefaultProxyPort).toInt();
@@ -520,9 +522,11 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
     pSettings->setValue(u"HTTP_user"_s, sOpdsUser);
     pSettings->setValue(u"httpPassword"_s, QString(baOpdsPasswordSalt.toBase64()) + u":"_s + QString(baOpdsPasswordHash.toBase64()));
     pSettings->setValue(u"BaseUrl"_s, sBaseUrl);
+    pSettings->setValue(u"net.sslcert"_s, sCertPath);
+    pSettings->setValue(u"net.sslkey"_s, sKeyPath);
     pSettings->setValue(u"srv_annotation"_s, bOpdsShowAnotation);
     pSettings->setValue(u"srv_covers"_s, bOpdsShowCover);
-    pSettings->setValue(u"portHttp"_s, nHttpPort);
+    pSettings->setValue(u"net.port"_s, nHttpPort);
     pSettings->setValue(u"books_per_page"_s, nOpdsBooksPerPage);
     pSettings->setValue(u"proxy_type"_s, nProxyType);
     pSettings->setValue(u"proxy_port"_s, nProxyPort);

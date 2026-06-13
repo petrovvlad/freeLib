@@ -7,6 +7,7 @@
 #include <QJsonObject>
 #include <QSettings>
 #include <QNetworkProxy>
+#include <QSslKey>
 #include <QStringBuilder>
 #include <QDir>
 #include <QtConcurrent/QtConcurrentMap>
@@ -1426,16 +1427,21 @@ QHttpServerResponse opds_server::generatePageOPDS2(const std::vector<uint> &vBoo
     return result;
 }
 
-void opds_server::stop_server()
+void opds_server::stopServer()
 {
     if(status_ == Status::run)
     {
         status_ = Status::stoped;
         const auto listTcpServsrs = httpServer_.servers();
-        for(auto &server: listTcpServsrs) {
+        for(auto &server: listTcpServsrs)
             server->close();
-        }
+        pTcpServer_.release();
     }
+}
+
+void opds_server::closeSesions()
+{
+    sessions_.clear();
 }
 
 QHttpServerResponse opds_server::rootHTML(uint idLib, const QHttpServerRequest &request)
@@ -3163,27 +3169,57 @@ QHttpServerResponse opds_server::convert(uint idLib, uint idBook, const QString 
     return result;
 }
 
-void opds_server::server_run()
+
+void opds_server::startServer()
 {
-    if(g::options.nHttpPort != nPort_ && status_ == Status::run)
+    bool bUseHttps = !g::options.sCertPath.isEmpty() && !g::options.sKeyPath.isEmpty();
+    if(status_ == Status::run &&
+        (g::options.nHttpPort != nPort_ || bUseHttps || (qobject_cast<QSslServer*>(pTcpServer_.get()) && !bUseHttps)))
     {
-        stop_server();
+        stopServer();
     }
     nPort_ = g::options.nHttpPort;
     if(g::options.bOpdsEnable)
     {
         if(status_ == Status::stoped)
         {
+            if(!pTcpServer_){
+                if(bUseHttps){
+                    auto sslServer = std::make_unique<QSslServer>(this);
+                    QSslConfiguration sslConfig = QSslConfiguration::defaultConfiguration();
+                    QFile fileCert(g::options.sCertPath);
+                    QFile fileKey(g::options.sKeyPath);
+                    if(!fileCert.open(QIODeviceBase::ReadOnly) || !fileKey.open(QIODeviceBase::ReadOnly)){
+                        LogWarning << "Не удалось открыть файлы сертификата/ключа";
+                        return;
+                    }
+                    QSslCertificate cert(&fileCert);
+                    QSslKey key(&fileKey, QSsl::Rsa, QSsl::Pem);
+                    if (cert.isNull() || key.isNull()) {
+                        LogWarning << "Неверный сертификат или приватный ключ";
+                        return;
+                    }
+
+                    sslConfig.setLocalCertificate(cert);
+                    sslConfig.setPrivateKey(key);
+                    sslConfig.setAllowedNextProtocols({QSslConfiguration::ALPNProtocolHTTP2});
+                    sslServer->setSslConfiguration(sslConfig);
+                    pTcpServer_ = std::move(sslServer);
+                }else{
+                    pTcpServer_ = std::make_unique<QTcpServer>(this);;
+                }
+            }
+
 #if QT_VERSION >= QT_VERSION_CHECK(6, 8, 0)
-            if (!tcpServer_.listen(QHostAddress::Any, nPort_) || !httpServer_.bind(&tcpServer_))
+            if (!pTcpServer_->listen(QHostAddress::Any, nPort_) || !httpServer_.bind(pTcpServer_.get()))
                 LogWarning << "Unable to start the server.";
             else
                 status_ = Status::run;
 #else
-            if (!tcpServer_.listen(QHostAddress::Any, nPort_))
+            if (!pTcpServer_->listen(QHostAddress::Any, nPort_))
                 LogWarning << "Unable to start the server.";
             else{
-                httpServer_.bind(&tcpServer_);
+                httpServer_.bind(pTcpServer_.get());
                 status_ = Status::run;
             }
 #endif
@@ -3191,7 +3227,7 @@ void opds_server::server_run()
     }
     else
     {
-        stop_server();
+        stopServer();
     }
 }
 

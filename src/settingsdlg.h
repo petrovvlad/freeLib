@@ -134,6 +134,8 @@ private slots:
 #ifdef USE_HTTSERVER
     void onUseForHttpChanged(int state);
     void onProxyTypeCurrentIndexChanged(int index);
+    static bool validateCert(const QString &sFileCert);
+    static bool validateKey(const QString &sFileKey);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     void onHttpNeedPaswordChanged(int state);

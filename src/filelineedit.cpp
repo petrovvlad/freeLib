@@ -56,6 +56,11 @@ void FileLineEdit::setDefaultDirectory(const QString &dir)
     sDefaultDir_ = dir;
 }
 
+void FileLineEdit::setValidateFunction(ValidateFunction func)
+{
+    validateFunc = std::move(func);
+}
+
 void FileLineEdit::setButtonText(const QString &text)
 {
     button_->setText(text);
@@ -119,6 +124,9 @@ void FileLineEdit::validate(const QString &sPath)
         case FileInDirectory:
             bValid = true;
         }
+
+        if(validateFunc)
+            bValid &= validateFunc(sPath);
 
         QPalette palette = parentWidget()->palette();
         if(!bValid)

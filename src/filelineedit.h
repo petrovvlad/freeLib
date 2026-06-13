@@ -15,6 +15,7 @@ class FileLineEdit : public QLineEdit
     Q_PROPERTY(QString buttonText READ buttonText WRITE setButtonText NOTIFY textButtonChanged DESIGNABLE true)
     Q_PROPERTY(QString fileName READ fileName WRITE setFileName NOTIFY fileNameChaged DESIGNABLE true)
 
+    using ValidateFunction = std::function<bool(const QString&)>;
 
 public:
     enum FileMode {
@@ -42,6 +43,7 @@ public:
     QString fileName() const;
 
     void setDefaultDirectory(const QString &dir);
+    void setValidateFunction(ValidateFunction func);
 
 signals:
     void nameFilterChanged(const QString &filter);
@@ -55,6 +57,7 @@ private slots:
 
 private:
     void validate(const QString &sPath);
+    ValidateFunction validateFunc;
 
     QToolButton *button_;
     FileMode fileMode_ = ExistingFile;

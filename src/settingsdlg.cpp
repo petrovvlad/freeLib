@@ -164,6 +164,8 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->HTTP_need_pasword, &QCheckBox::checkStateChanged, this, &SettingsDlg::onHttpNeedPaswordChanged);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
+    ui->fileCert->setValidateFunction(validateCert);
+    ui->fileKey->setValidateFunction(validateKey);
 #endif //USE_HTTSERVER
 
     LoadSettings();
@@ -248,6 +250,8 @@ void SettingsDlg::LoadSettings()
     ui->OPDS_enable->setChecked(options_.bOpdsEnable);
     ui->portHttp->setValue(options_.nHttpPort);
     ui->baseUrl->setText(options_.sBaseUrl);
+    ui->fileCert->setText(options_.sCertPath);
+    ui->fileKey->setText(options_.sKeyPath);
     ui->HTTP_need_pasword->setChecked(options_.bOpdsNeedPassword);
     ui->HTTP_user->setText(options_.sOpdsUser);
     if(options_.baOpdsPasswordSalt.isEmpty())
@@ -501,6 +505,8 @@ void SettingsDlg::btnOK()
     g::options.baOpdsPasswordSalt = ui->HTTP_password->getPasswordSalt();
     g::options.nHttpPort = ui->portHttp->value();
     g::options.sBaseUrl = ui->baseUrl->text();
+    g::options.sCertPath = ui->fileCert->text();
+    g::options.sKeyPath = ui->fileKey->text();
     g::options.nOpdsBooksPerPage = ui->books_per_page->value();
     g::options.nProxyType = ui->proxy_type->currentIndex();
     g::options.nProxyPort = ui->proxy_port->value();
@@ -821,6 +827,34 @@ void SettingsDlg::onProxyTypeCurrentIndexChanged(int index)
     ui->proxy_port->setEnabled(bEnable);
     ui->proxy_user->setEnabled(bEnable);
 }
+
+bool SettingsDlg::validateCert(const QString &sFileCert)
+{
+    QFile file(sFileCert);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    QTextStream stream(&file);
+    QString firstLine = stream.readLine();
+    file.close();
+
+    return firstLine.contains("BEGIN CERTIFICATE");
+}
+
+bool SettingsDlg::validateKey(const QString &sFileKey)
+{
+    QFile file(sFileKey);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    QTextStream stream(&file);
+    QString firstLine = stream.readLine();
+    file.close();
+
+    return firstLine.contains("BEGIN PRIVATE KEY");
+}
 #endif
 
 void SettingsDlg::onTrayIconCurrentIndexChanged(int index)
@@ -1028,6 +1062,10 @@ void SettingsDlg::onOpdsEnable(Qt::CheckState state)
     ui->baseUrl->setEnabled(bOpdsEnable);
     ui->label_20->setEnabled(bOpdsEnable);
     ui->label_23->setEnabled(bOpdsEnable);
+    ui->label_2->setEnabled(bOpdsEnable);
+    ui->fileCert->setEnabled(bOpdsEnable);
+    ui->label_3->setEnabled(bOpdsEnable);
+    ui->fileKey->setEnabled(bOpdsEnable);
     ui->HTTP_need_pasword->setEnabled(bOpdsEnable);
     ui->HTTP_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
     ui->p_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
