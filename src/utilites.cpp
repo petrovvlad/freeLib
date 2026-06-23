@@ -381,17 +381,6 @@ void setLocale(const QString &sLocale)
     g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Book"), u"body"_s, u"body_font"_s, 100));
 }
 
-bool setCurrentZipFileName(QuaZip *zip, const QString &name)
-{
-    bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    if(!result)
-    {
-        zip->setFileNameCodec("IBM 866");
-        result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    }
-    return result;
-}
-
 bool kindlegenInstalled()
 {
     QString kindlegenPath = QStandardPaths::findExecutable(u"kindlegen"_s);

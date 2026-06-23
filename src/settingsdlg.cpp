@@ -5,17 +5,12 @@
 #include <QMessageBox>
 #include <QStandardItemModel>
 
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazipfile.h>
-#endif
-
 #include "exportframe.h"
 #include "conversionframe.h"
 #include "config-freelib.h"
 #include "utilites.h"
 #include "filelineedit.h"
+#include "qarchive.h"
 
 
 SettingsDlg::SettingsDlg(QWidget *parent) :
@@ -839,7 +834,7 @@ bool SettingsDlg::validateCert(const QString &sFileCert)
     QString firstLine = stream.readLine();
     file.close();
 
-    return firstLine.contains("BEGIN CERTIFICATE");
+    return firstLine.contains(u"BEGIN CERTIFICATE");
 }
 
 bool SettingsDlg::validateKey(const QString &sFileKey)
@@ -853,7 +848,7 @@ bool SettingsDlg::validateKey(const QString &sFileKey)
     QString firstLine = stream.readLine();
     file.close();
 
-    return firstLine.contains("BEGIN PRIVATE KEY");
+    return firstLine.contains(u"BEGIN PRIVATE KEY");
 }
 #endif
 
@@ -891,64 +886,64 @@ void SettingsDlg::onBtnSaveExportClicked()
         (ui->ExportName->currentText()), u"freeLib export (*.fle)"_s);
     if(file_name.isEmpty()) [[unlikely]]
         return;
-    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s, QSettings::IniFormat));
+    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/freeLib/export.ini"_s, QSettings::IniFormat));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     settings->setIniCodec("UTF-8");
 #endif
     ExportOptions exportOptions;
 
-    const QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
+    qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
+    const QStringList fonts_list = qobject_cast<ConversionFrame*>(ui->stackedWidgetConversion->currentWidget())->Save(&exportOptions);
     exportOptions.sName = ui->ExportName->currentText();
     exportOptions.Save(settings, false);
     settings->sync();
-    QuaZip zip(file_name);
-    zip.open(QuaZip::mdCreate);
-    QuaZipFile zip_file(&zip);
+    QArchive arc(file_name, QArchive::create);
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"export.ini"_s, settings->fileName()));
     QFile file(settings->fileName());
     if(!file.open(QIODevice::ReadOnly))
         LogWarning << "Error open: " << settings->fileName();
-    zip_file.write(file.readAll());
-    file.close();
-    zip_file.close();
+    else{
+        arc.writeFile(u"export.ini"_s, file);
+        file.close();
+    }
 
     QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
     for(const QString &font: fonts_list)
     {
-        QString font_file = font;
-        if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file))
+        if(font.isEmpty())
+            continue;
+        QString sFontFile = font;
+        if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % sFontFile))
         {
-            font_file = QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file;
+            sFontFile = QApplication::applicationDirPath() % u"/xsl/fonts/"_s % sFontFile;
         }
         else
         {
-            if(QFile::exists(db_path % u"/"_s % font_file))
+            if(QFile::exists(db_path % u"/"_s % sFontFile))
             {
-                font_file = db_path % u"/"_s % font_file;
+                sFontFile = db_path % u"/"_s % sFontFile;
             }
-            else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % font_file))
+            else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % sFontFile))
             {
-                font_file = FREELIB_DATA_DIR % u"/fonts"_s % font_file;
+                sFontFile = FREELIB_DATA_DIR % u"/fonts"_s % sFontFile;
             }
             else
             {
-                if(!QFile::exists(font_file))
-                    font_file = u""_s;
+                if(!QFile::exists(sFontFile))
+                    sFontFile = u""_s;
             }
         }
-        if(!font_file.isEmpty())
+        if(!sFontFile.isEmpty())
         {
-            zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"Fonts/"_s + QFileInfo(font_file).fileName(), font_file));
-            file.setFileName(font_file);
+            file.setFileName(sFontFile);
             if(!file.open(QIODevice::ReadOnly))
-                LogWarning << "Error open: " << font_file;
-            zip_file.write(file.readAll());
-            file.close();
-            zip_file.close();
+                LogWarning << "Error open: " << sFontFile;
+            else{
+                arc.writeFile(u"Fonts/"_s + QFileInfo(sFontFile).fileName(), file);
+                file.close();
+            }
         }
     }
-    zip.close();
 }
 
 void SettingsDlg::onBtnOpenExportClicked()
@@ -962,14 +957,13 @@ void SettingsDlg::onBtnOpenExportClicked()
     if(msgBox.exec() == QMessageBox::Cancel)
         return;
 
-    QuaZip zip(file_name);
-    zip.open(QuaZip::mdUnzip);
+    QArchive arc(file_name);
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
     QDir().mkpath(db_path);
-    const QStringList files = zip.getFileNameList();
+    auto files = arc.fileList();
 
     for(const QString &file: files)
     {
@@ -987,14 +981,12 @@ void SettingsDlg::onBtnOpenExportClicked()
 
             {
                 QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) % u"/"_s % fi.fileName();
-                setCurrentZipFileName(&zip, file);
-                QuaZipFile zip_file(&zip);
-                zip_file.open(QIODevice::ReadOnly);
-                QFile font_file(font_name);
-                font_file.remove();
-                if(font_file.open(QFile::WriteOnly)){
-                    font_file.write(zip_file.readAll());
-                    font_file.close();
+                QFile fileFont(font_name);
+                fileFont.remove();
+                if(fileFont.open(QFile::WriteOnly)){
+
+                    fileFont.write(arc.readFile(file));
+                    fileFont.close();
                 }else
                     LogWarning << "Error open: " << font_name;
 
@@ -1003,14 +995,11 @@ void SettingsDlg::onBtnOpenExportClicked()
         }
     }
 
-    setCurrentZipFileName(&zip, u"export.ini"_s);
-    QuaZipFile zip_file(&zip);
-    zip_file.open(QIODevice::ReadOnly);
     QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s;
     QFile file(ini_name);
     file.remove();
     if(file.open(QFile::WriteOnly)){
-        file.write(zip_file.readAll());
+        file.write(arc.readFile(u"export.ini"_s));
         file.close();
     }else
         LogWarning << "Error open: " << ini_name;
@@ -1039,9 +1028,8 @@ void SettingsDlg::onBtnOpenExportClicked()
         ExportOptions exportOptions;
         exportOptions.Load(settings);
         qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Load(&exportOptions);
+        qobject_cast<ConversionFrame*>(ui->stackedWidgetConversion->currentWidget())->Load(&exportOptions);
     }
-
-    zip_file.close();
 }
 
 void SettingsDlg::onChangeAlphabetCombobox(int /*index*/)

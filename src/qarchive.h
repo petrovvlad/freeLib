@@ -2,6 +2,12 @@
 #define QARCHIVE_H
 
 #include "utilites.h"
+#ifdef QUAZIP_STATIC
+#include "quazip/quazip/quazipfile.h"
+#else
+#include <quazip/quazipfile.h>
+#endif
+
 
 struct archive;
 struct archive_entry;
@@ -14,9 +20,18 @@ struct AchiveFileInfo{
 class QArchive
 {
 public:
+    enum Mode {
+        //notOpen,
+        read,
+        create
+        //,append
+        //,add
+    };
     QArchive();
     QArchive(const QString &sArchivePath);
+    QArchive(const QString &sArchivePath, Mode mode);
     QArchive(const QByteArray data);
+    QArchive(Mode mode);
     ~QArchive();
 
     void setData(const QByteArray data);
@@ -30,6 +45,10 @@ public:
     QByteArray readFile(const QString &sFileName, size_t size);
     QByteArray readFile(size_t size);
     QByteArray readFile();
+
+    void writeFile(const QString &sFileName, const QByteArray &data, int method = Z_DEFLATED, int level = Z_DEFAULT_COMPRESSION);
+    void writeFile(const QString &sFileName, QFile &file, int method = Z_DEFLATED, int level = Z_DEFAULT_COMPRESSION);
+
 
 
     bool extractFileTo(const QString sFileName, const QString &sDst);
@@ -55,6 +74,7 @@ private:
     QuaZip zip_;
     QByteArray data_;
     QString sArchivePath_;
+    Mode mode_;
 
     bool open();
 };

@@ -3,30 +3,41 @@
 #ifdef USE_LIBARCHIVE
 #include <archive.h>
 #include <archive_entry.h>
-#else //USE_LIBARCHIVE
+#endif //USE_LIBARCHIVE
+
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
 #else
 #include <quazip/quazipfile.h>
 #endif
-#endif //USE_LIBARCHIVE
-
 
 #include "utilites.h"
 
 QArchive::QArchive()
 #ifdef USE_LIBARCHIVE
     : archive_(nullptr),
-      entry_(nullptr)
+      entry_(nullptr),
 #endif //USE_LIBARCHIVE
+    mode_(Mode::read)
 {
 }
 
 QArchive::QArchive(const QString &sArchivePath)
 #ifdef USE_LIBARCHIVE
     : archive_(nullptr),
-      entry_(nullptr)
+      entry_(nullptr),
 #endif //USE_LIBARCHIVE
+    mode_(Mode::read)
+{
+    sArchivePath_ = sArchivePath;
+}
+
+QArchive::QArchive(const QString &sArchivePath, Mode mode)
+#ifdef USE_LIBARCHIVE
+    : archive_(nullptr),
+    entry_(nullptr),
+#endif //USE_LIBARCHIVE
+    mode_(mode)
 {
     sArchivePath_ = sArchivePath;
 }
@@ -34,11 +45,20 @@ QArchive::QArchive(const QString &sArchivePath)
 QArchive::QArchive(const QByteArray data)
 #ifdef USE_LIBARCHIVE
     : archive_(nullptr),
-      entry_(nullptr)
+      entry_(nullptr),
 #endif //USE_LIBARCHIVE
-
+    mode_(Mode::read)
 {
     data_ = data;
+}
+
+QArchive::QArchive(Mode mode)
+#ifdef USE_LIBARCHIVE
+    : archive_(nullptr),
+    entry_(nullptr)
+#endif //USE_LIBARCHIVE
+{
+    mode_ = mode;
 }
 
 QArchive::~QArchive()
@@ -91,14 +111,14 @@ bool QArchive::setCurrentFile(const QString &sFileName)
     }
     else
 #endif //USE_LIBARCHIVE
-        return zip_.setCurrentFile(sFileName);
+        return zip_.setCurrentFile(sFileName, QuaZip::csInsensitive);
 }
 
 bool QArchive::open()
 {
     bool bSuccess = false;
 #ifdef USE_LIBARCHIVE
-    if(!sArchivePath_.endsWith(u".zip")){
+    if(!sArchivePath_.endsWith(u".zip") && mode_ != Mode::create){
         archive_ = archive_read_new();
         if (!archive_) {
             LogWarning << "Failed to create archive_read object";
@@ -131,21 +151,33 @@ bool QArchive::open()
     {
         if(zip_.isOpen())
             return true;
-        if(data_.size() != 0)
-        {
-            buffer_.setData(data_);
-            zip_.setIoDevice(&buffer_);
-        }
-        else if(!sArchivePath_.isEmpty())
-        {
-            zip_.setZipName(sArchivePath_);
-        }
+        switch(mode_){
+        case Mode::read:
+            if(data_.size() != 0)
+            {
+                buffer_.setData(data_);
+                zip_.setIoDevice(&buffer_);
+            }
+            else if(!sArchivePath_.isEmpty())
+                zip_.setZipName(sArchivePath_);
 
-        if( !zip_.open(QuaZip::mdUnzip) ) [[unlikely]]
-        {
-            LogWarning << "Error open archive!" << sArchivePath_;
-        }else
-            bSuccess = true;
+            if( !zip_.open(QuaZip::mdUnzip) ) [[unlikely]]
+                LogWarning << "Error open archive!" << sArchivePath_;
+            else
+                bSuccess = true;
+            break;
+
+        case Mode::create:
+            zip_.setZipName(sArchivePath_);
+            if( !zip_.open(QuaZip::mdCreate) ) [[unlikely]]
+                LogWarning << "Error creat archive!" << sArchivePath_;
+            else
+                bSuccess = true;
+            break;
+
+        default:
+            break;
+        }
     }
 
     return bSuccess;
@@ -271,7 +303,7 @@ QByteArray QArchive::readFile(const QString &sFileName)
                 }
 
                 result.resize(size);
-                la_ssize_t bytesRead = archive_read_data(archive_, result.data(), size);
+                auto bytesRead = archive_read_data(archive_, result.data(), size);
                 if (bytesRead != size) {
                     LogWarning << "Failed to read file data: " << archive_error_string(archive_);
                     result.clear();
@@ -291,7 +323,15 @@ QByteArray QArchive::readFile(const QString &sFileName)
 #endif //USE_LIBARCHIVE
 
     {
-        zip_.setCurrentFile(sFileName);
+        if(!zip_.setCurrentFile(sFileName, QuaZip::csInsensitive))
+        {
+            zip_.setFileNameCodec("IBM 866");
+            if(!zip_.setCurrentFile(sFileName, QuaZip::csInsensitive))
+            {
+                LogWarning << "Failed to set file:" << sFileName;
+                return result;
+            }
+        }
         QuaZipFile zipFile(&zip_);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
         {
@@ -301,7 +341,6 @@ QByteArray QArchive::readFile(const QString &sFileName)
             zipFile.close();
         }
     }
-
     return result;
 }
 
@@ -347,7 +386,7 @@ QByteArray QArchive::readFile(const QString &sFileName, size_t size)
 #endif //USE_LIBARCHIVE
 
     {
-        zip_.setCurrentFile(sFileName);
+        zip_.setCurrentFile(sFileName, QuaZip::csInsensitive);
         QuaZipFile zipFile(&zip_);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
         {
@@ -434,6 +473,25 @@ QByteArray QArchive::readFile()
     return result;
 }
 
+void QArchive::writeFile(const QString &sFileName, const QByteArray &data, int method, int level)
+{
+    if(!open())
+        return;
+
+    QuaZipFile zipFile(&zip_);
+    if(!zipFile.open(QIODevice::WriteOnly, QuaZipNewInfo(sFileName), nullptr, 0, method, level)) [[unlikely]]
+    {
+        LogWarning << "Error open file:" << sFileName;
+    }else{
+        zipFile.write(data);
+    }
+}
+
+void QArchive::writeFile(const QString &sFileName, QFile &file, int method, int level)
+{
+    writeFile(sFileName, file.readAll(), method, level);
+}
+
 bool QArchive::extractFileTo(const QString sFileName, const QString &sDst)
 {
     if(!open())
@@ -477,7 +535,7 @@ bool QArchive::extractFileTo(const QString sFileName, const QString &sDst)
     else
 #endif //USE_LIBARCHIVE
     {
-        zip_.setCurrentFile(sFileName);
+        zip_.setCurrentFile(sFileName, QuaZip::csInsensitive);
         QuaZipFile zipFile(&zip_);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
         {
@@ -524,7 +582,7 @@ QDateTime QArchive::getMTime(const QString sFileName)
     else
 #endif //USE_LIBARCHIVE
     {
-        zip_.setCurrentFile(sFileName);
+        zip_.setCurrentFile(sFileName, QuaZip::csInsensitive);
         QuaZipFile zipFile(&zip_);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
             LogWarning << "Error open file:" << sFileName;

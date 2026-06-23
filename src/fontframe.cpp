@@ -4,7 +4,6 @@
 
 #include <QDir>
 #include <QFileDialog>
-#include <QDebug>
 #include <QStringBuilder>
 
 #include "utilites.h"

@@ -9,14 +9,7 @@
 #include <QStringBuilder>
 #include <unordered_set>
 
-#ifdef QUAZIP_STATIC
-#include "../quazip/quazip/quazip.h"
-#include "../quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazip.h>
-#include <quazip/quazipfile.h>
-#endif
-
+#include "qarchive.h"
 #include "../mobiEdit/mobiedit.h"
 #include "config-freelib.h"
 #include "utilites.h"
@@ -1495,47 +1488,23 @@ void recurseAddDir(const QDir &d, std::vector<QString> &list)
     }
 }
 
-void ZipDir(QuaZip *zip, const QDir &dir)
+void zipDir(QArchive &arc, const QString &sBasePath, const QString &sRelativePath)
 {
-    QFile inFile;
-    std::vector<QString> sl;
-    recurseAddDir(dir, sl);
-    std::vector<QFileInfo> files;
-    for(const QString &fn: sl)
-        files.emplace_back(QFileInfo(fn));
-    QuaZipFile outFile(zip);
-    char c;
-    for(const QFileInfo &fileInfo: files)
-    {
+    const int basePathLength = sBasePath.length() + 1;
+
+    std::vector<QString> filePaths;
+    recurseAddDir(QDir(sBasePath + sRelativePath), filePaths);
+    for (const QString& fullPath : filePaths) {
+        QFileInfo fileInfo(fullPath);
         if (!fileInfo.isFile())
             continue;
-        // Если файл в поддиректории, то добавляем имя этой поддиректории к именам файлов
-        // например: fileInfo.filePath() = "D:\Work\Sources\SAGO\svn\sago\Release\tmp_DOCSWIN\Folder\123.opn"
-        // тогда после удаления части строки fileNameWithSubFolders будет равен "Folder\123.opn" и т.д.
-        QString fileNameWithRelativePath = fileInfo.filePath().remove(0, QFileInfo(dir.absolutePath()).absolutePath().length() + 1);
-        inFile.setFileName(fileInfo.filePath());
-        if (!inFile.open(QIODevice::ReadOnly))
-        {
-            qDebug() << u"testCreate(): inFile.open(): %1"_s.arg(inFile.errorString().toLocal8Bit().constData());
+        QString sFile = fullPath.mid(basePathLength);
+        QFile inFile(fullPath);
+        if (!inFile.open(QIODevice::ReadOnly)) {
+            LogWarning << "ZipDir: Failed to open input file:" << inFile.errorString();
             return;
         }
-        if (!outFile.open(QIODevice::WriteOnly, QuaZipNewInfo(fileNameWithRelativePath, fileInfo.filePath())))
-        {
-            qDebug() << u"testCreate(): outFile.open(): %1"_s.arg(outFile.getZipError());
-            return;
-        }
-        while (inFile.getChar(&c) && outFile.putChar(c));
-        if (outFile.getZipError() != UNZ_OK)
-        {
-            qDebug() << u"testCreate(): outFile.putChar(): %1"_s.arg(outFile.getZipError());
-            return;
-        }
-        outFile.close();
-        if (outFile.getZipError() != UNZ_OK)
-        {
-            qDebug() << u"testCreate(): outFile.close(): %1"_s.arg(outFile.getZipError());
-            return;
-        }
+        arc.writeFile(sFile, inFile);
         inFile.close();
     }
 }
@@ -2060,24 +2029,17 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
             LogWarning << "Error open file:" << container_file;
 
 
-        QuaZip zip(sTmpDir_ + u"/book.epub"_s);
-        zip.open(QuaZip::mdCreate);
-        QuaZipFile zip_file(&zip);
-        zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"mimetype"_s), 0, 0, 0, 0);
+        out_file = sTmpDir_ + u"/book.epub"_s;
+        QArchive arc(QArchive::Mode::create);
+        arc.setPath(out_file);
         QFile file(mime_file);
         if(file.open(QIODevice::ReadOnly)){
-            zip_file.write(file.readAll());
+            arc.writeFile(u"mimetype"_s, file, 0, Z_NO_COMPRESSION);
             file.close();
         }else
             LogWarning << "Error open file:" << mime_file;
-
-        zip_file.close();
-        ZipDir(&zip, QDir(sTmpDir_ + u"/OEBPS"_s));
-        ZipDir(&zip, QDir(sTmpDir_ + u"/META-INF"_s));
-        zip.close();
-
-        out_file = sTmpDir_ + u"/book.epub"_s;
-
+        zipDir(arc, sTmpDir_, u"/OEBPS"_s);
+        zipDir(arc, sTmpDir_, u"/META-INF"_s);
     }
         break;
     case pdf:
