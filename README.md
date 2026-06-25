@@ -39,6 +39,10 @@ yay -S freelib-git
 #### Ubuntu
 Установить необходимые компоненты: 
 
+в Ubuntu 26.04
+```
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev qt6-websockets-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev libarchive-dev
+```
 в Ubuntu 25.04
 ```
 sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev libarchive-dev
