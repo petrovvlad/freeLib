@@ -48,7 +48,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 
     QStringList dirContent = QDir(QApplication::applicationDirPath() + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     if(dirContent.isEmpty())
-        dirContent = QDir(FREELIB_DATA_DIR + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+        dirContent = QDir(QStringLiteral(FREELIB_DATA_DIR) + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     ui->Language->clear();
     ui->Language->addItem(u"english"_s, "en_US");
     ui->Language->setCurrentIndex(0);
@@ -85,38 +85,41 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->AddApp, &QAbstractButton::clicked, this, &SettingsDlg::AddApp);
     connect(ui->AddExport, &QToolButton::clicked, this, &SettingsDlg::onAddExport);
     connect(ui->DelExport, &QPushButton::clicked, this, &SettingsDlg::onDelExport);
-    connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
-    connect(ui->ConversionName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged/*[](){}*/);
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->DefaultExport, &QCheckBox::stateChanged, this, &SettingsDlg::onDefaultExportChanged);
-#else
-    connect(ui->DefaultExport, &QCheckBox::checkStateChanged, this, &SettingsDlg::onDefaultExportChanged);
-#endif
-    connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
-    connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
-    connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
-    connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
-    connect(ui->btnOpenExport, &QToolButton::clicked, this, &SettingsDlg::onBtnOpenExportClicked);
-    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
-    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
-    connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
-#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->useSystemFonts, &QCheckBox::stateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
 #else
+    connect(ui->DefaultExport, &QCheckBox::checkStateChanged, this, &SettingsDlg::onDefaultExportChanged);
     connect(ui->useSystemFonts, &QCheckBox::checkStateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
 #endif
-    connect(ui->sidebarFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onSidebarFontChanged);
-    connect(ui->listFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onListFontChanged);
-    connect(ui->annotationFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onAnnotationFontChanged);
+    connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
+    connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
+    connect(ui->btnOpenExport, &QToolButton::clicked, this, &SettingsDlg::onBtnOpenExportClicked);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->ConversionName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged/*[](){}*/);
+    connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
+    connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
+    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
+    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
     connect(ui->sidebarFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onSidebarSizeFontChanged);
     connect(ui->listFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onAnnotationSizeFontChanged);
 #else
+    connect(ui->ExportName, &QComboBox::currentIndexChanged, this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->ConversionName, &QComboBox::currentIndexChanged, this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->trayIcon, &QComboBox::currentIndexChanged, this, &SettingsDlg::onTrayIconCurrentIndexChanged);
+    connect(ui->tray_color, &QComboBox::currentIndexChanged, this, &SettingsDlg::onTrayColorCurrentIndexChanged);
+    connect(ui->ABC, &QComboBox::currentIndexChanged, this, &SettingsDlg::onChangeAlphabetCombobox);
+    connect(ui->Language, &QComboBox::currentIndexChanged, this, &SettingsDlg::ChangeLanguage);
     connect(ui->sidebarFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onSidebarSizeFontChanged);
     connect(ui->listFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onAnnotationSizeFontChanged);
 #endif
+    connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
+    connect(ui->sidebarFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onSidebarFontChanged);
+    connect(ui->listFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onListFontChanged);
+    connect(ui->annotationFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onAnnotationFontChanged);
 
     ui->treeWidget->setColumnWidth(0, 300);
     auto item = new QTreeWidgetItem(ui->treeWidget);
@@ -158,7 +161,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->OPDS_enable, &QCheckBox::checkStateChanged, this, &SettingsDlg::onOpdsEnable);
     connect(ui->HTTP_need_pasword, &QCheckBox::checkStateChanged, this, &SettingsDlg::onHttpNeedPaswordChanged);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-    connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
+    connect(ui->proxy_type, &QComboBox::currentIndexChanged, this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
     ui->fileCert->setValidateFunction(validateCert);
     ui->fileKey->setValidateFunction(validateKey);
 #endif //USE_HTTSERVER
@@ -893,7 +896,7 @@ void SettingsDlg::onBtnSaveExportClicked()
     ExportOptions exportOptions;
 
     qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
-    const QStringList fonts_list = qobject_cast<ConversionFrame*>(ui->stackedWidgetConversion->currentWidget())->Save(&exportOptions);
+    auto fonts = qobject_cast<ConversionFrame*>(ui->stackedWidgetConversion->currentWidget())->Save(&exportOptions);
     exportOptions.sName = ui->ExportName->currentText();
     exportOptions.Save(settings, false);
     settings->sync();
@@ -908,7 +911,7 @@ void SettingsDlg::onBtnSaveExportClicked()
     }
 
     QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
-    for(const QString &font: fonts_list)
+    for(const QString &font: fonts)
     {
         if(font.isEmpty())
             continue;
@@ -923,9 +926,9 @@ void SettingsDlg::onBtnSaveExportClicked()
             {
                 sFontFile = db_path % u"/"_s % sFontFile;
             }
-            else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % sFontFile))
+            else if(QFile::exists(QStringLiteral(FREELIB_DATA_DIR) % u"/fonts"_s % sFontFile))
             {
-                sFontFile = FREELIB_DATA_DIR % u"/fonts"_s % sFontFile;
+                sFontFile = QStringLiteral(FREELIB_DATA_DIR) % u"/fonts"_s % sFontFile;
             }
             else
             {
@@ -975,7 +978,7 @@ void SettingsDlg::onBtnOpenExportClicked()
                 continue;
             if(QFile::exists(db_path % u"/"_s % fi.fileName()))
                 continue;
-            if(QFile::exists(FREELIB_DATA_DIR % u"/fonts/"_s % fi.fileName()))
+            if(QFile::exists(QStringLiteral(FREELIB_DATA_DIR) % u"/fonts/"_s % fi.fileName()))
                 continue;
 
 

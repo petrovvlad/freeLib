@@ -139,7 +139,7 @@ void ConversionFrame::Load(const ExportOptions *pExportOptions)
     }
 }
 
-QStringList ConversionFrame::Save(ExportOptions *pExportOptions)
+std::vector<QString> ConversionFrame::Save(ExportOptions *pExportOptions)
 {
     pExportOptions->bDropCaps = ui->dropcaps->isChecked();
     pExportOptions->bJoinSeries = ui->join_series->isChecked();
@@ -166,7 +166,7 @@ QStringList ConversionFrame::Save(ExportOptions *pExportOptions)
     pExportOptions->sCoverLabel = ui->coverLabel->text().trimmed();
     pExportOptions->nContentPlacement = ui->content_placement->currentIndex();
 
-    QStringList fonts_list;
+    std::vector<QString> fonts;
     int count = ui->fontLayout->count() - 2;
     pExportOptions->vFontExportOptions.resize(count);
     for (int i = 0; i < count; ++i)
@@ -181,12 +181,12 @@ QStringList ConversionFrame::Save(ExportOptions *pExportOptions)
         fontExportOptions.sFontBI = pFontFrame->font_bi();
         fontExportOptions.nFontSize = pFontFrame->fontSize();
 
-        fonts_list << fontExportOptions.sFont;
-        fonts_list << fontExportOptions.sFontB;
-        fonts_list << fontExportOptions.sFontI;
-        fonts_list << fontExportOptions.sFontBI;
+        fonts.push_back(fontExportOptions.sFont);
+        fonts.push_back(fontExportOptions.sFontB);
+        fonts.push_back(fontExportOptions.sFontI);
+        fonts.push_back(fontExportOptions.sFontBI);
     }
-    return fonts_list;
+    return fonts;
 
 }
 
