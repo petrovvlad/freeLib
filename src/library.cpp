@@ -10,12 +10,7 @@
 #include <QDir>
 #include <QtConcurrent>
 
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazipfile.h>
-#endif
-
+#include "qarchive.h"
 #include "utilites.h"
 #include "options.h"
 
@@ -623,28 +618,15 @@ QString SLib::nameFromInpx(const QString &sInpx)
 {
     QString sName;
     if(!sInpx.isEmpty()){
-        QuaZip uz(sInpx);
-        if(!uz.open(QuaZip::mdUnzip)) [[unlikely]]
-        {
-            LogWarning << "Error open INPX file: " << sInpx;
-        } else
-            if(setCurrentZipFileName(&uz, u"COLLECTION.INFO"_s)) [[likely]]
-            {
-                QBuffer outbuff;
-                QuaZipFile zip_file(&uz);
-                zip_file.open(QIODevice::ReadOnly);
-                outbuff.setData(zip_file.readAll());
-                uint nMarkerSize = 0;
-                auto data = outbuff.data();
-                if(outbuff.size()>4){
-                    quint32 marker = *((uint*)(data.data())) & 0x00ffffff;
-                    if((marker & 0x00ffffff) == 0x00bfbbef) //UTF8
-                        nMarkerSize = 3;
-                }
-                zip_file.close();
-                sName = QString::fromUtf8(data.mid(nMarkerSize, data.indexOf('\n', nMarkerSize)-nMarkerSize));
-
-            }
+        QArchive arc(sInpx);
+        QByteArray data = arc.readFile(u"COLLECTION.INFO"_s);
+        uint nMarkerSize = 0;
+        if(data.size()>4){
+            quint32 marker = *((uint*)(data.data())) & 0x00ffffff;
+            if((marker & 0x00ffffff) == 0x00bfbbef) //UTF8
+                nMarkerSize = 3;
+        }
+        sName = QString::fromUtf8(data.mid(nMarkerSize, data.indexOf('\n', nMarkerSize)-nMarkerSize));
     }
     return sName.simplified();
 }

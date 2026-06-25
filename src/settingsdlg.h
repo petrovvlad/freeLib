@@ -128,12 +128,14 @@ private slots:
     void onBtnSaveExportClicked();
     void onBtnOpenExportClicked();
     void onChangeAlphabetCombobox(int index);
-    void btnDBPath();
+    void onMoveDB(const QString &sPath);
     void onChangePage();
     void onExportFormatChanged();
 #ifdef USE_HTTSERVER
     void onUseForHttpChanged(int state);
     void onProxyTypeCurrentIndexChanged(int index);
+    static bool validateCert(const QString &sFileCert);
+    static bool validateKey(const QString &sFileKey);
 
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     void onHttpNeedPaswordChanged(int state);

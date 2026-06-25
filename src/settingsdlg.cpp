@@ -5,16 +5,13 @@
 #include <QMessageBox>
 #include <QStandardItemModel>
 
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazipfile.h>
-#endif
-
 #include "exportframe.h"
 #include "conversionframe.h"
 #include "config-freelib.h"
 #include "utilites.h"
+#include "filelineedit.h"
+#include "qarchive.h"
+
 
 SettingsDlg::SettingsDlg(QWidget *parent) :
     QDialog(parent),
@@ -51,7 +48,7 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 
     QStringList dirContent = QDir(QApplication::applicationDirPath() + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     if(dirContent.isEmpty())
-        dirContent = QDir(FREELIB_DATA_DIR + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
+        dirContent = QDir(QStringLiteral(FREELIB_DATA_DIR) + u"/translations"_s).entryList({u"language_*.qm"_s}, QDir::Dirs | QDir::Files | QDir::NoDotAndDotDot);
     ui->Language->clear();
     ui->Language->addItem(u"english"_s, "en_US");
     ui->Language->setCurrentIndex(0);
@@ -88,38 +85,41 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->AddApp, &QAbstractButton::clicked, this, &SettingsDlg::AddApp);
     connect(ui->AddExport, &QToolButton::clicked, this, &SettingsDlg::onAddExport);
     connect(ui->DelExport, &QPushButton::clicked, this, &SettingsDlg::onDelExport);
-    connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
-    connect(ui->ConversionName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged/*[](){}*/);
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->DefaultExport, &QCheckBox::stateChanged, this, &SettingsDlg::onDefaultExportChanged);
-#else
-    connect(ui->DefaultExport, &QCheckBox::checkStateChanged, this, &SettingsDlg::onDefaultExportChanged);
-#endif
-    connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
-    connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
-    connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
-    connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
-    connect(ui->btnOpenExport, &QToolButton::clicked, this, &SettingsDlg::onBtnOpenExportClicked);
-    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
-    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
-    connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
-#if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->useSystemFonts, &QCheckBox::stateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
 #else
+    connect(ui->DefaultExport, &QCheckBox::checkStateChanged, this, &SettingsDlg::onDefaultExportChanged);
     connect(ui->useSystemFonts, &QCheckBox::checkStateChanged, this, &SettingsDlg::onUseSystemFontsChanged);
 #endif
-    connect(ui->sidebarFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onSidebarFontChanged);
-    connect(ui->listFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onListFontChanged);
-    connect(ui->annotationFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onAnnotationFontChanged);
+    connect(ui->btnDefaultSettings, &QPushButton::clicked, this, &SettingsDlg::onBtnDefaultSettingsClicked);
+    connect(ui->btnSaveExport, &QToolButton::clicked, this, &SettingsDlg::onBtnSaveExportClicked);
+    connect(ui->btnOpenExport, &QToolButton::clicked, this, &SettingsDlg::onBtnOpenExportClicked);
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
+    connect(ui->ExportName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->ConversionName, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onExportNameCurrentIndexChanged/*[](){}*/);
+    connect(ui->trayIcon, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayIconCurrentIndexChanged);
+    connect(ui->tray_color, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onTrayColorCurrentIndexChanged);
+    connect(ui->ABC, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onChangeAlphabetCombobox);
+    connect(ui->Language, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::ChangeLanguage);
     connect(ui->sidebarFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onSidebarSizeFontChanged);
     connect(ui->listFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontSpinBox, QOverload<int>::of(&QSpinBox::valueChanged), this, &SettingsDlg::onAnnotationSizeFontChanged);
 #else
+    connect(ui->ExportName, &QComboBox::currentIndexChanged, this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->ConversionName, &QComboBox::currentIndexChanged, this, &SettingsDlg::onExportNameCurrentIndexChanged);
+    connect(ui->trayIcon, &QComboBox::currentIndexChanged, this, &SettingsDlg::onTrayIconCurrentIndexChanged);
+    connect(ui->tray_color, &QComboBox::currentIndexChanged, this, &SettingsDlg::onTrayColorCurrentIndexChanged);
+    connect(ui->ABC, &QComboBox::currentIndexChanged, this, &SettingsDlg::onChangeAlphabetCombobox);
+    connect(ui->Language, &QComboBox::currentIndexChanged, this, &SettingsDlg::ChangeLanguage);
     connect(ui->sidebarFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onSidebarSizeFontChanged);
     connect(ui->listFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onListSizeFontChanged);
     connect(ui->annotationFontSpinBox, &QSpinBox::valueChanged, this, &SettingsDlg::onAnnotationSizeFontChanged);
 #endif
+    connect(ui->ExportName->lineEdit(), &QLineEdit::editingFinished, this, &SettingsDlg::ExportNameChanged);
+    connect(ui->sidebarFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onSidebarFontChanged);
+    connect(ui->listFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onListFontChanged);
+    connect(ui->annotationFontComboBox, &QFontComboBox::currentFontChanged, this, &SettingsDlg::onAnnotationFontChanged);
 
     ui->treeWidget->setColumnWidth(0, 300);
     auto item = new QTreeWidgetItem(ui->treeWidget);
@@ -152,16 +152,6 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
 
     connect(ui->treeWidget, &QTreeWidget::itemSelectionChanged, this, &SettingsDlg::onChangePage);
 
-    QToolButton* btnDBPath = new QToolButton(this);
-    btnDBPath->setFocusPolicy(Qt::NoFocus);
-    btnDBPath->setCursor(Qt::ArrowCursor);
-    btnDBPath->setText(tr("Move to ..."));
-    QHBoxLayout*  layout = new QHBoxLayout(ui->database_path);
-    layout->addWidget(btnDBPath, 0, Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    connect(btnDBPath, &QAbstractButton::clicked, this, &SettingsDlg::btnDBPath);
-
 
 #ifdef USE_HTTSERVER
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
@@ -171,10 +161,14 @@ SettingsDlg::SettingsDlg(QWidget *parent) :
     connect(ui->OPDS_enable, &QCheckBox::checkStateChanged, this, &SettingsDlg::onOpdsEnable);
     connect(ui->HTTP_need_pasword, &QCheckBox::checkStateChanged, this, &SettingsDlg::onHttpNeedPaswordChanged);
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-    connect(ui->proxy_type, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
+    connect(ui->proxy_type, &QComboBox::currentIndexChanged, this, &SettingsDlg::onProxyTypeCurrentIndexChanged);
+    ui->fileCert->setValidateFunction(validateCert);
+    ui->fileKey->setValidateFunction(validateKey);
 #endif //USE_HTTSERVER
 
     LoadSettings();
+    connect(ui->database_path, &FileLineEdit::textChanged, this, & SettingsDlg::onMoveDB);
+
 #ifdef USE_HTTSERVER
     onProxyTypeCurrentIndexChanged(ui->proxy_type->currentIndex());
 #endif //USE_HTTSERVER
@@ -254,6 +248,8 @@ void SettingsDlg::LoadSettings()
     ui->OPDS_enable->setChecked(options_.bOpdsEnable);
     ui->portHttp->setValue(options_.nHttpPort);
     ui->baseUrl->setText(options_.sBaseUrl);
+    ui->fileCert->setText(options_.sCertPath);
+    ui->fileKey->setText(options_.sKeyPath);
     ui->HTTP_need_pasword->setChecked(options_.bOpdsNeedPassword);
     ui->HTTP_user->setText(options_.sOpdsUser);
     if(options_.baOpdsPasswordSalt.isEmpty())
@@ -420,27 +416,19 @@ void SettingsDlg::reject()
     QDialog::reject();
 }
 
-void SettingsDlg::btnDBPath()
+void SettingsDlg::onMoveDB(const QString &sPath)
 {
-    QDir::setCurrent(QFileInfo(ui->database_path->text()).absolutePath());
-    QString dir=QFileDialog::getExistingDirectory(this, tr("Select database directory"));
-    if(!dir.isEmpty() && dir != ui->database_path->text())
+    QSqlDatabase dbase = QSqlDatabase::database(u"libdb"_s, false);
+    if (dbase.isOpen())
+        dbase.close();
+    if(QFile().rename(g::options.sDatabasePath, sPath))
     {
-        g::options.sDatabasePath = ui->database_path->text().trimmed();
-        QSqlDatabase dbase = QSqlDatabase::database(u"libdb"_s, false);
-        if (dbase.isOpen())
-            dbase.close();
-        if(QFile().rename(RelativeToAbsolutePath(ui->database_path->text()), dir + u"/freeLib.sqlite"_s))
-        {
-            QFile().remove(RelativeToAbsolutePath(ui->database_path->text()));
-            ui->database_path->setText(dir + u"/freeLib.sqlite"_s);
-            dbase.setDatabaseName(RelativeToAbsolutePath(ui->database_path->text()));
-            if(!dbase.open())
-            {
-                QApplication::closingDown();
-            }
-        }
+        g::options.sDatabasePath = sPath;
+        dbase.setDatabaseName(sPath);
+        if(!dbase.open())
+            QApplication::closingDown();
     }
+
 }
 
 void SettingsDlg::onChangePage()
@@ -515,6 +503,8 @@ void SettingsDlg::btnOK()
     g::options.baOpdsPasswordSalt = ui->HTTP_password->getPasswordSalt();
     g::options.nHttpPort = ui->portHttp->value();
     g::options.sBaseUrl = ui->baseUrl->text();
+    g::options.sCertPath = ui->fileCert->text();
+    g::options.sKeyPath = ui->fileKey->text();
     g::options.nOpdsBooksPerPage = ui->books_per_page->value();
     g::options.nProxyType = ui->proxy_type->currentIndex();
     g::options.nProxyPort = ui->proxy_port->value();
@@ -835,6 +825,34 @@ void SettingsDlg::onProxyTypeCurrentIndexChanged(int index)
     ui->proxy_port->setEnabled(bEnable);
     ui->proxy_user->setEnabled(bEnable);
 }
+
+bool SettingsDlg::validateCert(const QString &sFileCert)
+{
+    QFile file(sFileCert);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    QTextStream stream(&file);
+    QString firstLine = stream.readLine();
+    file.close();
+
+    return firstLine.contains(u"BEGIN CERTIFICATE");
+}
+
+bool SettingsDlg::validateKey(const QString &sFileKey)
+{
+    QFile file(sFileKey);
+    if (!file.open(QIODevice::ReadOnly | QIODevice::Text)) {
+        return false;
+    }
+
+    QTextStream stream(&file);
+    QString firstLine = stream.readLine();
+    file.close();
+
+    return firstLine.contains(u"BEGIN PRIVATE KEY");
+}
 #endif
 
 void SettingsDlg::onTrayIconCurrentIndexChanged(int index)
@@ -871,64 +889,64 @@ void SettingsDlg::onBtnSaveExportClicked()
         (ui->ExportName->currentText()), u"freeLib export (*.fle)"_s);
     if(file_name.isEmpty()) [[unlikely]]
         return;
-    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s, QSettings::IniFormat));
+    auto settings = QSharedPointer<QSettings> (new QSettings(QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/freeLib/export.ini"_s, QSettings::IniFormat));
 #if QT_VERSION < QT_VERSION_CHECK(6, 0, 0)
     settings->setIniCodec("UTF-8");
 #endif
     ExportOptions exportOptions;
 
-    const QStringList fonts_list = qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
+    qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Save(&exportOptions);
+    auto fonts = qobject_cast<ConversionFrame*>(ui->stackedWidgetConversion->currentWidget())->Save(&exportOptions);
     exportOptions.sName = ui->ExportName->currentText();
     exportOptions.Save(settings, false);
     settings->sync();
-    QuaZip zip(file_name);
-    zip.open(QuaZip::mdCreate);
-    QuaZipFile zip_file(&zip);
+    QArchive arc(file_name, QArchive::create);
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"export.ini"_s, settings->fileName()));
     QFile file(settings->fileName());
     if(!file.open(QIODevice::ReadOnly))
         LogWarning << "Error open: " << settings->fileName();
-    zip_file.write(file.readAll());
-    file.close();
-    zip_file.close();
+    else{
+        arc.writeFile(u"export.ini"_s, file);
+        file.close();
+    }
 
     QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
-    for(const QString &font: fonts_list)
+    for(const QString &font: fonts)
     {
-        QString font_file = font;
-        if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file))
+        if(font.isEmpty())
+            continue;
+        QString sFontFile = font;
+        if(QFile::exists(QApplication::applicationDirPath() % u"/xsl/fonts/"_s % sFontFile))
         {
-            font_file = QApplication::applicationDirPath() % u"/xsl/fonts/"_s % font_file;
+            sFontFile = QApplication::applicationDirPath() % u"/xsl/fonts/"_s % sFontFile;
         }
         else
         {
-            if(QFile::exists(db_path % u"/"_s % font_file))
+            if(QFile::exists(db_path % u"/"_s % sFontFile))
             {
-                font_file = db_path % u"/"_s % font_file;
+                sFontFile = db_path % u"/"_s % sFontFile;
             }
-            else if(QFile::exists(FREELIB_DATA_DIR % u"/fonts"_s % font_file))
+            else if(QFile::exists(QStringLiteral(FREELIB_DATA_DIR) % u"/fonts"_s % sFontFile))
             {
-                font_file = FREELIB_DATA_DIR % u"/fonts"_s % font_file;
+                sFontFile = QStringLiteral(FREELIB_DATA_DIR) % u"/fonts"_s % sFontFile;
             }
             else
             {
-                if(!QFile::exists(font_file))
-                    font_file = u""_s;
+                if(!QFile::exists(sFontFile))
+                    sFontFile = u""_s;
             }
         }
-        if(!font_file.isEmpty())
+        if(!sFontFile.isEmpty())
         {
-            zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"Fonts/"_s + QFileInfo(font_file).fileName(), font_file));
-            file.setFileName(font_file);
+            file.setFileName(sFontFile);
             if(!file.open(QIODevice::ReadOnly))
-                LogWarning << "Error open: " << font_file;
-            zip_file.write(file.readAll());
-            file.close();
-            zip_file.close();
+                LogWarning << "Error open: " << sFontFile;
+            else{
+                arc.writeFile(u"Fonts/"_s + QFileInfo(sFontFile).fileName(), file);
+                file.close();
+            }
         }
     }
-    zip.close();
 }
 
 void SettingsDlg::onBtnOpenExportClicked()
@@ -942,14 +960,13 @@ void SettingsDlg::onBtnOpenExportClicked()
     if(msgBox.exec() == QMessageBox::Cancel)
         return;
 
-    QuaZip zip(file_name);
-    zip.open(QuaZip::mdUnzip);
+    QArchive arc(file_name);
     QString HomeDir;
     if(QStandardPaths::standardLocations(QStandardPaths::HomeLocation).count() > 0)
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
     QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
     QDir().mkpath(db_path);
-    const QStringList files = zip.getFileNameList();
+    auto files = arc.fileList();
 
     for(const QString &file: files)
     {
@@ -961,20 +978,18 @@ void SettingsDlg::onBtnOpenExportClicked()
                 continue;
             if(QFile::exists(db_path % u"/"_s % fi.fileName()))
                 continue;
-            if(QFile::exists(FREELIB_DATA_DIR % u"/fonts/"_s % fi.fileName()))
+            if(QFile::exists(QStringLiteral(FREELIB_DATA_DIR) % u"/fonts/"_s % fi.fileName()))
                 continue;
 
 
             {
                 QString font_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) % u"/"_s % fi.fileName();
-                setCurrentZipFileName(&zip, file);
-                QuaZipFile zip_file(&zip);
-                zip_file.open(QIODevice::ReadOnly);
-                QFile font_file(font_name);
-                font_file.remove();
-                if(font_file.open(QFile::WriteOnly)){
-                    font_file.write(zip_file.readAll());
-                    font_file.close();
+                QFile fileFont(font_name);
+                fileFont.remove();
+                if(fileFont.open(QFile::WriteOnly)){
+
+                    fileFont.write(arc.readFile(file));
+                    fileFont.close();
                 }else
                     LogWarning << "Error open: " << font_name;
 
@@ -983,14 +998,11 @@ void SettingsDlg::onBtnOpenExportClicked()
         }
     }
 
-    setCurrentZipFileName(&zip, u"export.ini"_s);
-    QuaZipFile zip_file(&zip);
-    zip_file.open(QIODevice::ReadOnly);
     QString ini_name = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/export.ini"_s;
     QFile file(ini_name);
     file.remove();
     if(file.open(QFile::WriteOnly)){
-        file.write(zip_file.readAll());
+        file.write(arc.readFile(u"export.ini"_s));
         file.close();
     }else
         LogWarning << "Error open: " << ini_name;
@@ -1019,9 +1031,8 @@ void SettingsDlg::onBtnOpenExportClicked()
         ExportOptions exportOptions;
         exportOptions.Load(settings);
         qobject_cast<ExportFrame*>(ui->stackedWidget->currentWidget())->Load(&exportOptions);
+        qobject_cast<ConversionFrame*>(ui->stackedWidgetConversion->currentWidget())->Load(&exportOptions);
     }
-
-    zip_file.close();
 }
 
 void SettingsDlg::onChangeAlphabetCombobox(int /*index*/)
@@ -1042,6 +1053,10 @@ void SettingsDlg::onOpdsEnable(Qt::CheckState state)
     ui->baseUrl->setEnabled(bOpdsEnable);
     ui->label_20->setEnabled(bOpdsEnable);
     ui->label_23->setEnabled(bOpdsEnable);
+    ui->label_2->setEnabled(bOpdsEnable);
+    ui->fileCert->setEnabled(bOpdsEnable);
+    ui->label_3->setEnabled(bOpdsEnable);
+    ui->fileKey->setEnabled(bOpdsEnable);
     ui->HTTP_need_pasword->setEnabled(bOpdsEnable);
     ui->HTTP_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());
     ui->p_user->setEnabled(bOpdsEnable && ui->HTTP_need_pasword->isChecked());

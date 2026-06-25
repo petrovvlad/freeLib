@@ -229,7 +229,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef USE_HTTSERVER
     if(g::options.bOpdsEnable){
         pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
-        pOpds_->server_run();
+        pOpds_->startServer();
     }
 #endif
 
@@ -894,13 +894,25 @@ void MainWindow::Settings()
             FillListBooks();
         }
 #ifdef USE_HTTSERVER
-        if(g::options.bOpdsEnable != pDlg->options_.bOpdsEnable || g::options.nHttpPort != pDlg->options_.nHttpPort || g::options.sBaseUrl != pDlg->options_.sBaseUrl ||
-           g::options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || g::options.sOpdsUser != pDlg->options_.sOpdsUser ||
-           g::options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash)
+        if( g::options.bOpdsEnable != pDlg->options_.bOpdsEnable || g::options.nHttpPort != pDlg->options_.nHttpPort ||
+            g::options.sCertPath != pDlg->options_.sKeyPath || g::options.sCertPath != pDlg->options_.sKeyPath )
         {
             if(pOpds_ == nullptr && g::options.bOpdsEnable)
-                pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );
-            pOpds_->server_run();
+                pOpds_ = std::unique_ptr<opds_server>( new opds_server(this) );            
+            if(pOpds_){
+                if(g::options.bOpdsEnable)
+                    pOpds_->startServer();
+                else{
+                    pOpds_->stopServer();
+                    pOpds_.release();
+                }
+            }
+        }else{
+            if(pOpds_ && (g::options.bOpdsNeedPassword != pDlg->options_.bOpdsNeedPassword || g::options.sOpdsUser != pDlg->options_.sOpdsUser ||
+               g::options.baOpdsPasswordHash != pDlg->options_.baOpdsPasswordHash))
+            {
+                pOpds_->closeSesions();
+            }
         }
 #endif
         UpdateExportMenu();
@@ -1657,7 +1669,7 @@ void MainWindow::fillLanguages()
     auto settings = GetSettings();
     QString sCurrentLanguage = settings->value(u"BookLanguage"_s, u"*"_s).toString();
     QLocale locale;
-    auto sLocale = locale.name().left(2);
+    //auto sLocale = locale.name().left(2);
     QString sSearchLanguage;
     if(g::options.bStorePosition)
         sSearchLanguage = settings->value(u"search.language"_s).toString();

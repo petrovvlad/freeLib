@@ -196,7 +196,14 @@
            </widget>
           </item>
           <item>
-           <widget class="QLineEdit" name="Path"/>
+           <widget class="FileLineEdit" name="Path">
+            <property name="fileMode">
+             <enum>FileLineEdit::FileMode::Directory</enum>
+            </property>
+            <property name="captionDialog">
+             <string>Select device directory</string>
+            </property>
+           </widget>
           </item>
           <item>
            <widget class="QCheckBox" name="originalFileName">
@@ -500,6 +507,13 @@
    </item>
   </layout>
  </widget>
+ <customwidgets>
+  <customwidget>
+   <class>FileLineEdit</class>
+   <extends>QLineEdit</extends>
+   <header>filelineedit.h</header>
+  </customwidget>
+ </customwidgets>
  <tabstops>
   <tabstop>OutputFormat</tabstop>
   <tabstop>CurrentTools</tabstop>

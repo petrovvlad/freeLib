@@ -12,6 +12,7 @@
 #include <QSqlError>
 
 #include "exportdlg.h"
+#include "filelineedit.h"
 #include "utilites.h"
 
 LibrariesDlg::LibrariesDlg(QWidget *parent) :
@@ -21,32 +22,14 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     bLibChanged = false;
     ui->setupUi(this);
 
-    QToolButton* tbInpx = new QToolButton(this);
-    tbInpx->setFocusPolicy(Qt::NoFocus);
-    tbInpx->setCursor(Qt::ArrowCursor);
-    tbInpx->setText(QStringLiteral("..."));
-    QHBoxLayout* layout = new QHBoxLayout(ui->inpx);
-    layout->addWidget(tbInpx, 0, Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-
-    QToolButton* tbBooksDir = new QToolButton(this);
-    tbBooksDir->setFocusPolicy(Qt::NoFocus);
-    tbBooksDir->setCursor(Qt::ArrowCursor);
-    tbBooksDir->setText(QStringLiteral("..."));
-    layout = new QHBoxLayout(ui->BookDir);
-    layout->addWidget(tbBooksDir, 0, Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-
     ui->Add->setIcon(themedIcon(u"list-add"_s));
     ui->Del->setIcon(themedIcon(u"list-remove"_s));
 
     idCurrentLib_ = g::idCurrentLib;
     UpdateLibList();
 
-    connect(tbInpx, &QAbstractButton::clicked, this, &LibrariesDlg::InputINPX);
-    connect(tbBooksDir, &QAbstractButton::clicked, this, &LibrariesDlg::SelectBooksDir);
+    connect(ui->inpx, &FileLineEdit::textChanged, this, &LibrariesDlg::inpxPathChanged);
+    connect(ui->BookDir, &FileLineEdit::textChanged, this, &LibrariesDlg::bookDirChanged);
     connect(ui->btnUpdate, &QPushButton::clicked, this, [this](){this->StartImport();});
     connect(ui->btnExport, &QAbstractButton::clicked, this, &LibrariesDlg::ExportLib);
     connect(ui->btnAddBook, &QPushButton::clicked, this, &LibrariesDlg::addBook);
@@ -97,43 +80,31 @@ void LibrariesDlg::progressImport(uint nBooksAdded, float fProgress)
     ui->labelStatus->setText(tr("Books adds:") + u" "_s + QString::number(nBooksAdded));
 }
 
-void LibrariesDlg::InputINPX()
+void LibrariesDlg::inpxPathChanged(const QString &sPath)
 {
-    QString sOldFileName = ui->inpx->text();
-    QString sDir;
-    QString sBookDir = ui->BookDir->text();
-    if(!sOldFileName.isEmpty())
-        sDir = QFileInfo(sOldFileName).absolutePath();
-    else{
-        if(!sBookDir.isEmpty())
-            sDir = sBookDir;
-    }
-    QString sNewFileName = QFileDialog::getOpenFileName(this, tr("Add library"), sDir, tr("Library") + u" (*.inpx)"_s);
-    if(!sNewFileName.isEmpty())
-    {
-        ui->inpx->setText(sNewFileName);
+    if(!sPath.isEmpty()){
+        QString sBookDir = ui->BookDir->text();
         if(sBookDir.isEmpty())
-            ui->BookDir->setText(QFileInfo(sNewFileName).absolutePath());
+            ui->BookDir->setText(QFileInfo(sPath).absolutePath());
+
         if(ui->ExistingLibs->itemText(ui->ExistingLibs->currentIndex()).startsWith(tr("new"))){
-            QString sLibName = UniqueName( SLib::nameFromInpx(sNewFileName) );
+            QString sLibName = UniqueName( SLib::nameFromInpx(sPath) );
             if(!sLibName.isEmpty())
                 ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), sLibName);
         }
-        if(sOldFileName != sNewFileName){
-            ui->progressBar->setVisible(false);
-            ui->labelStatus->setVisible(false);
-        }
+
+        ui->progressBar->setVisible(false);
+        ui->labelStatus->setVisible(false);
     }
+
 }
 
-void LibrariesDlg::SelectBooksDir()
+void LibrariesDlg::bookDirChanged(const QString &sDir)
 {
-    QString sDir = ui->BookDir->text();
-    if(sDir.isEmpty())
-        sDir = QFileInfo(ui->inpx->text()).absolutePath();
-    QString sNewDir = QFileDialog :: getExistingDirectory(this, tr("Select books directory"), sDir);
-    if( sDir != sNewDir && !sNewDir.isEmpty()){
-        ui->BookDir->setText(sNewDir);
+    if(!sDir.isEmpty()){
+        QString sInpxPath =  ui->inpx->text();
+        if(sInpxPath.isEmpty())
+            ui->inpx->setDefaultDirectory(sDir);
         ui->progressBar->setVisible(false);
         ui->labelStatus->setVisible(false);
     }
@@ -285,7 +256,7 @@ void LibrariesDlg::DeleteLibrary()
     if(idCurrentLib_ == 0)
         return;
 
-    if(QMessageBox::question(this, tr("Delete library"), tr("Delete library ") +"\"" + ui->ExistingLibs->currentText() + "\"?", QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
+    if(QMessageBox::question(this, tr("Delete library"), tr("Delete library ") +u"\""_s + ui->ExistingLibs->currentText() + u"\"?"_s, QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
@@ -362,7 +333,7 @@ void LibrariesDlg::ExistingLibsChanged()
 {
     QString sCurrentName;
     if(idCurrentLib_>0)
-        sCurrentName = g::libs[idCurrentLib_].name; //ui->ExistingLibs->itemText(ui->ExistingLibs->currentIndex());
+        sCurrentName = g::libs[idCurrentLib_].name;
     QString sNewName = ui->ExistingLibs->lineEdit()->text().simplified();
     if(sCurrentName != sNewName){
         ui->ExistingLibs->setItemText(ui->ExistingLibs->currentIndex(), ui->ExistingLibs->lineEdit()->text());

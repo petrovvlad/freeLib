@@ -11,6 +11,7 @@
 #include <QBuffer>
 #include <vector>
 
+#include "qarchive.h"
 #include "library.h"
 
 class EpubReader {
@@ -23,8 +24,7 @@ public:
         bool isValid() const { return !title.isEmpty() && !authors.empty(); }
     };
 
-    explicit EpubReader(QByteArray data);
-    explicit EpubReader(QIODevice *device);
+    explicit EpubReader(const QByteArray data);
 
     bool readMetadata(BookMetadata &metadata);
     QImage readCover();
@@ -34,7 +34,6 @@ public:
 
 private:
     bool openOpf();
-    bool initializeZip() const;
     bool readContainer(QDomDocument &doc) const;
     bool findOpfPath(const QDomDocument &container, QString &opfPath) const;
     bool parseMetadata(BookMetadata &metadata) const;
@@ -43,9 +42,8 @@ private:
     QString extractImageFromHtml(const QString &htmlPath, const QString &relPath) const;
 
     QByteArray data_;
-    QBuffer buffer_;
-    QIODevice *device_;
     mutable QuaZip zip_;
+    mutable QArchive arc_;
     QDomDocument opf_;
     QString opfPath_;
 };

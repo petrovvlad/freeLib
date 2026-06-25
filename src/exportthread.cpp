@@ -24,11 +24,7 @@
 #include "SmtpClient/src/smtpclient.h"
 #include "SmtpClient/src/mimeattachment.h"
 #include "SmtpClient/src/mimetext.h"
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazipfile.h>
-#endif
+#include "qarchive.h"
 
 #include "fb2mobi/fb2mobi.h"
 #include "library.h"
@@ -365,14 +361,12 @@ void ExportThread::export_books()
     {
         const SBook &book = lib.books.at(idBook);
         if(bNeedGroupSeries && !book.series.empty()){
-            auto iBookGroup = vBbooksGroup.begin();
-            while(iBookGroup != vBbooksGroup.end()){
-                auto &groupeSequence = lib.books.at(iBookGroup->front()).series;
-                if(!groupeSequence.empty() && groupeSequence.begin()->first == book.series.begin()->first){
-                    break;
-                }
-                ++iBookGroup;
-            }
+            auto iBookGroup = std::ranges::find_if( vBbooksGroup,
+                [&](const auto& group) {
+                    const auto& groupSeries = lib.books.at(group.front()).series;
+                    return !groupSeries.empty() && groupSeries.begin()->first == book.series.begin()->first;
+                });
+
             if(iBookGroup != vBbooksGroup.end())
                 iBookGroup->push_back(idBook);
             else{
@@ -628,51 +622,38 @@ void ExportThread::export_lib()
             emit Progress( nCount * 100 / lib.books.size(), nCount );
     }
     inpx.close();
-    QuaZip zip(sExportDir_ % u"/"_s % BuildFileName(lib.name) % u".inpx"_s);
-    zip.open(QuaZip::mdCreate);
-    QuaZipFile zip_file(&zip);
-    QFile file;
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"freeLib.inp"_s), nullptr, 0, Z_BZIP2ED, Z_BEST_COMPRESSION);
+    QFile file;
+    QArchive arc(QArchive::Mode::create);
+    arc.setPath(sExportDir_ % u"/"_s % BuildFileName(lib.name) % u".inpx"_s);
     file.setFileName(sInpxFile);
     if(file.open(QIODevice::ReadOnly)){
-        zip_file.write(file.readAll());
+        arc.writeFile(u"freeLib.inp"_s, file, Z_BZIP2ED, Z_BEST_COMPRESSION);
         file.close();
     }else
         LogWarning << "Error open file:" << sInpxFile;
-    zip_file.close();
 
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"structure.info"_s), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(structure_file);
     if(file.open(QIODevice::ReadOnly)){
-        zip_file.write(file.readAll());
+        arc.writeFile(u"structure.info"_s, file);
         file.close();
     }else
         LogWarning << "Error open file:" << structure_file;
 
-    zip_file.close();
-
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"version.info"_s), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(version_file);
     if(file.open(QIODevice::ReadOnly)){
-        zip_file.write(file.readAll());
+        arc.writeFile(u"version.info"_s, file);
         file.close();
     }else
         LogWarning << "Error open file:" << version_file;
 
-    zip_file.close();
-
-    zip_file.open(QIODevice::WriteOnly, QuaZipNewInfo(u"collection.info"_s), nullptr, 0, Z_DEFLATED, 5);
     file.setFileName(collection_file);
     if(file.open(QIODevice::ReadOnly)){
-        zip_file.write(file.readAll());
+        arc.writeFile(u"collection.info"_s, file);
         file.close();
     }else
         LogWarning << "Error open file:" << collection_file;
 
-    zip_file.close();
-
-    zip.close();
     emit Progress(100, lib.books.size());
 }
 

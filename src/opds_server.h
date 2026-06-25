@@ -7,6 +7,7 @@
 #include <QDomDocument>
 #include <QDateTime>
 #include <QHttpServer>
+#include <QSslServer>
 
 #include "library.h"
 #include "options.h"
@@ -16,7 +17,9 @@ class opds_server : public QObject
     Q_OBJECT
 public:
     explicit opds_server(QObject *parent = nullptr);
-    void server_run();
+    void startServer();
+    void stopServer();
+    void closeSesions();
 
     void setLanguageFilter(const QString &sLanguage);
 
@@ -41,9 +44,6 @@ private:
     std::vector<uint> searchBooks(const SLib& lib, const QString &sAuthor, const QString &sTitle, const QStringView sLanguageFilter);
     static std::vector<uint> searchAuthors(const SLib &lib, const QString &sAuthor);
     auto searchSeries(const SLib& lib, const QString &sSeries, const QStringView sLanguageFilter);
-
-    void stop_server();
-
 
     static void loadAnnotations(const std::vector<uint> &vBooks, SLib &lib, uint begin, uint end);
     QHttpServerResponse generatePageHTML(const std::vector<uint> &vBooks, SLib &lib, const QString &sTitle, const QString &sLibUrl, const QUrl &url, bool bShowAuthor);
@@ -109,7 +109,7 @@ private:
     ExportOptions *pExportOptions_;
     QString sLanguageFilter_;
     QHttpServer httpServer_;
-    QTcpServer tcpServer_;
+    std::unique_ptr<QTcpServer> pTcpServer_;
 };
 
 #endif // OPDS_SERVER_H

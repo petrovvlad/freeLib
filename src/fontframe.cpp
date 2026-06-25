@@ -4,7 +4,6 @@
 
 #include <QDir>
 #include <QFileDialog>
-#include <QDebug>
 #include <QStringBuilder>
 
 #include "utilites.h"
@@ -176,10 +175,10 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
     connect(ui->font_bi, &QComboBox::currentTextChanged, this ,&FontFrame::FontSelected);
     connect(ui->tag, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &FontFrame::onTagCurrentIndexChanged);
 
-    ui->font->addItem(QStringLiteral(""));
-    ui->font_b->addItem(QStringLiteral(""));
-    ui->font_i->addItem(QStringLiteral(""));
-    ui->font_bi->addItem(QStringLiteral(""));
+    ui->font->addItem(u""_s);
+    ui->font_b->addItem(u""_s);
+    ui->font_i->addItem(u""_s);
+    ui->font_bi->addItem(u""_s);
 
     ui->Use->setChecked(use);
     ui->tag->setCurrentIndex(tag);
@@ -190,10 +189,10 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
 
     QDir dir(QApplication::applicationDirPath() + u"/xsl/fonts"_s);
     if(!dir.exists()){
-        dir.setPath(FREELIB_DATA_DIR + QStringLiteral("/fonts"));
+        dir.setPath(QStringLiteral(FREELIB_DATA_DIR) + u"/fonts"_s);
     }
 
-    auto listFiles = dir.entryList(QStringList() << u"*.ttf"_s, QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name);
+    auto listFiles = dir.entryList({u"*.ttf"_s}, QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name);
     for(const QString &str: std::as_const(listFiles))
     {
         QString sName = GetFontNameFromFile(dir.absoluteFilePath(str));
@@ -207,7 +206,7 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
         HomeDir = QStandardPaths::standardLocations(QStandardPaths::HomeLocation).at(0);
 
     dir.setPath(QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s);
-    listFiles = dir.entryList(QStringList() << u"*.ttf"_s, QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name);
+    listFiles = dir.entryList({u"*.ttf"_s}, QDir::Files|QDir::NoSymLinks|QDir::NoDotAndDotDot|QDir::Readable, QDir::Name);
     for(const QString &str: std::as_const(listFiles))
     {
         QString sName = GetFontNameFromFile(dir.absoluteFilePath(str));
@@ -262,10 +261,10 @@ FontFrame::FontFrame(bool use, int tag, const QString &font, const QString &font
             }
         }
     }
-    ui->font->addItem(QStringLiteral("..."));
-    ui->font_b->addItem(QStringLiteral("..."));
-    ui->font_i->addItem(QStringLiteral("..."));
-    ui->font_bi->addItem(QStringLiteral("..."));
+    ui->font->addItem(u"..."_s);
+    ui->font_b->addItem(u"..."_s);
+    ui->font_i->addItem(u"..."_s);
+    ui->font_bi->addItem(u"..."_s);
     current_font = ui->font->currentIndex();
     current_font_b = ui->font_b->currentIndex();
     current_font_i = ui->font_i->currentIndex();
@@ -279,7 +278,7 @@ void FontFrame::FontSelected(const QString &str)
     disconnect(font_box, &QComboBox::currentTextChanged, this, &FontFrame::FontSelected);
     if(str == u"...")
     {
-        QString fileName = QFileDialog::getOpenFileName(this, tr("Select font"), QStringLiteral(""), tr("Fonts" )+ QStringLiteral(" (*.ttf)"));
+        QString fileName = QFileDialog::getOpenFileName(this, tr("Select font"), u""_s, tr("Fonts" )+ u" (*.ttf)"_s);
         if(!fileName.isEmpty())
         {
             bool find = false;

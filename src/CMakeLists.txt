@@ -92,6 +92,7 @@ set(PROJECT_SOURCES
         SmtpClient/src/mimecontentencoder.cpp   SmtpClient/src/mimecontentencoder.h
 
         qarchive.cpp     qarchive.h
+        filelineedit.cpp    filelineedit.h
 )
 
 add_subdirectory(Help)

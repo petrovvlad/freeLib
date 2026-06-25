@@ -26,7 +26,8 @@ ExportFrame::ExportFrame(QWidget *parent) :
     connect(ui->radioDevice, &QRadioButton::toggled, this, &ExportFrame::onRadioDeviceToggled);
     connect(ui->radioEmail, &QRadioButton::toggled, this, &ExportFrame::onRadioEmailToggled);
     connect(ui->OutputFormat, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onOutputFormatChanged);
-    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    // connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    connect(ui->ConnectionType, &QComboBox::currentTextChanged, this, &ExportFrame::onConnectionTypeChanged);
 #if QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
     connect(ui->originalFileName, &QCheckBox::stateChanged, this, &ExportFrame::onOriginalFileNameChanged);
     connect(ui->PostprocessingCopy, &QCheckBox::stateChanged, this, &ExportFrame::onPostprocessingCopyChanged);
@@ -40,16 +41,6 @@ ExportFrame::ExportFrame(QWidget *parent) :
     connect(ui->checkBoxUseForHttp, &QCheckBox::checkStateChanged, this, &ExportFrame::onUseForHttpChanged);
 #endif //USE_HTTSERVER
 #endif //QT_VERSION < QT_VERSION_CHECK(6, 7, 0)
-
-    QToolButton* btnPath = new QToolButton(this);
-    btnPath->setFocusPolicy(Qt::NoFocus);
-    btnPath->setCursor(Qt::ArrowCursor);
-    btnPath->setText(u"..."_s);
-    QHBoxLayout*  layout = new QHBoxLayout(ui->Path);
-    layout->addWidget(btnPath, 0, Qt::AlignRight);
-    layout->setSpacing(0);
-    layout->setContentsMargins(0, 0, 0, 0);
-    connect(btnPath, &QAbstractButton::clicked, this, &ExportFrame::btnPath);
 
     QRegularExpression rx(u"\\b[^@\\s]+@[^@\\s]+\\.[^@\\s]+\\b"_s, QRegularExpression::CaseInsensitiveOption);
     validatorEMail.setRegularExpression(rx);
@@ -83,9 +74,9 @@ void ExportFrame::onOutputFormatChanged(int /*index*/)
     emit OutputFormatChanged();
 }
 
-void ExportFrame::onConnectionTypeChanged(int /*index*/)
+void ExportFrame::onConnectionTypeChanged(const QString &text)
 {
-    if(ui->ConnectionType->currentText().toLower() == u"tcp"_s)
+    if(text.toLower() == u"tcp"_s)
         ui->Port->setText(u"25"_s);
     else
         ui->Port->setText(u"465"_s);
@@ -93,7 +84,7 @@ void ExportFrame::onConnectionTypeChanged(int /*index*/)
 
 void ExportFrame::Load(const ExportOptions *pExportOptions)
 {
-    disconnect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    disconnect(ui->ConnectionType, &QComboBox::currentTextChanged, this, &ExportFrame::onConnectionTypeChanged);
     ui->Email->setText(pExportOptions->sEmail);
     ui->from_email->setText(pExportOptions->sEmailFrom);
     ui->mail_subject->setText(pExportOptions->sEmailSubject);
@@ -125,7 +116,7 @@ void ExportFrame::Load(const ExportOptions *pExportOptions)
         ui->radioEmail->setChecked(true);
 
     UpdateToolComboBox(pExportOptions->sCurrentTool);
-    connect(ui->ConnectionType, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, &ExportFrame::onConnectionTypeChanged);
+    connect(ui->ConnectionType, &QComboBox::currentTextChanged, this, &ExportFrame::onConnectionTypeChanged);
 }
 
 ExportFormat ExportFrame::outputFormat()
@@ -143,7 +134,7 @@ void ExportFrame::setUseForHttp(bool bUse)
     ui->checkBoxUseForHttp->setChecked(bUse);
 }
 
-QStringList ExportFrame::Save(ExportOptions *pExportOptions)
+void ExportFrame::Save(ExportOptions *pExportOptions)
 {
     pExportOptions->sEmailFrom = ui->from_email->text().trimmed();
     pExportOptions->sEmail = ui->Email->text().trimmed();
@@ -165,11 +156,7 @@ QStringList ExportFrame::Save(ExportOptions *pExportOptions)
 #ifdef USE_HTTSERVER
     pExportOptions->bUseForHttp = ui->checkBoxUseForHttp->isChecked();
 #endif
-
     pExportOptions->bTransliteration = ui->transliteration->isChecked();
-
-    QStringList fonts_list;
-    return fonts_list;
 }
 
 void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
@@ -195,14 +182,6 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
 void ExportFrame::onUseForHttpChanged(int state)
 {
     emit UseForHttpChanged(state);
-}
-
-void ExportFrame::btnPath()
-{
-    QDir::setCurrent(ui->Path->text());
-    QString dir = QFileDialog::getExistingDirectory(this, tr("Select device directory"));
-    if(!dir.isEmpty())
-        ui->Path->setText(dir);
 }
 
 void ExportFrame::onOriginalFileNameChanged(int state)

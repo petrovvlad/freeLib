@@ -3,30 +3,16 @@
 #include <QDir>
 #include <QFileInfo>
 #include <QRegularExpression>
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazipfile.h"
-#else
-#include <quazip/quazipfile.h>
-#endif
 
-
-EpubReader::EpubReader(QByteArray data)
-    : data_(std::move(data)), buffer_(&data_), device_(&buffer_)
+EpubReader::EpubReader(const QByteArray data)
+    : data_(std::move(data))
 {
-    openOpf();
-}
-
-EpubReader::EpubReader(QIODevice *device)
-    : device_(device)
-{
-    Q_ASSERT(device_ != nullptr);
+    arc_.setData(data_);
     openOpf();
 }
 
 bool EpubReader::openOpf()
 {
-    if(!initializeZip()) [[unlikely]]
-        return false;
 
     QDomDocument container;
     if(!readContainer(container)) [[unlikely]]
@@ -35,20 +21,12 @@ bool EpubReader::openOpf()
     if(!findOpfPath(container, opfPath_)) [[unlikely]]
         return false;
 
-    if(!setCurrentZipFileName(&zip_, opfPath_)) [[unlikely]]
-    {
-        LogWarning << "Failed to set OPF file:" << opfPath_;
-        return false;
-    }
-
-    QuaZipFile zipFile(&zip_);
-    if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-    {
-        LogWarning << "Failed to open OPF file:" << opfPath_;
-        return false;
-    }
-
-    if(!opf_.setContent(zipFile.readAll())) [[unlikely]]
+    auto baOpf = arc_.readFile(opfPath_);
+#if (QT_VERSION < QT_VERSION_CHECK(6, 5, 0))
+    if(!opf_.setContent(baOpf, true)) [[unlikely]]
+#else
+    if(!opf_.setContent(baOpf, QDomDocument::ParseOption::UseNamespaceProcessing)) [[unlikely]]
+#endif
     {
         LogWarning << "Failed to parse OPF file:" << opfPath_;
         return false;
@@ -57,33 +35,10 @@ bool EpubReader::openOpf()
     return true;
 }
 
-bool EpubReader::initializeZip() const
-{
-    zip_.setIoDevice(device_);
-    if (!zip_.open(QuaZip::mdUnzip)) [[unlikely]]
-    {
-        LogWarning << "Failed to open EPUB as ZIP";
-        return false;
-    }
-    return true;
-}
-
 bool EpubReader::readContainer(QDomDocument &doc) const
 {
-    if (!setCurrentZipFileName(&zip_, u"META-INF/container.xml"_s)) [[unlikely]]
-    {
-        LogWarning << "No container.xml";
-        return false;
-    }
-
-    QuaZipFile zipFile(&zip_);
-    if (!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-    {
-        LogWarning << "Failed to open META-INF/container.xml";
-        return false;
-    }
-
-    if (!doc.setContent(zipFile.readAll())) [[unlikely]]
+    auto container = arc_.readFile(u"META-INF/container.xml"_s);
+    if (!doc.setContent(container)) [[unlikely]]
     {
         LogWarning << "Failed to parse container.xml" ;
         return false;
@@ -215,21 +170,10 @@ QString EpubReader::normalizePath(const QString &path, const QString &basePath) 
 QString EpubReader::extractImageFromHtml(const QString &htmlPath, const QString &relPath) const
 {
     QString cleanHtmlPath = normalizePath(htmlPath, relPath);
-    if(!setCurrentZipFileName(&zip_, cleanHtmlPath)) [[unlikely]]
-    {
-        LogWarning << "Failed to set HTML file:" << cleanHtmlPath;
-        return QString();
-    }
 
-    QuaZipFile zipFile(&zip_);
-    if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-    {
-        LogWarning << "Failed to open HTML file:" << cleanHtmlPath;
-        return QString();
-    }
-
+    auto html = arc_.readFile(cleanHtmlPath);
     QDomDocument xmlDoc;
-    if(!xmlDoc.setContent(zipFile.readAll())) [[unlikely]]
+    if(!xmlDoc.setContent(html)) [[unlikely]]
     {
         LogWarning << "Failed to parse HTML file:" << cleanHtmlPath;
         return QString();
@@ -431,16 +375,7 @@ QImage EpubReader::parseCover() const
                 if(mediaType == u"application/xhtml+xml"_s){
                     coverPath = extractImageFromHtml(href, relPath);
                 }else{
-                    // Проверяем размер изображения
-                    QString imgPath = normalizePath(href, relPath);
-                    if(setCurrentZipFileName(&zip_, imgPath)){
-                        QuaZipFile zipFile(&zip_);
-                        if(zipFile.open(QIODevice::ReadOnly)){
-                            QImage img = QImage::fromData(zipFile.readAll());
-                            if(!img.isNull() && img.width() >= 200 && img.height() >= 200 && img.height() > img.width())
-                                coverPath = imgPath;
-                        }
-                    }
+                    coverPath = normalizePath(href, relPath);
                 }
                 if(!coverPath.isEmpty())
                     break;
@@ -452,22 +387,11 @@ QImage EpubReader::parseCover() const
     if(coverPath.isEmpty())
         return QImage();
 
-    coverPath.replace(u"%40"_s, u"@"_s);
-    coverPath.replace(u"%20"_s, u" "_s);
-    if(!setCurrentZipFileName(&zip_, coverPath)) [[unlikely]]
-    {
-        LogWarning << "Failed to set cover file:" << coverPath;
-        return QImage();
-    }
+    if(coverPath.contains(u"%"_s))
+        coverPath = QUrl::fromPercentEncoding(coverPath.toUtf8());
 
-    QuaZipFile zipFile(&zip_);
-    if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
-    {
-        LogWarning << "Failed to open cover file:" << coverPath;
-        return QImage();
-    }
 
-    QImage cover = QImage::fromData(zipFile.readAll());
+    QImage cover = QImage::fromData(arc_.readFile(coverPath));
     if(cover.isNull()) [[unlikely]]
     {
         LogWarning << "Failed to load cover image from:" << coverPath;

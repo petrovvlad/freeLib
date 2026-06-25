@@ -18,7 +18,7 @@ public:
     explicit ConversionFrame(QWidget *parent = nullptr);
     ~ConversionFrame();
     void Load(const ExportOptions *pExportOptions);
-    QStringList Save(ExportOptions *pExportOptions);
+    std::vector<QString> Save(ExportOptions *pExportOptions);
     void setCurrentTab(int index);
 
 signals:

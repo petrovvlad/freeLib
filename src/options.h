@@ -150,6 +150,8 @@ struct Options
     QString sProxyUser;
     QString sProxyPassword;
     QString sBaseUrl;
+    QString sCertPath;
+    QString sKeyPath;
     quint16 nHttpPort;
     quint16 nOpdsBooksPerPage;
     quint16 nProxyPort;

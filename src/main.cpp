@@ -495,7 +495,7 @@ int main(int argc, char *argv[])
         g::options.bOpdsEnable = true;
         if(!sLanguageFilter.isEmpty())
             pOpds->setLanguageFilter(sLanguageFilter);
-        pOpds->server_run();
+        pOpds->startServer();
     }else
 #endif
     {

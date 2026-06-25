@@ -1,3 +1,13 @@
+#include <algorithm>
+#include <chrono>
+#include <iostream>
+#include <ranges>
+#include <typeinfo>
+#include <unistd.h>
+#include <unordered_set>
+#include <vector>
+
+
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
@@ -5,6 +15,11 @@
 #include <quazip/quazip.h>
 #include <quazip/quazipfile.h>
 #endif
+
+#ifdef USE_LIBARCHIVE
+#include <archive.h>
+#include <archive_entry.h>
+#endif //USE_LIBARCHIVE
 
 #ifdef USE_DEJVULIBRE
 #include <libdjvu/ddjvuapi.h>
@@ -49,7 +64,6 @@
 #include <QMenu>
 #include <QMessageBox>
 #include <QMetaEnum>
-#include <QMultiMap>
 #include <QObject>
 #include <QPainter>
 #include <QPalette>
@@ -91,14 +105,6 @@
 #include <QXmlStreamReader>
 #include <QtAlgorithms>
 #include <QtConcurrent>
-#include <algorithm>
-#include <chrono>
-#include <iostream>
-#include <ranges>
-#include <typeinfo>
-#include <unistd.h>
-#include <unordered_set>
-#include <vector>
 
 #if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
 #include <QByteArrayView>
@@ -107,6 +113,8 @@
 #ifdef USE_HTTSERVER
 #include <QHttpServer>
 #include <QNetworkProxy>
+#include <QSslKey>
+#include <QSslServer>
 #include <QTcpServer>
 #endif
 

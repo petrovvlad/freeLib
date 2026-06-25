@@ -8,12 +8,6 @@
 #include <QSettings>
 #include <QtConcurrent>
 
-#ifdef QUAZIP_STATIC
-#include "quazip/quazip/quazip.h"
-#else
-#include <quazip/quazip.h>
-#endif
-
 #if __has_include(<execution>) //checking to see if the <execution> header is there
 #ifdef emit
 #undef emit
@@ -60,7 +54,7 @@ struct std::hash<QString> {
 template <typename T>
 bool contains(const std::vector<T> &v, T id)
 {
-    return std::find(v.begin(), v.end(), id) != v.end();
+    return std::ranges::find(v, id) != v.end();
 }
 
 struct tag
@@ -80,7 +74,6 @@ inline std::vector<tag> vTags;
 
 QString RelativeToAbsolutePath(QString path);
 bool openDB(const QString &sName);
-void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only);
 QString Transliteration(QString str);
 bool localeStringCompare(const QString &str1, const QString &str2);
 #ifdef USE_HTTSERVER
@@ -88,7 +81,6 @@ void setProxy();
 #endif
 QSharedPointer<QSettings> GetSettings(bool bReopen = false);
 void setLocale(const QString &sLocale);
-bool setCurrentZipFileName(QuaZip *zip, const QString &name);
 bool kindlegenInstalled();
 QIcon themedIcon(const QString &sIcon);
 QPixmap renderSvg(QSvgRenderer &render, bool bDark);

@@ -19,7 +19,7 @@ class ExportFrame : public QFrame
 public:
     explicit ExportFrame(QWidget *parent = 0);
     ~ExportFrame();
-    QStringList Save(ExportOptions *pExportOptions);
+    void Save(ExportOptions *pExportOptions);
     void Load(const ExportOptions *pExportOptions);
     ExportFormat outputFormat();
     bool getUseForHttp();
@@ -35,12 +35,10 @@ private slots:
     void onRadioDeviceToggled(bool checked);
     void onRadioEmailToggled(bool checked);
     void onOutputFormatChanged(int index);
-    void onConnectionTypeChanged(int index);
+    void onConnectionTypeChanged(const QString &text);
     void onOriginalFileNameChanged(int state);
     void onPostprocessingCopyChanged(int state);
     void validateEmail(QLineEdit* leEmail);
-
-    void btnPath();
 
 private:
     Ui::ExportFrame *ui;

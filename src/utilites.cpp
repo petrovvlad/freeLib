@@ -241,23 +241,6 @@ bool openDB(const QString &sName)
     return true;
 }
 
-void ClearLib(const QSqlDatabase &dbase, qlonglong id_lib, bool delete_only)
-{
-    QSqlQuery query(dbase);
-    if(delete_only)
-    {
-        query.exec(u"update book set deleted=1 where id_lib="_s + QString::number(id_lib));
-    }
-    else
-    {
-        query.exec(u"PRAGMA foreign_keys = ON"_s);
-        query.exec(u"delete from book where id_lib="_s + QString::number(id_lib));
-        query.exec(u"delete from author where id_lib="_s + QString::number(id_lib));
-        query.exec(u"delete from seria where id_lib="_s + QString::number(id_lib));
-        query.exec(u"VACUUM"_s);
-    }
-}
-
 QString Transliteration(QString str)
 {
     str = str.trimmed();
@@ -396,17 +379,6 @@ void setLocale(const QString &sLocale)
     g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Poems"), u".poem"_s, u"poem_font"_s, 100));
     g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Epigraph"), u".epigraph"_s, u"epigraph_font"_s, 100));
     g::vTags.emplace_back(tag(QApplication::translate("SettingsDlg", "Book"), u"body"_s, u"body_font"_s, 100));
-}
-
-bool setCurrentZipFileName(QuaZip *zip, const QString &name)
-{
-    bool result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    if(!result)
-    {
-        zip->setFileNameCodec(QTextCodec::codecForName("IBM 866"));
-        result = zip->setCurrentFile(name, QuaZip::csInsensitive);
-    }
-    return result;
 }
 
 bool kindlegenInstalled()
