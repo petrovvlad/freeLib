@@ -14,51 +14,51 @@
 #include "utilites.h"
 
 QArchive::QArchive()
+    : mode_(Mode::read)
 #ifdef USE_LIBARCHIVE
-    : archive_(nullptr),
-      entry_(nullptr),
+    , archive_(nullptr)
+    , entry_(nullptr)
 #endif //USE_LIBARCHIVE
-    mode_(Mode::read)
 {
 }
 
 QArchive::QArchive(const QString &sArchivePath)
+    : mode_(Mode::read)
 #ifdef USE_LIBARCHIVE
-    : archive_(nullptr),
-      entry_(nullptr),
+    , archive_(nullptr)
+    , entry_(nullptr)
 #endif //USE_LIBARCHIVE
-    mode_(Mode::read)
 {
     sArchivePath_ = sArchivePath;
 }
 
 QArchive::QArchive(const QString &sArchivePath, Mode mode)
+    : mode_(mode)
 #ifdef USE_LIBARCHIVE
-    : archive_(nullptr),
-    entry_(nullptr),
+    , archive_(nullptr)
+    , entry_(nullptr)
 #endif //USE_LIBARCHIVE
-    mode_(mode)
 {
     sArchivePath_ = sArchivePath;
 }
 
 QArchive::QArchive(const QByteArray data)
+    : mode_(Mode::read)
 #ifdef USE_LIBARCHIVE
-    : archive_(nullptr),
-      entry_(nullptr),
+    , archive_(nullptr)
+    ,  entry_(nullptr)
 #endif //USE_LIBARCHIVE
-    mode_(Mode::read)
 {
     data_ = data;
 }
 
 QArchive::QArchive(Mode mode)
+    : mode_ (mode)
 #ifdef USE_LIBARCHIVE
-    : archive_(nullptr),
-    entry_(nullptr)
+    , archive_(nullptr)
+    , entry_(nullptr)
 #endif //USE_LIBARCHIVE
 {
-    mode_ = mode;
 }
 
 QArchive::~QArchive()
