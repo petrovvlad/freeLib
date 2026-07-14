@@ -131,8 +131,22 @@ QImage BookFile::cover()
 {
     if(!cover_.isNull())
         return cover_;
-    QString sImg = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) % u"/covers/"_s % QString::number(idBook_) % u".jpg"_s;
     QImage img;
+    if(sArchive_.endsWith(u"7z"_s)){
+        QString sCoverArc = sLibPath_ % u"covers/" % sArchive_.left(sArchive_.length() - 2) % u"zip"_s;
+        if(QFile::exists(sCoverArc)){
+            QArchive coverArc = QArchive(sCoverArc);
+            QByteArray imageData = coverArc.readFile(sFile_);
+            img = QImage::fromData(imageData);
+            if(!img.isNull()){
+                cover_ = img;
+                return img;
+            }
+        }
+    }
+
+
+    QString sImg = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) % u"/covers/"_s % QString::number(idBook_) % u".jpg"_s;
     if(QFile::exists(sImg))
         return QImage(sImg);
 
