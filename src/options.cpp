@@ -547,11 +547,11 @@ void Options::Save(QSharedPointer<QSettings> pSettings)
 
     pSettings->beginWriteArray(u"tools"_s);
     index = 0;
-    for(const auto &iTool :tools){
+    for(const auto &[sToolName, tool] :tools){
         pSettings->setArrayIndex(index);
-        pSettings->setValue(u"name"_s, iTool.first);
-        pSettings->setValue(u"path"_s, iTool.second.sPath);
-        pSettings->setValue(u"args"_s, iTool.second.sArgs);
+        pSettings->setValue(u"name"_s, sToolName);
+        pSettings->setValue(u"path"_s, tool.sPath);
+        pSettings->setValue(u"args"_s, tool.sArgs);
         ++index;
     }
     pSettings->endArray();

@@ -267,18 +267,18 @@ void SettingsDlg::LoadSettings()
 
     ui->ApplicationList->setRowCount(options_.applications.size());
     int index = 0;
-    for(const auto &iApp :options_.applications){
-        ui->ApplicationList->setItem(index, 0, new QTableWidgetItem(iApp.first));
-        ui->ApplicationList->setItem(index, 1, new QTableWidgetItem(iApp.second));
+    for(const auto &[sAppName, sApp] :options_.applications){
+        ui->ApplicationList->setItem(index, 0, new QTableWidgetItem(sAppName));
+        ui->ApplicationList->setItem(index, 1, new QTableWidgetItem(sApp));
         ++index;
     }
 
     ui->ExportList->setRowCount(options_.tools.size());
     index=0;
-    for(const auto &iTool :options_.tools){
-        ui->ExportList->setItem(index, 0, new QTableWidgetItem(iTool.first));
-        ui->ExportList->setItem(index, 1, new QTableWidgetItem(iTool.second.sPath));
-        ui->ExportList->setItem(index, 2, new QTableWidgetItem(iTool.second.sArgs));
+    for(const auto &[sTool, toolOptions] :options_.tools){
+        ui->ExportList->setItem(index, 0, new QTableWidgetItem(sTool));
+        ui->ExportList->setItem(index, 1, new QTableWidgetItem(toolOptions.sPath));
+        ui->ExportList->setItem(index, 2, new QTableWidgetItem(toolOptions.sArgs));
         ++index;
     }
 
