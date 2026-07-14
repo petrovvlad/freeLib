@@ -27,6 +27,7 @@ public slots:
     void process();
     void break_import();
 protected:
+    void importBooksFromInpx();
     void importBooksFromPath(const QString &sPath);
     void importBooksFromList(const QFileInfoList &listFiles);
     void importBooksFromArchive(const QString &sPath, const QString &sArchName, uint &nBooksCount);
