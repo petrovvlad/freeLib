@@ -148,7 +148,7 @@ void fb2mobi::parse_description(const QDomNode &elem)
              }
          }
     }
-    hyphenator.init(test_language(g::libs[idLib_].vLaguages[pBook_->idLanguage]));
+    hyphenator.init(test_language(g::libs[idLib_].vLanguages[pBook_->idLanguage]));
 }
 
 void fb2mobi::parse_binary(const QDomNode &elem)
@@ -1139,7 +1139,7 @@ void fb2mobi::generate_opf_epub()
             title=Transliteration(title);
         buf += u"<dc:title>%1</dc:title>\n"_s.arg(title);
      }
-    buf += u"<dc:language>%1</dc:language>\n"_s.arg(test_language(g::libs[idLib_].vLaguages[pBook_->idLanguage]));
+    buf += u"<dc:language>%1</dc:language>\n"_s.arg(test_language(g::libs[idLib_].vLanguages[pBook_->idLanguage]));
     buf += u"<dc:identifier id=\"bookid\">%1</dc:identifier>\n"_s.arg(isbn.isEmpty() ?QUuid::createUuid().toString() :isbn);
     buf += u"<dc:creator opf:role=\"aut\">%1</dc:creator>\n"_s.arg(book_author);
 
@@ -1225,7 +1225,7 @@ void fb2mobi::generate_opf()
 
         buf += u"<dc:Title>%1</dc:Title>"_s.arg(title);
      }
-    buf += u"<dc:Language>%1</dc:Language>"_s.arg(test_language(lib.vLaguages[pBook_->idLanguage]));
+    buf += u"<dc:Language>%1</dc:Language>"_s.arg(test_language(lib.vLanguages[pBook_->idLanguage]));
     buf += u"<dc:Creator>%1</dc:Creator>"_s.arg(book_author);
     buf += u"<dc:identifier id=\"BookId\" opf:scheme=\"ISBN\">%1</dc:identifier>"_s.arg(isbn.isEmpty() ?QUuid::createUuid().toString() :isbn);
     buf += u"<dc:Publisher /><dc:date /><x-metadata>"_s;

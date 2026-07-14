@@ -85,7 +85,7 @@ bool TreeBookItem::operator<(const QTreeWidgetItem &other) const
             return g::genres[bookThis.vIdGenres.at(0)].sName < g::genres[bookOther.vIdGenres.at(0)].sName;
         }
         case 8: //Язык
-            return lib.vLaguages[bookThis.idLanguage] < lib.vLaguages[bookOther.idLanguage];
+            return lib.vLanguages[bookThis.idLanguage] < lib.vLanguages[bookOther.idLanguage];
         case 9: //Формат
             return bookThis.sFormat < bookOther.sFormat;
         }

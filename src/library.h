@@ -101,8 +101,8 @@ public:
     std::unordered_multimap<uint, uint> authorBooksLink;
     std::unordered_map<uint, SBook> books;
     std::unordered_map<uint, SSeries> series;
-    std::vector<QString> vLaguages;
-    std::vector<QString> vSortedLaguages;
+    std::vector<QString> vLanguages;
+    std::vector<QString> vSortedLanguages;
     std::chrono::time_point<std::chrono::system_clock> timeHttp{};
 };
 

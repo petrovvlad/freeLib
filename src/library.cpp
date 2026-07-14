@@ -18,14 +18,14 @@ void loadLibrary(uint idLibrary)
 {
     if(idLibrary == 0)
         return;
-    if(!QSqlDatabase::database(QStringLiteral("libdb"), false).isOpen())
+    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
         return;
 
     qint64 timeStart, timeEnd;
     if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
 
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
     query.setForwardOnly(true);
     if(!query.exec(u"SELECT id FROM lib WHERE id=%1;"_s.arg(idLibrary)) || !query.first()) [[unlikely]]
         return;
@@ -102,7 +102,8 @@ void loadLibrary(uint idLibrary)
 #ifdef __cpp_lib_atomic_wait
     std::atomic_int_fast32_t anCount[2] = {0, 0};
     std::atomic_uint anTotalCount{0};
-    std::atomic_bool abFinished{false};
+    std::atomic_flag abFinished;
+
 
     const uint sizeBufffer{30000};
     constexpr uint nColCount = 13;
@@ -150,7 +151,8 @@ void loadLibrary(uint idLibrary)
             anTotalCount += i;
             anCount[nBuff].store(i);
             anCount[nBuff].notify_all();
-            abFinished.store(true);
+            abFinished.test_and_set();
+
         }
         QSqlDatabase::removeDatabase(u"readdb"_s);
     });
@@ -158,7 +160,7 @@ void loadLibrary(uint idLibrary)
     lib.books.clear();
     uint nBuff = 0;
     uint nTotalCount{0};
-    while(!abFinished || nTotalCount != anTotalCount){
+    while(!abFinished.test(std::memory_order_acquire) || nTotalCount != anTotalCount){
         anCount[nBuff].wait(-1);
         uint nCount = anCount[nBuff].load();
         for(uint i =0; i<nCount; i++){
@@ -171,11 +173,11 @@ void loadLibrary(uint idLibrary)
             SBook &book = lib.books[id];
             book.sName = sName;
             book.nStars = qvariant_cast<uchar>(buff[k+2]);
-            QString sLaguage = buff[k + 3].toString().toLower();
-            auto iLang = std::find(lib.vLaguages.cbegin(), lib.vLaguages.cend(), sLaguage);
-            int idLanguage = iLang - lib.vLaguages.cbegin();
-            if(idLanguage == lib.vLaguages.size()) [[unlikely]]
-                lib.vLaguages.push_back(std::move(sLaguage));
+            QString sLanguage = buff[k + 3].toString().toLower();
+            auto iLang = std::ranges::find(lib.vLanguages, sLanguage);
+            int idLanguage = iLang - lib.vLanguages.cbegin();
+            if(idLanguage == lib.vLanguages.size()) [[unlikely]]
+                lib.vLanguages.push_back(std::move(sLanguage));
             book.idLanguage = static_cast<uchar>(idLanguage);
             book.sFile = buff[k + 4].toString();
             book.nSize = buff[k + 5].toUInt();
@@ -402,7 +404,7 @@ SAuthor::SAuthor(const QString &sName)
 QString SAuthor::getName() const
 {
     QString sAuthorName = QStringLiteral("%1 %2 %3").arg(sLastName, sFirstName, sMiddleName).trimmed();
-    if(sAuthorName.trimmed().isEmpty()) [[unlikely]]
+    if(sAuthorName.isEmpty()) [[unlikely]]
         sAuthorName = QCoreApplication::translate("MainWindow","unknown author");
     return sAuthorName;
 }
@@ -635,8 +637,8 @@ void SLib::sortLanguages()
 {
     QLocale locale;
     auto sLocale = locale.name().left(2);
-    vSortedLaguages = vLaguages;
-    std::ranges::sort(vSortedLaguages, [&sLocale](auto i1, auto i2)
+    vSortedLanguages = vLanguages;
+    std::ranges::sort(vSortedLanguages, [&sLocale](auto i1, auto i2)
     {
         bool bFavorite1 = contains(g::options.vFavoriteLanguges, i1);
         bool bFavorite2 = contains(g::options.vFavoriteLanguges, i2);
