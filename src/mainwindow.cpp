@@ -1250,18 +1250,10 @@ void MainWindow::onStartSearch()
         if(!sName.isEmpty() &&  !book.sName.contains(sName, Qt::CaseInsensitive))
             continue;
 
-        bool bSeries = false;
-        if(sSeries.isEmpty())
-            bSeries = true;
-        else{
-            for(const auto &iSeries :book.series){
-                uint idSeries = iSeries.first;
-                if(lib.series.at(idSeries).sName.contains(sSeries, Qt::CaseInsensitive)){
-                    bSeries = true;
-                    break;
-                }
-            }
-        }
+        bool bSeries = sSeries.isEmpty();
+        bSeries |=  std::ranges::any_of(book.series | std::views::keys, [&lib, &sSeries](auto idSeries)
+                    { return lib.series.at(idSeries).sName.contains(sSeries, Qt::CaseInsensitive); });
+
         if(!bSeries)
             continue;
 
@@ -1290,7 +1282,7 @@ void MainWindow::onStartSearch()
         settings->setValue(u"search.series"_s, sSeries);
         settings->setValue(u"search.id.genre"_s, idGenre);
 
-        QString sLanguage = idLanguage>=0 ?lib.vLaguages[idLanguage] :u""_s;
+        QString sLanguage = idLanguage>=0 ?lib.vLanguages[idLanguage] :u""_s;
         settings->setValue(u"search.language"_s, sLanguage);
         settings->setValue(u"search.min.rating"_s, nMinimalRating);
 
@@ -1346,7 +1338,7 @@ void MainWindow::SelectLibrary()
                 oldLib.authors.clear();
                 oldLib.series.clear();
                 oldLib.authorBooksLink.clear();
-                oldLib.vLaguages.clear();
+                oldLib.vLanguages.clear();
             });
         }
 
@@ -1396,8 +1388,9 @@ void MainWindow::SelectGenre()
     ushort idGenre = cur_item->data(0, Qt::UserRole).toUInt();
     vBooks_.clear();
     SLib& lib = g::libs[g::idCurrentLib];
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
     for(const auto &[idBook, book] :lib.books){
-        if(IsBookInList(book)){
+        if(IsBookInList(book, idTagFilter)){
             for(auto iGenre: book.vIdGenres) {
                 if(iGenre == idGenre){
                     vBooks_.push_back(idBook);
@@ -1431,8 +1424,9 @@ void MainWindow::selectSeries()
     vBooks_.clear();
     SLib& lib = g::libs[g::idCurrentLib];
 
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
     for(const auto &[idBook, book] :lib.books){
-        if(book.series.contains(idCurrentSeries_) && IsBookInList(book)){
+        if(book.series.contains(idCurrentSeries_) && IsBookInList(book, idTagFilter)){
             vBooks_.push_back(idBook);
         }
     }
@@ -1458,12 +1452,14 @@ void MainWindow::SelectAuthor()
     idCurrentAuthor_ = pItem->data(Qt::UserRole).toUInt();
     vBooks_.clear();
     SLib &currentLib = g::libs[g::idCurrentLib];
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
 
-    for (auto it = g::libs[g::idCurrentLib].authorBooksLink.equal_range(idCurrentAuthor_); it.first != it.second; ++it.first) {
-        uint id = it.first->second;
+    auto [begin, end] = currentLib.authorBooksLink.equal_range(idCurrentAuthor_);
+    for (auto it = begin; it != end; ++it) {
+        uint id = it->second;
         const auto &book = currentLib.books.at(id);
-        if(IsBookInList(book))
-            vBooks_.push_back(it.first->second);
+        if(IsBookInList(book, idTagFilter))
+            vBooks_.push_back(it->second);
     }
     FillListBooks(vBooks_, {}, idCurrentAuthor_);
 
@@ -1599,7 +1595,7 @@ void MainWindow::fillReview(const BookFile &bookFile)
     if(!book.series.empty()){
         sSeries = u"<tr><td><b>Серия:</b></td><td>"_s;
         bool bFirst = true;
-        for(auto [idSeries, numInSeries] :book.series){
+        for(auto idSeries :book.series | std::views::keys){
             if(!bFirst)
                 sSeries += u"; "_s;
             sSeries += u"<a href=series_%1>%2</a>"_s.arg(QString::number(idSeries),lib.series[idSeries].sName);
@@ -1668,18 +1664,16 @@ void MainWindow::fillLanguages()
 
     auto settings = GetSettings();
     QString sCurrentLanguage = settings->value(u"BookLanguage"_s, u"*"_s).toString();
-    QLocale locale;
-    //auto sLocale = locale.name().left(2);
     QString sSearchLanguage;
     if(g::options.bStorePosition)
         sSearchLanguage = settings->value(u"search.language"_s).toString();
-    if(currentLib.vSortedLaguages.empty())
+    if(currentLib.vSortedLanguages.empty())
         currentLib.sortLanguages();
 
     int iCurrentLang = 0;
     int iSearchLang = 0;
-    for(int iLang = 0; iLang<currentLib.vSortedLaguages.size(); iLang++){
-        QString sAbbrLanguage = currentLib.vSortedLaguages[iLang];
+    for(int iLang = 0; iLang<currentLib.vSortedLanguages.size(); iLang++){
+        QString sAbbrLanguage = currentLib.vSortedLanguages[iLang];
         if(!sAbbrLanguage.isEmpty() && sAbbrLanguage != u"un"){
             QString sLanguage;
             if(g::languges.contains(sAbbrLanguage))
@@ -1687,9 +1681,9 @@ void MainWindow::fillLanguages()
             else
                 sLanguage = sAbbrLanguage;
 
-            auto it = std::ranges::find(currentLib.vLaguages, sAbbrLanguage);
-            if(it != currentLib.vLaguages.end()){
-                int id = it - currentLib.vLaguages.begin();
+            auto it = std::ranges::find(currentLib.vLanguages, sAbbrLanguage);
+            if(it != currentLib.vLanguages.end()){
+                int id = it - currentLib.vLanguages.begin();
                 ui->language->addItem(sLanguage, id);
                 ui->findLanguage->addItem(sLanguage, id);
 
@@ -1706,7 +1700,7 @@ void MainWindow::fillLanguages()
 
     if(!g::options.vFavoriteLanguges.empty()){
         int iSeparator = std::ranges::count_if(g::options.vFavoriteLanguges, [&currentLib](auto sLang)
-            { return contains(currentLib.vSortedLaguages, sLang); }) + 1;
+            { return contains(currentLib.vSortedLanguages, sLang); }) + 1;
         ui->language->insertSeparator(iSeparator);
         ui->findLanguage->insertSeparator(iSeparator);
     }
@@ -1743,7 +1737,7 @@ void MainWindow::ManageLibrary()
                     oldLib.authors.clear();
                     oldLib.series.clear();
                     oldLib.authorBooksLink.clear();
-                    oldLib.vLaguages.clear();
+                    oldLib.vLanguages.clear();
                 });
             }
         }
@@ -2216,14 +2210,15 @@ void MainWindow::FillAuthors()
         return (sSearch == u"*" || (sSearch == u"#" && !sName.left(1).contains(re)) || sName.startsWith(sSearch, Qt::CaseInsensitive));
     });
 
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
     std::vector<QListWidgetItem*> vItems;
     std::mutex m;
     QtConcurrent::blockingMap(vIdAuthors, [&](uint idAuthor){
         auto &author = authors.at(idAuthor);
         auto [begin, end] = currentLib.authorBooksLink.equal_range(idAuthor);
-        uint count = std::count_if(begin, end, [&currentLib, this](const auto& pair) {
+        uint count = std::count_if(begin, end, [&currentLib, idTagFilter, this](const auto& pair) {
                 const auto& book = currentLib.books.at(pair.second);
-                return IsBookInList(book);
+                return IsBookInList(book, idTagFilter);
         });
 
         if(count>0){
@@ -2282,14 +2277,13 @@ void MainWindow::fillSeries()
     std::unordered_map<uint, uint> mCounts;
     const SLib& lib = g::libs[g::idCurrentLib];
     auto &series = lib.series;
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
 
-    for(const auto &iBook :lib.books){
-        auto &book = iBook.second;
-        if(!book.series.empty() && IsBookInList(book)){
-            for(const auto &iSeries: book.series){
-                uint idSeries = iSeries.first;
-                if((sSearch == u"*" || (sSearch == u"#" && !series.at(idSeries).sName.left(1).contains(re)) ||
-                     series.at(idSeries).sName.startsWith(sSearch, Qt::CaseInsensitive)))
+    for(const auto &book :lib.books | std::views::values){
+        if(!book.series.empty() && IsBookInList(book, idTagFilter)){
+            for(auto idSeries: book.series | std::views::keys){
+                if(sSearch == u"*" || (sSearch == u"#" && !series.at(idSeries).sName.left(1).contains(re)) ||
+                     series.at(idSeries).sName.startsWith(sSearch, Qt::CaseInsensitive))
                 {
                     mCounts[idSeries]++;
                 }
@@ -2345,12 +2339,13 @@ void MainWindow::FillGenres()
 
     std::unordered_map<ushort, std::atomic_uint_fast32_t> mCounts;
     const SLib& lib = g::libs[g::idCurrentLib];
+    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
 
-    for(auto &genre :g::genres)
-        mCounts[genre.first]/* = 0*/;
+    for(auto &idGenre :g::genres | std::views::keys)
+        mCounts[idGenre]/* = 0*/;
     blockingMap(lib.books, [&](const auto &book)
     {
-        if(IsBookInList(book))
+        if(IsBookInList(book, idTagFilter))
         {
             for(auto iGenre: book.vIdGenres)
                 mCounts[iGenre]++;
@@ -2441,7 +2436,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
     QLocale locale;
 
     TreeBookItem* itemSeries = nullptr;
-    TreeBookItem* item_author;
+    TreeBookItem* itemAuthor;
     std::unordered_map<uint, TreeBookItem*> mAuthorItems;
     std::unordered_multimap<uint, TreeBookItem*> mSeriesItems;
 
@@ -2472,34 +2467,34 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
 
         if(bTreeView_){
             if(!mAuthorItems.contains(idAuthor)){
-                item_author = new TreeBookItem(ui->Books, ITEM_TYPE_AUTHOR);
-                item_author->setText(0, sAuthor);
-                item_author->setExpanded(true);
-                item_author->setFont(0, bold_font);
-                item_author->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
-                item_author->setData(0, Qt::UserRole, idAuthor);
-                item_author->setData(3, Qt::UserRole, -1);
-                item_author->setData(5, Qt::UserRole, -1);
+                itemAuthor = new TreeBookItem(ui->Books, ITEM_TYPE_AUTHOR);
+                itemAuthor->setText(0, sAuthor);
+                itemAuthor->setExpanded(true);
+                itemAuthor->setFont(0, bold_font);
+                itemAuthor->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
+                itemAuthor->setData(0, Qt::UserRole, idAuthor);
+                itemAuthor->setData(3, Qt::UserRole, -1);
+                itemAuthor->setData(5, Qt::UserRole, -1);
 
                 if(g::options.bUseTag){
-                    item_author->setIcon(0, getTagIcon(lib.authors[idAuthor].idTags));
+                    itemAuthor->setIcon(0, getTagIcon(lib.authors[idAuthor].idTags));
                 }
-                mAuthorItems[idAuthor] = item_author;
+                mAuthorItems[idAuthor] = itemAuthor;
             }else{
-                item_author = mAuthorItems[idAuthor];
-                auto checkedState = item_author->checkState(0);
+                itemAuthor = mAuthorItems[idAuthor];
+                auto checkedState = itemAuthor->checkState(0);
                 if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
-                    item_author->setCheckState(0, Qt::PartiallyChecked);
+                    itemAuthor->setCheckState(0, Qt::PartiallyChecked);
             }
 
             if(!bSeriesInTree){
-                itemsBook.push_back(new TreeBookItem(item_author, ITEM_TYPE_BOOK));
+                itemsBook.push_back(new TreeBookItem(itemAuthor, ITEM_TYPE_BOOK));
             }else{
                 if(!book.series.empty()){
-                    for(auto [idSeries, numInSeries] :book.series){
+                    for(auto idSeries :book.series | std::views::keys){
                         bool bFound = false;
-                        auto items = mSeriesItems | std::views::filter([idSeries](const auto& pair){return pair.first == idSeries;});
-                        for (const auto& [id, item] :items) {
+                        auto items = mSeriesItems | std::views::filter([idSeries](const auto& pair){return pair.first == idSeries;}) | std::views::values;
+                        for (const auto& item :items) {
                             if(item->parent()->data(0, Qt::UserRole) == idAuthor){
                                 auto checkedState = item->checkState(0);
                                 if((checkedState == Qt::Checked && !bBookChecked) || (checkedState == Qt::Unchecked && bBookChecked))
@@ -2512,7 +2507,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                         if(!bFound){
                             itemSeries = new TreeBookItem(mAuthorItems[idAuthor], ITEM_TYPE_SERIES);
                             itemSeries->setText(0, lib.series[idSeries].sName);
-                            item_author->addChild(itemSeries);
+                            itemAuthor->addChild(itemSeries);
                             itemSeries->setExpanded(true);
                             itemSeries->setFont(0, bold_font);
                             itemSeries->setCheckState(0, bBookChecked ?Qt::Checked  :Qt::Unchecked);
@@ -2526,7 +2521,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                         itemsBook.push_back(new TreeBookItem(itemSeries, ITEM_TYPE_BOOK));
                     }
                 }else{
-                    itemsBook.push_back(new TreeBookItem(item_author, ITEM_TYPE_BOOK));
+                    itemsBook.push_back(new TreeBookItem(itemAuthor, ITEM_TYPE_BOOK));
                 }
             }
         }else
@@ -2562,7 +2557,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                 if(book.series.size() == 1)
                     numInSeries = book.series.begin()->second;
                 bool bFirst = true;
-                for(auto [idSeries, numInSeries] :book.series){
+                for(auto idSeries :book.series | std::views::keys){
                     if(!bFirst)
                         sSeries += u"; "_s;
                     sSeries += lib.series[idSeries].sName;
@@ -2597,7 +2592,7 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
                 itemBook->setTextAlignment(7, Qt::AlignLeft|Qt::AlignVCenter);
             }
 
-            itemBook->setText(8, lib.vLaguages[book.idLanguage]);
+            itemBook->setText(8, lib.vLanguages[book.idLanguage]);
             itemBook->setTextAlignment(8, Qt::AlignCenter);
 
             itemBook->setText(9, book.sFormat);
@@ -2635,14 +2630,12 @@ void MainWindow::FillListBooks(const std::vector<uint> &vBooks, const std::vecto
     }
 }
 
-bool MainWindow::IsBookInList(const SBook &book)
+bool MainWindow::IsBookInList(const SBook &book, uint idTagFilter)
 {
-
     if(idCurrentLanguage_ != -1 && idCurrentLanguage_ != book.idLanguage)
         return false;
     if(!g::options.bShowDeleted && book.bDeleted)
         return false;
-    uint idTagFilter = ui->TagFilter->itemData(ui->TagFilter->currentIndex()).toUInt();
     if(g::options.bUseTag && idTagFilter != 0){
         if(book.idTags.contains(idTagFilter))
             return true;
@@ -2738,7 +2731,7 @@ void MainWindow::onLanguageFilterChanged(int index)
     if(iLang == -1)
         sLanguage = u"*"_s;
     else
-        sLanguage = currentLib.vLaguages[iLang];
+        sLanguage = currentLib.vLanguages[iLang];
     auto settings = GetSettings();
     settings->setValue(u"BookLanguage"_s, sLanguage);
     idCurrentLanguage_ = ui->language->itemData(index).toInt();

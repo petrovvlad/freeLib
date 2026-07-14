@@ -128,11 +128,11 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
     SLib& lib = g::libs[idLib];
     Q_CHECK_PTR(pExportOptions_);
     QString tool_path,tool_arg;
-    for(const auto &iTool :g::options.tools){
-        if(iTool.first == pExportOptions_->sCurrentTool)
+    for(const auto &[sToolName, tool] :g::options.tools){
+        if(sToolName == pExportOptions_->sCurrentTool)
         {
-            tool_path = iTool.second.sPath;
-            tool_arg = iTool.second.sArgs;
+            tool_path = tool.sPath;
+            tool_arg = tool.sArgs;
             break;
         }
     }
@@ -556,8 +556,7 @@ void ExportThread::export_lib()
     }
 
     uint nCount = 0;
-    for(const auto &iBook :lib.books){
-        const auto &book = iBook.second;
+    for(const auto &book :lib.books | std::views::values){
         QString sBookTags;
         for(auto idTag: book.idTags)
             sBookTags += tagsName[idTag] + ':';
@@ -603,7 +602,7 @@ void ExportThread::export_lib()
                         (
                             book.sFormat,                         //EXT
                             QString::number(book.nSize),          //SIZE
-                            lib.vLaguages[book.idLanguage],       //LANG
+                            lib.vLanguages[book.idLanguage],       //LANG
                             QString::number(book.nStars),         //STARS
                             book.date.toString(u"yyyy-MM-dd"_s),  //DATE
                             book.bDeleted ?"1" :"",               //DEL

@@ -168,14 +168,12 @@ void ExportFrame::UpdateToolComboBox(const QString &sCurrentTool)
         CurrentTool = sCurrentTool;
     while(ui->CurrentTools->count()>1)
         ui->CurrentTools->removeItem(1);
-    int index=0;
-    for(const auto &iTool :g::options.tools){
-        ui->CurrentTools->addItem(iTool.first);
-        if(iTool.first == CurrentTool)
+    for(const auto &sToolName :g::options.tools | std::views::keys){
+        ui->CurrentTools->addItem(sToolName);
+        if(sToolName == CurrentTool)
         {
             ui->CurrentTools->setCurrentIndex(ui->CurrentTools->count()-1);
         }
-        ++index;
     }
 }
 
