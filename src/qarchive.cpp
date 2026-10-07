@@ -13,6 +13,72 @@
 
 #include "utilites.h"
 
+namespace {
+constexpr quint16 ZipCompressionMethodPpmd = 98;
+
+bool isZipArchivePath(const QString &sArchivePath)
+{
+    return sArchivePath.endsWith(u".zip"_s, Qt::CaseInsensitive);
+}
+
+#ifdef USE_LIBARCHIVE
+bool zipContainsPpmdEntry(const QuaZip &zip)
+{
+    const auto fileInfoList = zip.getFileInfoList64();
+    for(const auto &fi : fileInfoList){
+        if(fi.method == ZipCompressionMethodPpmd)
+            return true;
+    }
+
+    return false;
+}
+
+bool shouldReadNonZipWithLibArchive(const QString &sArchivePath, QArchive::Mode mode)
+{
+    if(mode == QArchive::Mode::create)
+        return false;
+    return !isZipArchivePath(sArchivePath);
+}
+
+bool openLibArchiveReader(struct archive *&archive, const QString &sArchivePath, const QByteArray &data)
+{
+    archive = archive_read_new();
+    if (!archive) {
+        LogWarning << "Failed to create archive_read object";
+        return false;
+    }
+
+    archive_read_support_filter_all(archive);
+    archive_read_support_format_zip(archive);
+    archive_read_support_format_7zip(archive);
+    archive_read_support_format_rar(archive);
+    archive_read_support_format_rar5(archive);
+    // archive_read_support_format_all(archive);
+
+    bool bSuccess = false;
+    if(data.size() != 0)
+    {
+        bSuccess = archive_read_open_memory(archive, data.constData(), data.size()) == ARCHIVE_OK;
+    }
+    else if(!sArchivePath.isEmpty())
+    {
+        const std::size_t blockSize = 262144;  // 256 КиБ
+        const QByteArray pathUtf8 = sArchivePath.toUtf8();
+        bSuccess = archive_read_open_filename(archive, pathUtf8.constData(), blockSize) == ARCHIVE_OK;
+    }else{
+        LogWarning << "Cannot open archive";
+    }
+
+    if(!bSuccess){
+        LogWarning << "Error open archive!" << sArchivePath << archive_error_string(archive);
+        archive_read_free(archive);
+        archive = nullptr;
+    }
+    return bSuccess;
+}
+#endif //USE_LIBARCHIVE
+} // namespace
+
 QArchive::QArchive()
     : mode_(Mode::read)
 #ifdef USE_LIBARCHIVE
@@ -118,33 +184,8 @@ bool QArchive::open()
 {
     bool bSuccess = false;
 #ifdef USE_LIBARCHIVE
-    if(!sArchivePath_.endsWith(u".zip") && mode_ != Mode::create){
-        archive_ = archive_read_new();
-        if (!archive_) {
-            LogWarning << "Failed to create archive_read object";
-            return false;
-        }
-
-        archive_read_support_filter_all(archive_);
-        archive_read_support_format_zip(archive_);
-        archive_read_support_format_7zip(archive_);
-        archive_read_support_format_rar(archive_);
-        archive_read_support_format_rar5(archive_);
-        // archive_read_support_format_all(archive_);
-
-
-        if(data_.size() != 0)
-        {
-            bSuccess = archive_read_open_memory(archive_, data_.constData(), data_.size()) == ARCHIVE_OK;
-        }
-        else if(!sArchivePath_.isEmpty())
-        {
-            const std::size_t blockSize = 262144;  // 256 КиБ
-            const QByteArray pathUtf8 = sArchivePath_.toUtf8();
-            bSuccess = archive_read_open_filename(archive_, pathUtf8.constData(), blockSize) == ARCHIVE_OK;
-        }else{
-            LogWarning << "Cannot open archive";
-        }
+    if(shouldReadNonZipWithLibArchive(sArchivePath_, mode_)){
+        bSuccess = openLibArchiveReader(archive_, sArchivePath_, data_);
     }
     else
 #endif //USE_LIBARCHIVE
@@ -162,9 +203,23 @@ bool QArchive::open()
                 zip_.setZipName(sArchivePath_);
 
             if( !zip_.open(QuaZip::mdUnzip) ) [[unlikely]]
+            {
                 LogWarning << "Error open archive!" << sArchivePath_;
+#ifdef USE_LIBARCHIVE
+                if(isZipArchivePath(sArchivePath_))
+                    bSuccess = openLibArchiveReader(archive_, sArchivePath_, data_);
+#endif //USE_LIBARCHIVE
+            }
             else
+            {
+#ifdef USE_LIBARCHIVE
+                if(isZipArchivePath(sArchivePath_) && zipContainsPpmdEntry(zip_)){
+                    zip_.close();
+                    bSuccess = openLibArchiveReader(archive_, sArchivePath_, data_);
+                }else
+#endif //USE_LIBARCHIVE
                 bSuccess = true;
+            }
             break;
 
         case Mode::create:
