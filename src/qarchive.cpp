@@ -1026,7 +1026,7 @@ QDateTime QArchive::getMTime(const QString &sFileName)
     if(reader_){
         for (const auto& item : *reader_) {
             if (QString::fromStdString(item.path()) == sFileName) {
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
                 auto tp = std::chrono::time_point_cast<std::chrono::milliseconds>(item.creationTime());
                 time = QDateTime::fromStdTimePoint(tp);
 #else
@@ -1079,7 +1079,7 @@ QDateTime QArchive::getMTime()
     QDateTime time;
 #ifdef USE_BIT7Z
     if(currentIndex_ >= 0){
-#if QT_VERSION >= QT_VERSION_CHECK(6, 4, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
         auto tp = std::chrono::time_point_cast<std::chrono::milliseconds>(reader_->itemAt(currentIndex_).creationTime());
         time = QDateTime::fromStdTimePoint(tp);
 #else
