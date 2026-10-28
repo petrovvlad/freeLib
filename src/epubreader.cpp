@@ -4,8 +4,8 @@
 #include <QFileInfo>
 #include <QRegularExpression>
 
-EpubReader::EpubReader(const QByteArray data)
-    : data_(std::move(data))
+EpubReader::EpubReader(const QByteArray &data)
+    : data_(data)
 {
     arc_.setData(data_);
     openOpf();

@@ -24,7 +24,8 @@ public:
         bool isValid() const { return !title.isEmpty() && !authors.empty(); }
     };
 
-    explicit EpubReader(const QByteArray data);
+    explicit EpubReader(const QByteArray &data);
+
 
     bool readMetadata(BookMetadata &metadata);
     QImage readCover();
@@ -42,7 +43,6 @@ private:
     QString extractImageFromHtml(const QString &htmlPath, const QString &relPath) const;
 
     QByteArray data_;
-    mutable QuaZip zip_;
     mutable QArchive arc_;
     QDomDocument opf_;
     QString opfPath_;
