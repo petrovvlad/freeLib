@@ -99,7 +99,7 @@ set(PROJECT_SOURCES
 
 add_subdirectory(Help)
 
-if(7Z_FOUND)
+if(7Z_FOUND_)
     add_compile_definitions(USE_BIT7Z)
     set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
     # set(BIT7Z_USE_NATIVE_STRING ON CACHE BOOL "enable native string" FORCE)
@@ -207,7 +207,7 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Concurrent
     )
 
-if(7Z_FOUND)
+if(7Z_FOUND_)
     target_link_libraries(freelib PRIVATE bit7z)
 else()
     if(LibArchive_FOUND)

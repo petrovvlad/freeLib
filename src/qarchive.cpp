@@ -8,6 +8,7 @@
 #ifdef USE_QUAZIP
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazipfile.h"
+#include "quazip/quazip/quazipdir.h"
 #else
 #include <quazip/quazipfile.h>
 #include <quazip/quazipdir.h>
@@ -125,6 +126,7 @@ void QArchive::initLib()
 QString QArchive::find7zLibrary() const
 {
     QStringList candidates = {
+
         u"/usr/lib/p7zip/7z.so"_s,
         u"/usr/lib/x86_64-linux-gnu/p7zip/7z.so"_s,
         u"/usr/local/lib/7z.so"_s,
