@@ -32,9 +32,8 @@ else()
     find_package(Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 endif()
 
-find_package(LibLZMA QUIET)
-if(LibLZMA_FOUND)
-    message(STATUS "Found LibLZMA")
+if(7Z_FOUND)
+    message(STATUS "Found 7z")
 endif()
 
 find_package(TBB QUIET)
@@ -100,7 +99,7 @@ set(PROJECT_SOURCES
 
 add_subdirectory(Help)
 
-if(LibLZMA_FOUND)
+if(7Z_FOUND)
     add_compile_definitions(USE_BIT7Z)
     set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
     # set(BIT7Z_USE_NATIVE_STRING ON CACHE BOOL "enable native string" FORCE)
@@ -206,10 +205,9 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Xml
     Qt${QT_VERSION_MAJOR}::Concurrent
-    # Qt6::Core5Compat
     )
 
-if(LibLZMA_FOUND)
+if(7Z_FOUND)
     target_link_libraries(freelib PRIVATE bit7z)
 else()
     if(LibArchive_FOUND)
