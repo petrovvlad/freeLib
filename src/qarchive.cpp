@@ -803,7 +803,11 @@ void QArchive::writeFile(const QString &sSrcFile, const QString &sDstFile, int m
 #endif //USE_BIT7Z
 #ifdef USE_QUAZIP
     QFile srcFile(sSrcFile);
+#if QT_VERSION >= QT_VERSION_CHECK(6, 0, 0)
     if(srcFile.open(QIODeviceBase::ReadOnly)){
+#else
+    if(srcFile.open(QIODevice::ReadOnly)){
+#endif //QT_VERSION
         writeFile(sDstFile, srcFile.readAll(), method, level);
             }else{
         LogWarning << "Error open file:" << sSrcFile;
