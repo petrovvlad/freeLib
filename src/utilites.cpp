@@ -11,7 +11,6 @@
 #include <QSqlQuery>
 #include <QNetworkProxy>
 #include <QTranslator>
-#include <QTextCodec>
 #include <QLibraryInfo>
 #include <QProcess>
 #include <QSvgRenderer>
@@ -334,8 +333,6 @@ void setLocale(const QString &sLocale)
 
     setlocale(LC_ALL, (sLocale + QStringLiteral(".UTF-8")).toLatin1().data());
     QLocale::setDefault(QLocale(sLocale));
-
-    QTextCodec::setCodecForLocale(QTextCodec::codecForName("UTF-8"));
 
     if(translator)
         QApplication::removeTranslator(translator.get());
