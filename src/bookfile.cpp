@@ -81,8 +81,8 @@ void BookFile::open()
         }else{
             QArchive ar(sArchive);
             ar.setCurrentFile(sFile);
-            data_ = ar.readFile();
             timeBirth_ = ar.getMTime();
+            data_ = ar.readFile();
             bOpen_ = true;
         }
     }
@@ -95,6 +95,42 @@ void BookFile::open()
             {
                 file_.reset();
                 doc_.setContent(&file_);
+            }
+
+            if(sArchive_.endsWith(u"7z")){
+
+                QString sCoverArc = sLibPath_ % u"covers/" % sArchive_.left(sArchive_.length() - 2) % u"zip"_s;
+                if(QFile::exists(sCoverArc)){
+                    QArchive coverArc = QArchive(sCoverArc);
+                    QByteArray imageData = coverArc.readFile(sFile_);
+                    QImage img = QImage::fromData(imageData);
+                    insertImageInFb2(img, u"cover"_s);
+                    cover_ = std::move(img);
+                }
+
+                QString sImages = sLibPath_ % u"images/"_s % sArchive_.left(sArchive_.size()-2) % u"zip"_s;
+                if(QFile::exists(sImages)){
+                    QArchive imgArc = QArchive(sImages);
+                    auto fileList = imgArc.fileList(sFile_ + u'/');
+                    if(!fileList.empty()){
+                        QDomElement prevElement;
+                        for( const auto &sFile :fileList){
+                            QByteArray imageData = imgArc.readFile(sFile_ % u'/' % sFile);
+                            QImage img = QImage::fromData(imageData);
+
+                            QString imageId = sFile.right(sFile.size()-sFile_.size()-1);
+                            insertImageInFb2(img, imageId, &prevElement);
+
+                        }
+                    }
+                }
+
+                QDomNode firstChild = doc_.firstChild();
+                if (!firstChild.isNull() && firstChild.isProcessingInstruction() && firstChild.nodeName() == u"xml"_s) {
+                    QDomProcessingInstruction header = firstChild.toProcessingInstruction();
+                    header.setData(u"version=\"1.0\" encoding=\"UTF-8\""_s);
+                }
+                data_ = doc_.toByteArray();
             }
         }
     }else if(sFormat_ == u"epub")
@@ -112,8 +148,8 @@ void BookFile::open()
                     doc_.setContent(ba);
                 }else
                 if(sFile.endsWith(u".epub") && pEpub_ == nullptr){
-                    QByteArray ba = a.readFile(sFile);
-                    pEpub_ = std::make_unique<EpubReader>(ba);
+                    QByteArray data = a.readFile(sFile);
+                    pEpub_ = std::make_unique<EpubReader>(data);
                 }
             }
         }
@@ -131,20 +167,6 @@ QImage BookFile::cover()
 {
     if(!cover_.isNull())
         return cover_;
-    QImage img;
-    if(sArchive_.endsWith(u"7z"_s)){
-        QString sCoverArc = sLibPath_ % u"covers/" % sArchive_.left(sArchive_.length() - 2) % u"zip"_s;
-        if(QFile::exists(sCoverArc)){
-            QArchive coverArc = QArchive(sCoverArc);
-            QByteArray imageData = coverArc.readFile(sFile_);
-            img = QImage::fromData(imageData);
-            if(!img.isNull()){
-                cover_ = img;
-                return img;
-            }
-        }
-    }
-
 
     QString sImg = QStandardPaths::writableLocation(QStandardPaths::CacheLocation) % u"/covers/"_s % QString::number(idBook_) % u".jpg"_s;
     if(QFile::exists(sImg))
@@ -152,6 +174,7 @@ QImage BookFile::cover()
 
     if(!bOpen_)
         return createCover();
+    QImage img;
     if(doc_.isDocument())
         img = coverFb2();
     if(img.isNull()){
@@ -783,6 +806,105 @@ QByteArray BookFile::openArcInArc(const QString &sArchive, const QString &sFileN
     return data;
 }
 
+void BookFile::insertImageInFb2(const QImage &img, const QString &sId, QDomElement *prevElement)
+{
+    if(!img.isNull()){
+        QDomElement root = doc_.documentElement();
+
+        QByteArray imageData;
+        QBuffer buffer(&imageData);
+        buffer.open(QIODevice::WriteOnly);
+        img.save(&buffer, "PNG");
+        buffer.close();
+
+        QString base64 = imageData.toBase64();
+
+        QDomElement binary = doc_.createElement("binary");
+        binary.setAttribute("id", sId);
+        binary.setAttribute("content-type", "image/png");
+        if(prevElement == nullptr || prevElement->isNull()){
+            QDomElement body = root.firstChildElement("body");
+            root.insertAfter(binary, body);
+        }else
+            root.insertAfter(binary, *prevElement);
+        if(prevElement != nullptr)
+            *prevElement = binary;
+        QDomText textNode = doc_.createTextNode(base64);
+        binary.appendChild(textNode);
+    }
+}
+
+void BookFile::insertImagesInEpub()
+{
+    QArchive epubArc;
+    epubArc.setData(data_);
+    if(data_.startsWith("7z\xBC\xAF\x27\x1C"_ba)){
+
+        QString sTmpDir = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/freeLib/"_s;
+        QString sTempEpub = sTmpDir % u"epub/"_s % sFile_ % u"/"_s;
+        QDir().mkpath(sTempEpub);
+        QString sTmpArchive = sTmpDir + sFile_;
+        QArchive tmpArc(sTmpArchive, u"zip"_s, QArchive::Mode::create);
+        if(epubArc.setCurrentFile(u"FLibraryImageIndex.json"_s)){
+            QByteArray baJson = epubArc.readFile();
+            QJsonDocument doc = QJsonDocument::fromJson(baJson);
+            
+            epubArc.extractFolderTo(sFile_+u"/"_s, sTempEpub);
+            
+            QString sCoverArc = sLibPath_ % u"covers/" % sArchive_.left(sArchive_.length() - 2) % u"zip"_s;
+            QString sImages = sLibPath_ % u"images/"_s % sArchive_.left(sArchive_.size()-2) % u"zip"_s;
+            bool bImagesExist;
+            QArchive imgArc;
+            if(QFile::exists(sImages)){
+                imgArc.setPath(sImages);
+                bImagesExist = true;
+            }else
+                bImagesExist = false;
+            
+            QJsonArray jsonArray = doc.array();
+            for(const auto &json : std::as_const(jsonArray)){
+                QJsonObject obj = json.toObject();
+                
+                QString id = obj[u"id"].toString();
+                int num = obj["num"].toInt();
+                QByteArray imageData;
+                
+                if(num == -1){
+                    if( QFile::exists(sCoverArc)){
+                        QArchive coverArc = QArchive(sCoverArc);
+                        imageData = coverArc.readFile(sFile_);
+                    }
+                }else{
+                    if(bImagesExist)
+                        imageData = imgArc.readFile(sFile_ % u"/" % QString::number(num));
+                }
+                if(!imageData.isEmpty()){
+                    QImage img = QImage::fromData(imageData);
+                    QString sImg = sTempEpub + id;
+                    QDir().mkpath(QFileInfo(sImg).path());
+                    img.save(sImg);
+                }
+            }
+        }else{
+            epubArc.extractFolderTo(u"/"_s, sTempEpub);
+        }
+        QString sMimeTypeFile = sTempEpub + u"mimetype"_s;
+        tmpArc.writeFile(sMimeTypeFile, u"mimetype"_s, QArchive::Method::Copy);
+        QFile().remove(sMimeTypeFile);
+        tmpArc.writeDir(sTempEpub);
+        tmpArc.close();
+        QDir dir(sTempEpub);
+        dir.removeRecursively();
+
+        QFile file(sTmpArchive);
+        if(file.open(QIODevice::ReadOnly)){
+            data_ = file.readAll();
+            file.close();
+        }
+        file.remove();
+    }
+}
+
 void BookFile::cleanCoversCache()
 {
     qint64 nSizeDir = 0;
@@ -809,9 +931,15 @@ void BookFile::openEpub()
                 QByteArray data = file_.readAll();
                 pEpub_ = std::make_unique<EpubReader>(data);
             }
-        }else{
-            if(!data_.isEmpty())
+        }
+        else{
+            if(!data_.isEmpty()){
+#if defined(USE_LIBARCHIVE) || defined(USE_BIT7Z)
+                if(sArchive_.endsWith(u"7z"))
+                    insertImagesInEpub();
+#endif
                 pEpub_ = std::make_unique<EpubReader>(data_);
+            }
         }
     }
 }

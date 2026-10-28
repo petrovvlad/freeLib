@@ -32,7 +32,11 @@ else()
     find_package(Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 endif()
 
-find_package(ZLIB REQUIRED)
+find_package(LibLZMA QUIET)
+if(LibLZMA_FOUND)
+    message(STATUS "Found LibLZMA")
+endif()
+
 find_package(TBB QUIET)
 
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} ${CMAKE_CURRENT_SOURCE_DIR}/cmake)
@@ -90,12 +94,32 @@ set(PROJECT_SOURCES
         SmtpClient/src/mimeqpformatter.cpp      SmtpClient/src/mimeqpformatter.h
         SmtpClient/src/mimeqpencoder.cpp        SmtpClient/src/mimeqpencoder.h
         SmtpClient/src/mimecontentencoder.cpp   SmtpClient/src/mimecontentencoder.h
-
         qarchive.cpp     qarchive.h
         filelineedit.cpp    filelineedit.h
 )
 
 add_subdirectory(Help)
+
+if(LibLZMA_FOUND)
+    add_compile_definitions(USE_BIT7Z)
+    set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
+    # set(BIT7Z_USE_NATIVE_STRING ON CACHE BOOL "enable native string" FORCE)
+    set(BIT7Z_USE_STD_BYTE ON CACHE BOOL "enable std::byte" FORCE)
+    add_subdirectory(bit7z)
+else()
+    find_package(LibArchive QUIET)
+    if(LibArchive_FOUND)
+        message(STATUS "Found LibArchive")
+        add_compile_definitions(USE_LIBARCHIVE)
+    endif()
+    add_compile_definitions(USE_QUAZIP)
+    find_package(QuaZip-Qt${FREELIB_QT_MAJOR_VERSION} QUIET)
+    if(NOT QuaZip-Qt${FREELIB_QT_MAJOR_VERSION}_FOUND)
+        set(QUAZIP_INSTALL OFF)
+        set(BUILD_SHARED_LIBS OFF)
+        add_subdirectory(quazip)
+    endif()
+endif()
 
 find_package(Qt${FREELIB_QT_MAJOR_VERSION} COMPONENTS HttpServer QUIET)
 if(Qt${FREELIB_QT_MAJOR_VERSION}HttpServer_FOUND)
@@ -111,22 +135,6 @@ find_package(Qt${FREELIB_QT_MAJOR_VERSION}Keychain QUIET)
 if(Qt${FREELIB_QT_MAJOR_VERSION}Keychain_FOUND)
     message(STATUS "Found QtKeychain")
     add_compile_definitions(USE_QTKEYCHAIN)
-endif()
-
-find_package(QuaZip-Qt${FREELIB_QT_MAJOR_VERSION} QUIET)
-if(NOT QuaZip-Qt${FREELIB_QT_MAJOR_VERSION}_FOUND)
-    set(QUAZIP_INSTALL OFF)
-    set(BUILD_SHARED_LIBS OFF)
-    add_subdirectory(quazip)
-endif()
-
-find_package(LibArchive QUIET)
-if(LibArchive_FOUND)
-    message(STATUS "Found LibArchive")
-    add_compile_definitions(USE_LIBARCHIVE)
-    set(PROJECT_SOURCES
-        ${PROJECT_SOURCES}
-    )
 endif()
 
 if(DJVULIBRE_FOUND)
@@ -198,7 +206,17 @@ target_link_libraries(freelib PRIVATE
     Qt${QT_VERSION_MAJOR}::Sql
     Qt${QT_VERSION_MAJOR}::Xml
     Qt${QT_VERSION_MAJOR}::Concurrent
-    QuaZip::QuaZip)
+    # Qt6::Core5Compat
+    )
+
+if(LibLZMA_FOUND)
+    target_link_libraries(freelib PRIVATE bit7z)
+else()
+    if(LibArchive_FOUND)
+        target_link_libraries(freelib PRIVATE LibArchive::LibArchive)
+    endif()
+    target_link_libraries(freelib PRIVATE QuaZip::QuaZip)
+endif()
 
 if(Qt${FREELIB_QT_MAJOR_VERSION}HttpServer_FOUND)
     target_link_libraries(freelib PRIVATE Qt${QT_VERSION_MAJOR}::HttpServer)
@@ -224,9 +242,9 @@ if(TBB_FOUND)
     target_link_libraries(freelib PRIVATE TBB::tbb)
 endif()
 
-if(LibArchive_FOUND)
-    target_link_libraries(freelib PRIVATE LibArchive::LibArchive)
-endif()
+# if(LibArchive_FOUND)
+#     target_link_libraries(freelib PRIVATE LibArchive::LibArchive)
+# endif()
 
 target_precompile_headers(freelib
   PRIVATE

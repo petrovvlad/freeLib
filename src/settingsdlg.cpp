@@ -900,15 +900,9 @@ void SettingsDlg::onBtnSaveExportClicked()
     exportOptions.sName = ui->ExportName->currentText();
     exportOptions.Save(settings, false);
     settings->sync();
-    QArchive arc(file_name, QArchive::create);
 
-    QFile file(settings->fileName());
-    if(!file.open(QIODevice::ReadOnly))
-        LogWarning << "Error open: " << settings->fileName();
-    else{
-        arc.writeFile(u"export.ini"_s, file);
-        file.close();
-    }
+    QArchive arc(file_name, QArchive::create);
+    arc.writeFile(settings->fileName(), u"export.ini"_s);
 
     QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
     for(const QString &font: fonts)
@@ -937,15 +931,7 @@ void SettingsDlg::onBtnSaveExportClicked()
             }
         }
         if(!sFontFile.isEmpty())
-        {
-            file.setFileName(sFontFile);
-            if(!file.open(QIODevice::ReadOnly))
-                LogWarning << "Error open: " << sFontFile;
-            else{
-                arc.writeFile(u"Fonts/"_s + QFileInfo(sFontFile).fileName(), file);
-                file.close();
-            }
-        }
+            arc.writeFile(sFontFile, u"Fonts/"_s + QFileInfo(sFontFile).fileName());
     }
 }
 

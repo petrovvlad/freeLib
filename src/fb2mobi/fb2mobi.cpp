@@ -1499,13 +1499,7 @@ void zipDir(QArchive &arc, const QString &sBasePath, const QString &sRelativePat
         if (!fileInfo.isFile())
             continue;
         QString sFile = fullPath.mid(basePathLength);
-        QFile inFile(fullPath);
-        if (!inFile.open(QIODevice::ReadOnly)) {
-            LogWarning << "ZipDir: Failed to open input file:" << inFile.errorString();
-            return;
-        }
-        arc.writeFile(sFile, inFile);
-        inFile.close();
+        arc.writeFile(fullPath, sFile);
     }
 }
 
@@ -1653,7 +1647,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         if(fb2file.suffix().toLower() == u"epub" &&
             (outputFormat_ == mobi || outputFormat_ == azw3))
         {
-            QString sKindlegen = QApplication::applicationDirPath() + QStringLiteral("/kindlegen");
+            QString sKindlegen = QApplication::applicationDirPath() + u"/kindlegen"_s;
             if(!QFile::exists(sKindlegen))
                 sKindlegen = u"kindlegen"_s;
             QProcess::execute(sKindlegen, {sTmpDir_ % u"/"_s % fb2file.fileName()});
@@ -2032,12 +2026,7 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         out_file = sTmpDir_ + u"/book.epub"_s;
         QArchive arc(QArchive::Mode::create);
         arc.setPath(out_file);
-        QFile file(mime_file);
-        if(file.open(QIODevice::ReadOnly)){
-            arc.writeFile(u"mimetype"_s, file, 0, Z_NO_COMPRESSION);
-            file.close();
-        }else
-            LogWarning << "Error open file:" << mime_file;
+        arc.writeFile(mime_file, u"mimetype"_s, QArchive::Method::Copy, 0);
         zipDir(arc, sTmpDir_, u"/OEBPS"_s);
         zipDir(arc, sTmpDir_, u"/META-INF"_s);
     }

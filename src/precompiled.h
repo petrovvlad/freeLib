@@ -8,6 +8,7 @@
 #include <vector>
 
 
+#ifdef USE_QUAZIP
 #ifdef QUAZIP_STATIC
 #include "quazip/quazip/quazip.h"
 #include "quazip/quazip/quazipfile.h"
@@ -15,6 +16,7 @@
 #include <quazip/quazip.h>
 #include <quazip/quazipfile.h>
 #endif
+#endif //USE_QUAZIP
 
 #ifdef USE_LIBARCHIVE
 #include <archive.h>
@@ -89,7 +91,6 @@
 #include <QSvgRenderer>
 #include <QSystemTrayIcon>
 #include <QTextBrowser>
-#include <QTextCodec>
 #include <QTextStream>
 #include <QThread>
 #include <QTime>
