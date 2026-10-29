@@ -98,14 +98,18 @@ void BookFile::open()
             }
 
             if(sArchive_.endsWith(u"7z")){
-
                 QString sCoverArc = sLibPath_ % u"covers/" % sArchive_.left(sArchive_.length() - 2) % u"zip"_s;
                 if(QFile::exists(sCoverArc)){
                     QArchive coverArc = QArchive(sCoverArc);
-                    QByteArray imageData = coverArc.readFile(sFile_);
-                    QImage img = QImage::fromData(imageData);
-                    insertImageInFb2(img, u"cover"_s);
-                    cover_ = std::move(img);
+                    if(coverArc.setCurrentFile(sFile_)){
+                        QByteArray imageData = coverArc.readFile();
+
+                        QImage img = QImage::fromData(imageData);
+                        if(!img.isNull()){
+                            insertImageInFb2(img, u"cover"_s);
+                            cover_ = std::move(img);
+                        }
+                    }
                 }
 
                 QString sImages = sLibPath_ % u"images/"_s % sArchive_.left(sArchive_.size()-2) % u"zip"_s;
@@ -117,10 +121,10 @@ void BookFile::open()
                         for( const auto &sFile :fileList){
                             QByteArray imageData = imgArc.readFile(sFile_ % u'/' % sFile);
                             QImage img = QImage::fromData(imageData);
-
-                            QString imageId = sFile.right(sFile.size()-sFile_.size()-1);
-                            insertImageInFb2(img, imageId, &prevElement);
-
+                            if(!img.isNull()){
+                                QString imageId = sFile.right(sFile.size()-sFile_.size()-1);
+                                insertImageInFb2(img, imageId, &prevElement);
+                            }
                         }
                     }
                 }
