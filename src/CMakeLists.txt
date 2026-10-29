@@ -32,8 +32,9 @@ else()
     find_package(Qt5 COMPONENTS ${QT_COMPONENTS} REQUIRED)
 endif()
 
-if(7Z_FOUND)
-    message(STATUS "Found 7z")
+find_package(7z QUIET)
+if(NOT 7Z_FOUND)
+    find_program(7Z_FOUND NAMES 7z)
 endif()
 
 find_package(TBB QUIET)
@@ -100,6 +101,7 @@ set(PROJECT_SOURCES
 add_subdirectory(Help)
 
 if(7Z_FOUND)
+    message(STATUS "Found 7z")
     add_compile_definitions(USE_BIT7Z)
     set(BIT7Z_AUTO_FORMAT ON CACHE BOOL "enable auto format support" FORCE)
     # set(BIT7Z_USE_NATIVE_STRING ON CACHE BOOL "enable native string" FORCE)
