@@ -1435,7 +1435,7 @@ void opds_server::stopServer()
         const auto listTcpServsrs = httpServer_.servers();
         for(auto &server: listTcpServsrs)
             server->close();
-        pTcpServer_.release();
+        pTcpServer_ = nullptr;
     }
 }
 
