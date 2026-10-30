@@ -165,13 +165,13 @@ private slots:
     void onUpdateAnnotationFont(const QFont &font);
 
     void changingTrayIcon(int index, bool bColor);
+    void onMinimizeWindow();
 #ifdef USE_KStatusNotifier
     void hideEvent(QHideEvent *ev) override;
     void showEvent(QShowEvent *ev) override;
     void handleTrayActivation(bool active, const QPoint &pos);
 #else
     void handleTrayActivation(QSystemTrayIcon::ActivationReason reason);
-    void MinimizeWindow();
     void hide();
 public slots:
     void show();

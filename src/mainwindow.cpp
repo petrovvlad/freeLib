@@ -330,9 +330,7 @@ MainWindow::MainWindow(QWidget *parent) :
 #ifdef Q_OS_OSX
     connect(MyPrivate::instance(), SIGNAL(dockClicked()), SLOT(dockClicked()));
 #endif
-#ifndef USE_KStatusNotifier
-    connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::MinimizeWindow);
-#endif
+    connect(ui->actionMinimize_window, &QAction::triggered, this, &MainWindow::onMinimizeWindow);
 
     addShortcutToToolTip(ui->btnCheck, ui->actionCheck_uncheck);
     addShortcutToToolTip(ui->btnLibrary, ui->actionAddLibrary);
@@ -904,7 +902,7 @@ void MainWindow::Settings()
                     pOpds_->startServer();
                 else{
                     pOpds_->stopServer();
-                    pOpds_.release();
+                    pOpds_ = nullptr;
                 }
             }
         }else{
@@ -3049,6 +3047,14 @@ void MainWindow::changingTrayIcon(int index, bool bColor)
     }
 }
 
+void MainWindow::onMinimizeWindow()
+{
+    if(g::options.nIconTray == 0)
+        this->setWindowState(this->windowState() | Qt::WindowMinimized);
+    else
+        this->hide();
+}
+
 #ifdef USE_KStatusNotifier
 void MainWindow::hideEvent(QHideEvent *ev)
 {
@@ -3136,11 +3142,6 @@ void MainWindow::handleTrayActivation(QSystemTrayIcon::ActivationReason reason)
         }
     #endif
 #endif
-}
-
-void MainWindow::MinimizeWindow()
-{
-    this->setWindowState(this->windowState() | Qt::WindowMinimized);
 }
 
 void MainWindow::hide()
