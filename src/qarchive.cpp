@@ -21,7 +21,6 @@
 #include <bit7z/bitfilecompressor.hpp>
 #endif //USE_BIT7Z
 
-
 #include "utilites.h"
 
 #ifdef USE_BIT7Z
@@ -123,10 +122,9 @@ void QArchive::initLib()
     }
 }
 
-QString QArchive::find7zLibrary() const
+QString QArchive::find7zLibrary()
 {
     QStringList candidates = {
-
         u"/usr/lib/p7zip/7z.so"_s,
         u"/usr/lib/x86_64-linux-gnu/p7zip/7z.so"_s,
         u"/usr/local/lib/7z.so"_s,
@@ -139,7 +137,6 @@ QString QArchive::find7zLibrary() const
     }
     return u"7z.so"_s;
 }
-
 #endif //USE_BIT7Z
 
 QArchive::~QArchive()
@@ -167,7 +164,7 @@ void QArchive::setPath(const QString &sArchivePath)
     data_.clear();
 }
 
-bool QArchive::setCurrentFile(const QString &sFileName)
+bool QArchive::setCurrentFile(const QString &sFileName, Qt::CaseSensitivity cs)
 {
     if(!open())
         return false;
@@ -175,8 +172,10 @@ bool QArchive::setCurrentFile(const QString &sFileName)
 #ifdef USE_BIT7Z
     if (!reader_) return false;
     currentIndex_ = -1;
+    QString sSearchName = (cs == Qt::CaseSensitive) ? sFileName :sFileName.toCaseFolded();
     for (const auto& item : *reader_) {
-        if (QString::fromStdString(item.path()) == sFileName) {
+        QString sItemFileName  = (cs == Qt::CaseSensitive) ?QString::fromStdString(item.path()) : QString::fromStdString(item.path()).toCaseFolded();
+        if (sSearchName == sItemFileName) {
             currentIndex_ = item.index();
             return true;
         }
@@ -186,17 +185,17 @@ bool QArchive::setCurrentFile(const QString &sFileName)
 
 #ifdef USE_LIBARCHIVE
     if( archive_ ){
-        QString sFileNameLow = sFileName.toLower();
+        QString sSearchName = (cs==Qt::CaseSensitive) ?sFileName :sFileName.toCaseFolded();
 
         entry_ = archive_entry_new();
         bool bFound  = false;
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
             const char *path = archive_entry_pathname_utf8(entry_);
             if (path) {
-                QString filePath = QString::fromUtf8(path).toLower();
-                if(filePath == sFileNameLow){
-                    qDebug() << "format" << archive_format_name(archive_);
-
+                QString filePath = QString::fromUtf8(path);
+                if(cs == Qt::CaseInsensitive)
+                    filePath = filePath.toCaseFolded();
+                if(filePath == sSearchName){
                     bFound = true;
                     break;
                 }
@@ -215,7 +214,8 @@ bool QArchive::setCurrentFile(const QString &sFileName)
 #endif //USE_LIBARCHIVE
 
 #ifdef USE_QUAZIP
-        return zip_.setCurrentFile(sFileName, QuaZip::csInsensitive);
+    QuaZip::CaseSensitivity qzcs = (cs==Qt::CaseSensitive) ?QuaZip::csSensitive :QuaZip::csInsensitive;
+    return zip_.setCurrentFile(sFileName, qzcs);
 #endif //USE_QUAZIP
 }
 
@@ -228,7 +228,7 @@ bool QArchive::open()
         try {
             if (!sArchivePath_.isEmpty()) {
                 reader_ = std::make_unique<bit7z::BitArchiveReader>(*b7zLib_, sArchivePath_.toStdString());
-            } else if (!data_.empty()) {
+            } else{
                 reader_ = std::make_unique<bit7z::BitArchiveReader>(*b7zLib_, data_, bit7z::BitFormat::Auto);
             }
         } catch (const bit7z::BitException& ex) {
@@ -316,7 +316,7 @@ void QArchive::close()
 {
 #ifdef USE_BIT7Z
     if(reader_){
-        reader_ = nullptr/*release()*/;
+        reader_ = nullptr;
     }
 #endif //USE_BIT7Z
 #ifdef USE_LIBARCHIVE
@@ -493,7 +493,7 @@ std::vector<ArchiveFileInfo> QArchive::fileInfoList()
 
 }
 
-QByteArray QArchive::readFile(const QString &sFileName)
+QByteArray QArchive::readFile(const QString &sFileName, Qt::CaseSensitivity cs)
 {
     QByteArray result;
     if(!open())
@@ -502,8 +502,10 @@ QByteArray QArchive::readFile(const QString &sFileName)
     if (!reader_) return result;
 
     try {
+        QString sSearchName = (cs == Qt::CaseSensitive) ? sFileName :sFileName.toCaseFolded();
         for (const auto& item : *reader_) {
-            if (QString::fromStdString(item.path()) == sFileName) {
+            QString sItemFileName  = (cs == Qt::CaseSensitive) ?QString::fromStdString(item.path()) : QString::fromStdString(item.path()).toCaseFolded();
+            if (sSearchName == sItemFileName) {
                 auto size = item.size();
                 result.resize(size);
                 reader_->extractTo(reinterpret_cast< bit7z::byte_t *>(result.data()), size, item.index());
@@ -519,11 +521,13 @@ QByteArray QArchive::readFile(const QString &sFileName)
     if(archive_){
         entry_ = archive_entry_new();
         bool found = false;
-        QString sFileNameLow = sFileName.toLower();
+        QString sSearchName = (cs==Qt::CaseSensitive) ?sFileName :sFileName.toCaseFolded();
 
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
-            QString currentPath = QString::fromUtf8(archive_entry_pathname_utf8(entry_)).toLower();
-            if (currentPath == sFileNameLow) {
+            QString currentPath = QString::fromUtf8(archive_entry_pathname_utf8(entry_));
+            if(cs == Qt::CaseInsensitive)
+                currentPath = currentPath.toCaseFolded();
+            if (currentPath == sSearchName) {
                 found = true;
 
                 auto size = archive_entry_size(entry_);
@@ -544,7 +548,7 @@ QByteArray QArchive::readFile(const QString &sFileName)
         }
 
         if (!found) {
-            if(!sFileNameLow.endsWith(u".fbd"))
+            if(!sFileName.toCaseFolded().endsWith(u".fbd"))
                 LogWarning << "File not found in archive: " << sFileName;
         }
 
@@ -554,10 +558,11 @@ QByteArray QArchive::readFile(const QString &sFileName)
 
 #ifdef USE_QUAZIP
     {
-        if(!zip_.setCurrentFile(sFileName, QuaZip::csInsensitive))
+        QuaZip::CaseSensitivity qzcs = (cs==Qt::CaseSensitive) ?QuaZip::csSensitive :QuaZip::csInsensitive;
+        if(!zip_.setCurrentFile(sFileName, qzcs))
         {
             zip_.setFileNameCodec("IBM 866");
-            if(!zip_.setCurrentFile(sFileName, QuaZip::csInsensitive))
+            if(!zip_.setCurrentFile(sFileName, qzcs))
             {
                 LogWarning << "Failed to set file:" << sFileName;
                 return result;
@@ -576,10 +581,10 @@ QByteArray QArchive::readFile(const QString &sFileName)
     return result;
 }
 
-QByteArray QArchive::readFile(const QString &sFileName, size_t size)
+QByteArray QArchive::readFile(const QString &sFileName, size_t size, Qt::CaseSensitivity cs)
 { 
 #ifdef USE_BIT7Z
-    return readFile(sFileName).left(size);
+    return readFile(sFileName, cs).left(size);
 #endif //USE_BIT7Z
 
     QByteArray result;
@@ -589,11 +594,13 @@ QByteArray QArchive::readFile(const QString &sFileName, size_t size)
     if(archive_){
         entry_ = archive_entry_new();
         bool found = false;
-        QString sFileNameLow = sFileName.toLower();
+        QString sSearchName = (cs==Qt::CaseSensitive) ?sFileName :sFileName.toCaseFolded();
 
         while (archive_read_next_header2(archive_, entry_) == ARCHIVE_OK) {
-            QString currentPath = QString::fromUtf8(archive_entry_pathname_utf8(entry_)).toLower();
-            if (currentPath == sFileNameLow) {
+            QString currentPath = QString::fromUtf8(archive_entry_pathname_utf8(entry_)).toCaseFolded();
+            if(cs == Qt::CaseInsensitive)
+                currentPath = currentPath.toCaseFolded();
+            if (currentPath == sSearchName) {
                 found = true;
 
                 size = std::min(static_cast<size_t>(archive_entry_size(entry_)), size);
@@ -614,7 +621,7 @@ QByteArray QArchive::readFile(const QString &sFileName, size_t size)
         }
 
         if (!found) {
-            if(!sFileNameLow.endsWith(u".fbd"))
+            if(!sFileName.toCaseFolded().endsWith(u".fbd"))
                 LogWarning << "File not found in archive: " << sFileName;
         }
 
@@ -624,7 +631,8 @@ QByteArray QArchive::readFile(const QString &sFileName, size_t size)
 
 #ifdef USE_QUAZIP
     {
-        zip_.setCurrentFile(sFileName, QuaZip::csInsensitive);
+        QuaZip::CaseSensitivity qzcs = (cs==Qt::CaseSensitive) ?QuaZip::csSensitive :QuaZip::csInsensitive;
+        zip_.setCurrentFile(sFileName, qzcs);
         QuaZipFile zipFile(&zip_);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
         {
@@ -793,7 +801,7 @@ void QArchive::writeFile(const QString &sSrcFile, const QString &sDstFile, int m
 {
 #ifdef USE_BIT7Z
     try {
-        bit7z::BitArchiveWriter writer(*b7zLib_,sArchivePath_.toStdString(), bit7z::BitFormat::Zip);
+        bit7z::BitArchiveWriter writer(*b7zLib_, sArchivePath_.toStdString(), bit7z::BitFormat::Zip);
         writer.setUpdateMode(bit7z::UpdateMode::Update);
         writer.setCompressionMethod(static_cast<bit7z::BitCompressionMethod> (method));
         writer.setCompressionLevel(static_cast<bit7z::BitCompressionLevel> (level));
@@ -978,7 +986,8 @@ bool QArchive::extractFolderTo(const QString &sSrcDir, const QString &sDstDir)
             reader_->extractRootFolderContentTo(sDstDir.toStdString());
         else
             reader_->extractFolderTo(sDstDir.toStdString(), sSrcDir.toStdString());
-    } catch (...) {
+    } catch (const bit7z::BitException& ex) {
+        LogWarning << "bit7z error:" << ex.what();
         return false;
     }
     return true;
@@ -1023,15 +1032,17 @@ bool QArchive::extractFolderTo(const QString &sSrcDir, const QString &sDstDir)
     return false;
 }
 
-QDateTime QArchive::getMTime(const QString &sFileName)
+QDateTime QArchive::getMTime(const QString &sFileName, Qt::CaseSensitivity cs)
 {
     QDateTime time;
     if(!open())
         return time;
 #ifdef USE_BIT7Z
     if(reader_){
+        QString sSearchName = (cs == Qt::CaseSensitive) ? sFileName :sFileName.toCaseFolded();
         for (const auto& item : *reader_) {
-            if (QString::fromStdString(item.path()) == sFileName) {
+            QString sItemFileName  = (cs == Qt::CaseSensitive) ?QString::fromStdString(item.path()) : QString::fromStdString(item.path()).toCaseFolded();
+            if (sItemFileName == sSearchName) {
 #if QT_VERSION >= QT_VERSION_CHECK(6, 6, 0)
                 auto tp = std::chrono::time_point_cast<std::chrono::milliseconds>(item.creationTime());
                 time = QDateTime::fromStdTimePoint(tp);
@@ -1066,7 +1077,8 @@ QDateTime QArchive::getMTime(const QString &sFileName)
 #endif //USE_LIBARCHIVE
 #ifdef USE_QUAZIP
     {
-        zip_.setCurrentFile(sFileName, QuaZip::csInsensitive);
+        QuaZip::CaseSensitivity qzcs = (cs==Qt::CaseSensitive) ?QuaZip::csSensitive :QuaZip::csInsensitive;
+        zip_.setCurrentFile(sFileName, qzcs);
         QuaZipFile zipFile(&zip_);
         if(!zipFile.open(QIODevice::ReadOnly)) [[unlikely]]
             LogWarning << "Error open file:" << sFileName;

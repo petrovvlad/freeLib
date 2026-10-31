@@ -11,10 +11,8 @@
 #endif //USE_QUAZIP
 
 #ifdef USE_BIT7Z
-// #include "bit7z/include/bit7z/bit7z.hpp"
 #include "bit7z/bit7zlibrary.hpp"
 #include "bit7z/bitarchivereader.hpp"
-// #include "bit7z/include/bit7z/bitarchivewriter.hpp"
 #endif //USE_BIT7Z
 
 
@@ -59,14 +57,14 @@ public:
 
     void setData(const QByteArray &data);
     void setPath(const QString &sArchivePath);
-    bool setCurrentFile(const QString &sFileName);
+    bool setCurrentFile(const QString &sFileName, Qt::CaseSensitivity cs = Qt::CaseSensitive);
     void close();
 
     std::vector<QString> fileList();
     std::vector<QString> fileList(const QString &sDir);
     std::vector<ArchiveFileInfo> fileInfoList();
-    QByteArray readFile(const QString &sFileName);
-    QByteArray readFile(const QString &sFileName, size_t size);
+    QByteArray readFile(const QString &sFileName, Qt::CaseSensitivity cs = Qt::CaseSensitive);
+    QByteArray readFile(const QString &sFileName, size_t size, Qt::CaseSensitivity cs = Qt::CaseSensitive);
     QByteArray readFile(size_t size);
     QByteArray readFile();
 
@@ -77,7 +75,7 @@ public:
 
     bool extractFileTo(const QString &sFileName, const QString &sDst);
     bool extractFolderTo(const QString &sSrcDir, const QString &sDstDir);
-    QDateTime getMTime(const QString &sFileName);
+    QDateTime getMTime(const QString &sFileName, Qt::CaseSensitivity cs = Qt::CaseSensitive);
     QDateTime getMTime();
     QString getArcName();
     uint32_t filesCount();
@@ -107,7 +105,7 @@ private:
 
 #ifdef USE_BIT7Z
     void initLib();
-    QString find7zLibrary() const;
+    static QString find7zLibrary();
 
     static std::unique_ptr<bit7z::Bit7zLibrary> b7zLib_;
     std::unique_ptr<bit7z::BitArchiveReader> reader_;

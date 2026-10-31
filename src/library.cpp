@@ -621,7 +621,7 @@ QString SLib::nameFromInpx(const QString &sInpx)
     QString sName;
     if(!sInpx.isEmpty()){
         QArchive arc(sInpx);
-        QByteArray data = arc.readFile(u"COLLECTION.INFO"_s);
+        QByteArray data = arc.readFile(u"COLLECTION.INFO"_s, Qt::CaseInsensitive);
         uint nMarkerSize = 0;
         if(data.size()>4){
             quint32 marker = *((uint*)(data.data())) & 0x00ffffff;
