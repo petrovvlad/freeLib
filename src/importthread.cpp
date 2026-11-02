@@ -803,7 +803,7 @@ void ImportThread::importBooksFromInpx()
 
 
     QArchive archiveFile;
-    QArchive fileInpx(sInpxFile_);
+    QArchive fileInpx(sInpxFile_, u"zip"_s, QArchive::Mode::read);
 
     if(fileInpx.setCurrentFile(u"version.info"_s))
     {
@@ -1142,6 +1142,7 @@ void ImportThread::importBooksFromInpx()
                             archiveFile.setPath(sArchive);
                         }
                         buffer.setData(archiveFile.readFile(sFile, 16*1024));
+
 
                         QDomDocument doc;
                         doc.setContent(buffer.data());

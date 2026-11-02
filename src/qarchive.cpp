@@ -73,8 +73,8 @@ QArchive::QArchive(const QString &sArchivePath, const QString &sFormat, Mode mod
 #endif //USE_LIBARCHIVE
 {
     sArchivePath_ = sArchivePath;
-#ifdef USE_BIT7Z
     sFormat_ = sFormat;
+#ifdef USE_BIT7Z
     initLib();
 #endif //USE_BIT7Z
 }
@@ -241,7 +241,7 @@ bool QArchive::open()
 
     bool bSuccess = false;
 #ifdef USE_LIBARCHIVE
-    bool bZip = sArchivePath_.endsWith(u".zip") || data_.startsWith("PK\x03\x04");
+    bool bZip = sArchivePath_.endsWith(u".zip") || sFormat_ == u"zip"_s || data_.startsWith("PK\x03\x04");
     if(!bZip && mode_ != Mode::create){
         if(archive_)
             return true;

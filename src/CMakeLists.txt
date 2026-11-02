@@ -34,7 +34,6 @@ endif()
 
 find_package(7z QUIET)
 if(NOT 7Z_FOUND)
-    find_library(7Z_LIBRARY NAMES 7z)
     find_library(7Z_LIBRARY
         NAMES 7z 7z.so
         PATHS /usr/lib/7zip /usr/lib/p7zip /usr/local/lib
