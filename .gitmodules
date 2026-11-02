@@ -1,6 +1,9 @@
 [submodule "freeLib/src/quazip"]
 	path = src/quazip
 	url = https://github.com/stachenov/quazip.git
+[submodule "freeLib/src/bit7z"]
+	path = src/bit7z
+	url = https://github.com/rikyoz/bit7z.git
 [submodule "freeLib/src/SmtpClient"]
 	path = src/SmtpClient
 	url = https://github.com/petrovvlad/SmtpClient-for-Qt.git

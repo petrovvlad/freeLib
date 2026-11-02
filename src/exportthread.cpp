@@ -128,11 +128,11 @@ bool ExportThread::convert(const std::vector<QBuffer *> &vOutBuff, uint idLib, c
     SLib& lib = g::libs[idLib];
     Q_CHECK_PTR(pExportOptions_);
     QString tool_path,tool_arg;
-    for(const auto &iTool :g::options.tools){
-        if(iTool.first == pExportOptions_->sCurrentTool)
+    for(const auto &[sToolName, tool] :g::options.tools){
+        if(sToolName == pExportOptions_->sCurrentTool)
         {
-            tool_path = iTool.second.sPath;
-            tool_arg = iTool.second.sArgs;
+            tool_path = tool.sPath;
+            tool_arg = tool.sArgs;
             break;
         }
     }
@@ -307,27 +307,21 @@ void ExportThread::export_books()
             if(!book.sArchive.isEmpty())
             {
                 archive = book.sArchive;
-                archive.replace(QStringLiteral(".inp"), QStringLiteral(".zip"));
+                archive.replace(u".inp"_s, u".zip"_s);
             }
-            file = book.sName % QStringLiteral(".") % book.sFormat;
+            file = book.sName % u"."_s % book.sFormat;
             LibPath = RelativeToAbsolutePath(LibPath);
             archive = archive.replace('\\', '/');
             file = file.replace('\\', '/');
             if(archive.isEmpty())
             {
-                QDir().mkpath(QFileInfo(dir.absolutePath() % QStringLiteral("/") % file).absolutePath());
-                QFile().copy(LibPath % QStringLiteral("/") % file, dir.absolutePath() % QStringLiteral("/") + file);
+                QDir().mkpath(QFileInfo(dir.absolutePath() % u"/"_s % file).absolutePath());
+                QFile().copy(LibPath % u"/"_s % file, dir.absolutePath() % u"/"_s + file);
                 continue;
             }
-            QuaZip uz(LibPath % QStringLiteral("/") % archive);
-            if(!uz.open(QuaZip::mdUnzip)) [[unlikely]]
+            QArchive arc(LibPath % u"/"_s % archive);
+            if(arc.filesCount() > 1)
             {
-                LogWarning << "Error open archive:" << archive;
-                continue;
-            }
-            if(uz.getEntriesCount() > 1)
-            {
-                uz.close();
                 QString out_dir = dir.absolutePath() % u"/"_s % archive.left( archive.length() - 4 );
                 QDir().mkpath(out_dir);
                 BookFile fileBook(g::idCurrentLib, idBook);
@@ -556,8 +550,7 @@ void ExportThread::export_lib()
     }
 
     uint nCount = 0;
-    for(const auto &iBook :lib.books){
-        const auto &book = iBook.second;
+    for(const auto &book :lib.books | std::views::values){
         QString sBookTags;
         for(auto idTag: book.idTags)
             sBookTags += tagsName[idTag] + ':';
@@ -603,7 +596,7 @@ void ExportThread::export_lib()
                         (
                             book.sFormat,                         //EXT
                             QString::number(book.nSize),          //SIZE
-                            lib.vLaguages[book.idLanguage],       //LANG
+                            lib.vLanguages[book.idLanguage],       //LANG
                             QString::number(book.nStars),         //STARS
                             book.date.toString(u"yyyy-MM-dd"_s),  //DATE
                             book.bDeleted ?"1" :"",               //DEL
@@ -626,34 +619,12 @@ void ExportThread::export_lib()
     QFile file;
     QArchive arc(QArchive::Mode::create);
     arc.setPath(sExportDir_ % u"/"_s % BuildFileName(lib.name) % u".inpx"_s);
-    file.setFileName(sInpxFile);
-    if(file.open(QIODevice::ReadOnly)){
-        arc.writeFile(u"freeLib.inp"_s, file, Z_BZIP2ED, Z_BEST_COMPRESSION);
-        file.close();
-    }else
-        LogWarning << "Error open file:" << sInpxFile;
+    arc.writeFile(sInpxFile, u"freeLib.inp"_s, QArchive::Method::BZip2, 9);
+    arc.writeFile(structure_file, u"structure.info"_s);
 
-    file.setFileName(structure_file);
-    if(file.open(QIODevice::ReadOnly)){
-        arc.writeFile(u"structure.info"_s, file);
-        file.close();
-    }else
-        LogWarning << "Error open file:" << structure_file;
+    arc.writeFile(version_file, u"version.info"_s);
 
-    file.setFileName(version_file);
-    if(file.open(QIODevice::ReadOnly)){
-        arc.writeFile(u"version.info"_s, file);
-        file.close();
-    }else
-        LogWarning << "Error open file:" << version_file;
-
-    file.setFileName(collection_file);
-    if(file.open(QIODevice::ReadOnly)){
-        arc.writeFile(u"collection.info"_s, file);
-        file.close();
-    }else
-        LogWarning << "Error open file:" << collection_file;
-
+    arc.writeFile(collection_file, u"collection.info"_s);
     emit Progress(100, lib.books.size());
 }
 

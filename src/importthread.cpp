@@ -322,8 +322,8 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
                 hashAuthors_[author] = idAuthor;
             }
         }else{
-            for(const auto &iAuthor :lib.authors){
-                hashAuthors_[iAuthor.second] = iAuthor.first;
+            for(const auto &[idAuthor, author] :lib.authors){
+                hashAuthors_[author] = idAuthor;
             }
         }
     }
@@ -365,7 +365,7 @@ void ImportThread::init(uint id, SLib &lib, uchar nUpdateType)
             for (const auto& pair : tempAuthors)
                 stTagetAuthors_.insert(pair.second);
         }else{
-            for(auto &[idAuthor, author] :lib.authors){
+            for(const auto &[idAuthor, author] :lib.authors){
                 if(!author.idTags.empty())
                     stTagetAuthors_.insert(std::move(author));
             }
@@ -696,6 +696,7 @@ void ImportThread::importBooksFromArchive(const QString &sPath, const QString &s
     }
 }
 
+
 void ImportThread::process()
 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
@@ -714,16 +715,7 @@ void ImportThread::process()
 
     query_ = QSqlQuery(dbase);
     query_.setForwardOnly(true);
-    std::unordered_map<QString, uint> mTags;
-    mTags.clear();
-    query_.exec(u"PRAGMA cache_size = 2000"_s);
-    query_.exec(u"SELECT id,name FROM tag"_s);
-    while(query_.next())
-    {
-        uint idTag = query_.value(0).toUInt();
-        QString sTagName = query_.value(1).toString().trimmed();
-        mTags[sTagName] = idTag;
-    }
+    query_.exec(u"PRAGMA cache_size = 4000"_s);
 
     for(auto &[idGenre, genre] :g::genres){
         for(auto &sKey : genre.listKeys)
@@ -785,13 +777,31 @@ void ImportThread::process()
     }
 
     if(sInpxFile_.isEmpty())
-    {
         importBooksFromPath(sPath_);
-        // query_.exec(QStringLiteral("DELETE FROM book WHERE id_lib=%1 AND deleted=TRUE;").arg(QString::number(idLib_)));
-        // query_.exec(QStringLiteral("VACUUM"));
-        emit End();
-        return;
+    else
+        importBooksFromInpx();
+
+    emit End();
+}
+
+void ImportThread::break_import()
+{
+    stopped_.store(true, std::memory_order_relaxed);
+}
+
+void ImportThread::importBooksFromInpx()
+{
+    std::unordered_map<QString, uint> mTags;
+    mTags.clear();
+    query_.exec(u"SELECT id,name FROM tag"_s);
+    while(query_.next())
+    {
+        uint idTag = query_.value(0).toUInt();
+        QString sTagName = query_.value(1).toString().trimmed();
+        mTags[sTagName] = idTag;
     }
+
+
     QArchive archiveFile;
     QArchive fileInpx(sInpxFile_);
 
@@ -804,52 +814,57 @@ void ImportThread::process()
             LogWarning << query_.lastError().text();
     }
 
-#define _NAME           0
-#define _SERIA          1
-#define _NUM_IN_SERIA   2
-#define _FILE           3
-#define _SIZE           4
-#define _ID_IN_LIB      5
-#define _DELETED        6
-#define _FORMAT         7
-#define _DATE           8
-#define _LANGUAGE       9
-#define _STAR           10
-#define _KEYS           11
-#define _AUTHORS        12
-#define _JANRES         13
-#define _FOLDER         14
-#define _TAG            15
-#define _TAG_SERIA      16
-#define _TAG_AUTHOR     17
 
-    int field_index[20];
-    field_index[_NAME]          =2; //name
-    field_index[_SERIA]         =3; //seria
-    field_index[_NUM_IN_SERIA]  =4; //num_in_seria
-    field_index[_FILE]          =5; //file
-    field_index[_SIZE]          =6; //size
-    field_index[_ID_IN_LIB]     =7; //id_in_lib
-    field_index[_DELETED]       =8; //deleted
-    field_index[_FORMAT]        =9; //format
-    field_index[_DATE]          =10;//date
-    field_index[_LANGUAGE]      =11;//language
-    field_index[_STAR]          =12;//star
-    field_index[_KEYS]          =13;//keys
-    field_index[_AUTHORS]       =0; //Authors
-    field_index[_JANRES]        =1; //Janres
-    field_index[_FOLDER]        =-1; //Folder
-    field_index[_TAG]           =-1; //Tag
-    field_index[_TAG_SERIA]     =-1; //TagSeria
-    field_index[_TAG_AUTHOR]    =-1; //TagAuthor
+    constexpr int FieldName       = 0;
+    constexpr int FieldSeria      = 1;
+    constexpr int FieldNumInSeria = 2;
+    constexpr int FieldFile       = 3;
+    constexpr int FieldSize       = 4;
+    constexpr int FieldIdInLib    = 5;
+    constexpr int FieldDeleted    = 6;
+    constexpr int FieldFormat     = 7;
+    constexpr int FieldDate       = 8;
+    constexpr int FieldLanguage   = 9;
+    constexpr int FieldStar       = 10;
+    constexpr int FieldKeys       = 11;
+    constexpr int FieldAuthors    = 12;
+    constexpr int FieldGenres     = 13;
+    constexpr int FieldFolder     = 14;
+    constexpr int FieldTag        = 15;
+    constexpr int FieldTagSeria   = 16;
+    constexpr int FieldTagAuthor  = 17;
+    constexpr int FieldYear       = 18;
+    constexpr int FieldSourceLib  = 19;
+
+
+    int fieldIndex[] = {
+        2,  // Name
+        3,  // Seria
+        4,  // NumInSeria
+        5,  // File
+        6,  // Size
+        7,  // IdInLib
+        8,  // Deleted
+        9,  // Format
+        10, // Date
+        11, // Language
+        12, // Star
+        13, // Keys
+        0,  // Authors
+        1,  // Genres
+        -1, // Folder
+        -1, // Tag
+        -1, // TagSeria
+        -1, // TagAuthor
+        -1, // Year
+        -1  // SourceLib
+ };
 
     if(fileInpx.setCurrentFile(u"structure.info"_s))
     {
-        for(unsigned int i=0; i<sizeof(field_index)/sizeof(int); i++)
-            field_index[i] = -1;
-        QBuffer outbuff;
-        outbuff.setData(fileInpx.readFile());
-        const QStringList lines = (QString::fromUtf8(outbuff.data())).split(QStringLiteral("\n"));
+        for(unsigned int i=0; i<std::size(fieldIndex); i++)
+            fieldIndex[i] = -1;
+        const QStringList lines = (QString::fromUtf8(fileInpx.readFile())).split(u'\n');
         for(const QString &line: lines)
         {
             const QStringList substrings = line.toUpper().split(u";"_s);
@@ -857,41 +872,45 @@ void ImportThread::process()
             for(const QString &substring: substrings)
             {
                 if(substring == u"TITLE")
-                    field_index[_NAME] = i;
+                    fieldIndex[FieldName] = i;
                 else if(substring == u"SERIES")
-                    field_index[_SERIA] = i;
+                    fieldIndex[FieldSeria] = i;
                 else if(substring == u"SERNO")
-                    field_index[_NUM_IN_SERIA] = i;
+                    fieldIndex[FieldNumInSeria] = i;
                 else if(substring == u"FILE")
-                    field_index[_FILE] = i;
+                    fieldIndex[FieldFile] = i;
                 else if(substring == u"SIZE")
-                    field_index[_SIZE] = i;
+                    fieldIndex[FieldSize] = i;
                 else if(substring == u"LIBID")
-                    field_index[_ID_IN_LIB] = i;
+                    fieldIndex[FieldIdInLib] = i;
                 else if(substring == u"DEL")
-                    field_index[_DELETED] = i;
+                    fieldIndex[FieldDeleted] = i;
                 else if(substring == u"EXT")
-                    field_index[_FORMAT] = i;
+                    fieldIndex[FieldFormat] = i;
                 else if(substring == u"DATE")
-                    field_index[_DATE] = i;
+                    fieldIndex[FieldDate] = i;
                 else if(substring == u"LANG")
-                    field_index[_LANGUAGE] = i;
+                    fieldIndex[FieldLanguage] = i;
                 else if(substring == u"STARS" || substring == u"LIBRATE")
-                    field_index[_STAR] = i;
+                    fieldIndex[FieldStar] = i;
                 else if(substring == u"KEYWORDS")
-                    field_index[_KEYS] = i;
+                    fieldIndex[FieldKeys] = i;
                 else if(substring == u"AUTHOR")
-                    field_index[_AUTHORS] = i;
+                    fieldIndex[FieldAuthors] = i;
                 else if(substring == u"GENRE")
-                    field_index[_JANRES] = i;
+                    fieldIndex[FieldGenres] = i;
                 else if(substring == u"FOLDER")
-                    field_index[_FOLDER] = i;
+                    fieldIndex[FieldFolder] = i;
                 else if(substring == u"TAG")
-                    field_index[_TAG] = i;
+                    fieldIndex[FieldTag] = i;
                 else if(substring == u"TAGSERIES")
-                    field_index[_TAG_SERIA] = i;
+                    fieldIndex[FieldTagSeria] = i;
                 else if(substring == u"TAGAUTHOR")
-                    field_index[_TAG_AUTHOR] = i;
+                    fieldIndex[FieldTagAuthor] = i;
+                else if(substring == u"YEAR")
+                    fieldIndex[FieldYear] = i;
+                else if(substring == u"SOURCELIB")
+                    fieldIndex[FieldSourceLib] = i;
                 i++;
             }
 
@@ -906,7 +925,7 @@ void ImportThread::process()
         if(sFileName.right(4).toUpper() == u".INP")
             listInpFiles << sFileName;
 
-    dbase.transaction();
+    query_.exec(u"BEGIN;"_s);
 
     uint iStart = 0;
     for(uint i=0; i<listInpFiles.count(); i++)
@@ -940,34 +959,34 @@ void ImportThread::process()
             if(substrings.count() == 0) [[unlikely]]
                 continue;
             QString name;
-            if(substrings.count() > field_index[_NAME])
+            if(substrings.count() > fieldIndex[FieldName])
             {
-                name = substrings[field_index[_NAME]].trimmed();
+                name = substrings[fieldIndex[FieldName]].trimmed();
                 if(name.isEmpty()) [[unlikely]]
                     continue;
             }
             QString sSeries;
-            if(substrings.count() > field_index[_SERIA])
-                sSeries = substrings[field_index[_SERIA]].trimmed();
+            if(substrings.count() > fieldIndex[FieldSeria])
+                sSeries = substrings[fieldIndex[FieldSeria]].trimmed();
             int numInSeries = 0;
-            if(substrings.count() > field_index[_NUM_IN_SERIA])
+            if(substrings.count() > fieldIndex[FieldNumInSeria])
             {
-                numInSeries = substrings[field_index[_NUM_IN_SERIA]].trimmed().toInt();
+                numInSeries = substrings[fieldIndex[FieldNumInSeria]].trimmed().toInt();
             }
             QString file;
-            if(substrings.count() > field_index[_FILE])
+            if(substrings.count() > fieldIndex[FieldFile])
             {
-                file = substrings[field_index[_FILE]];
+                file = substrings[fieldIndex[FieldFile]];
             }
             int size = 0;
-            if(substrings.count() > field_index[_SIZE])
+            if(substrings.count() > fieldIndex[FieldSize])
             {
-                size = substrings[field_index[_SIZE]].trimmed().toInt();
+                size = substrings[fieldIndex[FieldSize]].trimmed().toInt();
             }
             uint idInLib = 0;
-            if(substrings.count() > field_index[_ID_IN_LIB])
+            if(substrings.count() > fieldIndex[FieldIdInLib])
             {
-                idInLib = substrings[field_index[_ID_IN_LIB]].trimmed().toUInt();
+                idInLib = substrings[fieldIndex[FieldIdInLib]].trimmed().toUInt();
                 if(nUpdateType_ == UT_NEW && mIdBookInLib_.contains(idInLib)){
                     if(sSeries.isEmpty())
                         continue;
@@ -984,14 +1003,14 @@ void ImportThread::process()
                 }
             }
             bool deleted = 0;
-            if(substrings.count()>field_index[_DELETED])
+            if(substrings.count()>fieldIndex[FieldDeleted])
             {
-                deleted = (substrings[field_index[_DELETED]].trimmed().toInt() > 0);
+                deleted = (substrings[fieldIndex[FieldDeleted]].trimmed().toInt() > 0);
             }
             QString sFormat;
-            if(substrings.count() > field_index[_FORMAT])
+            if(substrings.count() > fieldIndex[FieldFormat])
             {
-                sFormat = substrings[field_index[_FORMAT]].trimmed().toLower();
+                sFormat = substrings[fieldIndex[FieldFormat]].trimmed().toLower();
                 for(const auto &sArcFormat: QArchive::formats){
                     if(sFormat == sArcFormat){
                         if(file.endsWith(u".pdf", Qt::CaseInsensitive)){
@@ -1001,56 +1020,65 @@ void ImportThread::process()
                                 name.chop(5);
                             break;
                         } else
-                        if(file.endsWith(u".djvu", Qt::CaseInsensitive)  || file.endsWith(u".djv", Qt::CaseInsensitive)){
-                            sFormat = u"djvu."_s + sArcFormat;
-                            file.chop(5);
-                            if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
-                                name.chop(6);
-                            break;
-                        } else
-                        if(file.endsWith(u".epub", Qt::CaseInsensitive)){
-                            sFormat = u"epub."_s + sArcFormat;
-                            file.chop(5);
-                            if(name.endsWith(u"(epub)") || name.endsWith(u"[epub]"))
-                                name.chop(6);
-                            break;
-                        }
+                            if(file.endsWith(u".djvu", Qt::CaseInsensitive)  || file.endsWith(u".djv", Qt::CaseInsensitive)){
+                                sFormat = u"djvu."_s + sArcFormat;
+                                file.chop(5);
+                                if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
+                                    name.chop(6);
+                                break;
+                            } else
+                                if(file.endsWith(u".epub", Qt::CaseInsensitive)){
+                                    sFormat = u"epub."_s + sArcFormat;
+                                    file.chop(5);
+                                    if(name.endsWith(u"(epub)") || name.endsWith(u"[epub]"))
+                                        name.chop(6);
+                                    break;
+                                }
                     }
                 }
             }
 
             QDate date;
-            if(substrings.count() > field_index[_DATE])
+            if(substrings.count() > fieldIndex[FieldDate])
             {
-                date = QDate::fromString(substrings[field_index[_DATE]].trimmed(), QStringLiteral("yyyy-MM-dd"));
+                date = QDate::fromString(substrings[fieldIndex[FieldDate]].trimmed(), u"yyyy-MM-dd"_s);
             }
             QString language;
-            if(substrings.count() > field_index[_LANGUAGE])
+            if(substrings.count() > fieldIndex[FieldLanguage])
             {
-                language = substrings[field_index[_LANGUAGE]].trimmed().left(2);
+                language = substrings[fieldIndex[FieldLanguage]].trimmed().left(2);
             }
             qlonglong star = 0;
-            if(substrings.count() > field_index[_STAR] && field_index[_STAR] >= 0)
+            if(substrings.count() > fieldIndex[FieldStar] && fieldIndex[FieldStar] >= 0)
             {
-                star = substrings[field_index[_STAR]].trimmed().toInt();
+                star = substrings[fieldIndex[FieldStar]].trimmed().toInt();
             }
             QString keys;
-            if(substrings.count() > field_index[_KEYS])
+            if(substrings.count() > fieldIndex[FieldKeys])
             {
-                keys = substrings[field_index[_KEYS]].trimmed();
+                keys = substrings[fieldIndex[FieldKeys]].trimmed();
             }
             QString folder = sFileInInpx;
-            if(substrings.count() > field_index[_FOLDER] && field_index[_FOLDER] >= 0)
+            if(substrings.count() > fieldIndex[FieldFolder] && fieldIndex[FieldFolder] >= 0)
             {
-                folder = substrings[field_index[_FOLDER]].trimmed();
+                folder = substrings[fieldIndex[FieldFolder]].trimmed();
             }
+            if(folder.endsWith(u".inp"_s)){
+                QString sArhName = folder.left(folder.length() - 3);
+
+                if(QFile::exists(sPath_ % u"/"_s % sArhName % u"zip"_s))
+                    folder = sArhName + u"zip"_s;
+                else if(QFile::exists(sPath_ % u"/"_s % sArhName %  u"7z"_s))
+                    folder = sArhName + u"7z"_s;
+            }
+
             QVariantList listBookTags;
-            if(substrings.count() > field_index[_TAG] && field_index[_TAG] >= 0)
+            if(substrings.count() > fieldIndex[FieldTag] && fieldIndex[FieldTag] >= 0)
             {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-                const QStringList listStrBookTags = substrings[field_index[_TAG]].trimmed().split(':', Qt::SkipEmptyParts);
+                const QStringList listStrBookTags = substrings[fieldIndex[FieldTag]].trimmed().split(':', Qt::SkipEmptyParts);
 #else
-                QStringList listStrBookTags = substrings[field_index[_TAG]].trimmed().split(':');
+                QStringList listStrBookTags = substrings[field_index[FieldTag]].trimmed().split(':');
 #endif
                 for(const auto &sTag :listStrBookTags){
                     if(mTags.contains(sTag))
@@ -1058,12 +1086,12 @@ void ImportThread::process()
                 }
             }
             QVariantList listSeriesTags;
-            if(substrings.count() > field_index[_TAG_SERIA] && field_index[_TAG_SERIA] >= 0)
+            if(substrings.count() > fieldIndex[FieldTagSeria] && fieldIndex[FieldTagSeria] >= 0)
             {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-                const QStringList listStrSeriesTags = substrings[field_index[_TAG_SERIA]].trimmed().split(':', Qt::SkipEmptyParts);
+                const QStringList listStrSeriesTags = substrings[fieldIndex[FieldTagSeria]].trimmed().split(':', Qt::SkipEmptyParts);
 #else
-                QStringList listStrSeriesTags = substrings[field_index[_TAG_SERIA]].trimmed().split(':');
+                QStringList listStrSeriesTags = substrings[field_index[FieldTagSeria]].trimmed().split(':');
 #endif
                 for(const auto &sTag :listStrSeriesTags){
                     if(mTags.contains(sTag))
@@ -1071,12 +1099,12 @@ void ImportThread::process()
                 }
             }
             QVariantList listAuthorTags;
-            if(substrings.count() > field_index[_TAG_AUTHOR] && field_index[_TAG_AUTHOR] >= 0)
+            if(substrings.count() > fieldIndex[FieldTagAuthor] && fieldIndex[FieldTagAuthor] >= 0)
             {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-                const QStringList listStrAuthorTags = substrings[field_index[_TAG_AUTHOR]].trimmed().split(':', Qt::SkipEmptyParts);
+                const QStringList listStrAuthorTags = substrings[fieldIndex[FieldTagAuthor]].trimmed().split(':', Qt::SkipEmptyParts);
 #else
-                QStringList listStrAuthorTags = substrings[field_index[_TAG_AUTHOR]].trimmed().split(':');
+                QStringList listStrAuthorTags = substrings[fieldIndex[FieldTagAuthor]].trimmed().split(':');
 #endif
                 for(const auto &sTag :listStrAuthorTags){
                     if(mTags.contains(sTag))
@@ -1090,9 +1118,9 @@ void ImportThread::process()
 
 
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-                const QStringList Authors = substrings[field_index[_AUTHORS]].split(':', Qt::SkipEmptyParts);
+                const QStringList Authors = substrings[fieldIndex[FieldAuthors]].split(':', Qt::SkipEmptyParts);
 #else
-                QStringList Authors = substrings[field_index[_AUTHORS]].split(':');
+                QStringList Authors = substrings[fieldIndex[FieldAuthors]].split(':');
 #endif
                 int author_count = 0;
                 for(const QString &sAuthor: Authors)
@@ -1102,8 +1130,8 @@ void ImportThread::process()
                         continue;
 #endif
                     QString sAuthorLow = sAuthor.toLower();
-                    bool bUnkownAuthor = (sAuthorLow.contains(QStringLiteral("автор")) && (sAuthorLow.contains(QStringLiteral("неизвестен")) || sAuthorLow.contains(QStringLiteral("неизвестный"))))
-                                      || sAuthorLow == QStringLiteral("неизвестно");
+                    bool bUnkownAuthor = (sAuthorLow.contains(u"автор"_s) && (sAuthorLow.contains(u"неизвестен"_s) || sAuthorLow.contains(u"неизвестный"_s)))
+                                         || sAuthorLow == u"неизвестно"_s;
                     if(sFormat == u"fb2" && Authors.size()==1 && bUnkownAuthor)
                     {
                         QString sFile, sArchive;
@@ -1117,8 +1145,8 @@ void ImportThread::process()
 
                         QDomDocument doc;
                         doc.setContent(buffer.data());
-                        QDomElement title_info = doc.elementsByTagName(QStringLiteral("title-info")).at(0).toElement();
-                        QDomNodeList listAuthor = title_info.elementsByTagName(QStringLiteral("author"));
+                        QDomElement title_info = doc.elementsByTagName(u"title-info"_s).at(0).toElement();
+                        QDomNodeList listAuthor = title_info.elementsByTagName(u"author"_s);
 
                         for(int i=0; i<listAuthor.count(); i++)
                         {
@@ -1144,13 +1172,13 @@ void ImportThread::process()
                     }
                 }
 
-                if(substrings.count() >= field_index[_JANRES] + 1)
+                if(substrings.count() >= fieldIndex[FieldGenres] + 1)
                 {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 14, 0)
-                    const QStringList listGenres = substrings[field_index[_JANRES]].split(':', Qt::SkipEmptyParts);
+                    const QStringList listGenres = substrings[fieldIndex[FieldGenres]].split(':', Qt::SkipEmptyParts);
 #else
                     QStringList listGenres;
-                    QStringList tmpList = substrings[field_index[_JANRES]].split(QStringLiteral(":"));
+                    QStringList tmpList = substrings[fieldIndex[FieldGenres]].split(QStringLiteral(":"));
                     for(int i=0; i<tmpList.size(); i++){
                         QString str = tmpList.at(i);
                         if(!str.isEmpty())
@@ -1182,17 +1210,11 @@ void ImportThread::process()
             emit progress(nBooksCount, (float)(i - iStart + 1)/(float)(listInpFiles.count() - iStart));
     }
     cleanUnsortedGenre();
-    dbase.commit();
+    query_.exec(u"COMMIT;"_s);
+
     query_.exec(u"VACUUM"_s);
     if(!stopped_) [[likely]]
         emit progress(nBooksCount, 1.0f);
 
-    emit End();
-    dbase.close();
-}
-
-void ImportThread::break_import()
-{
-    stopped_.store(true, std::memory_order_relaxed);
 }
 

@@ -267,18 +267,18 @@ void SettingsDlg::LoadSettings()
 
     ui->ApplicationList->setRowCount(options_.applications.size());
     int index = 0;
-    for(const auto &iApp :options_.applications){
-        ui->ApplicationList->setItem(index, 0, new QTableWidgetItem(iApp.first));
-        ui->ApplicationList->setItem(index, 1, new QTableWidgetItem(iApp.second));
+    for(const auto &[sAppName, sApp] :options_.applications){
+        ui->ApplicationList->setItem(index, 0, new QTableWidgetItem(sAppName));
+        ui->ApplicationList->setItem(index, 1, new QTableWidgetItem(sApp));
         ++index;
     }
 
     ui->ExportList->setRowCount(options_.tools.size());
     index=0;
-    for(const auto &iTool :options_.tools){
-        ui->ExportList->setItem(index, 0, new QTableWidgetItem(iTool.first));
-        ui->ExportList->setItem(index, 1, new QTableWidgetItem(iTool.second.sPath));
-        ui->ExportList->setItem(index, 2, new QTableWidgetItem(iTool.second.sArgs));
+    for(const auto &[sTool, toolOptions] :options_.tools){
+        ui->ExportList->setItem(index, 0, new QTableWidgetItem(sTool));
+        ui->ExportList->setItem(index, 1, new QTableWidgetItem(toolOptions.sPath));
+        ui->ExportList->setItem(index, 2, new QTableWidgetItem(toolOptions.sArgs));
         ++index;
     }
 
@@ -900,15 +900,9 @@ void SettingsDlg::onBtnSaveExportClicked()
     exportOptions.sName = ui->ExportName->currentText();
     exportOptions.Save(settings, false);
     settings->sync();
-    QArchive arc(file_name, QArchive::create);
 
-    QFile file(settings->fileName());
-    if(!file.open(QIODevice::ReadOnly))
-        LogWarning << "Error open: " << settings->fileName();
-    else{
-        arc.writeFile(u"export.ini"_s, file);
-        file.close();
-    }
+    QArchive arc(file_name, QArchive::create);
+    arc.writeFile(settings->fileName(), u"export.ini"_s);
 
     QString db_path = QFileInfo(g::options.sDatabasePath).absolutePath() + u"/fonts"_s;
     for(const QString &font: fonts)
@@ -937,15 +931,7 @@ void SettingsDlg::onBtnSaveExportClicked()
             }
         }
         if(!sFontFile.isEmpty())
-        {
-            file.setFileName(sFontFile);
-            if(!file.open(QIODevice::ReadOnly))
-                LogWarning << "Error open: " << sFontFile;
-            else{
-                arc.writeFile(u"Fonts/"_s + QFileInfo(sFontFile).fileName(), file);
-                file.close();
-            }
-        }
+            arc.writeFile(sFontFile, u"Fonts/"_s + QFileInfo(sFontFile).fileName());
     }
 }
 

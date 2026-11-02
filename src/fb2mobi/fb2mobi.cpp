@@ -34,7 +34,6 @@ fb2mobi::fb2mobi(const ExportOptions *pExportOptions, uint idLib)
     bSubHeader_ = false;
     bAannotation_ = false;
     toc_max_level = 1000000;
-    sTmpDir_ = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/freeLib"_s;
     QDir dir(sTmpDir_);
     dir.mkpath(dir.path());
     sAnnotationTitle_ = tr("Abstract");
@@ -148,7 +147,7 @@ void fb2mobi::parse_description(const QDomNode &elem)
              }
          }
     }
-    hyphenator.init(test_language(g::libs[idLib_].vLaguages[pBook_->idLanguage]));
+    hyphenator.init(test_language(g::libs[idLib_].vLanguages[pBook_->idLanguage]));
 }
 
 void fb2mobi::parse_binary(const QDomNode &elem)
@@ -1139,7 +1138,7 @@ void fb2mobi::generate_opf_epub()
             title=Transliteration(title);
         buf += u"<dc:title>%1</dc:title>\n"_s.arg(title);
      }
-    buf += u"<dc:language>%1</dc:language>\n"_s.arg(test_language(g::libs[idLib_].vLaguages[pBook_->idLanguage]));
+    buf += u"<dc:language>%1</dc:language>\n"_s.arg(test_language(g::libs[idLib_].vLanguages[pBook_->idLanguage]));
     buf += u"<dc:identifier id=\"bookid\">%1</dc:identifier>\n"_s.arg(isbn.isEmpty() ?QUuid::createUuid().toString() :isbn);
     buf += u"<dc:creator opf:role=\"aut\">%1</dc:creator>\n"_s.arg(book_author);
 
@@ -1225,7 +1224,7 @@ void fb2mobi::generate_opf()
 
         buf += u"<dc:Title>%1</dc:Title>"_s.arg(title);
      }
-    buf += u"<dc:Language>%1</dc:Language>"_s.arg(test_language(lib.vLaguages[pBook_->idLanguage]));
+    buf += u"<dc:Language>%1</dc:Language>"_s.arg(test_language(lib.vLanguages[pBook_->idLanguage]));
     buf += u"<dc:Creator>%1</dc:Creator>"_s.arg(book_author);
     buf += u"<dc:identifier id=\"BookId\" opf:scheme=\"ISBN\">%1</dc:identifier>"_s.arg(isbn.isEmpty() ?QUuid::createUuid().toString() :isbn);
     buf += u"<dc:Publisher /><dc:date /><x-metadata>"_s;
@@ -1470,52 +1469,14 @@ void fb2mobi::InsertSeriaNumberToCover(const QString &number, CreateCover create
     delete painter;
 }
 
-void recurseAddDir(const QDir &d, std::vector<QString> &list)
-{
-    QStringList qsl = d.entryList(QDir::NoDotAndDotDot | QDir::Dirs | QDir::Files);
-    for(const QString &file: std::as_const(qsl))
-    {
-        QFileInfo finfo(u"%1/%2"_s.arg(d.path(), file));
-        if (finfo.isSymLink())
-            return;
-        if (finfo.isDir())
-        {
-            QDir sd(finfo.filePath());
-            recurseAddDir(sd, list);
-        }
-        else
-            list.emplace_back(QDir::toNativeSeparators(finfo.filePath()));
-    }
-}
-
-void zipDir(QArchive &arc, const QString &sBasePath, const QString &sRelativePath)
-{
-    const int basePathLength = sBasePath.length() + 1;
-
-    std::vector<QString> filePaths;
-    recurseAddDir(QDir(sBasePath + sRelativePath), filePaths);
-    for (const QString& fullPath : filePaths) {
-        QFileInfo fileInfo(fullPath);
-        if (!fileInfo.isFile())
-            continue;
-        QString sFile = fullPath.mid(basePathLength);
-        QFile inFile(fullPath);
-        if (!inFile.open(QIODevice::ReadOnly)) {
-            LogWarning << "ZipDir: Failed to open input file:" << inFile.errorString();
-            return;
-        }
-        arc.writeFile(sFile, inFile);
-        inFile.close();
-    }
-}
-
 QString fb2mobi::convert(uint idBook)
 {
     idBook_ = idBook;
+
+    sTmpDir_ = QStandardPaths::writableLocation(QStandardPaths::TempLocation) % u"/freeLib/"_s % QString::number(idBook);
     QDir dir(sTmpDir_ + u"/OEBPS"_s);
     dir.removeRecursively();
     dir.mkpath(sTmpDir_ + u"/OEBPS"_s);
-
     QBuffer outbuff;
     outputFormat_ = epub;
     auto &book = g::libs[idLib_].books[idBook];
@@ -1646,26 +1607,28 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     pBook_ = &g::libs[idLib_].books[idBook];
     idBook_ = idBook;
     outputFormat_ = pExportOptions_->format;
+    QString sOutFile;
+    sTmpDir_ = QStandardPaths::writableLocation(QStandardPaths::TempLocation) % u"/freeLib/"_s % QString::number(idBook);
     if(files.size() == 1)
     {
         fb2file.setFile(files.at(0));
-        QString out_file;
         if(fb2file.suffix().toLower() == u"epub" &&
             (outputFormat_ == mobi || outputFormat_ == azw3))
         {
-            QString sKindlegen = QApplication::applicationDirPath() + QStringLiteral("/kindlegen");
+            QString sKindlegen = QApplication::applicationDirPath() + u"/kindlegen"_s;
             if(!QFile::exists(sKindlegen))
                 sKindlegen = u"kindlegen"_s;
-            QProcess::execute(sKindlegen, {sTmpDir_ % u"/"_s % fb2file.fileName()});
-            out_file = sTmpDir_ % u"/"_s % fb2file.completeBaseName() % u".mobi"_s;
+            QFileInfo fi(fb2file);
+            QString sEpubFile = fi.absoluteFilePath();
+            QProcess::execute(sKindlegen, {sEpubFile});
+            sOutFile = fi.path() % u"/"_s % fi.completeBaseName() % u".mobi"_s;
             if(pExportOptions_->format == azw3)
             {
-                out_file = GenerateAZW3(out_file);
+                sOutFile = GenerateAZW3(sOutFile);
             }
-            return out_file;
+            return sOutFile;
         }
     }
-    QString out_file;
     QDir dir(sTmpDir_ + u"/OEBPS"_s);
     dir.removeRecursively();
     dir.mkpath(sTmpDir_ + u"/OEBPS/css"_s);
@@ -1812,12 +1775,12 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     css.close();
     join_seria = files.size() > 1;
     int i = 0;
-    for(const QString &file: files)
+    for(const QString &sFile: files)
     {
-        fb2file.setFile(file);
+        fb2file.setFile(sFile);
         if(fb2file.suffix().toLower() != u"fb2")
             return u""_s;
-        QFile f(sTmpDir_ + u"/book%1.fb2"_s.arg(i));
+        QFile f(sFile);
         if(!f.open(QIODevice::ReadOnly | QIODevice::Text))
         {
             LogWarning << "Error open fb2 file:" << f.fileName();
@@ -1994,14 +1957,14 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         if(!QFile::exists(sKindlegen))
             sKindlegen = u"kindlegen"_s;
         QProcess::execute(sKindlegen, {opf_file});
-        out_file = sTmpDir_ + u"/OEBPS/book.mobi"_s;
+        sOutFile = sTmpDir_ + u"/OEBPS/book.mobi"_s;
     }
     switch(pExportOptions_->format){
     case azw3:
-        out_file = GenerateAZW3(out_file);
+        sOutFile = GenerateAZW3(sOutFile);
         break;
     case mobi7:
-        out_file = GenerateMOBI7(out_file);
+        sOutFile = GenerateMOBI7(sOutFile);
         break;
     case epub:
     {
@@ -2011,13 +1974,13 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
         }
         QDir().mkpath(sTmpDir_ + u"/META-INF"_s);
         generate_mime();
-        QString mime_file = sTmpDir_ + u"/mimetype"_s;;
-        f.setFileName(mime_file);
+        QString sMimeFile = sTmpDir_ + u"/mimetype"_s;;
+        f.setFileName(sMimeFile);
         if(f.open(QIODevice::WriteOnly)){
             ts << buf;
             f.close();
         }else
-            LogWarning << "Error open file:" << mime_file;
+            LogWarning << "Error open file:" << sMimeFile;
 
         generate_container();
         QString container_file = sTmpDir_ + u"/META-INF/container.xml"_s;
@@ -2029,17 +1992,11 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
             LogWarning << "Error open file:" << container_file;
 
 
-        out_file = sTmpDir_ + u"/book.epub"_s;
-        QArchive arc(QArchive::Mode::create);
-        arc.setPath(out_file);
-        QFile file(mime_file);
-        if(file.open(QIODevice::ReadOnly)){
-            arc.writeFile(u"mimetype"_s, file, 0, Z_NO_COMPRESSION);
-            file.close();
-        }else
-            LogWarning << "Error open file:" << mime_file;
-        zipDir(arc, sTmpDir_, u"/OEBPS"_s);
-        zipDir(arc, sTmpDir_, u"/META-INF"_s);
+        sOutFile = QStandardPaths::writableLocation(QStandardPaths::TempLocation) + u"/freeLib/book.epub"_s;
+        QArchive arc(sOutFile, QArchive::Mode::create);
+        arc.writeFile(sMimeFile, u"mimetype"_s, QArchive::Method::Copy, 0);
+        QFile(sMimeFile).remove();
+        arc.writeDir(sTmpDir_);
     }
         break;
     case pdf:
@@ -2066,6 +2023,12 @@ QString fb2mobi::convert(const std::vector<QString> &files, uint idBook)
     default:
         break;
     }
-    return out_file;
+    if(sOutFile.startsWith(sTmpDir_)){
+        QFileInfo fi(sOutFile);
+        sOutFile = QStandardPaths::writableLocation(QStandardPaths::TempLocation) % u"/freeLib/"_s % fi.fileName();
+        QFile(fi.absoluteFilePath()).rename(sOutFile);
+    }
+    QDir(sTmpDir_).removeRecursively();
+    return sOutFile;
 }
 

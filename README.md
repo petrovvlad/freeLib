@@ -41,15 +41,15 @@ yay -S freelib-git
 
 в Ubuntu 26.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev qt6-websockets-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev libarchive-dev
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev qt6-websockets-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev 7zip 7zip-rar
 ```
 в Ubuntu 25.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev libarchive-dev
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev qt6-svg-dev libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev 7zip 7zip-rar
 ```
 в Ubuntu ≥23.04 и <25.04
 ```
-sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev libarchive-dev
+sudo apt update && sudo apt install git cmake build-essential qt6-base-dev libqt6core5compat6-dev qt6-httpserver-dev libqt6websockets6-dev libqt6svg6 libquazip1-qt6-dev libtbb-dev qtkeychain-qt6-dev p7zip-full p7zip-rar
 ```
 в Ubuntu <23.04
 ```

@@ -60,7 +60,7 @@ private:
     void FillListBooks(const std::vector<uint> &vBooks, const std::vector<uint> &vCheckedBooks, uint idCurrentAuthor);
     void FillAlphabet(const QString &sAlphabetName);
     void fillReview(const BookFile& bookFile);
-    bool IsBookInList(const SBook &book);
+    bool IsBookInList(const SBook &book, uint idTagFilter);
     void checkLetter(const QChar cLetter);
     std::vector<uint> getCheckedBooks(bool bCheckedOnly = false);
     void FillCheckedItemsBookList(const QTreeWidgetItem *item, bool send_all, std::vector<uint> *pList);
@@ -165,13 +165,13 @@ private slots:
     void onUpdateAnnotationFont(const QFont &font);
 
     void changingTrayIcon(int index, bool bColor);
+    void onMinimizeWindow();
 #ifdef USE_KStatusNotifier
     void hideEvent(QHideEvent *ev) override;
     void showEvent(QShowEvent *ev) override;
     void handleTrayActivation(bool active, const QPoint &pos);
 #else
     void handleTrayActivation(QSystemTrayIcon::ActivationReason reason);
-    void MinimizeWindow();
     void hide();
 public slots:
     void show();

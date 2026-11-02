@@ -31,6 +31,8 @@ public:
 
 private:
     QByteArray openArcInArc(const QString &sArchive, const QString &sFileName);
+    void insertImageInFb2(const QImage &img, const QString &sId, QDomElement *prevElement = nullptr);
+    void insertImagesInEpub();
 
     QImage coverFb2();
     QString annotationFb2();

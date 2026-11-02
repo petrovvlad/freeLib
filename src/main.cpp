@@ -521,6 +521,7 @@ int main(int argc, char *argv[])
     if(pMainWindow)
         delete pMainWindow;
 
+    g::activeBooks.clear();
     QDir(QDir::tempPath() + u"/freeLib/"_s).removeRecursively();
     return result;
 }
