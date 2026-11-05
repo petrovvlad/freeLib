@@ -27,7 +27,6 @@
 #include "qarchive.h"
 
 #include "fb2mobi/fb2mobi.h"
-#include "library.h"
 #include "utilites.h"
 #include "bookfile.h"
 
@@ -550,70 +549,19 @@ void ExportThread::export_lib()
     }
 
     uint nCount = 0;
+    auto progressStep = 99.0 / static_cast<double>(lib.books.size());
     for(const auto &book :lib.books | std::views::values){
-        QString sBookTags;
-        for(auto idTag: book.idTags)
-            sBookTags += tagsName[idTag] + ':';
-
-        QString sAuthors;
-        for(auto idAuthor : book.vIdAuthors){
-            const SAuthor &author = lib.authors.at(idAuthor);
-            sAuthors += author.sLastName % "," % author.sFirstName % ","  % author.sMiddleName % ":";
+        if(book.series.empty())
+            writeInpLine(inpx, tagsName, lib, book, 0);
+        else
+        for(const auto &idSeries :book.series | std::views::keys){
+            writeInpLine(inpx, tagsName, lib, book, idSeries);
         }
-
-        QString sAuthorTags;
-        auto &firstAuthor = lib.authors.at(book.vIdAuthors.front());
-        for(auto idTag :firstAuthor.idTags)
-            sAuthorTags += tagsName[idTag] + u':';
-
-        QString sSeriesTags;
-        if(!book.series.empty()){
-            const auto &idTags = lib.series.at(book.series.begin()->first).idTags;
-            for(auto idTag :idTags){
-                sSeriesTags += tagsName[idTag] + ':';
-            }
-        }
-
-        QString sGenres;
-        for(auto idGenre :book.vIdGenres){
-            sGenres += g::genres.at(idGenre).listKeys.constFirst() + ':';
-        }
-        //TODO Добавить мультисерийность при экспорте.
-        bool bSecuence = !book.series.empty();
-        QString sNumInSeries = bSecuence ?QString::number(book.series.begin()->second) :u""_s;
-        QString sSequence = bSecuence ?lib.series.at(book.series.begin()->first).sName :u""_s;
-        QString sLine = (u"%1\4%2\4%3\4%4\4%5\4%6\4%7\4%8"_s.arg(
-                             sAuthors,      //AUTHOR
-                             book.sName,    //TITLE
-                             sSequence,     //SERIES
-                             sNumInSeries,   //SERNO
-                             sGenres,       //GENRE
-                             QString::number(book.idInLib),  //LIBID
-                             book.sFile,    //FILE
-                             book.sArchive  //FOLDER
-                         ) %
-                         u"\4%1\4%2\4%3\4%4\4%5\4%6\4%7"_s.arg
-                        (
-                            book.sFormat,                         //EXT
-                            QString::number(book.nSize),          //SIZE
-                            lib.vLanguages[book.idLanguage],       //LANG
-                            QString::number(book.nStars),         //STARS
-                            book.date.toString(u"yyyy-MM-dd"_s),  //DATE
-                            book.bDeleted ?"1" :"",               //DEL
-                            book.sKeywords                        //KEYWORDS
-                        ) %
-                        u"\4%1\4%2\4%3\r\n"_s.arg
-                        (
-                             sBookTags,     //TAG
-                             sAuthorTags,   //TAGAUTHOR
-                             sSeriesTags    //TAGSERIES
-                        ));
-
-        inpx.write(sLine.toUtf8());
         nCount++;
-        if(uint(nCount / 1000) * 1000 == nCount) [[unlikely]]
-            emit Progress( nCount * 100 / lib.books.size(), nCount );
+        if(nCount % 1000 == 0) [[unlikely]]
+            emit Progress( nCount * progressStep, nCount );
     }
+    emit Progress( 99.0 , nCount );
     inpx.close();
 
     QFile file;
@@ -626,6 +574,67 @@ void ExportThread::export_lib()
 
     arc.writeFile(collection_file, u"collection.info"_s);
     emit Progress(100, lib.books.size());
+}
+
+void ExportThread::writeInpLine(QFile &inpx, std::unordered_map<uint, QString> &tagsName, const SLib &lib, const SBook &book, uint idSeries)
+{
+    QString sBookTags;
+    for(auto idTag: book.idTags)
+        sBookTags += tagsName[idTag] + ':';
+
+    QString sAuthors;
+    for(auto idAuthor : book.vIdAuthors){
+        const SAuthor &author = lib.authors.at(idAuthor);
+        sAuthors += author.sLastName % "," % author.sFirstName % ","  % author.sMiddleName % ":";
+    }
+
+    QString sAuthorTags;
+    auto &firstAuthor = lib.authors.at(book.vIdAuthors.front());
+    for(auto idTag :firstAuthor.idTags)
+        sAuthorTags += tagsName[idTag] + u':';
+
+    QString sSeriesTags;
+    if(!book.series.empty()){
+        const auto &idTags = lib.series.at(book.series.begin()->first).idTags;
+        for(auto idTag :idTags){
+            sSeriesTags += tagsName[idTag] + ':';
+        }
+    }
+
+    QString sGenres;
+    for(auto idGenre :book.vIdGenres){
+        sGenres += g::genres.at(idGenre).listKeys.constFirst() + ':';
+    }
+    QString sIdInLib = QString::number(book.idInLib);
+    QString sSize = QString::number(book.nSize);
+    QString sLanguage = lib.vLanguages[book.idLanguage];
+    QString sStars = QString::number(book.nStars);
+    QString sDate = book.date.toString(u"yyyy-MM-dd"_s);
+    QString sDeleted = book.bDeleted ?"1" :"0";
+    bool bSecuence = idSeries != 0;
+    QString sNumInSeries = bSecuence ?QString::number(book.series.at(idSeries)) :u""_s;
+    QString sSequence = bSecuence ?lib.series.at(idSeries).sName :u""_s;
+    QString sLine =
+        sAuthors       % u'\4' %    //AUTHOR
+        book.sName     % u'\4' %    //TITLE
+        sSequence      % u'\4' %    //SERIES
+        sNumInSeries   % u'\4' %    //SERNO
+        sGenres        % u'\4' %    //GENRE
+        sIdInLib       % u'\4' %    //LIBID
+        book.sFile     % u'\4' %    //FILE
+        book.sArchive  % u'\4' %    //FOLDER
+        book.sFormat   % u'\4' %    //EXT
+        sSize          % u'\4' %    //SIZE
+        sLanguage      % u'\4' %    //LANG
+        sStars         % u'\4' %    //STARS
+        sDate          % u'\4' %    //DATE
+        sDeleted       % u'\4' %    //DEL
+        book.sKeywords % u'\4' %    //KEYWORDS
+        sBookTags      % u'\4' %    //TAG
+        sAuthorTags    % u'\4' %    //TAGAUTHOR
+        sSeriesTags    % u"\r\n"_s; //TAGSERIES
+
+    inpx.write(sLine.toUtf8());
 }
 
 void ExportThread::break_exp()

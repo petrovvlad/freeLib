@@ -4,6 +4,7 @@
 #include <QThread>
 #include <QBuffer>
 
+#include "library.h"
 #include "options.h"
 
 class ExportThread : public QObject
@@ -26,6 +27,7 @@ private:
     void export_books();
     void export_lib();
     bool convert(const std::vector<QBuffer*> &vOutBuff, uint idLib, const QString &file_name, int count,  uint idBook );
+    void writeInpLine(QFile &inpx, std::unordered_map<uint, QString> &tagsName, const SLib &lib, const SBook &book, uint idSeries);
 
     std::vector<uint> vBbooks_;
     const ExportOptions* pExportOptions_;
