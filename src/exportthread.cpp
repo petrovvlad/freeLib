@@ -483,13 +483,13 @@ void ExportThread::export_lib()
     std::unordered_map<uint, QString> tagsName;
     {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
-        QSqlDatabase dbase = QSqlDatabase::cloneDatabase(QStringLiteral("libdb"), QStringLiteral("exportbdb"));
+        QSqlDatabase dbase = QSqlDatabase::cloneDatabase(u"libdb"_s, u"exportbdb"_s);
 #else
-        if(!QSqlDatabase::database(QStringLiteral("exportbdb"), false).isOpen())
+        if(!QSqlDatabase::database(u"exportbdb"_s, false).isOpen())
         {
-            openDB(QStringLiteral("exportbdb"));
+            openDB(u"exportbdb"_s);
         }
-        QSqlDatabase dbase = QSqlDatabase::database(QStringLiteral("exportbdb"), false);
+        QSqlDatabase dbase = QSqlDatabase::database(u"exportbdb"_s, false);
 #endif
 
         if (!dbase.open()) [[unlikely]]
@@ -506,30 +506,28 @@ void ExportThread::export_lib()
             tagsName[id] = sName;
         }
     }
-    QSqlDatabase::removeDatabase(QStringLiteral("exportbdb"));
+    QSqlDatabase::removeDatabase(u"exportbdb"_s);
 
-    QString tmp_dir = QStringLiteral("freeLib");
-    if(QStandardPaths::standardLocations(QStandardPaths::TempLocation).count() > 0)
-        tmp_dir = QStandardPaths::standardLocations(QStandardPaths::TempLocation).at(0) + QStringLiteral("/freeLib");
-    QString sInpxFile = tmp_dir + u"/freeLib.inp"_s;
-    QString structure_file = tmp_dir + QStringLiteral("/structure.info");
-    QString version_file = tmp_dir + QStringLiteral("/version.info");
-    QString collection_file = tmp_dir + QStringLiteral("/collection.info");
-    QDir().mkpath(tmp_dir);
+    QString sTmpDir = QDir::tempPath() + u"/freeLib"_s;
+    QString sInpxFile = sTmpDir + u"/freeLib.inp"_s;
+    QString structure_file = sTmpDir + u"/structure.info"_s;
+    QString version_file = sTmpDir + u"/version.info"_s;
+    QString collection_file = sTmpDir + u"/collection.info"_s;
+    QDir().mkpath(sTmpDir);
     QFile inpx(sInpxFile);
     QFile structure(structure_file);
     if(!structure.open(QFile::WriteOnly)){
         LogWarning << "Error open file:" << structure_file;
         return;
     }
-    structure.write(u"AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;FILE;FOLDER;EXT;SIZE;LANG;STARS;DATE;DEL;KEYWORDS;TAG;TAGAUTHOR;TAGSERIES;\r\n"_s.toUtf8());
+    structure.write(u"AUTHOR;TITLE;SERIES;SERNO;GENRE;LIBID;FILE;FOLDER;EXT;SIZE;LANG;LIBRATE;DATE;DEL;KEYWORDS;TAG;TAGAUTHOR;TAGSERIES;\r\n"_s.toUtf8());
     structure.close();
     QFile version(version_file);
     if(!version.open(QFile::WriteOnly)){
         LogWarning << "Error open file:" << version_file;
         return;
     }
-    version.write((QDate::currentDate().toString(QStringLiteral("dd.MM.yyyy")) + QStringLiteral("\r\n")).toUtf8());
+    version.write((QDate::currentDate().toString(u"dd.MM.yyyy"_s) + u"\r\n"_s).toUtf8());
     version.close();
     QFile collection(collection_file);
     if(!collection.open(QFile::WriteOnly)){
