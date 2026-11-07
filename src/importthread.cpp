@@ -1017,10 +1017,11 @@ void ImportThread::importBooksFromInpx()
                             if(name.endsWith(u"(pdf)"))
                                 name.chop(5);
                             break;
-                        } else
-                            if(file.endsWith(u".djvu", Qt::CaseInsensitive)  || file.endsWith(u".djv", Qt::CaseInsensitive)){
-                                sFormat = u"djvu."_s + sArcFormat;
-                                file.chop(5);
+                        } else{
+                            bool bDjvu = file.endsWith(u".djvu", Qt::CaseInsensitive);
+                            if(bDjvu  || file.endsWith(u".djv", Qt::CaseInsensitive)){
+                                sFormat = (bDjvu ?u"djvu."_s :u"djv."_s) + sArcFormat;
+                                file.chop(bDjvu ?5 :4);
                                 if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
                                     name.chop(6);
                                 break;
@@ -1032,6 +1033,7 @@ void ImportThread::importBooksFromInpx()
                                         name.chop(6);
                                     break;
                                 }
+                        }
                     }
                 }
             }
