@@ -34,7 +34,13 @@ endif()
 
 find_package(7z QUIET)
 if(NOT 7Z_FOUND)
-    find_program(7Z_FOUND NAMES 7z)
+    find_library(7Z_LIBRARY
+        NAMES 7z 7z.so
+        PATHS /usr/lib/7zip /usr/lib/p7zip /usr/local/lib
+    )
+    if(7Z_LIBRARY)
+        set(7Z_FOUND TRUE)
+    endif()
 endif()
 
 find_package(TBB QUIET)
@@ -241,10 +247,6 @@ endif()
 if(TBB_FOUND)
     target_link_libraries(freelib PRIVATE TBB::tbb)
 endif()
-
-# if(LibArchive_FOUND)
-#     target_link_libraries(freelib PRIVATE LibArchive::LibArchive)
-# endif()
 
 target_precompile_headers(freelib
   PRIVATE

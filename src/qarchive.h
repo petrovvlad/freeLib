@@ -101,7 +101,7 @@ private:
 #endif //USE_QUAZIP
     QString sArchivePath_;
     Mode mode_;
-
+    QString sFormat_;
 
 #ifdef USE_BIT7Z
     void initLib();
@@ -112,7 +112,6 @@ private:
 
     int currentIndex_ = -1;
     bit7z::buffer_t data_;
-    QString sFormat_;
 #else //USE_BIT7Z
     QByteArray data_;
 #endif //USE_BIT7Z

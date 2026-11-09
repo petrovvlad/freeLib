@@ -32,8 +32,8 @@ protected:
     void importBooksFromList(const QFileInfoList &listFiles);
     void importBooksFromArchive(const QString &sPath, const QString &sArchName, uint &nBooksCount);
 
-    void readFB2(const QByteArray &ba, QString file_name, QString arh_name,qint32 file_size=0);
-    void readEPUB(const QByteArray &ba, QString sFileName, QString sArhName,qint32 fileSize=0);
+    void readFB2(const QByteArray &ba, QString file_name, QString sArhName, uint &nBookCount, qint32 file_size=0);
+    void readEPUB(const QByteArray &ba, QString sFileName, QString sArhName, uint &nBookCount, qint32 fileSize=0);
     void readFB2_test(const QByteArray& ba, QString file_name, QString arh_name);
 private:
     QString sInpxFile_;
@@ -68,7 +68,7 @@ private:
     void addSeries(const QString &str, uint idLib, uint idBook, uint numInSeries, const QVariantList *pTags = nullptr);
     uint addAuthor(const SAuthor &author, uint libID, uint idBook, bool bFirstAuthor, const QVariantList *pTags = nullptr);
     uint addBook(uchar star, QString &name, int numInSeries, const QString &file,
-                 int size, uint idInLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, const QVariantList *pTags = nullptr);
+                 int size, uint idInLib, bool deleted, const QString &format, QDate date, const QString &language, const QString &keys, qlonglong id_lib, const QString &archive, uint &nCoun, const QVariantList *pTags = nullptr);
 
     void AddGenre(uint idBook, const QString &sGenre, uint idLib);
     void cleanUnsortedGenre();
