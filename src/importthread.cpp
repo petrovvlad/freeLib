@@ -179,6 +179,8 @@ uint ImportThread::addBook(uchar star, QString &name, int numInSeries, const QSt
         sRepairLanguge = u"ru"_s;
     else if(sRepairLanguge == u"ge")
         sRepairLanguge = u"de"_s;
+    else if(sRepairLanguge == u"kr")
+        sRepairLanguge = u"kb"_s;
     name.replace(u"..."_s, u"…"_s);
 
     queryInsertBook_.bindValue(u":name"_s, name);
@@ -699,86 +701,89 @@ void ImportThread::importBooksFromArchive(const QString &sPath, const QString &s
 
 void ImportThread::process()
 {
+    {
 #if QT_VERSION >= QT_VERSION_CHECK(5, 13, 0)
-    QSqlDatabase dbase = QSqlDatabase::cloneDatabase(u"libdb"_s, u"importdb"_s);
+        QSqlDatabase dbase = QSqlDatabase::cloneDatabase(u"libdb"_s, u"importdb"_s);
 #else
-    QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
-    QString sDbFile = fi.canonicalFilePath();
-    QSqlDatabase dbase = QSqlDatabase::addDatabase(u"QSQLITE"_s, u"importdb"_s);
-    dbase.setDatabaseName(sDbFile);
+        QFileInfo fi(RelativeToAbsolutePath(g::options.sDatabasePath));
+        QString sDbFile = fi.canonicalFilePath();
+        QSqlDatabase dbase = QSqlDatabase::addDatabase(u"QSQLITE"_s, u"importdb"_s);
+        dbase.setDatabaseName(sDbFile);
 #endif
-    if (!dbase.open()) [[unlikely]]
-    {
-        LogWarning << dbase.lastError().text();
-        return;
+        if (!dbase.open()) [[unlikely]]
+        {
+            LogWarning << dbase.lastError().text();
+            return;
+        }
+
+        query_ = QSqlQuery(dbase);
+        query_.setForwardOnly(true);
+        query_.exec(u"PRAGMA cache_size = 4000"_s);
+
+        for(auto &[idGenre, genre] :g::genres){
+            for(auto &sKey : genre.listKeys)
+                mGenreKeys_[sKey] = idGenre;
+        }
+
+        queryInsertBook_ = QSqlQuery(dbase);
+        queryInsertBook_.prepare(u"INSERT INTO book(name,star,language,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive) "
+                                 "values(:name,:star,:language,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive);"_s);
+
+        queryInsertAuthor_ = QSqlQuery(dbase);
+        queryInsertAuthor_.prepare(u"INSERT INTO author(name1,name2,name3,id_lib) values(:name1,:name2,:name3,:id_lib);"_s);
+
+        queryInsertSeries_ = QSqlQuery(dbase);
+        queryInsertSeries_.prepare(u"INSERT INTO seria(name,id_lib) values(:name,:id_lib)"_s);
+
+        queryInsertBookAuthor_ = QSqlQuery(dbase);
+        queryInsertBookAuthor_.prepare(u"INSERT OR IGNORE INTO book_author(id_book,id_author,id_lib) values(:idBook,:idAuthor,:idLib);"_s);
+
+        queryInsertBookSeries_ = QSqlQuery(dbase);
+        queryInsertBookSeries_.prepare(u"INSERT OR IGNORE INTO book_sequence(id_book,id_sequence,num_in_sequence) values(:idBook,:idSequence,:numInSequence);"_s);
+
+
+        queryInsertBookGenre_ = QSqlQuery(dbase);
+        queryInsertBookGenre_.prepare(u"INSERT OR IGNORE INTO book_genre(id_book,id_genre,id_lib) values(:idBook,:idGenre,:idLib);"_s);
+
+        queryInsertAuthorTag_ = QSqlQuery(dbase);
+        queryInsertAuthorTag_.prepare(u"INSERT INTO author_tag (id_author,id_tag) VALUES(:idAuthor, :idTag)"_s);
+
+        queryInsertBookTag_ = QSqlQuery(dbase);
+        queryInsertBookTag_.prepare(u"INSERT INTO book_tag(id_book, id_tag) values(:idBook, :idTag)"_s);
+
+        queryInsertSeriesTag_ = QSqlQuery(dbase);
+        queryInsertSeriesTag_.prepare(u"INSERT INTO seria_tag(id_seria, id_tag) values(:idSeria, :idTag)"_s);
+
+        if(!listFiles_.isEmpty()){
+            QFileInfoList listFilInfo;
+            listFilInfo.reserve(listFiles_.count());
+            for(const auto &sFile :std::as_const(listFiles_))
+                listFilInfo << QFileInfo(sFile);
+            if(listFiles_.count() > 0)
+                importBooksFromList(listFilInfo);
+            emit End();
+            return;
+        }
+
+        switch(nUpdateType_)
+        {
+        case UT_FULL:
+            query_.exec(u"PRAGMA foreign_keys = ON"_s);
+            query_.exec(u"delete from book where id_lib="_s + QString::number(idLib_));
+            query_.exec(u"delete from author where id_lib="_s + QString::number(idLib_));
+            query_.exec(u"delete from seria where id_lib="_s + QString::number(idLib_));
+            break;
+        case UT_DEL_AND_NEW:
+            query_.exec(u"update book set deleted=1 where id_lib="_s + QString::number(idLib_));
+            break;
+        }
+
+        if(sInpxFile_.isEmpty())
+            importBooksFromPath(sPath_);
+        else
+            importBooksFromInpx();
     }
-
-    query_ = QSqlQuery(dbase);
-    query_.setForwardOnly(true);
-    query_.exec(u"PRAGMA cache_size = 4000"_s);
-
-    for(auto &[idGenre, genre] :g::genres){
-        for(auto &sKey : genre.listKeys)
-            mGenreKeys_[sKey] = idGenre;
-    }
-
-    queryInsertBook_ = QSqlQuery(dbase);
-    queryInsertBook_.prepare(u"INSERT INTO book(name,star,language,file,size,'deleted',date,keys,id_inlib,id_lib,format,archive) "
-                              "values(:name,:star,:language,:file,:size,:deleted,:date,:keys,:id_inlib,:id_lib,:format,:archive);"_s);
-
-    queryInsertAuthor_ = QSqlQuery(dbase);
-    queryInsertAuthor_.prepare(u"INSERT INTO author(name1,name2,name3,id_lib) values(:name1,:name2,:name3,:id_lib);"_s);
-
-    queryInsertSeries_ = QSqlQuery(dbase);
-    queryInsertSeries_.prepare(u"INSERT INTO seria(name,id_lib) values(:name,:id_lib)"_s);
-
-    queryInsertBookAuthor_ = QSqlQuery(dbase);
-    queryInsertBookAuthor_.prepare(u"INSERT OR IGNORE INTO book_author(id_book,id_author,id_lib) values(:idBook,:idAuthor,:idLib);"_s);
-
-    queryInsertBookSeries_ = QSqlQuery(dbase);
-    queryInsertBookSeries_.prepare(u"INSERT OR IGNORE INTO book_sequence(id_book,id_sequence,num_in_sequence) values(:idBook,:idSequence,:numInSequence);"_s);
-
-
-    queryInsertBookGenre_ = QSqlQuery(dbase);
-    queryInsertBookGenre_.prepare(u"INSERT OR IGNORE INTO book_genre(id_book,id_genre,id_lib) values(:idBook,:idGenre,:idLib);"_s);
-
-    queryInsertAuthorTag_ = QSqlQuery(dbase);
-    queryInsertAuthorTag_.prepare(u"INSERT INTO author_tag (id_author,id_tag) VALUES(:idAuthor, :idTag)"_s);
-
-    queryInsertBookTag_ = QSqlQuery(dbase);
-    queryInsertBookTag_.prepare(u"INSERT INTO book_tag(id_book, id_tag) values(:idBook, :idTag)"_s);
-
-    queryInsertSeriesTag_ = QSqlQuery(dbase);
-    queryInsertSeriesTag_.prepare(u"INSERT INTO seria_tag(id_seria, id_tag) values(:idSeria, :idTag)"_s);
-
-    if(!listFiles_.isEmpty()){
-        QFileInfoList listFilInfo;
-        listFilInfo.reserve(listFiles_.count());
-        for(const auto &sFile :std::as_const(listFiles_))
-            listFilInfo << QFileInfo(sFile);
-        if(listFiles_.count() > 0)
-            importBooksFromList(listFilInfo);
-        emit End();
-        return;
-    }
-
-    switch(nUpdateType_)
-    {
-    case UT_FULL:
-        query_.exec(u"PRAGMA foreign_keys = ON"_s);
-        query_.exec(u"delete from book where id_lib="_s + QString::number(idLib_));
-        query_.exec(u"delete from author where id_lib="_s + QString::number(idLib_));
-        query_.exec(u"delete from seria where id_lib="_s + QString::number(idLib_));
-        break;
-    case UT_DEL_AND_NEW:
-        query_.exec(u"update book set deleted=1 where id_lib="_s + QString::number(idLib_));
-        break;
-    }
-
-    if(sInpxFile_.isEmpty())
-        importBooksFromPath(sPath_);
-    else
-        importBooksFromInpx();
+    QSqlDatabase::removeDatabase(u"importdb"_s);
 
     emit End();
 }
@@ -800,7 +805,6 @@ void ImportThread::importBooksFromInpx()
         mTags[sTagName] = idTag;
     }
 
-
     QArchive archiveFile;
     QArchive fileInpx(sInpxFile_, u"zip"_s, QArchive::Mode::read);
 
@@ -812,7 +816,6 @@ void ImportThread::importBooksFromInpx()
         if(!query_.exec(u"UPDATE lib SET version='"_s % sVersion % u"' WHERE id="_s % QString::number(idLib_))) [[unlikely]]
             LogWarning << query_.lastError().text();
     }
-
 
     constexpr int FieldName       = 0;
     constexpr int FieldSeria      = 1;
@@ -834,7 +837,6 @@ void ImportThread::importBooksFromInpx()
     constexpr int FieldTagAuthor  = 17;
     constexpr int FieldYear       = 18;
     constexpr int FieldSourceLib  = 19;
-
 
     int fieldIndex[] = {
         2,  // Name
@@ -919,20 +921,22 @@ void ImportThread::importBooksFromInpx()
     uint nBooksCount = 0;
     const auto listFiles = fileInpx.fileList();
 
-    QStringList listInpFiles;
+    // QStringList listInpFiles;
+    std::vector<QString> vInpFiles;
     for(const auto &sFileName :listFiles)
         if(sFileName.right(4).toUpper() == u".INP")
-            listInpFiles << sFileName;
+            vInpFiles.push_back(sFileName);
+            //listInpFiles << sFileName;
 
     query_.exec(u"BEGIN;"_s);
 
     uint iStart = 0;
-    for(uint i=0; i<listInpFiles.count(); i++)
+    for(uint i=0; i</*listInpFiles.count()*/vInpFiles.size(); i++)
     {
         QCoreApplication::processEvents();
         if(stopped_) [[unlikely]]
             break;
-        const QString &sFileInInpx = listInpFiles[i];
+        const QString &sFileInInpx = vInpFiles[i];//listInpFiles[i];
         if(nUpdateType_ == UT_NEW)
         {
             query_.exec(u"SELECT * FROM book WHERE archive='%1' AND id_lib=%2 LIMIT 1"_s.arg(sFileInInpx, QString::number(idLib_)));
@@ -1024,6 +1028,8 @@ void ImportThread::importBooksFromInpx()
                                 file.chop(bDjvu ?5 :4);
                                 if(name.endsWith(u"(djvu)") || name.endsWith(u"[djvu]"))
                                     name.chop(6);
+                                if(name.endsWith(u"(djv)") || name.endsWith(u"[djv]"))
+                                    name.chop(5);
                                 break;
                             } else
                                 if(file.endsWith(u".epub", Qt::CaseInsensitive)){
@@ -1195,8 +1201,10 @@ void ImportThread::importBooksFromInpx()
                 if(nBooksCount % 500 == 0) [[unlikely]]
                 {
                     float fProgress;
-                    if(listInpFiles.count()>1)
-                        fProgress = (float)(i - iStart)/(float)(listInpFiles.count() - iStart);
+                    // if(listInpFiles.count()>1)
+                    //     fProgress = (float)(i - iStart)/(float)(listInpFiles.count() - iStart);
+                    if(vInpFiles.size()>1)
+                        fProgress = (float)(i - iStart)/(float)(vInpFiles.size() - iStart);
                     else
                         fProgress = (float)(iLine - iStart)/(float)(lines.count() - iStart);
 
@@ -1204,7 +1212,8 @@ void ImportThread::importBooksFromInpx()
                 }
             }
         }
-        emit progress(nBooksCount, (float)(i - iStart + 1)/(float)(listInpFiles.count() - iStart));
+        // emit progress(nBooksCount, (float)(i - iStart + 1)/(float)(listInpFiles.count() - iStart));
+        emit progress(nBooksCount, (float)(i - iStart + 1)/(float)(vInpFiles.size() - iStart));
     }
     cleanUnsortedGenre();
     query_.exec(u"COMMIT;"_s);
@@ -1212,6 +1221,5 @@ void ImportThread::importBooksFromInpx()
     query_.exec(u"VACUUM"_s);
     if(!stopped_) [[likely]]
         emit progress(nBooksCount, 1.0f);
-
 }
 
