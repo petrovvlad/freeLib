@@ -458,7 +458,7 @@ void ExportThread::process()
     if(!vBbooks_.empty())
         export_books();
     if(idLib_ > 0)
-        export_lib();
+        exportLib();
 
     emit End();
 }
@@ -478,7 +478,7 @@ void ExportThread::process()
 //13- рейтинг (0-5)
 //14- ключевые слова
 
-void ExportThread::export_lib()
+void ExportThread::exportLib()
 {
     std::unordered_map<uint, QString> tagsName;
     {
@@ -512,7 +512,7 @@ void ExportThread::export_lib()
     QString sInpxFile = sTmpDir + u"/freeLib.inp"_s;
     QString structure_file = sTmpDir + u"/structure.info"_s;
     QString version_file = sTmpDir + u"/version.info"_s;
-    QString collection_file = sTmpDir + u"/collection.info"_s;
+    QString sCollectionFile = sTmpDir + u"/collection.info"_s;
     QDir().mkpath(sTmpDir);
     QFile inpx(sInpxFile);
     QFile structure(structure_file);
@@ -529,16 +529,18 @@ void ExportThread::export_lib()
     }
     version.write((QDate::currentDate().toString(u"dd.MM.yyyy"_s) + u"\r\n"_s).toUtf8());
     version.close();
-    QFile collection(collection_file);
+    QFile collection(sCollectionFile);
     if(!collection.open(QFile::WriteOnly)){
-        LogWarning << "Error open file:" << collection_file;
+        LogWarning << "Error open file:" << sCollectionFile;
         return;
     }
     const auto &lib = g::libs[idLib_];
-    collection.write((lib.name + u"\r\n"_s).toUtf8());
-    collection.write((lib.name + u"\r\n"_s).toUtf8());
-    collection.write(u"0\r\n"_s.toUtf8());
-    collection.write(u"freeLib\r\n"_s.toUtf8());
+    collection.write((
+                    lib.name % u"\r\n"_s %
+                    lib.name % u"_"_s % lib.sVersion % u"\r\n"_s %
+                    u"65536\r\n"_s
+                    u"freeLib. A local collection. Total: "_s % QString::number(lib.books.size()) % u" books.\r\n"_s
+                ).toUtf8());
     collection.close();
     if(!inpx.open(QFile::WriteOnly))
     {
@@ -570,7 +572,7 @@ void ExportThread::export_lib()
 
     arc.writeFile(version_file, u"version.info"_s);
 
-    arc.writeFile(collection_file, u"collection.info"_s);
+    arc.writeFile(sCollectionFile, u"collection.info"_s);
     emit Progress(100, lib.books.size());
 }
 
