@@ -1359,7 +1359,7 @@ void MainWindow::selectLibrary(uint idOldLib, uint idCurrentLib)
         settings->setValue(u"LibID"_s, g::idCurrentLib);
     }
 
-#if QT_VERSION >= QT_VERSION_CHECK(6, 3, 0)
+#if QT_VERSION >= QT_VERSION_CHECK(6, 5, 0)
     QtFuture::whenAll(cleanupFuture, loadFuture).then(this, [this](auto &&) {
         libraryLoaded();
     });
