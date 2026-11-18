@@ -31,7 +31,7 @@ LibrariesDlg::LibrariesDlg(QWidget *parent) :
     connect(ui->inpx, &FileLineEdit::textChanged, this, &LibrariesDlg::inpxPathChanged);
     connect(ui->BookDir, &FileLineEdit::textChanged, this, &LibrariesDlg::bookDirChanged);
     connect(ui->btnUpdate, &QPushButton::clicked, this, [this](){this->StartImport();});
-    connect(ui->btnExport, &QAbstractButton::clicked, this, &LibrariesDlg::ExportLib);
+    connect(ui->btnExport, &QAbstractButton::clicked, this, &LibrariesDlg::onExportLib);
     connect(ui->btnAddBook, &QPushButton::clicked, this, &LibrariesDlg::addBook);
     connect(ui->ExistingLibs, static_cast<void (QComboBox::*)(int)>(&QComboBox::currentIndexChanged), this, [this](int index){this->onComboboxLibraryChanged(index);});
     connect(ui->Del, &QAbstractButton::clicked, this, &LibrariesDlg::DeleteLibrary);
@@ -77,7 +77,7 @@ void LibrariesDlg::onAddLibrary()
 void LibrariesDlg::progressImport(uint nBooksAdded, float fProgress)
 {
     ui->progressBar->setValue(fProgress * ui->progressBar->maximum());
-    ui->labelStatus->setText(tr("Books adds:") + u" "_s + QString::number(nBooksAdded));
+    ui->labelStatus->setText(tr("Books adds:") % u" "_s % QString::number(nBooksAdded));
 }
 
 void LibrariesDlg::inpxPathChanged(const QString &sPath)
@@ -116,10 +116,9 @@ void LibrariesDlg::UpdateLibList()
     bool block = ui->ExistingLibs->blockSignals(true);
     ui->ExistingLibs->clear();
     int index = 0;
-    for(const auto &iLib :g::libs){
-        uint idLib = iLib.first;
+    for(const auto &[idLib, lib] :g::libs){
         if(idLib > 0){
-            ui->ExistingLibs->addItem(iLib.second.name, idLib);
+            ui->ExistingLibs->addItem(/*iLib.second*/lib.name, idLib);
             if(idLib == idCurrentLib_)
                 ui->ExistingLibs->setCurrentIndex(index);
             ++index;
@@ -152,6 +151,7 @@ void LibrariesDlg::StartImport(SLib &lib)
 
     uchar nUdateType = (ui->add_new->isChecked() ?UT_NEW :ui->del_old->isChecked() ?UT_DEL_AND_NEW :UT_FULL);
     SaveLibrary(lib);
+    g::libs[idCurrentLib_].bLoaded = false;
     ui->btnUpdate->setDisabled(true);
     ui->btnExport->setDisabled(true);
     ui->BookDir->setDisabled(true);
@@ -217,12 +217,12 @@ void LibrariesDlg::SelectLibrary()
     ui->labelStatus->hide();
 
     auto settings = GetSettings();
-    settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
+    settings->setValue(u"LibID"_s, idCurrentLib_);
 }
 
 void LibrariesDlg::SaveLibrary(const SLib &lib)
 {
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
     if(idCurrentLib_ == 0)
     {
         bool result = query.exec(u"INSERT INTO lib(name,path,inpx,firstAuthor,woDeleted) values('%1','%2','%3',%4,%5)"_s
@@ -231,7 +231,7 @@ void LibrariesDlg::SaveLibrary(const SLib &lib)
             LogWarning << query.lastError().databaseText();
         idCurrentLib_ = query.lastInsertId().toInt();
         auto settings = GetSettings();
-        settings->setValue(QStringLiteral("LibID"), idCurrentLib_);
+        settings->setValue(u"LibID"_s, idCurrentLib_);
         SLib &newLib = g::libs[idCurrentLib_];
         newLib.name = lib.name;
         newLib.path = lib.path;
@@ -256,15 +256,17 @@ void LibrariesDlg::DeleteLibrary()
     if(idCurrentLib_ == 0)
         return;
 
-    if(QMessageBox::question(this, tr("Delete library"), tr("Delete library ") +u"\""_s + ui->ExistingLibs->currentText() + u"\"?"_s, QMessageBox::Yes|QMessageBox::No,QMessageBox::No)==QMessageBox::No)
+    if(QMessageBox::question(this, tr("Delete library"),
+                              tr("Delete library ") % u"\""_s % ui->ExistingLibs->currentText() % u"\"?"_s,
+                              QMessageBox::Yes|QMessageBox::No, QMessageBox::No) == QMessageBox::No)
         return;
 
     QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    QSqlQuery query(QSqlDatabase::database(QStringLiteral("libdb")));
-    query.exec(QStringLiteral("PRAGMA foreign_keys = ON"));
-    if(!query.exec(QStringLiteral("DELETE FROM lib where ID=") + QString::number(idCurrentLib_))) [[unlikely]]
+    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    query.exec(u"PRAGMA foreign_keys = ON"_s);
+    if(!query.exec(u"DELETE FROM lib where ID="_s + QString::number(idCurrentLib_))) [[unlikely]]
         LogWarning << query.lastError().databaseText();
-    query.exec(QStringLiteral("VACUUM"));
+    query.exec(u"VACUUM"_s);
     g::libs.erase(idCurrentLib_);
     UpdateLibList();
     if(ui->ExistingLibs->count() > 0){
@@ -351,13 +353,14 @@ void LibrariesDlg::ExistingLibsChanged()
     }
 }
 
-void LibrariesDlg::ExportLib()
+void LibrariesDlg::onExportLib()
 {
-    QString dirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"));
-    if( !dirName.isEmpty() )
+    static QString sDirName;
+    sDirName = QFileDialog::getExistingDirectory(this, tr("Select destination directory"), sDirName);
+    if( !sDirName.isEmpty() )
     {
         ExportDlg ed(this);
-        ed.exec(idCurrentLib_, dirName);
+        ed.exec(idCurrentLib_, sDirName);
     }
 }
 

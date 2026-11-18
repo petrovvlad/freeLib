@@ -18,14 +18,19 @@ void loadLibrary(uint idLibrary)
 {
     if(idLibrary == 0)
         return;
-    if(!QSqlDatabase::database(u"libdb"_s, false).isOpen())
+    QSqlDatabase db = QSqlDatabase::cloneDatabase(u"libdb"_s, u"loaddb"_s);
+    if (!db.open()) [[unlikely]]
+    {
+        LogWarning << db.lastError().text();
         return;
+    }
 
     qint64 timeStart, timeEnd;
     if(g::bVerbose)
         timeStart = QDateTime::currentMSecsSinceEpoch();
 
-    QSqlQuery query(QSqlDatabase::database(u"libdb"_s));
+    QSqlQuery query(db);
+
     query.setForwardOnly(true);
     if(!query.exec(u"SELECT id FROM lib WHERE id=%1;"_s.arg(idLibrary)) || !query.first()) [[unlikely]]
         return;
@@ -660,11 +665,15 @@ void SLib::sortLanguages()
             sLanguage1 = g::languges.at(i1);
         else
             sLanguage1 = i1;
+        if(sLanguage1.isEmpty())
+            return false;
         QString sLanguage2;
         if(g::languges.contains(i2))
             sLanguage2 = g::languges.at(i2);
         else
             sLanguage2 = i2;
+        if(sLanguage2.isEmpty())
+            return true;
 
         return localeStringCompare(sLanguage1, sLanguage2);
     });

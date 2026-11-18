@@ -41,7 +41,7 @@ private:
     Ui::MainWindow *ui;
     void fillLanguages();
     void UpdateTags();
-    void SaveLibPosition();
+    void saveLibPosition();
 
     HelpDialog *pHelpDlg;
     QString last_search_symbol;
@@ -52,6 +52,8 @@ private:
     void uncheckBooks(const std::vector<uint> &vBooks);
     QToolButton *FirstButton;
     QToolButton *btn_Hash;
+    void selectLibrary(uint idOldLib, uint idCurrentLib);
+    void libraryLoaded();
     void UpdateExportMenu();
     void FillAuthors();
     void fillSeries();
@@ -122,7 +124,7 @@ protected:
 
 private slots:
     void ExportAction();
-    void ManageLibrary();
+    void onManageLibrary();
     void onStatistics();
     void onAddBooks();
     void addBooksFinished();
@@ -152,7 +154,6 @@ private slots:
     void onSetTag();
     void ChangingLanguage();
     void onReviewLinkClicked(const QUrl &url);
-    void SelectLibrary();
     void onTabWidgetChanged(int index);
     void onLanguageFilterChanged(int index);
     void onChangeAlpabet(const QString &sAlphabetName);
@@ -163,7 +164,6 @@ private slots:
     void onUpdateSidebarFont(const QFont &font);
     void onUpdateListFont(const QFont &font);
     void onUpdateAnnotationFont(const QFont &font);
-
     void changingTrayIcon(int index, bool bColor);
     void onMinimizeWindow();
 #ifdef USE_KStatusNotifier

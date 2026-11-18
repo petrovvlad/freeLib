@@ -3,7 +3,7 @@
 
 #include <vector>
 #include <ranges>
-#include <QtSql>
+#include <QtSql/qsqlerror.h>
 #include <QSplashScreen>
 #include <QButtonGroup>
 #include <QMessageBox>
@@ -11,7 +11,6 @@
 #include <QTextBrowser>
 #include <QCloseEvent>
 #include <QWidgetAction>
-#include <QtConcurrent>
 #include <QActionGroup>
 
 #include "librariesdlg.h"
@@ -243,10 +242,10 @@ MainWindow::MainWindow(QWidget *parent) :
 
     connect(ui->searchAuthor, &QLineEdit::textChanged, this, &MainWindow::onSerachAuthorsChanded);
     connect(ui->searchSeries, &QLineEdit::textChanged, this, &MainWindow::onSerachSeriesChanded);
-    connect(ui->actionAddLibrary, &QAction::triggered, this, &MainWindow::ManageLibrary);
+    connect(ui->actionAddLibrary, &QAction::triggered, this, &MainWindow::onManageLibrary);
     connect(ui->actionStatistics, &QAction::triggered, this, &MainWindow::onStatistics);
     connect(ui->actionAddBooks, &QAction::triggered, this, &MainWindow::onAddBooks);
-    connect(ui->btnLibrary, &QAbstractButton::clicked, this, &MainWindow::ManageLibrary);
+    connect(ui->btnLibrary, &QAbstractButton::clicked, this, &MainWindow::onManageLibrary);
     connect(ui->btnOpenBook, &QAbstractButton::clicked, this, &MainWindow::onDblClickBook);
     connect(ui->btnOption, &QAbstractButton::clicked, this, &MainWindow::Settings);
     connect(ui->actionPreference, &QAction::triggered, this, &MainWindow::Settings);
@@ -499,7 +498,7 @@ MainWindow::~MainWindow()
         delete pHelpDlg;
 
     if(g::options.bStorePosition)
-        SaveLibPosition();
+        saveLibPosition();
     delete ui;
 }
 
@@ -541,7 +540,7 @@ void MainWindow::ChangingLanguage()
 
 void MainWindow::FillAlphabet(const QString &sAlphabetName)
 {
-    QFile file(QStringLiteral(":/language/abc_%1.txt").arg(sAlphabetName));
+    QFile file(u":/language/abc_%1.txt"_s.arg(sAlphabetName));
     QString sAlphabet;
     if(!file.fileName().isEmpty() && file.open(QFile::ReadOnly))
     {
@@ -560,7 +559,7 @@ void MainWindow::FillAlphabet(const QString &sAlphabetName)
             btn->setText(sAlphabet.at(i));
             btn->setMaximumSize(QSize(22, 22));
             btn->setMinimumSize(QSize(22, 22));
-            btn->setFont(QFont(QStringLiteral("Noto Sans"), 10));
+            btn->setFont(QFont(u"Noto Sans"_s, 10));
             btn->setCheckable(true);
             btn->setAutoExclusive(true);
             btn->setSizePolicy(QSizePolicy::Fixed, QSizePolicy::Fixed);
@@ -828,19 +827,19 @@ void MainWindow::onTagFilterChanged(int index)
     }
 }
 
-void MainWindow::SaveLibPosition()
+void MainWindow::saveLibPosition()
 {
     auto settings = GetSettings();
     switch (ui->tabWidget->currentIndex()) {
     case TabAuthors:
-        settings->setValue(QStringLiteral("filter_set"), ui->searchAuthor->text());
+        settings->setValue(u"filter_set"_s, ui->searchAuthor->text());
         break;
     case TabSeries:
-        settings->setValue(QStringLiteral("filter_set"), ui->searchSeries->text());
+        settings->setValue(u"filter_set"_s, ui->searchSeries->text());
         break;
     }
-    settings->setValue(QStringLiteral("current_tab"), ui->tabWidget->currentIndex());
-    settings->setValue(QStringLiteral("current_book_id"), idCurrentBook_);
+    settings->setValue(u"current_tab"_s, ui->tabWidget->currentIndex());
+    settings->setValue(u"current_book_id"_s, idCurrentBook_);
 }
 
 
@@ -886,7 +885,7 @@ void MainWindow::Settings()
         if(g::options.bShowDeleted != pDlg->options_.bShowDeleted || g::options.bUseTag != pDlg->options_.bUseTag)
         {
             UpdateTags();
-            SaveLibPosition();
+            saveLibPosition();
             FillAuthors();
             FillGenres();
             FillListBooks();
@@ -1316,21 +1315,38 @@ void MainWindow::onClearSearch()
     }
 }
 
-void MainWindow::SelectLibrary()
+void MainWindow::selectLibrary(uint idOldLib, uint idCurrentLib)
 {
-    QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-    QApplication::processEvents();
+    saveLibPosition();
+    g::idCurrentLib = idCurrentLib;
+    QFuture<void> cleanupFuture;
+    QFuture<void> loadFuture;
 
-    QAction* action = qobject_cast<QAction*>(sender());
-    SaveLibPosition();
-    uint idOldLib = g::idCurrentLib;
-    g::idCurrentLib = action->data().toUInt();
+    if(!g::libs[g::idCurrentLib].bLoaded){
+        QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
+        loadFuture = QtConcurrent::run([this]() { loadLibrary(g::idCurrentLib); });
+        ui->AuthorList->setEnabled(false);
+        ui->Books->setEnabled(false);
+        ui->SeriaList->setEnabled(false);
+        ui->GenreList->setEnabled(false);
+        ui->do_search->setEnabled(false);
+        ui->TagFilter->setEnabled(false);
+        ui->findLanguage->setEnabled(false);
+        ui->language->setEnabled(false);
+        ui->actionLibraries->setEnabled(false);
+        ui->btnLibrary->setEnabled(false);
+        ui->abc->setEnabled(false);
+        ui->btnOpenBook->setEnabled(false);
+        ui->btnOption->setEnabled(false);
+        ui->find_books->clear();
+        ui->Review->clear();
+        vFoundBooks_.clear();
+    }
+
     if(g::idCurrentLib != idOldLib){
         auto &oldLib = g::libs[idOldLib];
-        QFuture<void> future;
         if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
-            future = QtConcurrent::run([&oldLib]()
-            {
+            cleanupFuture = QtConcurrent::run([&oldLib](){
                 oldLib.bLoaded = false;
                 oldLib.books.clear();
                 oldLib.authors.clear();
@@ -1339,35 +1355,57 @@ void MainWindow::SelectLibrary()
                 oldLib.vLanguages.clear();
             });
         }
-
         auto settings = GetSettings();
         settings->setValue(u"LibID"_s, g::idCurrentLib);
-
-        if(!g::libs[g::idCurrentLib].bLoaded)
-            loadLibrary(g::idCurrentLib);
-        fillLanguages();
-        FillAuthors();
-        fillSeries();
-        FillGenres();
-        switch(ui->tabWidget->currentIndex()){
-        case TabAuthors:
-            onSerachAuthorsChanded(ui->searchAuthor->text());
-            break;
-        case TabSeries:
-            onSerachSeriesChanded(ui->searchSeries->text());
-            break;
-        case TabGenres:
-            SelectGenre();
-            break;
-        case TabSearch:
-            ui->Books->clear();
-        }
-        vFoundBooks_.clear();
-        ui->find_books->clear();
-        ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
-        updateTitle();
-        future.waitForFinished();
     }
+
+#if QT_VERSION >= QT_VERSION_CHECK(6, 3, 0)
+    QtFuture::whenAll(cleanupFuture, loadFuture).then(this, [this](auto &&) {
+        libraryLoaded();
+    });
+#else //QT_VERSION
+    cleanupFuture.waitForFinished();
+    loadFuture.waitForFinished();
+    libraryLoaded();
+#endif //QT_VERSION
+}
+
+void MainWindow::libraryLoaded()
+{
+    fillLanguages();
+    FillAuthors();
+    fillSeries();
+    FillGenres();
+    switch(ui->tabWidget->currentIndex()){
+    case TabAuthors:
+        onSerachAuthorsChanded(ui->searchAuthor->text());
+        SelectAuthor();
+        break;
+    case TabSeries:
+        onSerachSeriesChanded(ui->searchSeries->text());
+        selectSeries();
+        break;
+    case TabGenres:
+        SelectGenre();
+        break;
+    case TabSearch:
+        ui->Books->clear();
+    }
+    ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
+    updateTitle();
+    ui->Books->setEnabled(true);
+    ui->AuthorList->setEnabled(true);
+    ui->SeriaList->setEnabled(true);
+    ui->GenreList->setEnabled(true);
+    ui->do_search->setEnabled(true);
+    ui->TagFilter->setEnabled(true);
+    ui->findLanguage->setEnabled(true);
+    ui->language->setEnabled(true);
+    ui->actionLibraries->setEnabled(g::libs.size()>0);
+    ui->btnLibrary->setEnabled(g::libs.size()>0);
+    ui->abc->setEnabled(true);
+    ui->btnOpenBook->setEnabled(true);
+    ui->btnOption->setEnabled(true);
 
     QApplication::restoreOverrideCursor();
 }
@@ -1715,60 +1753,15 @@ void MainWindow::fillLanguages()
     QApplication::restoreOverrideCursor();
 }
 
-void MainWindow::ManageLibrary()
+void MainWindow::onManageLibrary()
 {
-    SaveLibPosition();
+    saveLibPosition();
     uint idOldLib = g::idCurrentLib;
     LibrariesDlg al(this);
     al.exec();
-    if(al.bLibChanged){
-        QApplication::setOverrideCursor(QCursor(Qt::WaitCursor));
-        QCoreApplication::processEvents(QEventLoop::ExcludeUserInputEvents);
-        QFuture<void> future;
-        if(g::idCurrentLib != idOldLib && g::libs.contains(idOldLib)){
-            auto &oldLib = g::libs[idOldLib];
-            if(oldLib.timeHttp + 24h < std::chrono::system_clock::now()){
-                future = QtConcurrent::run([&oldLib]()
-                {
-                    oldLib.bLoaded = false;
-                    oldLib.books.clear();
-                    oldLib.authors.clear();
-                    oldLib.series.clear();
-                    oldLib.authorBooksLink.clear();
-                    oldLib.vLanguages.clear();
-                });
-            }
-        }
-        loadLibrary(g::idCurrentLib);
-        ui->date_from->setDate( g::libs[g::idCurrentLib].earliestDate_ );
-        ui->find_books->clear();
-        vFoundBooks_.clear();
-
-        fillLanguages();
-        FillAuthors();
-        fillSeries();
-        FillGenres();
-        switch(ui->tabWidget->currentIndex()){
-        case TabAuthors:
-            onSerachAuthorsChanded(ui->searchAuthor->text());
-            SelectAuthor();
-            break;
-        case TabSeries:
-            onSerachSeriesChanded(ui->searchSeries->text());
-            selectSeries();
-            break;
-        case TabGenres:
-            SelectGenre();
-            break;
-        case TabSearch:
-            ui->Books->clear();
-        }
-        if(g::idCurrentLib != idOldLib)
-            future.waitForFinished();
-        QGuiApplication::restoreOverrideCursor();
-    }
-    updateTitle();
     FillLibrariesMenu();
+    if(al.bLibChanged)
+        selectLibrary(idOldLib, g::idCurrentLib);
 }
 
 /*
@@ -2177,7 +2170,10 @@ void MainWindow::FillLibrariesMenu()
             action->setCheckable(true);
             menu->insertAction(nullptr, action);
             pLibGroup_->addAction(action);
-            connect(action, &QAction::triggered, this, &MainWindow::SelectLibrary);
+            connect(action, &QAction::triggered, this, [this, action] (){
+                selectLibrary(g::idCurrentLib, action->data().toUInt());
+            });
+
             if(idLib == g::idCurrentLib)
                 action->setChecked(true);
         }
@@ -2723,6 +2719,8 @@ void MainWindow::ExportAction()
 
 void MainWindow::onLanguageFilterChanged(int index)
 {
+    if(ui->language->count() == 0)
+        return;
     SLib &currentLib = g::libs[g::idCurrentLib];
     int iLang = ui->language->itemData(index).toInt();
     QString sLanguage;

@@ -42,7 +42,7 @@ private slots:
     void reject();
     void onBreak();
     void ExistingLibsChanged();
-    void ExportLib();
+    void onExportLib();
     void addBook();
     void onComboboxLibraryChanged(int index);
     QString UniqueName(const QString &sName);
