@@ -24,7 +24,6 @@ jobs:
             qt6-httpserver-dev \
             libqt6websockets6-dev \
             qt6-svg-dev \
-            libquazip1-qt6-dev \
             libdjvulibre-dev \
             libtbb-dev \
             qtkeychain-qt6-dev
