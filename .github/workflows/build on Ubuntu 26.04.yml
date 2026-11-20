@@ -23,7 +23,7 @@ jobs:
             build-essential \
             qt6-base-dev \
             qt6-httpserver-dev \
-            libqt6websockets6-dev \
+            qt6-websockets-dev \
             qt6-svg-dev \
             libdjvulibre-dev \
             libtbb-dev \
